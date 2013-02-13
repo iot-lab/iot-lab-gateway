@@ -13,14 +13,9 @@ import shlex
 
 
 
-CONFIG_FILES_PATH = '/home/root/bin'
-NODES_CFG   = {
-    'gwt':'fiteco-gwt.cfg',
-    'm3': 'fiteco-m3.cfg',
-    'a8': 'fiteco-a8.cfg'
-    }
+# import common configuration
+import config
 
-NODES = NODES_CFG.keys()
 
 
 class FlashFirmware():
@@ -32,6 +27,8 @@ class FlashFirmware():
 
     def __init__(self, cfg_file):
         self.cfg_file = cfg_file
+        self.err = None
+        self.out = None
 
     def flash(self, elf_file):
         """
@@ -59,21 +56,18 @@ class FlashFirmware():
 
         # Run openocd
         openocd = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
-        out, err = openocd.communicate()
+        out, err = openocd.communicate() # nothing is written to stdout
         ret = openocd.returncode
 
+        self.out = out
+        self.err = err
 
         # Check execution
-        if ret == 0:
-            print 'Ça marche OK'
-        else:
-            sys.stderr.write("Ca a merdé: %d\n" % ret)
-            sys.stderr.write("Write stderr to Log\n")
-            # write stderr to log
-            # print err >> log_num_date_
-            return ret
+        if ret != 0:
+            # logging ???
+            pass
 
-        return 0
+        return ret
 
 
 
@@ -86,7 +80,7 @@ def parse_arguments(args):
 
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('node', type=str, choices=NODES,
+    parser.add_argument('node', type=str, choices=config.NODES,
             help="Node selection")
     parser.add_argument('firmware', type=str, help="Firmware name")
     arguments = parser.parse_args(args)
@@ -95,17 +89,24 @@ def parse_arguments(args):
 
 
 
-
 if __name__ == '__main__':
+
+
     NODE, FIRMWARE = parse_arguments(sys.argv[1:])
-
-    print "node %s" % NODE
-    print "firmware %s" % FIRMWARE
-    CONFIG_FILE =  CONFIG_FILES_PATH + '/' + NODES_CFG[NODE]
-
-    print 'config_file %s' % CONFIG_FILE
+    CONFIG_FILE =  config.CONFIG_FILES_PATH + '/' + config.NODES_CFG[NODE]
 
     FLASH = FlashFirmware(CONFIG_FILE)
-    FLASH.flash(FIRMWARE)
+    RET_VAL = FLASH.flash(FIRMWARE)
+    if RET_VAL != 0:
+        # traiter les sorties
+        sys.stderr.write("Out:\n")
+        sys.stderr.write(FLASH.out)
+        sys.stderr.write("Err:\n")
+        sys.stderr.write(FLASH.err)
+        sys.stderr.write("\n\n")
+        sys.stderr.write("KO! return value: %d\n" % RET_VAL)
+    else:
+        sys.stderr.write("OK")
+
 
 
