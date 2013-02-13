@@ -40,7 +40,8 @@ class FlashFirmware():
 
         # flash_cmd
         cmd = """
-          openocd -f "%s"
+          openocd --debug=0
+              -f "%s"
               -f "target/stm32f1x.cfg"
               -c "init"
               -c "targets"
