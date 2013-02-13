@@ -94,7 +94,8 @@ if __name__ == '__main__':
 
 
     NODE, FIRMWARE = parse_arguments(sys.argv[1:])
-    CONFIG_FILE =  config.CONFIG_FILES_PATH + '/' + config.NODES_CFG[NODE]
+    CONFIG_FILE =  config.CONFIG_FILES_PATH + '/' + \
+            config.NODES_CFG[NODE]['openocd_cfg_file']
 
     FLASH = FlashFirmware(CONFIG_FILE)
     RET_VAL = FLASH.flash(FIRMWARE)
@@ -107,7 +108,7 @@ if __name__ == '__main__':
         sys.stderr.write("\n\n")
         sys.stderr.write("KO! return value: %d\n" % RET_VAL)
     else:
-        sys.stderr.write("OK")
+        sys.stderr.write("OK\n")
 
 
 
