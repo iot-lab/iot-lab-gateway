@@ -3,7 +3,7 @@
 
 
 """
-FlashFirmware script
+flash_firmware script
 """
 
 import argparse
