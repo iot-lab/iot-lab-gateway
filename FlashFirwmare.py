@@ -1,16 +1,19 @@
 #! /usr/bin/env python
+# -*- coding:utf-8 -*-
+
+
 """
-FlashFirmware class
+FlashFirmware script
 """
 
 import argparse
 import sys
-import subprocess
+from subprocess import Popen, PIPE
 import shlex
 
 
 
-CONFIG_FILES_PATH = '~/bin'
+CONFIG_FILES_PATH = '/home/root/bin'
 NODES_CFG   = {
     'gwt':'fiteco-gwt.cfg',
     'm3': 'fiteco-m3.cfg',
@@ -20,32 +23,59 @@ NODES_CFG   = {
 NODES = NODES_CFG.keys()
 
 
+class FlashFirmware():
+    """
+    FlashFirmware class
 
+    Used to flash m3, a8 or gwt M3 nodes
+    """
 
-class UpdateFirmware():
-  def __init__(self, cfg_file):
-    self.cfg_file = cfg_file
+    def __init__(self, cfg_file):
+        self.cfg_file = cfg_file
 
-  def flash(self, elf_file):
-    cmd = """
-      openocd -f "%s" 
-              -f "target/stm32f1x.cfg" 
-              -c "init" 
-              -c "targets" 
-              -c "reset halt" 
-              -c "reset init" 
-              -c "flash write_image erase %s" 
-              -c "verify_image %s" 
+    def flash(self, elf_file):
+        """
+        Flash firmware
+        Argument should be the full path to the firmware
+        Return 0 if OK
+        Return openocd return value on error
+        """
+
+        # flash_cmd
+        cmd = """
+          openocd -f "%s"
+              -f "target/stm32f1x.cfg"
+              -c "init"
+              -c "targets"
+              -c "reset halt"
+              -c "reset init"
+              -c "flash write_image erase %s"
+              -c "verify_image %s"
               -c "reset run"
               -c "shutdown"
 
-    """ % (self.cfg_file, self.elf_file, self.elf_file)
+        """ % (self.cfg_file, elf_file, elf_file)
+        cmd_list = shlex.split(cmd)
 
-    openocd = subprocess.Popen(shlex.split(cmd))
-    out, err = openocd.communicate()
+        # Run openocd
+        openocd = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+        out, err = openocd.communicate()
+        ret = openocd.returncode
 
-    print "Out : %s" % out
-    print "Err : %s" % err
+
+        # Check execution
+        if ret == 0:
+            print 'Ça marche OK'
+        else:
+            sys.stderr.write("Ca a merdé: %d\n" % ret)
+            sys.stderr.write("Write stderr to Log\n")
+            # write stderr to log
+            # print err >> log_num_date_
+            return ret
+
+        return 0
+
+
 
 def parse_arguments(args):
     """
@@ -75,7 +105,7 @@ if __name__ == '__main__':
 
     print 'config_file %s' % CONFIG_FILE
 
-    updatefirmware = UpdateFirmware(CONFIG_FILE)
-    updatefirmware.flash(FIRMWARE)
+    FLASH = FlashFirmware(CONFIG_FILE)
+    FLASH.flash(FIRMWARE)
 
 
