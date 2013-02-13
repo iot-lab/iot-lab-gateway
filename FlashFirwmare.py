@@ -25,8 +25,10 @@ class FlashFirmware():
     Used to flash m3, a8 or gwt M3 nodes
     """
 
-    def __init__(self, cfg_file):
-        self.cfg_file = cfg_file
+    def __init__(self, node):
+        self.node = node
+        self.cfg_file = config.CONFIG_FILES_PATH + '/' + \
+                config.NODES_CFG[node]['openocd_cfg_file']
         self.err = None
         self.out = None
 
@@ -94,10 +96,8 @@ if __name__ == '__main__':
 
 
     NODE, FIRMWARE = parse_arguments(sys.argv[1:])
-    CONFIG_FILE =  config.CONFIG_FILES_PATH + '/' + \
-            config.NODES_CFG[NODE]['openocd_cfg_file']
 
-    FLASH = FlashFirmware(CONFIG_FILE)
+    FLASH = FlashFirmware(NODE)
     RET_VAL = FLASH.flash(FIRMWARE)
     if RET_VAL != 0:
         # traiter les sorties
