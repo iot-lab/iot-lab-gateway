@@ -1,7 +1,8 @@
 #! /usr/bin/env python
 
-import sys
-sys.path.append("../../")
+if __name__ == '__main__':
+    import sys
+    sys.path.append("../../")
 
 from gateway_code_python import serial_redirection
 
