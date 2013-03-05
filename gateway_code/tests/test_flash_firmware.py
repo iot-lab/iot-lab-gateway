@@ -3,7 +3,7 @@
 import sys
 sys.path.append("../../")
 
-from gateway_code_python import flash_firmware
+from gateway_code import flash_firmware
 
 def test_0():
     print "On est heureux, E-R-E"
