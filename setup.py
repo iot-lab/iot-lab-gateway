@@ -26,9 +26,6 @@ class Lint(Command):
 
     def run(self):
         from pylint import lint
-        from pylint.reporters.text import ParseableTextReporter
-        from pylint.reporters.text import TextReporter
-        lint_output = Reporter()
         lint_args = ['-f', 'parseable', 'gateway_code/']
         # I didn't managed to catch the output of lint.Run function
         lint.Run(lint_args, exit=False)
