@@ -35,15 +35,15 @@ class _SerialRedirectionThread(threading.Thread):
         self.baudrate = baudrate
 
         # Handler called on error on socat
-        self.error_handler = None
-        self.handler_arg = None
+        self.error_handler = error_handler
+        self.handler_arg = handler_arg
 
         # Stopping thread
         self.stop_thread = False
         self.is_running = False
 
         # Current process running socat
-        self.current_redirector_process = None
+        self.redirector_process = None
 
     def start(self):
         """
@@ -72,15 +72,15 @@ class _SerialRedirectionThread(threading.Thread):
             if test_error:
                 error_str = ""
                 if self.error_handler is not None:
-                    self.error_handler(handler_arg, error_str)
-                break;
+                    self.error_handler(self.handler_arg, error_str)
+                break
 
-            self.current_redirector_process = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
-            out, err = self.current_redirector_process.communicate()
+            self.redirector_process = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+            out, err = self.redirector_process.communicate()
             self.out += out
             self.err += err
 
-            if self.current_redirector_process.returncode != 0:
+            if self.redirector_process.returncode != 0:
                 time.sleep(0.2)
 
             # debug
@@ -97,22 +97,23 @@ class _SerialRedirectionThread(threading.Thread):
         # kill
         while self.is_running:
             try:
-                self.current_redirector_process.terminate()
-            except OSError, e:
-                if e.errno == 3:
+                self.redirector_process.terminate()
+            except OSError, err:
+                if err.errno == 3:
                     # 'No such proccess'
                     # It means that the current process is already terminated
                     pass
                 else:
-                    raise e
+                    raise err
             time.sleep(1)
 
-        self.current_redirector_process = None
+        self.redirector_process = None
 
 
 class SerialRedirection():
 
-    def __init__(self, tty, baudrate = 500000, error_handler = None, handler_arg = None):
+    def __init__(self, tty, baudrate = 500000, \
+            error_handler = None, handler_arg = None):
         """
 
         error_handler signature:
@@ -125,7 +126,8 @@ class SerialRedirection():
                 raise ValueError, 'Error handler should accept two arguments'
 
 
-        self.redirector_thread = _SerialRedirectionThread(tty, baudrate, self.__error_handler, self)
+        self.redirector_thread = _SerialRedirectionThread(\
+                tty, baudrate, self.__error_handler, self)
         self.error_handler = error_handler
         self.handler_arg = handler_arg
         self.is_running = False
@@ -191,7 +193,7 @@ def parse_arguments(args):
     parser = argparse.ArgumentParser()
     parser.add_argument('node', type=str, choices=config.NODES,
             help="Node selection")
-    parser.add_argument('baudrate', type=int, default=500000,\
+    parser.add_argument('baudrate', type=int, default=500000, \
             help="baudrate, default from config")
     arguments = parser.parse_args(args)
 
@@ -218,15 +220,16 @@ if __name__ == '__main__':
 
 
 
-#    def __init__(self, tty, baudrate = 500000, error_handler = None, handler_arg = None):
+#    def __init__(self, tty, baudrate = 500000, 
+#           error_handler = None, handler_arg = None):
 
     THREAD = SerialRedirection(TTY, BAUDRATE, error_handler_test)
 
-    def signal_handler(signal, frame):
+    def cb_signal_handler(sig, frame):
         print >> sys.stderr, 'Got Ctrl+C'
         THREAD.stop()
 
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, cb_signal_handler)
 
     print 'start'
     THREAD.start()
