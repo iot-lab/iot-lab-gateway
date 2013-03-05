@@ -6,7 +6,6 @@
 serial_redirection script
 """
 
-import argparse
 import sys
 from subprocess import Popen, PIPE
 import shlex
@@ -188,6 +187,7 @@ def parse_arguments(args):
     Only pass arguments to function without script name
 
     """
+    import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('node', type=str, choices=config.NODES,
             help="Node selection")
