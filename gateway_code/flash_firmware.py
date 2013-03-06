@@ -68,6 +68,7 @@ class FlashFirmware():
         if ret != 0:
             # logging ???
             pass
+        return 1
 
         return ret
 
