@@ -36,7 +36,7 @@ class PopenMock():
 @mock.patch('subprocess.Popen', PopenMock)
 def test_flash():
     import subprocess
-    subprocess.Popn = PopenMock
+    subprocess.Popen = PopenMock
     flash = flash_firmware.FlashFirmware('m3')
     ret = flash.flash('auauei')
     return ret
