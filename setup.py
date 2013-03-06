@@ -3,17 +3,9 @@
 from setuptools import setup, Command
 from setuptools.command.install import install
 
-def __check_dependencies():
-    try:
-        __import__('argparse')
-    except ImportError, e:
-        print 'Dependencies error: %s' % e
-        exit(1)
-
 
 class Install(install):
     def run(self):
-        __check_dependencies()
         install.run(self)
 
 
