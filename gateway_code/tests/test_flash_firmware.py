@@ -20,26 +20,50 @@ def test_init():
 
 
 
-class PopenMock():
+class PopenMock(object):
+    """
+    Dummy Popen implementation for testing
+    """
+    out = None
+    err = None
+    returncode = None
+
     def __init__(self, cmds, stdout, stderr):
+        self.returncode = None
         print cmds
         print stdout
         print stderr
 
-    def communicate():
-        self.returncode = 0
-        assert False, 'Test assert'
-        return "STDOUT messages", "STDERR messages"
+    def communicate(self):
+        self.returncode = type(self).returncode
+        out = type(self).out
+        err = type(self).err
+        return out, err
+
+    @classmethod
+    def setup(cls, out=None, err=None, returncode=None):
+        cls.out = out
+        cls.err = err
+        cls.returncode = returncode
 
 
 
-@mock.patch('subprocess.Popen', PopenMock)
+
 def test_flash():
     import subprocess
-    subprocess.Popen = PopenMock
     flash = flash_firmware.FlashFirmware('m3')
-    ret = flash.flash('auauei')
-    return ret
+
+    out = "STDOUT messages"
+    err = "STDERR messages"
+    returncode = 0
+
+    PopenMock.setup(out=out, err=err, returncode=returncode)
+    with mock.patch('subprocess.Popen', new=PopenMock):
+        ret = flash.flash('auauei')
+
+    assert flash.out == out
+    assert flash.err == err
+    assert ret == returncode
 
 
 
