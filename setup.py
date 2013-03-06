@@ -1,4 +1,5 @@
 #! /usr/share/env python
+# -*- coding:utf-8 -*-
 
 from setuptools import setup, Command
 from setuptools.command.install import install
@@ -10,15 +11,21 @@ class Install(install):
 
 
 class Lint(Command):
-    user_options = []
+    user_options = [
+            ('report', 'r', "print errors and report")]
     def initialize_options(self):
-        pass
+        self.report = False
+
     def finalize_options(self):
-        pass
+        if not self.report:
+            self.report_option = ['--errors-only']
+        else:
+            self.report_option = []
 
     def run(self):
         from pylint import lint
         lint_args = ['-f', 'parseable', 'gateway_code/']
+        lint_args = self.report_option + lint_args
         # I didn't managed to catch the output of lint.Run function
         lint.Run(lint_args, exit=False)
 
