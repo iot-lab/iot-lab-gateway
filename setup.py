@@ -17,10 +17,10 @@ class Lint(Command):
         self.report = False
 
     def finalize_options(self):
-        if not self.report:
-            self.report_option = ['--errors-only']
+        if  self.report:
+            self.report_option = ['--reports=y']
         else:
-            self.report_option = []
+            self.report_option = ['--reports=n']
 
     def run(self):
         from pylint import lint
@@ -41,7 +41,7 @@ setup(name='gateway_code',
         cmdclass = {'lint': Lint,},
 
         install_requires = ['argparse'],
-        setup_requires = ['nose>=1.0', 'pylint', 'nosexcover'],
+        setup_requires = ['nose>=1.0', 'pylint', 'nosexcover', 'mock'],
         )
 
 
