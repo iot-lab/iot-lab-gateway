@@ -17,7 +17,7 @@ import inspect
 
 
 # import common configuration
-import config
+from gateway_code import config
 
 
 class _SerialRedirectionThread(threading.Thread):

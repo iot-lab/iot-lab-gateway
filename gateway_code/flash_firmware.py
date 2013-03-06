@@ -13,7 +13,7 @@ import shlex
 
 
 # import common configuration
-import config
+from gateway_code import config
 
 
 
