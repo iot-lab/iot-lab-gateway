@@ -8,6 +8,8 @@ flash_firmware script
 
 import sys
 from subprocess import Popen, PIPE
+import subprocess
+
 import shlex
 
 
@@ -57,7 +59,8 @@ class FlashFirmware():
         cmd_list = shlex.split(cmd)
 
         # Run openocd
-        openocd = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+        openocd = subprocess.Popen(cmd_list, \
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = openocd.communicate() # nothing is written to stdout
         ret = openocd.returncode
 
@@ -68,7 +71,6 @@ class FlashFirmware():
         if ret != 0:
             # logging ???
             pass
-        return 1
 
         return ret
 
