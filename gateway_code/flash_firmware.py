@@ -7,7 +7,6 @@ flash_firmware script
 """
 
 import sys
-from subprocess import Popen, PIPE
 import subprocess
 
 import shlex
@@ -95,24 +94,34 @@ def parse_arguments(args):
     return arguments.node, arguments.firmware
 
 
+def main(args):
+    """
+    Command line main function
+    """
 
-if __name__ == '__main__':
+    node, firmware = parse_arguments(args[1:])
 
-
-    NODE, FIRMWARE = parse_arguments(sys.argv[1:])
-
-    FLASH = FlashFirmware(NODE)
-    RET_VAL = FLASH.flash(FIRMWARE)
-    if RET_VAL != 0:
+    flash = FlashFirmware(node)
+    ret_val = flash.flash(firmware)
+    if ret_val != 0:
         # traiter les sorties
         sys.stderr.write("Out:\n")
-        sys.stderr.write(FLASH.out)
+        sys.stderr.write(flash.out)
         sys.stderr.write("Err:\n")
-        sys.stderr.write(FLASH.err)
+        sys.stderr.write(flash.err)
         sys.stderr.write("\n\n")
-        sys.stderr.write("KO! return value: %d\n" % RET_VAL)
+        sys.stderr.write("KO! return value: %d\n" % ret_val)
     else:
         sys.stderr.write("OK\n")
 
+    return ret_val
+
+
+
+
+
+
+if __name__ == '__main__':
+    main(sys.argv)
 
 
