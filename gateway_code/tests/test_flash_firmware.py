@@ -160,3 +160,23 @@ class TestsCommandLineCalls:
             assert re.search('ErrorRunMessage', err)
             assert ret == 42
 
+
+
+# I couldn't mock the main function so I use a working 'sys.argv'
+@mock.patch('sys.argv', ['cmd_name', '--help'])
+def test_program_call():
+    """
+    Simulate command line call
+    """
+    captured_out = StringIO()
+    import runpy
+    try:
+        with mock.patch('sys.stdout', captured_out):
+            runpy.run_module('gateway_code.flash_firmware', \
+                    run_name='__main__', alter_sys=True)
+    except SystemExit, ret:
+        assert ret.code == 0
+        assert re.search('help', captured_out.getvalue())
+    else:
+        assert 0
+
