@@ -26,6 +26,9 @@ class FlashFirmware():
     """
 
     def __init__(self, node):
+        if node not in config.NODES_CFG:
+            raise ValueError, 'Unknown node, not in %r' \
+                    % config.NODES_CFG.keys()
         self.node = node
         self.cfg_file = config.CONFIG_FILES_PATH + '/' + \
                 config.NODES_CFG[node]['openocd_cfg_file']
