@@ -21,6 +21,10 @@ from gateway_code import config
 
 
 class SerialRedirection():
+    """
+    Class providing node serial redirection to a tcp socket
+    Using a  start, stop, error_handler interface
+    """
 
     def __init__(self, node,
             error_handler = None, handler_arg = None):
@@ -32,7 +36,8 @@ class SerialRedirection():
 
         """
         if node not in config.NODES_CFG:
-            raise ValueError, 'Unknown node, not in %r' % config.NODES_CFG.keys()
+            raise ValueError, 'Unknown node, not in %r' \
+                    % config.NODES_CFG.keys()
         self.node = node
 
         # check handler signature
@@ -94,6 +99,9 @@ class SerialRedirection():
         return 0
 
     def __cb_error_handler(self, error_str):
+        """
+        Error callback which calls caller error_handler with arguments
+        """
         self.err = self.redirector_thread.err
         self.out = self.redirector_thread.out
 
@@ -101,6 +109,12 @@ class SerialRedirection():
             self.error_handler(self.handler_arg, error_str)
 
 class _SerialRedirectionThread(threading.Thread):
+    """
+    Stoppable thread that redirects node serial port to tcp
+
+    It calls 'error_handler' on error.
+    """
+
 
     def __init__(self, node, error_handler):
 
@@ -172,6 +186,9 @@ class _SerialRedirectionThread(threading.Thread):
 
 
     def stop(self):
+        """
+        Stop the running thread
+        """
 
         self.stop_thread = True
 
@@ -214,29 +231,41 @@ def parse_arguments(args):
 
 
 def main(args):
+    """
+    Command line main function
+    """
     import mutex
 
-    def main_error_handler(arg, error_tuple):
+    def __main_error_handler(arg, err):
+        """
+        Error handler in command line
+        """
+        error_num, error_str = err
         print >> sys.stderr, "main_error_handler"
         print >> sys.stderr, "arg: %r" % arg
-        print >> sys.stderr, "error: ('%d','%s')" % (error_tuple[0], error_tuple[1])
-        exit(error_tuple[0])
+        print >> sys.stderr, "error: ('%d','%s')" % (error_num, error_str)
+        exit(error_num)
 
     # main blocking mutex
     main_mutex = mutex.mutex()
     main_mutex.lock(None, None)
     def cb_signal_handler(sig, frame):
+        """
+        Ctrl+C handler
+        """
         print >> sys.stderr, 'Got Ctrl+C, Stopping...'
         main_mutex.unlock()
 
 
     node = parse_arguments(args)
-    thread = SerialRedirection(node, main_error_handler)
+    thread = SerialRedirection(node, __main_error_handler)
 
     # Wait ctrl+C to stop
     print 'Press Ctrl+C to stop the application'
     signal.signal(signal.SIGINT, cb_signal_handler)
-    main_mutex.lock(thread.stop)
+    # test this shit
+    assert 0 # not tested regarding arguments number
+    main_mutex.lock(thread.stop, None) 
     print >> sys.stderr, 'Stopped.'
 
 
