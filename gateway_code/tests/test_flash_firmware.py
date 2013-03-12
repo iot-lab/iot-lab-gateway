@@ -1,14 +1,19 @@
 #! /usr/bin/env python
 
+
 import sys
-sys.path.append("../../")
 
 import re
 import mock
 from cStringIO import StringIO
 
-import common
+# import package code from source folder if not installed
+from os.path import dirname, abspath
+current_folder = dirname(abspath(__file__))
+source_folder = dirname(dirname(current_folder))
+sys.path.append(source_folder)
 
+import common
 from gateway_code import flash_firmware
 
 

@@ -1,20 +1,21 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-if __name__ == '__main__':
-    import sys
-    sys.path.append("../../")
-
-
-from gateway_code import serial_redirection
-from gateway_code import config
-
 import mock
 import re
+import sys
+
+# import package code from source folder if not installed
+from os.path import dirname, abspath
+current_folder = dirname(abspath(__file__))
+source_folder = dirname(dirname(current_folder))
+sys.path.append(source_folder)
+
+from gateway_code.serial_redirection import SerialRedirection
+from gateway_code import serial_redirection, config
 
 _SerialRedirection_str = 'gateway_code.serial_redirection._SerialRedirectionThread'
 
-from gateway_code.serial_redirection import SerialRedirection
 class TestSerialRedirection:
     """
     Test the SerialRedirection class
