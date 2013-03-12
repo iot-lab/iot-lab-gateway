@@ -10,6 +10,7 @@ import sys
 import subprocess
 
 import shlex
+from os.path import abspath
 
 
 
@@ -17,34 +18,7 @@ import shlex
 from gateway_code import config
 
 
-
-class FlashFirmware():
-    """
-    FlashFirmware class
-
-    Used to flash m3, a8 or gwt M3 nodes
-    """
-
-    def __init__(self, node):
-        if node not in config.NODES_CFG:
-            raise ValueError, 'Unknown node, not in %r' \
-                    % config.NODES_CFG.keys()
-        self.node = node
-        self.cfg_file = config.CONFIG_FILES_PATH + '/' + \
-                config.NODES_CFG[node]['openocd_cfg_file']
-        self.err = None
-        self.out = None
-
-    def flash(self, elf_file):
-        """
-        Flash firmware
-        Argument should be the full path to the firmware
-        Return 0 if OK
-        Return openocd return value on error
-        """
-
-        # flash_cmd
-        cmd = """
+FLASH_CMD = """
           openocd --debug=0
               -f "%s"
               -f "target/stm32f1x.cfg"
@@ -56,25 +30,38 @@ class FlashFirmware():
               -c "verify_image %s"
               -c "reset run"
               -c "shutdown"
+"""
 
-        """ % (self.cfg_file, elf_file, elf_file)
-        cmd_list = shlex.split(cmd)
+def flash(node, elf_file):
+    """
+    Flash firmware
 
-        # Run openocd
-        openocd = subprocess.Popen(cmd_list, \
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        out, err = openocd.communicate() # nothing is written to stdout
-        ret = openocd.returncode
+    Return 0 if OK
+    Return openocd return value on error
+    """
 
-        self.out = out
-        self.err = err
+    # configure Node
+    if node not in config.NODES_CFG:
+        raise ValueError, 'Unknown node, not in %r' \
+                % config.NODES_CFG.keys()
+    cfg_file = config.CONFIG_FILES_PATH + '/' + \
+            config.NODES_CFG[node]['openocd_cfg_file']
 
-        # Check execution
-        if ret != 0:
-            # logging ???
-            pass
+    # get the absolute file path required for openocd
+    absolute_file_path = abspath(elf_file)
 
-        return ret
+    # flash_cmd
+
+    cmd = FLASH_CMD % (cfg_file, absolute_file_path, absolute_file_path)
+    cmd_list = shlex.split(cmd)
+
+    # Run openocd
+    openocd = subprocess.Popen(cmd_list, \
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    out, err = openocd.communicate() # nothing is written to stdout
+    ret = openocd.returncode
+
+    return ret, out, err
 
 
 
@@ -104,14 +91,13 @@ def main(args):
 
     node, firmware = parse_arguments(args[1:])
 
-    flash = FlashFirmware(node)
-    ret_val = flash.flash(firmware)
+    ret_val, out, err = flash(node, firmware)
     if ret_val != 0:
         # traiter les sorties
         sys.stderr.write("Out:\n")
-        sys.stderr.write(flash.out)
+        sys.stderr.write(out)
         sys.stderr.write("Err:\n")
-        sys.stderr.write(flash.err)
+        sys.stderr.write(err)
         sys.stderr.write("\n\n")
         sys.stderr.write("KO! return value: %d\n" % ret_val)
     else:
