@@ -23,31 +23,17 @@ class TestsFlashMethods:
     Tests flash_firmware methods
     """
     import subprocess
-    def test_init(self):
+    def test_node_detection(self):
         """
-        Test object creation
+        Test node detection
         """
 
-        NODE='m3'
-        flash = flash_firmware.FlashFirmware(NODE)
-
-        assert flash.node == NODE
-        assert re.search('fiteco-m3.cfg', flash.cfg_file)
-        assert flash.out == None
-        assert flash.err == None
-
-
-        NODE='gwt'
-        flash = flash_firmware.FlashFirmware(NODE)
-        assert flash.node == NODE
-
-        NODE='a8'
-        flash = flash_firmware.FlashFirmware(NODE)
-        assert flash.node == NODE
+        for node in ('m3', 'gwt', 'a8'):
+            ret, out, err = flash_firmware.flash(node, 'filename')
 
         try:
-            NODE='INEXISTANT NODE'
-            flash = flash_firmware.FlashFirmware(NODE)
+            node = 'INEXISTANT_ NODE'
+            ret, out, err = flash_firmware.flash(node, 'filename')
         except:
             pass
         else:
@@ -58,18 +44,17 @@ class TestsFlashMethods:
         Test with a flash with a successfull call
         """
 
-        out = "STDOUT messages"
-        err = ""
-        returncode = 0
+        mock_out = "STDOUT messages"
+        mock_err = ""
+        mock_ret = 0
         filename = 'TEST_FILENAME'
-        common.PopenMock.setup(out=out, err=err, returncode=returncode)
+        common.PopenMock.setup(out=mock_out, err=mock_err, returncode=mock_ret)
 
-        flash = flash_firmware.FlashFirmware('m3')
-        ret = flash.flash('TEST_FILENAME')
+        ret, out, err = flash_firmware.flash('m3', filename)
 
-        assert flash.out == out
-        assert flash.err == err
-        assert ret == returncode
+        assert mock_out == out
+        assert mock_err == err
+        assert mock_ret == ret
         assert filename in "".join(common.PopenMock.args)
 
 
@@ -78,19 +63,19 @@ class TestsFlashMethods:
         Test with a flash with a unsuccessfull call
         """
 
-        out = "STDOUT on error"
-        err = "STDERR on error"
-        returncode = 42
+        mock_out = "STDOUT on error"
+        mock_err = "STDERR on error"
+        mock_ret = 42
         filename = 'TEST_FILENAME'
-        common.PopenMock.setup(out=out, err=err, returncode=returncode)
+        common.PopenMock.setup(out=mock_out, err=mock_err, returncode=mock_ret)
 
-        flash = flash_firmware.FlashFirmware('m3')
-        ret = flash.flash(filename)
+        ret, out, err = flash_firmware.flash('m3', filename)
 
-        assert flash.out == out
-        assert flash.err == err
-        assert ret == returncode
+        assert mock_out == out
+        assert mock_err == err
+        assert mock_ret == ret
         assert filename in "".join(common.PopenMock.args)
+
 
 
 
@@ -131,39 +116,40 @@ class TestsCommandLineCalls:
 
 
     # look to replace mock.patch with simple 'mock' class (might be better here I think
-    @mock.patch.object(flash_firmware.FlashFirmware, 'flash', lambda s,x: 0)
-    def test_normal_run(self):
+    @mock.patch.object(flash_firmware, 'flash')
+    def test_normal_run(self, mock_fct):
         """
         Running command line with m3
         """
+        mock_fct.return_value = (0, 'OUT', 'ErrorRunMessage')
         try:
             ret = flash_firmware.main(['flash_firmware.py', 'm3', '/dev/null'])
         except SystemExit, ret:
             assert 0
         else:
             print captured_err.getvalue()
-            assert re.search('OK', captured_err.getvalue())
+            assert re.search('OUT', captured_err.getvalue())
             assert ret == 0
+        assert mock_fct.called
 
 
-    def test_error_run(self):
+    @mock.patch.object(flash_firmware, 'flash')
+    def test_error_run(self, mock_fct):
         """
         Running command line with error during run
         """
+        mock_fct.return_value = (42, 'OUT', 'ErrorRunMessage')
         try:
-            with mock.patch('gateway_code.flash_firmware.FlashFirmware') as mock_class:
-                instance = mock_class.return_value
-                instance.out = 'OUT'
-                instance.err = 'ErrorRunMessage'
-                instance.flash.return_value = 42
                 ret = flash_firmware.main(['flash_firmware.py', 'm3', '/dev/null'])
         except SystemExit, ret:
             assert 0
         else:
             err = captured_err.getvalue()
+            print err
             assert re.search('KO! return value', err)
             assert re.search('ErrorRunMessage', err)
             assert ret == 42
+        assert mock_fct.called
 
 
 
