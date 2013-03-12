@@ -63,7 +63,7 @@ class TestSerialRedirection:
                 node = 'FALS_NODE_NAME'
                 redirection = SerialRedirection(node)
             except ValueError as error:
-                assert re.search('Unknown node', error.message)
+                assert re.search('Unknown node', str(error))
             else:
                 assert 0
 
@@ -73,7 +73,7 @@ class TestSerialRedirection:
                     pass
                 redirection = SerialRedirection(node, false_error_handler)
             except ValueError as error:
-                assert re.search('Error handler', error.message)
+                assert re.search('Error handler', str(error))
             else:
                 assert 0
 
