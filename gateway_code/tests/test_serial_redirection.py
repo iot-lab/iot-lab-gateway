@@ -81,37 +81,3 @@ class TestSerialRedirection:
     def test_start(self):
         pass
 
-
-
-
-
-
-
-
-
-
-
-#@mock.patch('subprocess.Popen', common.PopenMock)
-# class Test_SerialRedirectionThread:
-#     """
-#     Tests the private _SerialRedirectionThread class
-#     """
-# 
-#     def test_init(self):
-#         """
-#         Test Object creation
-#         """
-# 
-#         node = 'm3'
-#         def __error_handler_one_arg(error_str):
-#             pass
-#         error_handler = __error_handler_one_arg
-# 
-#         redirect_thread = serial_redirection._SerialRedirectionThread(\
-#                 tty, baudrate, error_handler)
-#         assert redirect_thread.tty == tty
-#         assert redirect_thread.baudrate == baudrate
-#         assert redirect_thread.error_handler == error_handler
-
-
-
