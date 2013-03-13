@@ -7,17 +7,44 @@ serial_redirection script
 """
 
 import sys
-from subprocess import Popen, PIPE
+from subprocess import PIPE
+import subprocess
 import shlex
 import threading
 import time
 import signal
-import inspect
 
 
 
 # import common configuration
 from gateway_code import config
+
+
+
+def _num_arguments_required(func):
+    """
+    Returns the number of arguments required to call 'func'
+
+    Based on the function signature
+    Method which have n arguments required 'n-1' arguments to be called
+        as self is allready provided
+
+    Accepts only methods or functions
+
+    """
+    from inspect import getargspec, ismethod, isfunction
+    # manage only functions and methods
+    if not (ismethod(func) or isfunction(func)):
+        raise ValueError, 'Required method or function'
+
+    num = len(getargspec(func)[0])
+
+    # 'self' first argument is allready provided
+    if ismethod(func):
+        num -= 1
+
+    return num
+
 
 
 class SerialRedirection():
@@ -42,15 +69,14 @@ class SerialRedirection():
 
         # check handler signature
         if error_handler is not None:
-            if len(inspect.getargspec(error_handler)[0]) != 2:
+            if _num_arguments_required(error_handler) != 2:
                 raise ValueError, 'Error handler should accept two arguments'
 
 
         self.redirector_thread = _SerialRedirectionThread(\
                 config.NODES_CFG[self.node]['tty'],\
                 config.NODES_CFG[self.node]['baudrate'], \
-                self.__cb_error_handler,
-                self)
+                self.__cb_error_handler)
 
         self.error_handler = error_handler
         self.handler_arg = handler_arg
@@ -116,7 +142,7 @@ class _SerialRedirectionThread(threading.Thread):
     """
 
 
-    def __init__(self, node, error_handler):
+    def __init__(self, tty, baudrate, error_handler):
 
 
         super(_SerialRedirectionThread, self).__init__()
@@ -125,11 +151,11 @@ class _SerialRedirectionThread(threading.Thread):
         self.out = ""
 
         # serial link informations
-        self.node = node
+        self.node = {'tty': tty, 'baudrate': baudrate}
 
         # Handler called on error on socat
         if error_handler is not None:
-            if len(inspect.getargspec(error_handler)[0]) != 1:
+            if _num_arguments_required(error_handler) != 1:
                 raise ValueError, 'Error handler should accept one argument'
         self.error_handler = error_handler
 
@@ -163,23 +189,25 @@ class _SerialRedirectionThread(threading.Thread):
 
         while not self.stop_thread:
             # Pre-run tests (and repeated errors handling maybe)
-            test_error = False
-            if test_error:
-                error_str = ""
-                if self.error_handler is not None:
-                    self.error_handler(error_str)
-                break
+            # test_error = False
+            # if test_error:
+            #     error_str = ""
+            #     if self.error_handler is not None:
+            #         self.error_handler(error_str)
+            #     break
 
-            self.redirector_process = Popen(cmd_list, stdout=PIPE, stderr=PIPE)
+            self.redirector_process = subprocess.Popen(\
+                    cmd_list, stdout=PIPE, stderr=PIPE)
             out, err = self.redirector_process.communicate()
             self.out += out
             self.err += err
+            retcode = self.redirector_process.returncode
 
-            if self.redirector_process.returncode != 0:
-                time.sleep(0.2)
-
-            # debug
-            time.sleep(0.2)
+            if retcode != 0:
+                error_str = "Process returned non zero code %d" % retcode
+                if self.error_handler is not None:
+                    self.error_handler(error_str)
+                break
 
         self.is_running = False
 
@@ -203,7 +231,7 @@ class _SerialRedirectionThread(threading.Thread):
                     pass
                 else:
                     raise err
-            time.sleep(1)
+            time.sleep(0.1)
 
         self.redirector_process = None
 
@@ -265,7 +293,7 @@ def main(args):
     signal.signal(signal.SIGINT, cb_signal_handler)
     # test this shit
     assert 0 # not tested regarding arguments number
-    main_mutex.lock(thread.stop, None) 
+    main_mutex.lock(thread.stop, None)
     print >> sys.stderr, 'Stopped.'
 
 
