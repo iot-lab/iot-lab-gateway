@@ -13,24 +13,29 @@ current_folder = dirname(abspath(__file__))
 source_folder = dirname(dirname(current_folder))
 sys.path.append(source_folder)
 
-import common
 from gateway_code import flash_firmware
 
 
-@mock.patch('subprocess.Popen', common.PopenMock)
+from subprocess import PIPE
+@mock.patch('subprocess.Popen')
 class TestsFlashMethods:
     """
     Tests flash_firmware methods
     """
-    import subprocess
-    def test_node_detection(self):
+    def test_node_detection(self, mock_popen):
         """
         Test node detection
         """
+        # config mock
+        popen = mock_popen.return_value
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
+        popen.returncode = mock_ret = 0
 
+        # valid nodes
         for node in ('m3', 'gwt', 'a8'):
             ret, out, err = flash_firmware.flash(node, 'filename')
 
+        # invalid nodes
         try:
             node = 'INEXISTANT_ NODE'
             ret, out, err = flash_firmware.flash(node, 'filename')
@@ -39,42 +44,46 @@ class TestsFlashMethods:
         else:
             assert 0, 'Non existant node not detected'
 
-    def test_flash_OK(self):
+
+    def test_flash_OK(self, mock_popen):
         """
         Test with a flash with a successfull call
         """
+        # config mock
+        popen = mock_popen.return_value
+        popen.returncode = mock_ret = 0
+        popen.communicate.return_value = \
+                (mock_out, mock_err) = ("OUT_MSG", "")
 
-        mock_out = "STDOUT messages"
-        mock_err = ""
-        mock_ret = 0
         filename = 'TEST_FILENAME'
-        common.PopenMock.setup(out=mock_out, err=mock_err, returncode=mock_ret)
-
         ret, out, err = flash_firmware.flash('m3', filename)
 
+        assert popen.communicate.call_count == 1
         assert mock_out == out
         assert mock_err == err
         assert mock_ret == ret
-        assert filename in "".join(common.PopenMock.args)
+        assert popen.communicate.called_once_with(filename, PIPE, PIPE)
 
 
-    def test_flash_Error(self):
+    def test_flash_Error(self, mock_popen):
         """
         Test with a flash with a unsuccessfull call
         """
 
-        mock_out = "STDOUT on error"
-        mock_err = "STDERR on error"
-        mock_ret = 42
-        filename = 'TEST_FILENAME'
-        common.PopenMock.setup(out=mock_out, err=mock_err, returncode=mock_ret)
+        popen = mock_popen.return_value
+        popen.returncode = mock_ret = 42
+        popen.communicate.return_value = \
+                (mock_out, mock_err) = ("OUT_ERR", "ERR_ERR")
 
+        filename = 'TEST_FILENAME'
         ret, out, err = flash_firmware.flash('m3', filename)
+
+        assert popen.communicate.call_count == 1
 
         assert mock_out == out
         assert mock_err == err
         assert mock_ret == ret
-        assert filename in "".join(common.PopenMock.args)
+        assert popen.communicate.called_once_with(filename, PIPE, PIPE)
 
 
 
@@ -115,7 +124,6 @@ class TestsCommandLineCalls:
 
 
 
-    # look to replace mock.patch with simple 'mock' class (might be better here I think
     @mock.patch.object(flash_firmware, 'flash')
     def test_normal_run(self, mock_fct):
         """
