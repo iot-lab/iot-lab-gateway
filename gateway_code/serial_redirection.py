@@ -189,11 +189,10 @@ class _SerialRedirectionThread(threading.Thread):
 
         cmd_list = shlex.split(SOCAT_CMD % self.node['tty'])
 
-        # Run openocd
-
         while not self.stop_thread:
             self.redirector_process = subprocess.Popen(\
                     cmd_list, stdout=PIPE, stderr=PIPE)
+
             out, err = self.redirector_process.communicate()
             self.out += out
             self.err += err
@@ -204,7 +203,7 @@ class _SerialRedirectionThread(threading.Thread):
             #   a positive value on error
             #   a negative value on fatal error.
 
-            if retcode != 0:
+            if retcode != 0 and (not self.stop_thread):
                 if self.error_handler is not None:
                     self.error_handler(retcode)
                 break
@@ -263,41 +262,45 @@ def main(args):
     """
     Command line main function
     """
-    from threading import Semaphore
 
+    node = parse_arguments(args[1:])
+
+    # main_error_handler, send sigalrm to wake up main thread
+    signal.signal(signal.SIGALRM, lambda x,y: 0)
     def __main_error_handler(arg, error_num):
         """
         Error handler in command line
         """
-        print >> sys.stderr, "main_error_handler"
+        print >> sys.stderr, "Error_handler"
         print >> sys.stderr, "arg: %r" % arg
-        print >> sys.stderr, "errornum: '%d)" % error_num
-        exit(error_num)
-
-    # main blocking semaphore
-    sem = Semaphore(0)
-    def cb_signal_handler(sig, frame):
-        """
-        Ctrl+C handler
-        """
-        print >> sys.stderr, 'Got Ctrl+C, Stopping...'
-        sem.release()
+        print >> sys.stderr, "errornum: '%d'" % error_num
+        print >> sys.stderr, "Stopping..."
+        signal.alarm(1) # to wake up main thread
 
 
-    node = parse_arguments(args[1:])
+    # Create the redirector
     redirect = SerialRedirection(node, __main_error_handler)
+    if redirect.start() != 0:
+        print >> sys.stderr, "Could not start redirection"
+
 
     # Wait ctrl+C to stop
-    print 'Press Ctrl+C to stop the application'
+    def cb_signal_handler(sig, frame):
+        """ Ctrl+C handler """
+        print >> sys.stderr, "Got Ctrl+C, Stopping..."
     signal.signal(signal.SIGINT, cb_signal_handler)
-    sem.acquire(True)
+    print 'Press Ctrl+C to stop the application'
+
+    signal.pause() # wait for signal
     redirect.stop()
+
     print >> sys.stderr, 'Stopped.'
     print >> sys.stderr, ''
     print >> sys.stderr, 'Out log:'
-    print >> sys.stderr, redirect.out
+    print >> sys.stderr, redirect.out,
     print >> sys.stderr, ''
     print >> sys.stderr, 'Error log:'
-    print >> sys.stderr, redirect.err
+    print >> sys.stderr, redirect.err,
+    exit(0)
 
 
