@@ -301,6 +301,5 @@ def main(args):
     print >> sys.stderr, ''
     print >> sys.stderr, 'Error log:'
     print >> sys.stderr, redirect.err,
-    exit(0)
 
 
