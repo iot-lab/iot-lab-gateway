@@ -19,6 +19,13 @@ import signal
 from gateway_code import config
 
 
+SOCAT_CMD = """
+        socat
+        -d
+        TCP4-LISTEN:20000,reuseaddr
+        open:%s
+        """
+
 
 def _num_arguments_required(func):
     """
@@ -57,8 +64,7 @@ class SerialRedirection():
 
         """
         error_handler signature:
-            def error_handler(handler_arg, error_tuple)
-        error_tuple = (error_num, error_str)
+            def error_handler(handler_arg, error_num)
 
         """
         if node not in config.NODES_CFG:
@@ -123,7 +129,7 @@ class SerialRedirection():
         # logging ?
         return 0
 
-    def __cb_error_handler(self, error_str):
+    def __cb_error_handler(self, error_num):
         """
         Error callback which calls caller error_handler with arguments
         """
@@ -131,7 +137,7 @@ class SerialRedirection():
         self.out = self.redirector_thread.out
 
         if self.error_handler is not None:
-            self.error_handler(self.handler_arg, error_str)
+            self.error_handler(self.handler_arg, error_num)
 
 class _SerialRedirectionThread(threading.Thread):
     """
@@ -181,20 +187,11 @@ class _SerialRedirectionThread(threading.Thread):
         It starts a while loop running a socat command
         """
 
-        cmd = '''echo "Not Implemented"'''
-        cmd_list = shlex.split(cmd)
+        cmd_list = shlex.split(SOCAT_CMD % node['tty'])
 
         # Run openocd
 
         while not self.stop_thread:
-            # Pre-run tests (and repeated errors handling maybe)
-            # test_error = False
-            # if test_error:
-            #     error_str = ""
-            #     if self.error_handler is not None:
-            #         self.error_handler(error_str)
-            #     break
-
             self.redirector_process = subprocess.Popen(\
                     cmd_list, stdout=PIPE, stderr=PIPE)
             out, err = self.redirector_process.communicate()
@@ -202,10 +199,14 @@ class _SerialRedirectionThread(threading.Thread):
             self.err += err
             retcode = self.redirector_process.returncode
 
+            # On exit, socat gives status:
+            #   0 if it terminated due to EOF or inactivity timeout
+            #   a positive value on error
+            #   a negative value on fatal error.
+
             if retcode != 0:
-                error_str = "Process returned non zero code %d" % retcode
                 if self.error_handler is not None:
-                    self.error_handler(error_str)
+                    self.error_handler(retcode)
                 break
 
         self.is_running = False
@@ -264,14 +265,14 @@ def main(args):
     """
     from threading import Semaphore
 
-    def __main_error_handler(arg, err):
+    def __main_error_handler(arg, error_num):
         """
         Error handler in command line
         """
         error_num, error_str = err
         print >> sys.stderr, "main_error_handler"
         print >> sys.stderr, "arg: %r" % arg
-        print >> sys.stderr, "error: ('%d','%s')" % (error_num, error_str)
+        print >> sys.stderr, "errornum: '%d)" % error_num
         exit(error_num)
 
     # main blocking semaphore
@@ -293,5 +294,11 @@ def main(args):
     sem.acquire(True)
     thread.stop()
     print >> sys.stderr, 'Stopped.'
+    print >> sys.stderr, ''
+    print >> sys.stderr, 'Out log:'
+    print >> sys.stderr, threading.out
+    print >> sys.stderr, ''
+    print >> sys.stderr, 'Error log:'
+    print >> sys.stderr, threading.err
 
 
