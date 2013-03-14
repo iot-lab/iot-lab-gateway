@@ -211,3 +211,47 @@ class Test_num_arguments_required:
         else:
             assert 0, 'No Value Error exception raised'
 
+
+from cStringIO import StringIO
+captured_err = StringIO()
+@mock.patch('sys.stderr', captured_err)
+class TestParseArguments:
+    def test_help(self):
+        """
+        Test calling help from command line
+        """
+
+        for help in ('--help', '-h'):
+            try:
+                args = [help]
+                serial_redirection.parse_arguments(args)
+            except SystemExit as ret:
+                assert ret.code == 0
+            else:
+                assert 0
+
+    def test_valid_calls(self):
+        """
+        Test valid calls with nodes name
+        """
+
+        for node in config.NODES:
+            args = [node]
+            ret = serial_redirection.parse_arguments(args)
+            assert ret == node
+
+
+    def invalid_call(self):
+        """
+        Test call with invalid node name
+        """
+        try:
+            node = 'IMPOSSIBRU'
+            args = [node]
+            serial_redirection.parse_arguments(args)
+        except SystemExit as ret:
+            assert ret.code != 0
+        else:
+            assert 0
+
+
