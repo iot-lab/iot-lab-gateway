@@ -187,7 +187,7 @@ class _SerialRedirectionThread(threading.Thread):
         It starts a while loop running a socat command
         """
 
-        cmd_list = shlex.split(SOCAT_CMD % node['tty'])
+        cmd_list = shlex.split(SOCAT_CMD % self.node['tty'])
 
         # Run openocd
 
@@ -269,7 +269,6 @@ def main(args):
         """
         Error handler in command line
         """
-        error_num, error_str = err
         print >> sys.stderr, "main_error_handler"
         print >> sys.stderr, "arg: %r" % arg
         print >> sys.stderr, "errornum: '%d)" % error_num
@@ -286,19 +285,19 @@ def main(args):
 
 
     node = parse_arguments(args[1:])
-    thread = SerialRedirection(node, __main_error_handler)
+    redirect = SerialRedirection(node, __main_error_handler)
 
     # Wait ctrl+C to stop
     print 'Press Ctrl+C to stop the application'
     signal.signal(signal.SIGINT, cb_signal_handler)
     sem.acquire(True)
-    thread.stop()
+    redirect.stop()
     print >> sys.stderr, 'Stopped.'
     print >> sys.stderr, ''
     print >> sys.stderr, 'Out log:'
-    print >> sys.stderr, threading.out
+    print >> sys.stderr, redirect.out
     print >> sys.stderr, ''
     print >> sys.stderr, 'Error log:'
-    print >> sys.stderr, threading.err
+    print >> sys.stderr, redirect.err
 
 
