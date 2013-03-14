@@ -16,7 +16,6 @@ import signal
 
 
 
-# import common configuration
 from gateway_code import config
 
 
@@ -242,7 +241,7 @@ def parse_arguments(args):
     """
     Parsing arguments:
 
-    script.py node firmware.elf
+    script.py node
     Only pass arguments to function without script name
 
     """
@@ -252,7 +251,7 @@ def parse_arguments(args):
             help="Node selection")
     arguments = parser.parse_args(args)
 
-    return arguments.node, arguments.baudrate
+    return arguments.node
 
 
 
@@ -285,7 +284,7 @@ def main(args):
         main_mutex.unlock()
 
 
-    node = parse_arguments(args)
+    node = parse_arguments(args[1:])
     thread = SerialRedirection(node, __main_error_handler)
 
     # Wait ctrl+C to stop
@@ -296,7 +295,4 @@ def main(args):
     main_mutex.lock(thread.stop, None)
     print >> sys.stderr, 'Stopped.'
 
-
-if __name__ == '__main__':
-    main(sys.argv)
 
