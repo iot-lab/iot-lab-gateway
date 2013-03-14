@@ -211,14 +211,13 @@ class Test_num_arguments_required:
         else:
             assert 0, 'No Value Error exception raised'
 
-
 from cStringIO import StringIO
 captured_err = StringIO()
 @mock.patch('sys.stderr', captured_err)
 class TestParseArguments:
     def test_help(self):
         """
-        Test calling help from command line
+        Test normal run
         """
 
         for help in ('--help', '-h'):
@@ -254,4 +253,48 @@ class TestParseArguments:
         else:
             assert 0
 
+from cStringIO import StringIO
+captured_err = StringIO()
+@mock.patch('sys.stderr', captured_err)
+@mock.patch('subprocess.Popen')
+class TestMainFunction:
+
+    def test_simple_case(self, mock_popen):
+        import signal
+
+        sem = Semaphore(0)
+        def communicate():
+            sem.acquire(True)
+            return mock.DEFAULT
+        def terminate():
+            sem.release()
+
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
+        popen.returncode = mock_ret = 0
+
+        with mock.patch.object(signal, 'pause') as mock_pause:
+            node = 'm3'
+            args = ['serial_redirection.py', node]
+            serial_redirection.main(args)
+
+    def test_error_on_communicate(self, mock_popen):
+        import signal
+
+        def communicate():
+            return mock.DEFAULT
+        def terminate():
+            pass
+
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "ERR_MSG")
+        popen.returncode = mock_ret = 42
+
+        node = 'm3'
+        args = ['serial_redirection.py', node]
+        serial_redirection.main(args)
 
