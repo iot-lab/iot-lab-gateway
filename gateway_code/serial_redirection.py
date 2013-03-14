@@ -227,6 +227,7 @@ class _SerialRedirectionThread(threading.Thread):
                 if err.errno == 3:
                     # 'No such proccess'
                     # It means that the current process is already terminated
+                    # not an issue
                     pass
                 else:
                     raise err
@@ -261,7 +262,7 @@ def main(args):
     """
     Command line main function
     """
-    import mutex
+    from threading import Semaphore
 
     def __main_error_handler(arg, err):
         """
@@ -273,15 +274,14 @@ def main(args):
         print >> sys.stderr, "error: ('%d','%s')" % (error_num, error_str)
         exit(error_num)
 
-    # main blocking mutex
-    main_mutex = mutex.mutex()
-    main_mutex.lock(None, None)
+    # main blocking semaphore
+    sem = Semaphore(0)
     def cb_signal_handler(sig, frame):
         """
         Ctrl+C handler
         """
         print >> sys.stderr, 'Got Ctrl+C, Stopping...'
-        main_mutex.unlock()
+        sem.release()
 
 
     node = parse_arguments(args[1:])
@@ -290,9 +290,8 @@ def main(args):
     # Wait ctrl+C to stop
     print 'Press Ctrl+C to stop the application'
     signal.signal(signal.SIGINT, cb_signal_handler)
-    # test this shit
-    assert 0 # not tested regarding arguments number
-    main_mutex.lock(thread.stop, None)
+    sem.acquire(True)
+    thread.stop()
     print >> sys.stderr, 'Stopped.'
 
 

@@ -101,7 +101,7 @@ class TestSerialRedirectionUsage:
 
     def test_simple_start(self, mock_popen):
 
-        sem = Semaphore(1)
+        sem = Semaphore(0)
         def communicate():
             sem.acquire(True)
             return mock.DEFAULT
@@ -147,7 +147,6 @@ class TestSerialRedirectionUsage:
 
         def terminate():
             sem.release()
-            pass
 
         # error handler to detect
         mock_handler = mock.Mock()
