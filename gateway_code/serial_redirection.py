@@ -222,7 +222,8 @@ class _SerialRedirectionThread(threading.Thread):
         # kill
         while self.is_running:
             try:
-                self.redirector_process.terminate()
+                if self.redirector_process is not None:
+                    self.redirector_process.terminate()
             except OSError, err:
                 if err.errno == 3:
                     # 'No such proccess'
