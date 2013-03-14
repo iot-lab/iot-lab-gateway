@@ -266,7 +266,7 @@ def main(args):
     node = parse_arguments(args[1:])
 
     # main_error_handler, send sigalrm to wake up main thread
-    signal.signal(signal.SIGALRM, lambda x,y: 0)
+    signal.signal(signal.SIGALRM, (lambda x, y: 0))
     def __main_error_handler(arg, error_num):
         """
         Error handler in command line
