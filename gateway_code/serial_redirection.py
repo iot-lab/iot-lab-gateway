@@ -260,7 +260,7 @@ def parse_arguments(args):
 
 
 # direct import of Event to be able to mock it to test main function
-# mocking the 'threading.Event' used 
+# without mocking the 'threading.Event' used in the threading class
 from threading import Event
 def main(args):
     """
@@ -288,6 +288,7 @@ def main(args):
     redirect = SerialRedirection(node, __main_error_handler)
     if redirect.start() != 0:
         print >> sys.stderr, "Could not start redirection"
+        exit(1)
 
 
     # Wait ctrl+C to stop

@@ -260,7 +260,6 @@ captured_err = StringIO()
 class TestMainFunction:
 
     def test_simple_case(self, mock_popen):
-        import signal
 
         # stub Popen
         sem = Semaphore(0)
@@ -283,18 +282,15 @@ class TestMainFunction:
             handler = signal.getsignal(signal.SIGINT)
             handler(None, None)
 
+        with mock.patch('gateway_code.serial_redirection.Event') as mock_event:
+            event = mock_event.return_value
+            event.wait.side_effect = wait_mock
 
-        with mock.patch.object(signal, 'pause') as mock_pause:
-            with mock.patch('gateway_code.serial_redirection.Event') as mock_event:
-                event = mock_event.return_value
-                event.wait.side_effect = wait_mock
-
-                serial_redirection.main(['serial_redirection.py', 'm3'])
-                assert event.wait.call_count == 1
+            serial_redirection.main(['serial_redirection.py', 'm3'])
+            assert event.wait.call_count == 1
 
 
     def test_error_on_communicate(self, mock_popen):
-        import signal
 
         def communicate():
             return mock.DEFAULT
@@ -310,4 +306,15 @@ class TestMainFunction:
         node = 'm3'
         args = ['serial_redirection.py', node]
         serial_redirection.main(args)
+
+    @mock.patch('gateway_code.serial_redirection.SerialRedirection')
+    def test_error_with_start_redirection(self, mock_open, mock_serial):
+        mock_redirection = mock_serial.return_value
+        mock_redirection.start.return_value = 1
+        try:
+            serial_redirection.main(['serial_redirection.py', 'm3'])
+        except SystemExit as ret:
+            assert ret.code == 1
+        else:
+            assert 0
 
