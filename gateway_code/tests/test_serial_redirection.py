@@ -172,41 +172,6 @@ class TestMainFunction(object):
         redirection.stop()
 
 
-class Test_num_arguments_required(object):
-    def test_valid_calls(self):
-        class test:
-            def method2(self, arg1, arg2):
-                pass
-            def method0(self):
-                pass
-        t = test()
-        assert serial_redirection._num_arguments_required(t.method2) == 2
-        assert serial_redirection._num_arguments_required(t.method0) == 0
-        def function1(arg1):
-            pass
-        def function0():
-            pass
-        assert serial_redirection._num_arguments_required(function1) == 1
-        assert serial_redirection._num_arguments_required(function0) == 0
-
-        lambda_2 = (lambda x,y : 0)
-        assert serial_redirection._num_arguments_required(lambda_2) == 2
-
-
-    def test_invalid_calls(self):
-        # testing to get 100% coverage
-
-        mock_test = mock.Mock()
-        lambda_2 = (lambda x,y : 0)
-        mock_test.method.side_effect = lambda_2
-        method = mock_test.method
-
-        try:
-            serial_redirection._num_arguments_required(method)
-        except ValueError:
-            pass
-        else:
-            assert 0, 'No Value Error exception raised'
 
 from cStringIO import StringIO
 captured_err = StringIO()
