@@ -259,12 +259,17 @@ def parse_arguments(args):
 
 
 
+# direct import of Event to be able to mock it to test main function
+# mocking the 'threading.Event' used 
+from threading import Event
 def main(args):
     """
     Command line main function
     """
 
     node = parse_arguments(args[1:])
+
+    unlock_main_thread = Event()
 
     # main_error_handler, send sigalrm to wake up main thread
     signal.signal(signal.SIGALRM, (lambda x, y: 0))
@@ -276,7 +281,7 @@ def main(args):
         print >> sys.stderr, "arg: %r" % arg
         print >> sys.stderr, "errornum: '%d'" % error_num
         print >> sys.stderr, "Stopping..."
-        signal.alarm(1) # to wake up main thread
+        unlock_main_thread.set()
 
 
     # Create the redirector
@@ -289,10 +294,12 @@ def main(args):
     def cb_signal_handler(sig, frame):
         """ Ctrl+C handler """
         print >> sys.stderr, "Got Ctrl+C, Stopping..."
+        unlock_main_thread.set()
     signal.signal(signal.SIGINT, cb_signal_handler)
     print 'Press Ctrl+C to stop the application'
 
-    signal.pause() # wait for signal
+    unlock_main_thread.wait()
+    #signal.pause() # wait for signal
     redirect.stop()
 
     print >> sys.stderr, 'Stopped.'
