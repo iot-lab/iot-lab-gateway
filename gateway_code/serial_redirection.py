@@ -9,9 +9,7 @@ serial_redirection script
 import sys
 from subprocess import PIPE
 import subprocess
-import shlex
 import threading
-import time
 import signal
 
 
@@ -19,13 +17,7 @@ import signal
 from gateway_code import config
 
 
-SOCAT_CMD = """
-        socat
-        -d
-        TCP4-LISTEN:20000,reuseaddr
-        open:%s
-        """
-
+SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s '''
 
 def _num_arguments_required(func):
     """
@@ -80,7 +72,6 @@ class SerialRedirection():
 
         self.redirector_thread = _SerialRedirectionThread(\
                 config.NODES_CFG[self.node]['tty'],\
-                config.NODES_CFG[self.node]['baudrate'], \
                 self.__cb_error_handler)
 
         self.error_handler = error_handler
@@ -147,7 +138,7 @@ class _SerialRedirectionThread(threading.Thread):
     """
 
 
-    def __init__(self, tty, baudrate, error_handler):
+    def __init__(self, tty, error_handler):
 
 
         super(_SerialRedirectionThread, self).__init__()
@@ -156,7 +147,7 @@ class _SerialRedirectionThread(threading.Thread):
         self.out = ""
 
         # serial link informations
-        self.node = {'tty': tty, 'baudrate': baudrate}
+        self.tty = tty
 
         # Handler called on error on socat
         if error_handler is not None:
@@ -166,19 +157,10 @@ class _SerialRedirectionThread(threading.Thread):
 
         # Stopping thread
         self.stop_thread = False
-        self.is_running = False
 
         # Current process running socat
         self.redirector_process = None
 
-    def start(self):
-        """
-        Start a new thread
-        """
-
-        self.is_running = True
-
-        super(_SerialRedirectionThread, self).start()
 
     def run(self):
         """
@@ -186,8 +168,9 @@ class _SerialRedirectionThread(threading.Thread):
 
         It starts a while loop running a socat command
         """
+        import shlex
 
-        cmd_list = shlex.split(SOCAT_CMD % self.node['tty'])
+        cmd_list = shlex.split(SOCAT_CMD % self.tty)
 
         while not self.stop_thread:
             self.redirector_process = subprocess.Popen(\
@@ -209,19 +192,17 @@ class _SerialRedirectionThread(threading.Thread):
                     self.error_handler(retcode)
                 break
 
-        self.is_running = False
-
 
 
     def stop(self):
         """
         Stop the running thread
         """
-
+        import time
         self.stop_thread = True
 
         # kill
-        while self.is_running:
+        while self.is_alive():
             try:
                 if self.redirector_process is not None:
                     self.redirector_process.terminate()

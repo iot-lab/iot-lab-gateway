@@ -39,7 +39,6 @@ class TestSerialRedirectionInit(object):
             node_cfg = config.NODES_CFG[node]
             call_args = mock_thread.call_args[0]
             assert node_cfg['tty'] ==  call_args[0]
-            assert node_cfg['baudrate'] == call_args[1]
 
 
 
@@ -171,8 +170,6 @@ class TestMainFunction(object):
 
         assert mock_handler.error_handler.call_count <= 1
         redirection.stop()
-
-
 
 
 class Test_num_arguments_required(object):
