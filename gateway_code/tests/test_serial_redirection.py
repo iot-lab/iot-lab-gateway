@@ -17,7 +17,7 @@ from gateway_code import serial_redirection, config
 _SerialRedirection_str = 'gateway_code.serial_redirection._SerialRedirectionThread'
 
 @mock.patch(_SerialRedirection_str)
-class TestSerialRedirectionInit:
+class TestSerialRedirectionInit(object):
     """
     Test the SerialRedirection class init
     """
@@ -97,7 +97,7 @@ class TestSerialRedirectionInit:
 from threading import Semaphore
 import time
 @mock.patch('subprocess.Popen')
-class TestSerialRedirectionUsage:
+class TestMainFunction(object):
 
     def test_simple_start(self, mock_popen):
 
@@ -175,7 +175,7 @@ class TestSerialRedirectionUsage:
 
 
 
-class Test_num_arguments_required:
+class Test_num_arguments_required(object):
     def test_valid_calls(self):
         class test:
             def method2(self, arg1, arg2):
@@ -214,7 +214,7 @@ class Test_num_arguments_required:
 from cStringIO import StringIO
 captured_err = StringIO()
 @mock.patch('sys.stderr', captured_err)
-class TestParseArguments:
+class TestParseArguments(object):
     def test_help(self):
         """
         Test normal run
@@ -257,7 +257,7 @@ from cStringIO import StringIO
 captured_err = StringIO()
 @mock.patch('sys.stderr', captured_err)
 @mock.patch('subprocess.Popen')
-class TestMainFunction:
+class TestMainFunction(object):
 
     def test_simple_case(self, mock_popen):
 

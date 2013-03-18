@@ -204,6 +204,7 @@ class _SerialRedirectionThread(threading.Thread):
             #   a negative value on fatal error.
 
             if retcode != 0 and (not self.stop_thread):
+                # don't call handler when 'terminate' causes the error
                 if self.error_handler is not None:
                     self.error_handler(retcode)
                 break
