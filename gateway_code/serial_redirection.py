@@ -10,38 +10,13 @@ import sys
 from subprocess import PIPE
 import subprocess
 import threading
-import signal
-
-
 
 from gateway_code import config
 
+from gateway_code.common_functions import num_arguments_required
+
 
 SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s '''
-
-def _num_arguments_required(func):
-    """
-    Returns the number of arguments required to call 'func'
-
-    Based on the function signature
-    Method which have n arguments required 'n-1' arguments to be called
-        as self is allready provided
-
-    Accepts only methods or functions
-
-    """
-    from inspect import getargspec, ismethod, isfunction
-    # manage only functions and methods
-    if not (ismethod(func) or isfunction(func)):
-        raise ValueError, 'Required method or function'
-
-    num = len(getargspec(func)[0])
-
-    # 'self' first argument is allready provided
-    if ismethod(func):
-        num -= 1
-
-    return num
 
 
 
@@ -66,7 +41,7 @@ class SerialRedirection():
 
         # check handler signature
         if error_handler is not None:
-            if _num_arguments_required(error_handler) != 2:
+            if num_arguments_required(error_handler) != 2:
                 raise ValueError, 'Error handler should accept two arguments'
 
 
@@ -88,12 +63,10 @@ class SerialRedirection():
         """
 
         if self.is_running:
-            # Already running
             return 1
 
         self.err = ""
         self.out = ""
-
         self.is_running = True
         self.redirector_thread.start()
 
@@ -106,23 +79,20 @@ class SerialRedirection():
         """
 
         if not self.is_running:
-            # not running
             return 1
 
         self.redirector_thread.stop()
         self.redirector_thread.join()
-        self.is_running = False
 
         self.err = self.redirector_thread.err
         self.out = self.redirector_thread.out
-
-
-        # logging ?
+        self.is_running = False
         return 0
 
     def __cb_error_handler(self, error_num):
         """
-        Error callback which calls caller error_handler with arguments
+        Error callback passed to the thread
+        Calls the caller error_handler
         """
         self.err = self.redirector_thread.err
         self.out = self.redirector_thread.out
@@ -151,7 +121,7 @@ class _SerialRedirectionThread(threading.Thread):
 
         # Handler called on error on socat
         if error_handler is not None:
-            if _num_arguments_required(error_handler) != 1:
+            if num_arguments_required(error_handler) != 1:
                 raise ValueError, 'Error handler should accept one argument'
         self.error_handler = error_handler
 
@@ -248,17 +218,16 @@ def main(args):
     """
     Command line main function
     """
+    import signal
 
     node = parse_arguments(args[1:])
-
     unlock_main_thread = Event()
 
-    # main_error_handler, send sigalrm to wake up main thread
-    signal.signal(signal.SIGALRM, (lambda x, y: 0))
     def __main_error_handler(arg, error_num):
         """
         Error handler in command line
         """
+        # release main thread
         print >> sys.stderr, "Error_handler"
         print >> sys.stderr, "arg: %r" % arg
         print >> sys.stderr, "errornum: '%d'" % error_num
@@ -280,11 +249,10 @@ def main(args):
         unlock_main_thread.set()
     signal.signal(signal.SIGINT, cb_signal_handler)
     print 'Press Ctrl+C to stop the application'
-
     unlock_main_thread.wait()
-    #signal.pause() # wait for signal
-    redirect.stop()
 
+
+    redirect.stop()
     print >> sys.stderr, 'Stopped.'
     print >> sys.stderr, ''
     print >> sys.stderr, 'Out log:'
