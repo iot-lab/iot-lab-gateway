@@ -56,7 +56,7 @@ class GatewayManager(object):
 
     @staticmethod
     def open_flash(firmware_path):
-        ret, out, err = flash_firmware('m3', firmware_path)
+        ret, out, err = flash_firmware.flash('m3', firmware_path)
         return ret, out, err
 
 
