@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from bottle import route, run, template, post, request
+from bottle import run, post, request
 from gateway_code.gateway_manager import GatewayManager
 
 import json
@@ -52,16 +52,13 @@ def exp_start(expid, username):
     firmware = files_d['firmware']
     profile = files_d['profile']
 
-
     # write firmware to file
     firmware_path = "/tmp/" + firmware.filename
-    with open(firmware_path, 'w') as file:
-        file.write(firmware.file.read())
-
+    with open(firmware_path, 'w') as _file:
+        _file.write(firmware.file.read())
 
     # unpack profile
     profile_object = json.load(profile.file)
-
 
     # start experiment
     manager = GatewayManager()
