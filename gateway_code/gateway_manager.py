@@ -27,13 +27,13 @@ class GatewayManager(object):
 
 
     def exp_stop(self, exp_id, user):
-        param_str = str(self, exp_id, user)
+        param_str = str((self, exp_id, user))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         return 0, ret_str
 
 
     def exp_update_profile(self, exp_id, user, profile):
-        param_str = str(self, exp_id, user, profile)
+        param_str = str((self, exp_id, user, profile))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         return 0, ret_str
 
@@ -56,7 +56,7 @@ class GatewayManager(object):
 
     @staticmethod
     def open_flash(firmware_path):
-        param_str = str(firmware_path)
+        param_str = str((firmware_path))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         return 0, ret_str
 
@@ -64,7 +64,7 @@ class GatewayManager(object):
 
     @staticmethod
     def control_flash(firmware_path):
-        param_str = str(firmware_path)
+        param_str = str((firmware_path))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         return 0, ret_str
 
