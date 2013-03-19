@@ -6,7 +6,7 @@
 manager script
 """
 
-import sys
+from gateway_code import flash_firmware
 
 class GatewayManager(object):
     """
@@ -56,9 +56,8 @@ class GatewayManager(object):
 
     @staticmethod
     def open_flash(firmware_path):
-        param_str = str((firmware_path))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        return 0, ret_str
+        ret, out, err = flash_firmware('m3', firmware_path)
+        return ret, out, err
 
 
 
@@ -73,6 +72,7 @@ def _unimplemented_fct_str_():
     """
     Current function name
     """
+    import sys
     fct = sys._getframe(1).f_code.co_name
     ret_str = "Not implemented %s" % fct
     return ret_str
