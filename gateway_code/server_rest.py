@@ -24,9 +24,9 @@ def open_flash():
     with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
         _file.write(firmware.file.read())
         print "Start Open Node flash"
-        ret_str = manager.open_flash(_file.name)
+        ret_tuple = manager.open_flash(_file.name)
 
-    return ret_str
+    return str(ret_tuple)
 
 @post('/exp/start/:expid/:username')
 def exp_start(expid, username):
@@ -50,8 +50,8 @@ def exp_start(expid, username):
 
     with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
         _file.write(firmware.file.read())
-        ret_str = manager.exp_start(expid, username, _file.name, profile_object)
-    return ret_str
+        ret_tuple = manager.exp_start(expid, username, _file.name, profile_object)
+    return str(ret_tuple)
 
 
 def parse_arguments(args):
