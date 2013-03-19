@@ -1,4 +1,5 @@
 from bottle import route,run,template,post,request
+from gateway_code.gateway_manager import GatewayManager
 
 @route('/hello/:name')
 def index(name='World'):
@@ -14,7 +15,7 @@ def exp_start():
         file = open(filename, 'w')
         file.write(data)
         file.close()
-    return str('experiment %s started' % exp_id )
+    return str('experiment %s started by %s' % (expid, username) )
 
 def parse_arguments(args):
     """
