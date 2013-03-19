@@ -280,3 +280,22 @@ class TestSerialRedirection(object):
         else:
             assert 0
 
+
+from gateway_code.serial_redirection import _SerialRedirectionThread
+class TestSerialRedirectionThread(object):
+
+    def test_wrong_parameters_init(self):
+
+        # to get 100% coverage
+        # other cases treated by other test suites
+        bad_error_handler = (lambda a, b: 0)
+        try:
+            _SerialRedirectionThread('tty_file', bad_error_handler)
+        except ValueError as e:
+            pass
+        else:
+            assert 0, "No exception raised"
+
+
+
+
