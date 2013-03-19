@@ -1,26 +1,64 @@
-from bottle import route,run,template,post,request
+# -*- coding: utf-8 -*-
+
+from bottle import route, run, template, post, request
 from gateway_code.gateway_manager import GatewayManager
 
-@route('/hello/:name')
-def index(name='World'):
-    return template('<b>Hello {{name}}</b>!', name=name)
+import json
+
+import os
+
+
+
 
 @post('/exp/start/:expid/:username')
 def exp_start(expid, username):
-    #files = request.files.keys()
-    values = request.files.values()
-    for field in values:
-        with open(field.filename, 'w') as file:
-            file.write(field.file.read())
-    return str('experiment %s started by %s' % (expid, username) )
+    """
+    Start an experiment
+
+    :param expid: experiment id
+    :param username: username of the experiment owner
+    """
+
+    files_d = request.files
+
+    # verify passed files as request
+    if sort(filed_d.keys()) != sort(['firmware', 'profile']):
+        return "Wrong file arguments, should be 'firmware' and 'profile'"
+    firmware = files_d('firmware')
+    profile = files_d('profile')
+
+
+    # write firmware to file
+    firmware_path = "/tmp/" + firmware.filename
+    with open(firmware_path, 'w') as file:
+        file.write(firmware.file.read())
+
+
+    # unpack profile
+    profile_object = json.load(profile.file)
+
+
+    # start experiment
+    manager = GatewayManager()
+    print "Starting experiment"
+    ret_str = manager.exp_start(expid, username, firmware_path, profile_object)
+    print "experiment started"
+
+    print "Deleting firmware %s" % firmware_path
+    os.remove(firmware_path)
+
+    return ret_str
+
+
+
 
 def parse_arguments(args):
     """
-    Parsing arguments:
+    Pars arguments:
+        [host, port]
 
-    host port
-    Only pass arguments to function without script name
-
+    :param args: arguments, without the script name == sys.argv[1:]
+    :type args: list
     """
     import argparse
 
@@ -31,6 +69,7 @@ def parse_arguments(args):
     arguments = parser.parse_args(args)
 
     return arguments.host, arguments.port
+
 
 def main(args):
     """
