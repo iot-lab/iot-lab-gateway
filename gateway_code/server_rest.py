@@ -22,10 +22,10 @@ def exp_start(expid, username):
     files_d = request.files
 
     # verify passed files as request
-    if sort(filed_d.keys()) != sort(['firmware', 'profile']):
+    if sorted(files_d.keys()) != sorted(['firmware', 'profile']):
         return "Wrong file arguments, should be 'firmware' and 'profile'"
-    firmware = files_d('firmware')
-    profile = files_d('profile')
+    firmware = files_d['firmware']
+    profile = files_d['profile']
 
 
     # write firmware to file
