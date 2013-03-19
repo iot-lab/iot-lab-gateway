@@ -7,8 +7,33 @@ import json
 
 import os
 
+@post('/open/flash')
+def open_flash()
+   """
+   Flash open node  
 
+   """
+   files_d = request.files
+   # verify passed files as request
+   if (len(files_d) > 1 or not 'firmware' in files_d):
+      return "Wrong file arguments, should be 'firmware' and only one file"
 
+   firmware = files_d['firmware'] 
+
+   # write firmware to file
+   firmware_path = "/tmp/" + firmware.filename
+   with open(firmware_path, 'w') as file:
+      file.write(firmware.file.read())
+
+   # start flash open node
+   manager = GatewayManager()
+   print "Start Open Node flash"
+   ret_str = manager.open_flash(firmware_path)
+
+   print "Deleting firmware %s" % firmware_path
+   os.remove(firmware_path)
+
+   return ret_str
 
 @post('/exp/start/:expid/:username')
 def exp_start(expid, username):
