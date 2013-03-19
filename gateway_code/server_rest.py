@@ -6,7 +6,7 @@ def index(name='World'):
     return template('<b>Hello {{name}}</b>!', name=name)
 
 @post('/exp/start/:expid/:username')
-def exp_start():
+def exp_start(expid, username):
     #files = request.files.keys()
     values = request.files.values()
     for field in values:
