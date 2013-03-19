@@ -7,14 +7,11 @@ def index(name='World'):
 
 @post('/exp/start/:expid/:username')
 def exp_start():
-    files = request.files.keys()
+    #files = request.files.keys()
     values = request.files.values()
     for field in values:
-        filename = field.filename
-        data = field.file.read()
-        file = open(filename, 'w')
-        file.write(data)
-        file.close()
+        with open(field.filename, 'w') as file:
+            file.write(field.file.read())
     return str('experiment %s started by %s' % (expid, username) )
 
 def parse_arguments(args):
