@@ -21,7 +21,7 @@ class GatewayManager(object):
 
     def exp_start(self, exp_id, user, firmware_path, profile):
 
-        param_str = str(self, exp_id, user, firmware_path, profile)
+        param_str = str((self, exp_id, user, firmware_path, profile))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         return 0, ret_str
 
