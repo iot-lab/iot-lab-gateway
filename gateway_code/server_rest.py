@@ -8,7 +8,7 @@ import json
 import os
 
 @post('/open/flash')
-def open_flash()
+def open_flash():
    """
    Flash open node  
 
@@ -70,8 +70,6 @@ def exp_start(expid, username):
     os.remove(firmware_path)
 
     return ret_str
-
-
 
 
 def parse_arguments(args):
