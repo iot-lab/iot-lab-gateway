@@ -2,38 +2,31 @@
 
 from bottle import run, post, request
 from gateway_code.gateway_manager import GatewayManager
+from tempfile import NamedTemporaryFile
 
 import json
 
-import os
 
 @post('/open/flash')
 def open_flash():
-   """
-   Flash open node  
+    """
+    Flash open node
 
-   """
-   files_d = request.files
-   # verify passed files as request
-   if (len(files_d) > 1 or not 'firmware' in files_d):
-      return "Wrong file arguments, should be 'firmware' and only one file"
+    """
+    files_d = request.files
+    # verify passed files as request
+    if (len(files_d) > 1 or not 'firmware' in files_d):
+        return "Wrong file arguments, should be 'firmware' and only one file"
 
-   firmware = files_d['firmware'] 
+    firmware = files_d['firmware']
+    manager = GatewayManager()
 
-   # write firmware to file
-   firmware_path = "/tmp/" + firmware.filename
-   with open(firmware_path, 'w') as file:
-      file.write(firmware.file.read())
+    with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
+        _file.write(firmware.file.read())
+        print "Start Open Node flash"
+        ret_str = manager.open_flash(_file.name)
 
-   # start flash open node
-   manager = GatewayManager()
-   print "Start Open Node flash"
-   ret_str = manager.open_flash(firmware_path)
-
-   print "Deleting firmware %s" % firmware_path
-   os.remove(firmware_path)
-
-   return ret_str
+    return ret_str
 
 @post('/exp/start/:expid/:username')
 def exp_start(expid, username):
@@ -47,28 +40,17 @@ def exp_start(expid, username):
     files_d = request.files
 
     # verify passed files as request
-    if sorted(files_d.keys()) != sorted(['firmware', 'profile']):
+    if set(files_d.keys()) != set(('firmware', 'profile')):
         return "Wrong file arguments, should be 'firmware' and 'profile'"
     firmware = files_d['firmware']
     profile = files_d['profile']
-
-    # write firmware to file
-    firmware_path = "/tmp/" + firmware.filename
-    with open(firmware_path, 'w') as _file:
-        _file.write(firmware.file.read())
-
-    # unpack profile
     profile_object = json.load(profile.file)
 
-    # start experiment
     manager = GatewayManager()
-    print "Starting experiment"
-    ret_str = manager.exp_start(expid, username, firmware_path, profile_object)
-    print "experiment started"
 
-    print "Deleting firmware %s" % firmware_path
-    os.remove(firmware_path)
-
+    with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
+        _file.write(firmware.file.read())
+        ret_str = manager.exp_start(expid, username, _file.name, profile_object)
     return ret_str
 
 
