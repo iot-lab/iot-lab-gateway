@@ -1,11 +1,16 @@
 # -*- coding: utf-8 -*-
 
+"""
+Rest server listening to the experiment handler
+
+It calls the gateway manager to treat commands
+"""
+
 from bottle import run, post, request
 from gateway_code.gateway_manager import GatewayManager
 from tempfile import NamedTemporaryFile
 
 import json
-
 
 @post('/open/flash')
 def open_flash():
@@ -44,13 +49,13 @@ def exp_start(expid, username):
         return "Wrong file arguments, should be 'firmware' and 'profile'"
     firmware = files_d['firmware']
     profile = files_d['profile']
-    profile_object = json.load(profile.file)
+    profile_obj = json.load(profile.file)
 
     manager = GatewayManager()
 
     with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
         _file.write(firmware.file.read())
-        ret_tuple = manager.exp_start(expid, username, _file.name, profile_object)
+        ret_tuple = manager.exp_start(expid, username, _file.name, profile_obj)
     return str(ret_tuple)
 
 
