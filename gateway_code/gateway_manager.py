@@ -18,7 +18,8 @@ class GatewayManager(object):
         self.exp_id = None
         self.user = None
 
-        self.experiment_is_started = False
+        self.experiment_is_running = False
+        self.current_profile = None
 
 
     def exp_start(self, exp_id, user, firmware_path, profile):
@@ -34,7 +35,8 @@ class GatewayManager(object):
         """
         self.exp_id = exp_id
         self.user = user
-        self.experiment_is_started = True
+        self.experiment_is_running = True
+        self.current_profile = profile
 
         param_str = str((self, exp_id, user, firmware_path, profile))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
@@ -42,12 +44,31 @@ class GatewayManager(object):
 
 
     def exp_stop(self):
+        """
+        Stop the current running experiment
+        """
+
         param_str = str((self))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
+
+        # update experiment profile with a
+        #   'no polling',
+        #   'battery charge',
+        #   'power off'
+        # profile
+
+        # reset the manager
+        self.__init__()
+
         return 0, ret_str
 
 
     def exp_update_profile(self, profile):
+        """
+        Update the control node profile
+        """
+        self.current_profile = profile
+
         param_str = str((self, profile))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         return 0, ret_str
@@ -55,22 +76,36 @@ class GatewayManager(object):
 
 
     @staticmethod
-    def open_start():
+    def open_power_start():
+        """
+        Power on the open node
+        """
         ret_str = _unimplemented_fct_str_()
         return 0, ret_str
 
     @staticmethod
-    def open_stop():
+    def open_power_stop():
+        """
+        Power off the open node
+        """
+
         ret_str = _unimplemented_fct_str_()
         return 0, ret_str
 
     @staticmethod
-    def open_reset():
+    def open_soft_reset():
+        """
+        Reset the open node using the 'reset' pin
+        """
         ret_str = _unimplemented_fct_str_()
         return 0, ret_str
+
 
     @staticmethod
     def open_flash(firmware_path):
+        """
+        Flash the given firmware on the open node
+        """
         ret_tuple = flash_firmware.flash('m3', firmware_path)
         return ret_tuple # (ret, out, err)
 
@@ -78,6 +113,11 @@ class GatewayManager(object):
 
     @staticmethod
     def control_flash(firmware_path):
+        """
+        Flash the given firmware on the control node
+
+        :note: Admin command
+        """
         param_str = str((firmware_path))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         return 0, ret_str
