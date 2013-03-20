@@ -7,6 +7,8 @@ manager script
 """
 
 from gateway_code import flash_firmware
+from gateway_code.serial_redirection import SerialRedirection
+import time
 
 class GatewayManager(object):
     """
@@ -20,6 +22,19 @@ class GatewayManager(object):
 
         self.experiment_is_running = False
         self.current_profile = None
+
+        self.start_experiment_time = None
+
+        self.serial_redirection = None
+
+    def cb_serial_redirection_error(self, handler_arg, error_code):
+        """
+        Callback for SerialRedirection error handler
+
+        """
+        param_str = str((self, handler_arg, error_code))
+        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
+        raise  NotImplementedError(0, ret_str)
 
 
     def exp_start(self, exp_id, user, firmware_path, profile):
@@ -38,9 +53,36 @@ class GatewayManager(object):
         self.experiment_is_running = True
         self.current_profile = profile
 
-        param_str = str((self, exp_id, user, firmware_path, profile))
+        # maybe call 'directly' the specialized class
+        # to get a 'clean' return value not decorated for the rest server
+        ret = self.open_power_start()
+        if ret == 0:
+            ret = self.open_flash(firmware_path)
+
+        if ret == 0:
+            ret = self.exp_update_profile(profile)
+
+        # save the start experiment time
+        self.start_experiment_time = time.localtime()
+        # set_time_0
+        # set control node time to 0
+
+        if ret == 0:
+            ret = self.open_soft_reset()
+
+
+        # start the serial port redirection
+        if ret == 0:
+            ret = self.serial_redirection = SerialRedirection('m3', \
+                    error_handler = self.cb_serial_redirection_error)
+
+
+        # start the gdb server
+
+
+        param_str = str((self, exp_id, user, firmware_path, profile,))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        return 0, ret_str
+        return ret, ret_str
 
 
     def exp_stop(self):
@@ -108,7 +150,6 @@ class GatewayManager(object):
         """
         ret_tuple = flash_firmware.flash('m3', firmware_path)
         return ret_tuple # (ret, out, err)
-
 
 
     @staticmethod
