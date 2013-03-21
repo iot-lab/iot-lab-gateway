@@ -14,6 +14,16 @@ import json
 
 MANAGER = GatewayManager()
 
+def _valid_request(required_files_seq):
+    """
+    Check the file arguments in the request.
+
+    :param required_files_seq: file arguments required in 'request.files'
+    :type required_files_seq: sequence
+    :return: If files match required files
+    """
+    return set(request.files) == set(required_files_seq)
+
 @post('/exp/start/:expid/:username')
 def exp_start(expid, username):
     """
@@ -23,7 +33,7 @@ def exp_start(expid, username):
     :param username: username of the experiment owner
     """
     # verify passed files as request
-    if set(request.files.keys()) != set(('firmware', 'profile')):
+    if not _valid_request(('firmware', 'profile')):
         return "Wrong file arguments, should be 'firmware' and 'profile'"
 
     firmware = request.files['firmware']
@@ -45,7 +55,7 @@ def open_flash():
 
     """
     # verify passed files as request
-    if set(filed_d.keys()) != set(('firmware')):
+    if not _valid_request(('firmware')):
         return "Wrong file arguments, should be 'firmware'"
     firmware = request.files['firmware']
 
