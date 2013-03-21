@@ -52,13 +52,17 @@ class GatewayManager(object):
 
         # maybe call 'directly' the specialized class
         # to get a 'clean' return value not decorated for the rest server
+        # ie: replace by real function instead of the gateway_manager method
+        #    #ret = self.open_flash(firmware_path)
+        #    ret, out, err = flash_firmware.flash('m3', firmware_path)
 
         # ret = self. set dc power
         ret = self.open_power_start()
         ret = 0
         if ret == 0:
             # attente ready
-            ret = self.open_flash(firmware_path)
+            #ret = self.open_flash(firmware_path)
+            ret, out, err = flash_firmware.flash('m3', firmware_path)
 
         ret = 0
         if ret == 0:
@@ -73,8 +77,10 @@ class GatewayManager(object):
         # start the serial port redirection
         ret = 0
         if ret == 0:
-            ret = self.serial_redirection = SerialRedirection('m3', \
+            self.serial_redirection = SerialRedirection('m3', \
                     error_handler = self.cb_serial_redirection_error)
+        if ret == 0:
+            ret = self.serial_redirection.start()
 
 
         # start the gdb server
@@ -86,13 +92,16 @@ class GatewayManager(object):
 
         param_str = str((self, exp_id, user, firmware_path, profile,))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        return ret, ret_str
+        ret_dict = {'ret':ret, 'err': ret_str, 'out': out}
+        return ret_dict
 
 
     def exp_stop(self):
         """
         Stop the current running experiment
         """
+        if self.experiment_is_running:
+            ret = self.serial_redirection.stop()
 
         param_str = str((self))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
@@ -106,7 +115,8 @@ class GatewayManager(object):
         # reset the manager
         self.__init__()
 
-        return 0, ret_str
+        ret_dict = {'ret':ret, 'err': ret_str, 'out': 'stop redirection'}
+        return ret_dict
 
 
     def exp_update_profile(self, profile):
@@ -152,8 +162,9 @@ class GatewayManager(object):
         """
         Flash the given firmware on the open node
         """
-        ret_tuple = flash_firmware.flash('m3', firmware_path)
-        return ret_tuple # (ret, out, err)
+        ret, out, err = flash_firmware.flash('m3', firmware_path)
+        ret_dict = {'ret': ret, 'out': out, 'err': err}
+        return ret_dict
 
 
     @staticmethod

@@ -6,7 +6,7 @@ Rest server listening to the experiment handler
 It calls the gateway manager to treat commands
 """
 
-from bottle import run, post, request
+from bottle import run, post, request, delete
 from gateway_code.gateway_manager import GatewayManager
 from tempfile import NamedTemporaryFile
 
@@ -23,6 +23,9 @@ def _valid_request(required_files_seq):
     :return: If files match required files
     """
     # compare that the two lists have the same elements
+    print set(request.files.keys())
+    print set(required_files_seq)
+
     return set(request.files.keys()) == set(required_files_seq)
 
 @post('/exp/start/:expid/:username')
@@ -43,8 +46,19 @@ def exp_start(expid, username):
 
     with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
         _file.write(firmware.file.read())
-        ret_tuple = MANAGER.exp_start(expid, username, _file.name, profile_obj)
-    return str(ret_tuple)
+        ret_dict = MANAGER.exp_start(expid, username, _file.name, profile_obj)
+    return ret_dict
+
+@delete('/exp/stop')
+def exp_stop():
+    """
+    Stop the current experiment
+    """
+
+    # no files required, don't check
+
+    ret_dict = MANAGER.exp_stop()
+    return ret_dict
 
 @post('/open/flash')
 def open_flash():
@@ -56,16 +70,16 @@ def open_flash():
 
     """
     # verify passed files as request
-    if not _valid_request(('firmware')):
+    if not _valid_request(('firmware',)):
         return "Wrong file arguments, should be 'firmware'"
     firmware = request.files['firmware']
 
     print "Start Open Node flash"
     with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
         _file.write(firmware.file.read())
-        ret_tuple = MANAGER.open_flash(_file.name)
+        ret_dict = MANAGER.open_flash(_file.name)
 
-    return str(ret_tuple)
+    return ret_dict
 
 
 def parse_arguments(args):
