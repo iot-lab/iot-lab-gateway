@@ -19,10 +19,11 @@ def _valid_request(required_files_seq):
     Check the file arguments in the request.
 
     :param required_files_seq: file arguments required in 'request.files'
-    :type required_files_seq: sequence
+    :type required_files_seq:  sequence
     :return: If files match required files
     """
-    return set(request.files) == set(required_files_seq)
+    # compare that the two lists have the same elements
+    return set(request.files.keys()) == set(required_files_seq)
 
 @post('/exp/start/:expid/:username')
 def exp_start(expid, username):
