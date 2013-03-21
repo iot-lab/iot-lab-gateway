@@ -56,9 +56,11 @@ class GatewayManager(object):
         # maybe call 'directly' the specialized class
         # to get a 'clean' return value not decorated for the rest server
         ret = self.open_power_start()
+        ret = 0
         if ret == 0:
             ret = self.open_flash(firmware_path)
 
+        ret = 0
         if ret == 0:
             ret = self.exp_update_profile(profile)
 
@@ -67,11 +69,13 @@ class GatewayManager(object):
         # set_time_0
         # set control node time to 0
 
+        ret = 0
         if ret == 0:
             ret = self.open_soft_reset()
 
 
         # start the serial port redirection
+        ret = 0
         if ret == 0:
             ret = self.serial_redirection = SerialRedirection('m3', \
                     error_handler = self.cb_serial_redirection_error)
