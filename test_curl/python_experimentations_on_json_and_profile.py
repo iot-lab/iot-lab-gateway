@@ -75,6 +75,7 @@ class Profile(object):
             if name in dict:
                 arguments[name] = Class(**dict[name])
 
+
         profile = Profile(**arguments)
         return profile
 
