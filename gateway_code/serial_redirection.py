@@ -23,7 +23,9 @@ SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s '''
 class SerialRedirection():
     """
     Class providing node serial redirection to a tcp socket
-    Using a  start, stop, error_handler interface
+
+    Using non-blocking start, stop and cb_error_handler callback
+
     """
 
     def __init__(self, node,
@@ -146,6 +148,7 @@ class _SerialRedirectionThread(threading.Thread):
             self.redirector_process = subprocess.Popen(\
                     cmd_list, stdout=PIPE, stderr=PIPE)
 
+            # blocks until socat terminates
             out, err = self.redirector_process.communicate()
             self.out += out
             self.err += err
