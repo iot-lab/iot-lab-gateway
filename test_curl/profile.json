@@ -1,0 +1,20 @@
+{
+    "consumption": {
+        "current": true, 
+        "frequency": 5000, 
+        "power": false, 
+        "voltage": true
+    }, 
+    "power": "battery", 
+    "profilename": "test_profile", 
+    "radio": {
+        "frequency": 5000, 
+        "rssi": true
+    }, 
+    "sensor": {
+        "frequency": 30000, 
+        "luminosity": false, 
+        "temperature": true
+    }
+}
+
