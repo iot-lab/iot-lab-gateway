@@ -28,10 +28,7 @@ class GatewayManager(object):
         self.serial_redirection = None
 
     def cb_serial_redirection_error(self, handler_arg, error_code):
-        """
-        Callback for SerialRedirection error handler
-
-        """
+        """ Callback for SerialRedirection error handler """
         param_str = str((self, handler_arg, error_code))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         raise  NotImplementedError(0, ret_str)
@@ -55,9 +52,12 @@ class GatewayManager(object):
 
         # maybe call 'directly' the specialized class
         # to get a 'clean' return value not decorated for the rest server
+
+        # ret = self. set dc power
         ret = self.open_power_start()
         ret = 0
         if ret == 0:
+            # attente ready
             ret = self.open_flash(firmware_path)
 
         ret = 0
@@ -69,10 +69,6 @@ class GatewayManager(object):
         # set_time_0
         # set control node time to 0
 
-        ret = 0
-        if ret == 0:
-            ret = self.open_soft_reset()
-
 
         # start the serial port redirection
         ret = 0
@@ -82,6 +78,10 @@ class GatewayManager(object):
 
 
         # start the gdb server
+
+        ret = 0
+        if ret == 0:
+            ret = self.open_soft_reset()
 
 
         param_str = str((self, exp_id, user, firmware_path, profile,))
