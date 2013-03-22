@@ -6,7 +6,7 @@
 manager script
 """
 
-from gateway_code import flash_firmware
+from gateway_code import flash_firmware, reset
 from gateway_code.serial_redirection import SerialRedirection
 import time
 
@@ -40,32 +40,32 @@ class GatewayManager(object):
 
         :param exp_id: experiment id
         :param user: user owning the experiment
-        :param firmware_path: path of the firmare file to flash
+        :param firmware_path: path of the firmware file to flash
         :param profile: profile to configure the experiment
         :type profile: class Profile
 
         """
+
+        if self.experiment_is_running:
+            ret_dict = {'ret':1, 'err':'Experiment already running'}
+            return ret_dict
+
         self.exp_id = exp_id
         self.user = user
         self.experiment_is_running = True
         self.current_profile = profile
         ret_dict = {}
 
-        # maybe call 'directly' the specialized class
-        # to get a 'clean' return value not decorated for the rest server
-        # ie: replace by real function instead of the gateway_manager method
-        #    #ret = self.open_flash(firmware_path)
-        #    ret, out, err = flash_firmware.flash('m3', firmware_path)
 
         # ret = self. set dc power
 
-        ret = self.open_power_start()
+        ret, err = self.open_power_start()
         ret = 0
         if ret == 0:
             # attente ready
-            #ret = self.open_flash(firmware_path)
-            ret, out, err = flash_firmware.flash('m3', firmware_path)
-            ret_dict['flash_firmware'] = {'ret':ret, 'out':out, 'err':err}
+            ret_d = self.open_flash(firmware_path)
+            ret_dict['flash_firmware'] = ret_d
+            ret = ret_d['ret']
 
         if ret == 0:
             ret = self.exp_update_profile(profile)
@@ -92,9 +92,11 @@ class GatewayManager(object):
 
         # start the gdb server
 
+        # reset the open node
         if ret == 0:
-            ret, out, err = self.open_soft_reset()
-            ret_dict['reset'] = {'ret':ret}
+            ret_d = self.open_soft_reset()
+            ret_dict['reset'] = ret_d
+            ret = ret_d['ret']
 
 
         return ret_dict
@@ -104,11 +106,19 @@ class GatewayManager(object):
         """
         Stop the current running experiment
         """
-        if self.experiment_is_running:
-            ret = self.serial_redirection.stop()
+        if not self.experiment_is_running:
+            return {'ret': 1, 'err': 'No experiment running'}
 
-        param_str = str((self))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
+
+        # stop redirection
+        ret = self.serial_redirection.stop()
+
+        # stop gdb server
+
+        # set dc ON
+        # flash idle firmware
+        #
+
 
         # update experiment profile with a
         #   'no polling',
@@ -116,10 +126,17 @@ class GatewayManager(object):
         #   'power off'
         # profile
 
+
+        # shut down open node ?
+
         # reset the manager
         self.__init__()
 
+
+        param_str = str((self))
+        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         ret_dict = {'ret':ret, 'err': ret_str, 'out': 'stop redirection'}
+
         return ret_dict
 
 
@@ -155,8 +172,9 @@ class GatewayManager(object):
         """
         Reset the open node using the 'reset' pin
         """
-        ret_str = _unimplemented_fct_str_()
-        return 0, ret_str, ''
+        ret, out, err = reset.reset('m3')
+        ret_dict = {'ret': ret, 'out': out, 'err': err}
+        return ret_dict
 
 
     @staticmethod
@@ -176,9 +194,9 @@ class GatewayManager(object):
 
         :note: Admin command
         """
-        param_str = str((firmware_path))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        return 0, ret_str
+        ret, out, err = flash_firmware.flash('gwt', firmware_path)
+        ret_dict = {'ret': ret, 'out': out, 'err': err}
+        return ret_dict
 
 
 def _unimplemented_fct_str_():
