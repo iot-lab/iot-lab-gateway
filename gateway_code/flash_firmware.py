@@ -35,9 +35,6 @@ FLASH_CMD = """
 def flash(node, elf_file):
     """
     Flash firmware
-
-    Return 0 if OK
-    Return openocd return value on error
     """
 
     # configure Node
