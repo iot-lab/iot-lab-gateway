@@ -20,72 +20,71 @@ class GatewayRest(object):
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
 
-    def __valid_request(self, required_files_seq):
-    	"""
-    	Check the file arguments in the request.
+    @staticmethod
+    def __valid_request(required_files_seq):
+        """
+        Check the file arguments in the request.
 
-    	:param required_files_seq: file arguments required in 'request.files'
-    	:type required_files_seq:  sequence
-    	:return: If files match required files
-    	"""
-    	# compare that the two lists have the same elements
-    	print set(request.files.keys())
-    	print set(required_files_seq)
-
-    	return set(request.files.keys()) == set(required_files_seq)
+        :param required_files_seq: file arguments required in 'request.files'
+        :type required_files_seq:  sequence
+        :return: If files match required files
+        """
+        # compare that the two lists have the same elements
+        return set(request.files.keys()) == set(required_files_seq)
 
 
     def exp_start(self, expid, username):
-    	"""
-    	Start an experiment
+        """
+        Start an experiment
 
-    	:param expid: experiment id
-    	:param username: username of the experiment owner
-    	"""
-   	 # verify passed files as request
-    	if not self.__valid_request(('firmware', 'profile')):
-        	return "Wrong file arguments, should be 'firmware' and 'profile'"
+        :param expid: experiment id
+        :param username: username of the experiment owner
+        """
+        # verify passed files as request
+        if not self.__valid_request(('firmware', 'profile')):
+            return "Wrong file arguments, should be 'firmware' and 'profile'"
 
-    	firmware = request.files['firmware']
-    	profile  = request.files['profile']
-    	profile_obj = json.load(profile.file)
+        firmware = request.files['firmware']
+        profile  = request.files['profile']
+        profile_obj = json.load(profile.file)
 
-    	with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
-        	_file.write(firmware.file.read())
-        	ret_dict = self.gateway_manager.exp_start(expid, username, _file.name, profile_obj)
-    	return ret_dict
+        with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
+            _file.write(firmware.file.read())
+            ret_dict = self.gateway_manager.exp_start(expid, username, \
+                    _file.name, profile_obj)
+        return ret_dict
 
 
     def exp_stop(self):
-    	"""
-    	Stop the current experiment
-    	"""
+        """
+        Stop the current experiment
+        """
 
-    	# no files required, don't check
+        # no files required, don't check
 
-    	ret_dict = self.gateway_manager.exp_stop()
-    	return ret_dict
+        ret_dict = self.gateway_manager.exp_stop()
+        return ret_dict
 
 
     def open_flash(self):
-    	"""
-    	Flash open node
+        """
+        Flash open node
 
-    	Requires:
-    	request.files contains 'firmware' file argument
+        Requires:
+        request.files contains 'firmware' file argument
 
-    	"""
-    	# verify passed files as request
-    	if not self.__valid_request(('firmware',)):
-        	return "Wrong file arguments, should be 'firmware'"
-    	firmware = request.files['firmware']
+        """
+        # verify passed files as request
+        if not self.__valid_request(('firmware',)):
+            return "Wrong file arguments, should be 'firmware'"
+        firmware = request.files['firmware']
 
-    	print "Start Open Node flash"
-    	with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
-        	_file.write(firmware.file.read())
-        	ret_dict = self.gateway_manager.open_flash(_file.name)
+        print "Start Open Node flash"
+        with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
+            _file.write(firmware.file.read())
+            ret_dict = self.gateway_manager.open_flash(_file.name)
 
-    	return ret_dict
+        return ret_dict
 
 
 def parse_arguments(args):
@@ -111,9 +110,9 @@ def app_routing(app):
     routing configuration
     :param app: default application
     """
-    route('/exp/start/:expid/:username','POST')(app.exp_start)
-    route('/exp/stop','DELETE')(app.exp_stop)
-    route('/open/flash','POST')(app.open_flash)
+    route('/exp/start/:expid/:username', 'POST')(app.exp_start)
+    route('/exp/stop', 'DELETE')(app.exp_stop)
+    route('/open/flash', 'POST')(app.open_flash)
 
 
 def main(args):
