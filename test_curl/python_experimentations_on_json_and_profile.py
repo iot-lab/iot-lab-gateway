@@ -65,18 +65,20 @@ class Sensor(object):
 class Profile(object):
 
     @classmethod
-    def profile_from_dict(cls, dict):
+    def profile_from_dict(cls, json_dict):
+        simple_args = ('profilename', 'power')
+        class_correspondance = (('sensor', Sensor), ('radio', Radio),
+                ('consumption', Consumption))
+
         # simple arguments
-        arguments = {name:dict.get(name, None) for name in ('profilename', 'power')}
-
-        # for Class in (Sensor, Radio, Consumption):
-        #     name = Class.__name__.lower()
-        for name, Class in (('sensor', Sensor), ('radio', Radio), ('consumption', Consumption)):
-            if name in dict:
-                arguments[name] = Class(**dict[name])
+        args = {name:json_dict[name] for name in simple_args if name in json_dict}
+        # class arguments
+        for name, obj_class in class_correspondance:
+            if name in json_dict:
+                args[name] = obj_class(**dict[name])
 
 
-        profile = Profile(**arguments)
+        profile = Profile(**args)
         return profile
 
     def __init__(self, profilename=None, power=None, consumption=None, radio=None, sensor=None):
