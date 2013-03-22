@@ -86,6 +86,13 @@ class GatewayRest(object):
 
         return ret_dict
 
+    def open_soft_reset(self):
+        """
+        Reset the open node with 'reset' pin
+        """
+        ret_dict = self.gateway_manager.open_soft_reset()
+        return ret_dict
+
 
 def parse_arguments(args):
     """
@@ -113,6 +120,7 @@ def app_routing(app):
     route('/exp/start/:expid/:username', 'POST')(app.exp_start)
     route('/exp/stop', 'DELETE')(app.exp_stop)
     route('/open/flash', 'POST')(app.open_flash)
+    route('/open/reset', 'PUT')(app.open_soft_reset)
 
 
 def main(args):
