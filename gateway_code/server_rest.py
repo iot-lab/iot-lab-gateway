@@ -1,90 +1,96 @@
-# -*- coding: utf-8 -*-
+#-*- coding: utf-8 -*-
 
 """
 Rest server listening to the experiment handler
 
-It calls the gateway manager to treat commands
 """
 
-from bottle import run, post, request, delete
+from bottle import run, request, route
 from gateway_code.gateway_manager import GatewayManager
 from tempfile import NamedTemporaryFile
 
 import json
 
-MANAGER = GatewayManager()
-
-def _valid_request(required_files_seq):
+class GatewayRest(object):
     """
-    Check the file arguments in the request.
+    Gateway Rest class  
 
-    :param required_files_seq: file arguments required in 'request.files'
-    :type required_files_seq:  sequence
-    :return: If files match required files
+    It calls the gateway manager to treat commands
     """
-    # compare that the two lists have the same elements
-    print set(request.files.keys())
-    print set(required_files_seq)
+    def __init__(self, gateway_manager):
+        self.gateway_manager = gateway_manager
 
-    return set(request.files.keys()) == set(required_files_seq)
+    def __valid_request(self, required_files_seq):
+    	"""
+    	Check the file arguments in the request.
 
-@post('/exp/start/:expid/:username')
-def exp_start(expid, username):
-    """
-    Start an experiment
+    	:param required_files_seq: file arguments required in 'request.files'
+    	:type required_files_seq:  sequence
+    	:return: If files match required files
+    	"""
+    	# compare that the two lists have the same elements
+    	print set(request.files.keys())
+    	print set(required_files_seq)
 
-    :param expid: experiment id
-    :param username: username of the experiment owner
-    """
-    # verify passed files as request
-    if not _valid_request(('firmware', 'profile')):
-        return "Wrong file arguments, should be 'firmware' and 'profile'"
+    	return set(request.files.keys()) == set(required_files_seq)
 
-    firmware = request.files['firmware']
-    profile  = request.files['profile']
-    profile_obj = json.load(profile.file)
 
-    with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
-        _file.write(firmware.file.read())
-        ret_dict = MANAGER.exp_start(expid, username, _file.name, profile_obj)
-    return ret_dict
+    def exp_start(self, expid, username):
+    	"""
+    	Start an experiment
 
-@delete('/exp/stop')
-def exp_stop():
-    """
-    Stop the current experiment
-    """
+    	:param expid: experiment id
+    	:param username: username of the experiment owner
+    	"""
+   	 # verify passed files as request
+    	if not self.__valid_request(('firmware', 'profile')):
+        	return "Wrong file arguments, should be 'firmware' and 'profile'"
 
-    # no files required, don't check
+    	firmware = request.files['firmware']
+    	profile  = request.files['profile']
+    	profile_obj = json.load(profile.file)
 
-    ret_dict = MANAGER.exp_stop()
-    return ret_dict
+    	with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
+        	_file.write(firmware.file.read())
+        	ret_dict = self.gateway_manager.exp_start(expid, username, _file.name, profile_obj)
+    	return ret_dict
 
-@post('/open/flash')
-def open_flash():
-    """
-    Flash open node
 
-    Requires:
-    request.files contains 'firmware' file argument
+    def exp_stop(self):
+    	"""
+    	Stop the current experiment
+    	"""
 
-    """
-    # verify passed files as request
-    if not _valid_request(('firmware',)):
-        return "Wrong file arguments, should be 'firmware'"
-    firmware = request.files['firmware']
+    	# no files required, don't check
 
-    print "Start Open Node flash"
-    with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
-        _file.write(firmware.file.read())
-        ret_dict = MANAGER.open_flash(_file.name)
+    	ret_dict = self.gateway_manager.exp_stop()
+    	return ret_dict
 
-    return ret_dict
+
+    def open_flash(self):
+    	"""
+    	Flash open node
+
+    	Requires:
+    	request.files contains 'firmware' file argument
+
+    	"""
+    	# verify passed files as request
+    	if not self.__valid_request(('firmware',)):
+        	return "Wrong file arguments, should be 'firmware'"
+    	firmware = request.files['firmware']
+
+    	print "Start Open Node flash"
+    	with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
+        	_file.write(firmware.file.read())
+        	ret_dict = self.gateway_manager.open_flash(_file.name)
+
+    	return ret_dict
 
 
 def parse_arguments(args):
     """
-    Pars arguments:
+    Parse arguments:
         [host, port]
 
     :param args: arguments, without the script name == sys.argv[1:]
@@ -100,10 +106,21 @@ def parse_arguments(args):
 
     return arguments.host, arguments.port
 
+def app_routing(app):
+    """
+    routing configuration
+    :param app: default application
+    """
+    route('/exp/start/:expid/:username','POST')(app.exp_start)
+    route('/exp/stop','DELETE')(app.exp_stop)
+    route('/open/flash','POST')(app.open_flash)
+
 
 def main(args):
     """
     Command line main function
     """
+    app = GatewayRest(GatewayManager())
+    app_routing(app)
     host, port = parse_arguments(args[1:])
     run(host=host, port=port, server='paste')
