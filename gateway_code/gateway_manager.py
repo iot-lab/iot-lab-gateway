@@ -49,6 +49,7 @@ class GatewayManager(object):
         self.user = user
         self.experiment_is_running = True
         self.current_profile = profile
+        ret_dict = {}
 
         # maybe call 'directly' the specialized class
         # to get a 'clean' return value not decorated for the rest server
@@ -57,16 +58,23 @@ class GatewayManager(object):
         #    ret, out, err = flash_firmware.flash('m3', firmware_path)
 
         # ret = self. set dc power
+
         ret = self.open_power_start()
         ret = 0
         if ret == 0:
             # attente ready
             #ret = self.open_flash(firmware_path)
             ret, out, err = flash_firmware.flash('m3', firmware_path)
+            ret_dict['flash_firmware'] = {'ret':ret, 'out':out, 'err':err}
 
-        ret = 0
         if ret == 0:
             ret = self.exp_update_profile(profile)
+            ret_dict['update_profile'] = {'ret':ret}
+
+            # REMOVE ME
+            err = "NOT_IMPLEMENTED %s" % self.exp_update_profile.__name__
+            ret_dict['update_profile']['err'] = err
+
 
         # save the start experiment time
         self.start_experiment_time = time.localtime()
@@ -75,24 +83,20 @@ class GatewayManager(object):
 
 
         # start the serial port redirection
-        ret = 0
         if ret == 0:
             self.serial_redirection = SerialRedirection('m3', \
                     error_handler = self.cb_serial_redirection_error)
-        if ret == 0:
             ret = self.serial_redirection.start()
+            ret_dict['serial_redirection.start'] = {'ret':ret}
 
 
         # start the gdb server
 
-        ret = 0
         if ret == 0:
-            ret = self.open_soft_reset()
+            ret, out, err = self.open_soft_reset()
+            ret_dict['reset'] = {'ret':ret}
 
 
-        param_str = str((self, exp_id, user, firmware_path, profile,))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        ret_dict = {'ret':ret, 'err': ret_str, 'out': out}
         return ret_dict
 
 
@@ -125,9 +129,7 @@ class GatewayManager(object):
         """
         self.current_profile = profile
 
-        param_str = str((self, profile))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        return 0, ret_str
+        return 0
 
 
 
@@ -154,7 +156,7 @@ class GatewayManager(object):
         Reset the open node using the 'reset' pin
         """
         ret_str = _unimplemented_fct_str_()
-        return 0, ret_str
+        return 0, ret_str, ''
 
 
     @staticmethod
