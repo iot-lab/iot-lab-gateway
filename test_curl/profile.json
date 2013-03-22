@@ -10,11 +10,5 @@
     "radio": {
         "frequency": 5000, 
         "rssi": true
-    }, 
-    "sensor": {
-        "frequency": 30000, 
-        "luminosity": false, 
-        "temperature": true
-    }
+    } 
 }
-

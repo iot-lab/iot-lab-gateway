@@ -8,7 +8,7 @@ Rest server listening to the experiment handler
 from bottle import run, request, route
 from gateway_code.gateway_manager import GatewayManager
 from tempfile import NamedTemporaryFile
-
+from profile import ProfileJSONDecoder
 import json
 
 class GatewayRest(object):
@@ -46,7 +46,7 @@ class GatewayRest(object):
 
         firmware = request.files['firmware']
         profile  = request.files['profile']
-        profile_obj = json.load(profile.file)
+        profile_obj = json.load(profile.file, cls=ProfileJSONDecoder)
 
         with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
             _file.write(firmware.file.read())
