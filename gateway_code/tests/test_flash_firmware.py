@@ -62,7 +62,6 @@ class TestsFlashMethods:
         assert mock_out == out
         assert mock_err == err
         assert mock_ret == ret
-        assert popen.communicate.called_once_with(filename, PIPE, PIPE)
 
 
     def test_flash_Error(self, mock_popen):
@@ -83,7 +82,6 @@ class TestsFlashMethods:
         assert mock_out == out
         assert mock_err == err
         assert mock_ret == ret
-        assert popen.communicate.called_once_with(filename, PIPE, PIPE)
 
 
 
