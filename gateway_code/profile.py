@@ -33,10 +33,10 @@ class Profile:
         self.radio = radio
 
 class ProfileJSONDecoder(json.JSONDecoder):
-    """ 
+    """
     Converts a json string profile configuration into python object Profile
 
-    """   
+    """
     def decode(self, profile_json):
         # convert string to dict
         json_dict = json.loads(profile_json)
@@ -47,11 +47,14 @@ class ProfileJSONDecoder(json.JSONDecoder):
 
         # simple arguments
         args = {}
-        for name in simple_args:
-            if name in json_dict:
-                args[name] = json_dict[name]
-        #args = {name:json_dict[name] for name in simple_args if name in json_dict}
-        # class arguments
+
+        # Extract existing arguments from dictionary 'as is'
+        args.update(((name, json_dict[name]) \
+                for name in simple_args if name in json_dict))
+                # dict comprehensions not allowed before Python 2.7
+                # using dict.update with iterable on (key/value tuple)
+
+        # Extract existing arguments and initialize their class
         for name, obj_class in class_mapping:
             if name in json_dict:
                 args[name] = obj_class(**json_dict[name])
