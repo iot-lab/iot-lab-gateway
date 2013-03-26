@@ -98,7 +98,7 @@ def receive_packet():
     #Lock on the serial link whe
     #SYNC  |  LENGTH | TYPE  | PAYLOAD |
 
-    buffer_use = UNUSED   
+    #buffer_use = UNUSED   
     rx_state = RX_IDLE            
 
     while True:
@@ -106,9 +106,9 @@ def receive_packet():
         rx_bytes = SERIAL_PORT.read()
 
         #New packet is being received, we get a new buffer
-        if buffer_use == UNUSED:
+        if rx_state == RX_IDLE:
             packet = Buffer()
-            buffer_use = IN_USE
+            #buffer_use = IN_USE
 
         #TODO passer tout ce qui est recu aux fonctions au lieu
         #de passer les char un par un
@@ -119,7 +119,7 @@ def receive_packet():
             
 
         if rx_state == RX_IDLE:
-            buffer_use = UNUSED
+            #buffer_use = UNUSED
             #packet complete
             try:
                 RX_QUEUE.put(packet)
