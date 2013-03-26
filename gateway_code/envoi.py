@@ -12,11 +12,11 @@ from gateway_code.gateway_logging import logger
 SYNC_BYTE = chr(0x80)
 
 #The port is immediately opened on object creation bevause the port is given.
-serial_port = serial.Serial('/dev/ttyFITECO_GWT', 500000, timeout=16)
+SERIAL_PORT = serial.Serial('/dev/ttyFITECO_GWT', 500000, timeout=16)
 
 #Queue can store 1 item
-rx_queue = Queue(1)
-protect_send = Lock()
+RX_QUEUE = Queue(1)
+PROTECT_SEND = Lock()
 
 
 #Definitions for the state machine to monitor the completion progress of
@@ -104,7 +104,7 @@ def receive_packet():
 
     while True:
         #call to read will block when no bytes are received
-        rx_bytes = serial_port.read()
+        rx_bytes = SERIAL_PORT.read()
 
         #New packet is being received, we get a new buffer
         if buffer_use == UNUSED:
@@ -122,7 +122,7 @@ def receive_packet():
             buffer_use = UNUSED
             #packet complete
             try:
-                rx_queue.put(packet)
+                RX_QUEUE.put(packet)
 
             #TODO : ermplir condition queue full, bloquer sur le put?
             except Queue.Full:
@@ -151,13 +151,13 @@ def make_header(payload):
 
 def send_packet(payload):
 
-    protect_send.acquire()
+    PROTECT_SEND.acquire()
 
     tx_packet = make_header(payload)
-    serial_port.write(tx_packet)
+    SERIAL_PORT.write(tx_packet)
 
-    rx_packet = rx_queue.get(block=True)
-    protect_send.release()
+    rx_packet = RX_QUEUE.get(block=True)
+    PROTECT_SEND.release()
 
     return rx_packet
 
