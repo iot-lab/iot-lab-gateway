@@ -8,7 +8,7 @@ Rest server listening to the experiment handler
 from bottle import run, request, route
 from gateway_code.gateway_manager import GatewayManager
 from tempfile import NamedTemporaryFile
-from profile import ProfileJSONDecoder
+from gateway_code.profile import ProfileJSONDecoder
 import json
 
 class GatewayRest(object):
