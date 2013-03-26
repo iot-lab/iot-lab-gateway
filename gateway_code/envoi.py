@@ -39,13 +39,12 @@ class Buffer(object):
         self.payload = None
 
     def __repr__(self):
-        result = "sync id=%s, length=%s, type=%s, payload=%s" % \
-                (self.sync, self.length, self.pkt_type, self.payload)
+        result = " length=%s, payload=%s" % \
+                ( self.length,  self.payload)
         return result
 
     def __len__(self):
-        return len(self.sync) + len(self.length) + len(self.pkt_type) + \
-                len(self.payload)
+        return  len(self.length) + len(self.payload)
 
 
 
