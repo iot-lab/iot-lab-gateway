@@ -40,7 +40,7 @@ setup(name='gateway_code',
         packages = ['gateway_code'],
         cmdclass = {'lint': Lint,},
 
-        install_requires = ['argparse', 'bottle', 'paste'],
+        install_requires = ['argparse', 'bottle', 'paste', 'pyserial'],
         setup_requires = ['nose>=1.0', 'pylint', 'nosexcover', 'mock'],
         )
 
