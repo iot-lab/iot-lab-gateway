@@ -107,9 +107,10 @@ class ThreadRead(Thread):
     def __init__(self, queue):
         Thread.__init__(self)
         self.rx_queue = queue
-        #The port is immediately opened on object creation because the port is given.
-        #No timeout on read timeout=None by dflt
-        self.serial_port = serial.Serial(port='/dev/ttyFITECO_GWT', baudrate=500000)
+
+        # TODO maybe adapt this
+        self.serial_port = serial.Serial(port='/dev/ttyFITECO_GWT', \
+                baudrate=500000)
 
     def run(self):
         """
@@ -127,7 +128,7 @@ class ThreadRead(Thread):
             try:
                 rx_char = self.serial_port.read()
             except ValueError:
-                break;
+                break
 
             # Putting the bytes received into the packet depending on the
             # reception state (rx_state)
