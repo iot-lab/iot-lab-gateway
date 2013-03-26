@@ -41,42 +41,51 @@ class Buffer(object):
 
     def __init__(self):
         self.length = None
-        self.payload = None
+        self.payload = ""
 
     def __repr__(self):
-        result = " length=%s, payload=%s" % \
+        result = " length=%d, payload=%s" % \
                 ( self.length,  self.payload)
         return result
 
-    def __len__(self):
-        return  len(self.length) + len(self.payload)
+    def is_complete(self):
+        """
+        Returns if the packet is complete
+        """
+        return (self.length is not None) and (self.length == len(self.payload))
 
 
 
 
-def rx_idle ():
-    """Adds the sync byte to the packet and changes the rx_State
-    to RX_LEN in order to get the next length byte."""
+
+def rx_idle(packet, rx_char):
+    """
+    Adds the sync byte to the packet and changes the rx_State
+    to RX_LEN in order to get the next length byte.
+    """
     return RX_LEN
 
 
 def rx_length(packet, rx_char):
-    """Puts the legth byte into the packet, changes the rx_state
-    to RX_TYPE to get the packet type. """
-    packet.length = rx_char
+    """
+    'length' byte received, store it into packet
+    :return: new state for the state machine
+    """
+
+    packet.length = ord(rx_char)
     return RX_PAYLOAD
 
 
 def rx_payload(packet, rx_char):
-    """ Adds the payload bytes, check if the packet is complete
-    by comparing the length received and the packet length.  If it is
-    puts back the rx_state into RX_IDLE. """
-    if packet.payload is None:
-        packet.payload = rx_char
-    else:
-        packet.payload += rx_char
+    """
+    Adds the received byte to payload.
 
-    if len(packet) == packet.length:
+    If packet complete, change state to PACKET_FULL
+    else, keep waiting for bytes
+    """
+    packet.payload += rx_char
+
+    if packet.is_complete():
         logger.debug("\t rx_payload packet : %s" %(packet))
         return RX_PACKET_FULL
 
