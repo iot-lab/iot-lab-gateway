@@ -1,24 +1,21 @@
 import serial
-import sys
-import time
-from Queue import Queue
-import pdb
-import threading
-from threading import Thread, Lock
+import Queue
+#import threading
+from threading import Lock, Thread
 
 
 from gateway_code.gateway_logging import logger
 
 SYNC_BYTE = chr(0x80)
 
-#The port is immediately opened on object creation bevause the port is given. 
+#The port is immediately opened on object creation bevause the port is given.
 #No timeout on read timeout=None by dflt
 SERIAL_PORT = serial.Serial(port='/dev/ttyFITECO_GWT', baudrate=500000)
 
 
 
 #Queue can store 1 item
-RX_QUEUE = Queue(1)
+RX_QUEUE = Queue.Queue(1)
 PROTECT_SEND = Lock()
 
 
@@ -36,7 +33,7 @@ UNUSED = 6
 
 
 
-class Buffer():
+class Buffer(object):
     def __init__(self):
         self.length = None
         self.payload = None
@@ -56,7 +53,7 @@ def rx_idle ():
     """Adds the sync byte to the packet and changes the rx_State
     to RX_LEN in order to get the next length byte."""
     return RX_LEN
-        
+
 
 def rx_length(packet, rx_char):
     """Puts the legth byte into the packet, changes the rx_state
@@ -85,18 +82,24 @@ def rx_payload(packet, rx_char):
         #rx_state = RX_IDLE
         logger.debug("\t rx_payload packet : %s" %(packet))
         return RX_IDLE
-    
-    return RX_PAYLOAD
-    
-   
-state_machine_dict = {  RX_IDLE: rx_idle, 
-                            RX_LEN : rx_length,
-                            RX_PAYLOAD: rx_payload,
-                            }
 
-def receive_packet():
-    #Lock on the serial link whe
-    #SYNC  |  LENGTH | TYPE  | PAYLOAD |
+    return RX_PAYLOAD
+
+
+STATE_MACHINE_DICT = {  RX_IDLE: rx_idle,
+        RX_LEN : rx_length,
+        RX_TYPE: rx_type,
+        RX_PAYLOAD: rx_payload,
+        }
+
+def receive_packets():
+    """
+    Read packets from the serial link
+
+    Packet have the format:
+    # | SYNC  |  LENGTH | DATA |
+
+    """
 
     #buffer_use = UNUSED   
     rx_state = RX_IDLE            
@@ -115,8 +118,8 @@ def receive_packet():
         for rx_char in rx_bytes:
             #Putting the bytes recived into the packet depending on the
             #reception state (rx_state)
-            rx_state = state_machine_dict[rx_state](packet, rx_char)
-            
+            rx_state = STATE_MACHINE_DICT[rx_state](packet, rx_char)
+
 
         if rx_state == RX_IDLE:
             #buffer_use = UNUSED
@@ -133,27 +136,34 @@ def receive_packet():
 
 
 
-RXThread = threading.Thread(group=None, target=receive_packet, \
+RX_THREAD = Thread(group=None, target=receive_packets, \
     name='rx_thread', args= (), kwargs={})
-RXThread.start()
+RX_THREAD.start()
 
-def make_header(payload):
-    #payload is a string, and we add 2 bytes with
-    #elnght and sync byte
-    #TYPE  included in payload?
-    length = len(payload) + 3
+def make_header(data):
+    """
+    Create a packet from the data
 
-    packet = SYNC_BYTE + str(length) + payload
+    :param data: contains 'type', maybe 'ack byte', and 'data payload'
+    :type data: string
+
+    :return: a packet with header + data
+    """
+    length = len(data)
+    packet = SYNC_BYTE + chr(length) + data
     return packet
 
 
 
 
-def send_packet(payload):
+def send_packet(data):
+    """
+    Send a packet and wait for the answer
+    """
 
     PROTECT_SEND.acquire()
 
-    tx_packet = make_header(payload)
+    tx_packet = make_header(data)
     SERIAL_PORT.write(tx_packet)
 
     rx_packet = RX_QUEUE.get(block=True)
