@@ -63,7 +63,11 @@ def rx_idle(packet, rx_char):
     Adds the sync byte to the packet and changes the rx_State
     to RX_LEN in order to get the next length byte.
     """
-    return RX_LEN
+    if rx_char == RX_SYNC:
+        return RX_LEN
+    else:
+        logger.debug("rx_idle : packet lost?")
+        return RX_IDLE
 
 
 def rx_length(packet, rx_char):
@@ -109,14 +113,12 @@ def receive_packets():
     """
 
     rx_state = RX_IDLE
+    packet = Buffer()
 
     while True:
         #call to read will block when no bytes are received
         rx_bytes = SERIAL_PORT.read()
 
-        #New packet is being received, we get a new buffer
-        if rx_state == RX_IDLE:
-            packet = Buffer()
 
         #TODO passer tout ce qui est recu aux fonctions au lieu
         #     de passer les char un par un
@@ -133,7 +135,7 @@ def receive_packets():
             except Queue.Full:
                 pass
             rx_state = RX_IDLE
-            packet = None
+            packet = Buffer()
 
 
 
