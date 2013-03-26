@@ -88,7 +88,6 @@ def rx_payload(packet, rx_char):
 
 STATE_MACHINE_DICT = {  RX_IDLE: rx_idle,
         RX_LEN : rx_length,
-        RX_TYPE: rx_type,
         RX_PAYLOAD: rx_payload,
         }
 
