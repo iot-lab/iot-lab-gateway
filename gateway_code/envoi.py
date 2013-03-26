@@ -103,12 +103,6 @@ STATE_MACHINE_DICT = {
         }
 
 
-
-
-
-
-
-
 RX_THREAD = Thread(group=None, target=receive_packets, \
     name='rx_thread', args= (), kwargs={})
 RX_THREAD.start()
@@ -148,7 +142,7 @@ class ThreadRead(Thread):
 
         if rx_state == RX_PACKET_FULL:
             try:
-                RX_QUEUE.put(packet)
+                self.queue.put(packet)
             #TODO : remplir condition queue full, bloquer sur le put?
             except Queue.Full:
                 pass
