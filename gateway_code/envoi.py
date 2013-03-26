@@ -63,7 +63,7 @@ def rx_idle(packet, rx_char):
     Adds the sync byte to the packet and changes the rx_State
     to RX_LEN in order to get the next length byte.
     """
-    if rx_char == RX_SYNC:
+    if rx_char == SYNC_BYTE:
         return RX_LEN
     else:
         logger.debug("rx_idle : packet lost?")
