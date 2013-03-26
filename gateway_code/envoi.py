@@ -30,10 +30,9 @@ RX_IDLE, RX_LEN, RX_PAYLOAD, RX_PACKET_FULL = range(4)
 #Definitions used to trigger the creation of a new Buffer to receive the packet.
 IN_USE = 5
 UNUSED = 6
-
-
-
-
+    
+              
+              
 class Buffer(object):
     """
     Buffer to hold a packet while being created
@@ -63,7 +62,11 @@ def rx_idle(packet, rx_char):
     Adds the sync byte to the packet and changes the rx_State
     to RX_LEN in order to get the next length byte.
     """
-    return RX_LEN
+    if rx_char == SYNC_BYTE:
+        return RX_LEN
+    else:
+        logger.debug("rx_idle : packet lost?")
+        return RX_IDLE
 
 
 def rx_length(packet, rx_char):
@@ -99,7 +102,20 @@ STATE_MACHINE_DICT = {
         RX_PACKET_FULL: None,
         }
 
-def receive_packets():
+
+RX_THREAD = Thread(group=None, target=receive_packets, \
+    name='rx_thread', args= (), kwargs={})
+RX_THREAD.start()
+
+
+class ThreadRead(Thread):
+    """Threaded read"""
+    def __init__(self, queue):
+        Thread.__init__(self)
+        self.rx_queue = queue
+    
+    def run(self):
+        
     """
     Read packets from the serial link
 
@@ -109,14 +125,12 @@ def receive_packets():
     """
 
     rx_state = RX_IDLE
+    packet = Buffer()
 
     while True:
         #call to read will block when no bytes are received
         rx_bytes = SERIAL_PORT.read()
 
-        #New packet is being received, we get a new buffer
-        if rx_state == RX_IDLE:
-            packet = Buffer()
 
         #TODO passer tout ce qui est recu aux fonctions au lieu
         #     de passer les char un par un
@@ -128,21 +142,13 @@ def receive_packets():
 
         if rx_state == RX_PACKET_FULL:
             try:
-                RX_QUEUE.put(packet)
+                self.queue.put(packet)
             #TODO : remplir condition queue full, bloquer sur le put?
             except Queue.Full:
                 pass
             rx_state = RX_IDLE
-            packet = None
+            packet = Buffer()   
 
-
-
-
-
-
-RX_THREAD = Thread(group=None, target=receive_packets, \
-    name='rx_thread', args= (), kwargs={})
-RX_THREAD.start()
 
 def make_header(data):
     """
