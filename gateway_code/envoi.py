@@ -9,7 +9,8 @@ import Queue
 from threading import Lock, Thread
 
 
-from gateway_code.gateway_logging import logger
+# Remove for the moment
+#  from gateway_code.gateway_logging import logger
 
 SYNC_BYTE = chr(0x80)
 
@@ -21,7 +22,6 @@ SERIAL_PORT = serial.Serial(port='/dev/ttyFITECO_GWT', baudrate=500000)
 
 #Queue can store 1 item
 RX_QUEUE = Queue.Queue(1)
-PROTECT_SEND = Lock()
 
 
 # States of the packet reception progression state machine.
@@ -86,7 +86,7 @@ def rx_payload(packet, rx_char):
     packet.payload += rx_char
 
     if packet.is_complete():
-        logger.debug("\t rx_payload packet : %s" %(packet))
+        #logger.debug("\t rx_payload packet : %s" %(packet))
         return RX_PACKET_FULL
 
     return RX_PAYLOAD
@@ -160,6 +160,7 @@ def make_header(data):
 
 
 
+PROTECT_SEND = Lock()
 def send_packet(data):
     """
     Send a packet and wait for the answer
