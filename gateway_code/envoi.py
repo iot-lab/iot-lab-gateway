@@ -30,10 +30,9 @@ RX_IDLE, RX_LEN, RX_PAYLOAD, RX_PACKET_FULL = range(4)
 #Definitions used to trigger the creation of a new Buffer to receive the packet.
 IN_USE = 5
 UNUSED = 6
-
-
-
-
+    
+              
+              
 class Buffer(object):
     """
     Buffer to hold a packet while being created
@@ -103,7 +102,26 @@ STATE_MACHINE_DICT = {
         RX_PACKET_FULL: None,
         }
 
-def receive_packets():
+
+
+
+
+
+
+
+RX_THREAD = Thread(group=None, target=receive_packets, \
+    name='rx_thread', args= (), kwargs={})
+RX_THREAD.start()
+
+
+class ThreadRead(Thread):
+    """Threaded read"""
+    def __init__(self, queue):
+        Thread.__init__(self)
+        self.rx_queue = queue
+    
+    def run(self):
+        
     """
     Read packets from the serial link
 
@@ -135,16 +153,8 @@ def receive_packets():
             except Queue.Full:
                 pass
             rx_state = RX_IDLE
-            packet = Buffer()
+            packet = Buffer()   
 
-
-
-
-
-
-RX_THREAD = Thread(group=None, target=receive_packets, \
-    name='rx_thread', args= (), kwargs={})
-RX_THREAD.start()
 
 def make_header(data):
     """
