@@ -14,14 +14,8 @@ from threading import Lock, Thread
 
 SYNC_BYTE = chr(0x80)
 
-#The port is immediately opened on object creation because the port is given.
-#No timeout on read timeout=None by dflt
-SERIAL_PORT = serial.Serial(port='/dev/ttyFITECO_GWT', baudrate=500000)
 
 
-
-#Queue can store 1 item
-RX_QUEUE = Queue.Queue(1)
 
 
 # States of the packet reception progression state machine.
@@ -30,9 +24,9 @@ RX_IDLE, RX_LEN, RX_PAYLOAD, RX_PACKET_FULL = range(4)
 #Definitions used to trigger the creation of a new Buffer to receive the packet.
 IN_USE = 5
 UNUSED = 6
-    
-              
-              
+
+
+
 class Buffer(object):
     """
     Buffer to hold a packet while being created
@@ -65,7 +59,7 @@ def rx_idle(packet, rx_char):
     if rx_char == SYNC_BYTE:
         return RX_LEN
     else:
-        logger.debug("rx_idle : packet lost?")
+        #logger.debug("rx_idle : packet lost?")
         return RX_IDLE
 
 
@@ -103,9 +97,9 @@ STATE_MACHINE_DICT = {
         }
 
 
-RX_THREAD = Thread(group=None, target=receive_packets, \
-    name='rx_thread', args= (), kwargs={})
-RX_THREAD.start()
+# RX_THREAD = Thread(group=None, target=receive_packets, \
+#     name='rx_thread', args= (), kwargs={})
+# RX_THREAD.start()
 
 
 class ThreadRead(Thread):
@@ -113,41 +107,43 @@ class ThreadRead(Thread):
     def __init__(self, queue):
         Thread.__init__(self)
         self.rx_queue = queue
-    
+        #The port is immediately opened on object creation because the port is given.
+        #No timeout on read timeout=None by dflt
+        self.serial_port = serial.Serial(port='/dev/ttyFITECO_GWT', baudrate=500000)
+
     def run(self):
-        
-    """
-    Read packets from the serial link
+        """
+        Read packets from the serial link
 
-    Packet have the format:
-    # | SYNC  |  LENGTH | DATA |
+        Packet have the format:
+            | SYNC  |  LENGTH | DATA |
+        """
 
-    """
+        rx_state = RX_IDLE
+        packet = Buffer()
 
-    rx_state = RX_IDLE
-    packet = Buffer()
+        while True:
+            #call to read will block when no bytes are received
+            try:
+                rx_char = self.serial_port.read()
+            except ValueError:
+                break;
 
-    while True:
-        #call to read will block when no bytes are received
-        rx_bytes = SERIAL_PORT.read()
-
-
-        #TODO passer tout ce qui est recu aux fonctions au lieu
-        #     de passer les char un par un
-        for rx_char in rx_bytes:
             # Putting the bytes received into the packet depending on the
             # reception state (rx_state)
             rx_state = STATE_MACHINE_DICT[rx_state](packet, rx_char)
 
 
-        if rx_state == RX_PACKET_FULL:
-            try:
-                self.queue.put(packet)
-            #TODO : remplir condition queue full, bloquer sur le put?
-            except Queue.Full:
-                pass
-            rx_state = RX_IDLE
-            packet = Buffer()   
+            if rx_state == RX_PACKET_FULL:
+                try:
+                    self.rx_queue.put(packet.payload)
+                #TODO : remplir condition queue full, bloquer sur le put?
+                except Queue.Full:
+                    pass
+                rx_state = RX_IDLE
+                packet = Buffer()
+
+        # TODO maybe cleanup the code...
 
 
 def make_header(data):
@@ -167,6 +163,8 @@ def make_header(data):
 
 
 PROTECT_SEND = Lock()
+#Queue can store 1 item
+RX_QUEUE = Queue.Queue(1)
 def send_packet(data):
     """
     Send a packet and wait for the answer
