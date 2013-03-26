@@ -19,12 +19,8 @@ RX_QUEUE = Queue.Queue(1)
 PROTECT_SEND = Lock()
 
 
-#Definitions for the state machine to monitor the completion progress of
-#a packet.
-RX_IDLE  = 1
-RX_LEN = 2
-RX_TYPE = 3
-RX_PAYLOAD = 4
+# States of the packet reception progression state machine.
+RX_IDLE, RX_LEN, RX_PAYLOAD = range(3)
 
 #Definitions used to trigger the creation of a new Buffer to receive the packet.
 IN_USE = 5
@@ -86,7 +82,8 @@ def rx_payload(packet, rx_char):
     return RX_PAYLOAD
 
 
-STATE_MACHINE_DICT = {  RX_IDLE: rx_idle,
+STATE_MACHINE_DICT = {
+        RX_IDLE: rx_idle,
         RX_LEN : rx_length,
         RX_PAYLOAD: rx_payload,
         }
@@ -100,8 +97,8 @@ def receive_packets():
 
     """
 
-    #buffer_use = UNUSED   
-    rx_state = RX_IDLE            
+    #buffer_use = UNUSED
+    rx_state = RX_IDLE
 
     while True:
         #call to read will block when no bytes are received
@@ -113,7 +110,7 @@ def receive_packets():
             #buffer_use = IN_USE
 
         #TODO passer tout ce qui est recu aux fonctions au lieu
-        #de passer les char un par un
+        #     de passer les char un par un
         for rx_char in rx_bytes:
             #Putting the bytes recived into the packet depending on the
             #reception state (rx_state)
