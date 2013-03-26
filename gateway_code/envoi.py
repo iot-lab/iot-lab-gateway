@@ -35,9 +35,7 @@ UNUSED = 6
 
 class Buffer(object):
     def __init__(self):
-        self.sync = None
         self.length = None
-        self.pkt_type = None
         self.payload = None
 
     def __repr__(self):
@@ -52,12 +50,9 @@ class Buffer(object):
 
 
 
-def rx_idle (packet, rx_char):
+def rx_idle ():
     """Adds the sync byte to the packet and changes the rx_State
     to RX_LEN in order to get the next length byte."""
-    if rx_char == SYNC_BYTE:
-        packet.sync = SYNC_BYTE
-        #rx_state = RX_LEN
     return RX_LEN
 
 
@@ -66,14 +61,14 @@ def rx_length(packet, rx_char):
     to RX_TYPE to get the packet type. """
     packet.length = rx_char
     #rx_state = RX_TYPE
-    return RX_TYPE
-
-def rx_type(packet, rx_char):
-    """ Puts the packet type into the packet, changes the rx_state to
-    RX_PAYLOAD to get the packet data."""
-    packet.pkt_type = rx_char
-    #rx_state = RX_PAYLOAD
     return RX_PAYLOAD
+
+#def rx_type(packet, rx_char):
+    #""" Puts the packet type into the packet, changes the rx_state to
+    #RX_PAYLOAD to get the packet data."""
+    #packet.pkt_type = rx_char
+    ##rx_state = RX_PAYLOAD
+    #return RX_PAYLOAD
 
 def rx_payload(packet, rx_char):
     """ Adds the payload bytes, check if the packet is complete
