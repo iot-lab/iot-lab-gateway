@@ -70,11 +70,11 @@ class GatewayManager(object):
         if ret == 0:
             ret_d = self.exp_update_profile(profile)
             ret_dict['update_profile'] = ret_d
-     
+
             # REMOVE ME
             err = "NOT_IMPLEMENTED %s" % self.exp_update_profile.__name__
             ret_dict['update_profile']['err'] = err
-            ret = ret_d['ret'] 
+            ret = ret_d['ret']
 
         # save the start experiment time
         self.start_experiment_time = time.localtime()
@@ -145,7 +145,12 @@ class GatewayManager(object):
         Update the control node profile
         """
         self.current_profile = profile
-        ret_dict = {'ret':0, 'out': 'update profile name : %s' % self.current_profile.profilename }
+
+        # send profile to CN
+
+
+        ret_dict = {'ret':0, 'out': 'update profile name : %s' % \
+                self.current_profile.profilename }
 
         return ret_dict
 

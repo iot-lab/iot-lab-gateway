@@ -26,7 +26,8 @@ class Profile:
     Class Profile configuration for Control Node polling
 
     """
-    def __init__(self, profilename=None, power=None, consumption=None, radio=None):
+    def __init__(self, profilename=None, power=None, consumption=None, \
+            radio=None):
         self.profilename = profilename
         self.power = power
         self.consumption = consumption
