@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+
+"""
+Serial IO layer for control node
+"""
 import serial
 import Queue
 #import threading
@@ -8,7 +13,7 @@ from gateway_code.gateway_logging import logger
 
 SYNC_BYTE = chr(0x80)
 
-#The port is immediately opened on object creation bevause the port is given.
+#The port is immediately opened on object creation because the port is given.
 #No timeout on read timeout=None by dflt
 SERIAL_PORT = serial.Serial(port='/dev/ttyFITECO_GWT', baudrate=500000)
 
@@ -20,7 +25,7 @@ PROTECT_SEND = Lock()
 
 
 # States of the packet reception progression state machine.
-RX_IDLE, RX_LEN, RX_PAYLOAD = range(3)
+RX_IDLE, RX_LEN, RX_PAYLOAD, RX_PACKET_FULL = range(4)
 
 #Definitions used to trigger the creation of a new Buffer to receive the packet.
 IN_USE = 5
@@ -30,6 +35,10 @@ UNUSED = 6
 
 
 class Buffer(object):
+    """
+    Buffer to hold a packet while being created
+    """
+
     def __init__(self):
         self.length = None
         self.payload = None
@@ -55,15 +64,8 @@ def rx_length(packet, rx_char):
     """Puts the legth byte into the packet, changes the rx_state
     to RX_TYPE to get the packet type. """
     packet.length = rx_char
-    #rx_state = RX_TYPE
     return RX_PAYLOAD
 
-#def rx_type(packet, rx_char):
-    #""" Puts the packet type into the packet, changes the rx_state to
-    #RX_PAYLOAD to get the packet data."""
-    #packet.pkt_type = rx_char
-    ##rx_state = RX_PAYLOAD
-    #return RX_PAYLOAD
 
 def rx_payload(packet, rx_char):
     """ Adds the payload bytes, check if the packet is complete
@@ -75,9 +77,8 @@ def rx_payload(packet, rx_char):
         packet.payload += rx_char
 
     if len(packet) == packet.length:
-        #rx_state = RX_IDLE
         logger.debug("\t rx_payload packet : %s" %(packet))
-        return RX_IDLE
+        return RX_PACKET_FULL
 
     return RX_PAYLOAD
 
@@ -86,6 +87,7 @@ STATE_MACHINE_DICT = {
         RX_IDLE: rx_idle,
         RX_LEN : rx_length,
         RX_PAYLOAD: rx_payload,
+        RX_PACKET_FULL: None,
         }
 
 def receive_packets():
@@ -97,7 +99,6 @@ def receive_packets():
 
     """
 
-    #buffer_use = UNUSED
     rx_state = RX_IDLE
 
     while True:
@@ -107,25 +108,23 @@ def receive_packets():
         #New packet is being received, we get a new buffer
         if rx_state == RX_IDLE:
             packet = Buffer()
-            #buffer_use = IN_USE
 
         #TODO passer tout ce qui est recu aux fonctions au lieu
         #     de passer les char un par un
         for rx_char in rx_bytes:
-            #Putting the bytes recived into the packet depending on the
-            #reception state (rx_state)
+            # Putting the bytes received into the packet depending on the
+            # reception state (rx_state)
             rx_state = STATE_MACHINE_DICT[rx_state](packet, rx_char)
 
 
-        if rx_state == RX_IDLE:
-            #buffer_use = UNUSED
-            #packet complete
+        if rx_state == RX_PACKET_FULL:
             try:
                 RX_QUEUE.put(packet)
-
-            #TODO : ermplir condition queue full, bloquer sur le put?
+            #TODO : remplir condition queue full, bloquer sur le put?
             except Queue.Full:
                 pass
+            rx_state = RX_IDLE
+            packet = None
 
 
 
