@@ -24,7 +24,7 @@ class Lint(Command):
 
     def run(self):
         from pylint import lint
-        lint_args = ['-f', 'parseable', 'gateway_code/']
+        lint_args = ['--rcfile=pylint.rc', '-f', 'parseable', 'gateway_code/']
         lint_args = self.report_option + lint_args
         # I didn't managed to catch the output of lint.Run function
         lint.Run(lint_args, exit=False)
