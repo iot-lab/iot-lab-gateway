@@ -11,8 +11,11 @@ from gateway_code.gateway_logging import logger
 
 SYNC_BYTE = chr(0x80)
 
-#The port is immediately opened on object creation bevause the port is given.
-SERIAL_PORT = serial.Serial('/dev/ttyFITECO_GWT', 500000, timeout=16)
+#The port is immediately opened on object creation bevause the port is given. 
+#No timeout on read timeout=None by dflt
+SERIAL_PORT = serial.Serial(port='/dev/ttyFITECO_GWT', baudrate=500000)
+
+
 
 #Queue can store 1 item
 RX_QUEUE = Queue(1)
@@ -30,7 +33,7 @@ RX_PAYLOAD = 4
 IN_USE = 5
 UNUSED = 6
 
-rx_state = RX_IDLE
+
 
 
 class Buffer():
@@ -57,22 +60,23 @@ def rx_idle (packet, rx_char):
     to RX_LEN in order to get the next length byte."""
     if rx_char == SYNC_BYTE:
         packet.sync = SYNC_BYTE
-        rx_state = RX_LEN
-    return
+        #rx_state = RX_LEN
+    return RX_LEN
+        
 
 def rx_length(packet, rx_char):
     """Puts the legth byte into the packet, changes the rx_state
     to RX_TYPE to get the packet type. """
     packet.length = rx_char
-    rx_state = RX_TYPE
-    return
+    #rx_state = RX_TYPE
+    return RX_TYPE
 
 def rx_type(packet, rx_char):
     """ Puts the packet type into the packet, changes the rx_state to
     RX_PAYLOAD to get the packet data."""
     packet.pkt_type = rx_char
-    rx_state = RX_PAYLOAD
-    return
+    #rx_state = RX_PAYLOAD
+    return RX_PAYLOAD
 
 def rx_payload(packet, rx_char):
     """ Adds the payload bytes, check if the packet is complete
@@ -84,13 +88,14 @@ def rx_payload(packet, rx_char):
         packet.payload += rx_char
 
     if len(packet) == packet.length:
-        rx_state = RX_IDLE
+        #rx_state = RX_IDLE
         logger.debug("\t rx_payload packet : %s" %(packet))
-
-    return
-
-
-state_machine_dict = {  RX_IDLE: rx_idle,
+        return RX_IDLE
+    
+    return RX_PAYLOAD
+    
+   
+state_machine_dict = {  RX_IDLE: rx_idle, 
                             RX_LEN : rx_length,
                             RX_TYPE: rx_type,
                             RX_PAYLOAD: rx_payload,
@@ -100,7 +105,8 @@ def receive_packet():
     #Lock on the serial link whe
     #SYNC  |  LENGTH | TYPE  | PAYLOAD |
 
-    buffer_use = UNUSED
+    buffer_use = UNUSED   
+    rx_state = RX_IDLE            
 
     while True:
         #call to read will block when no bytes are received
@@ -116,7 +122,8 @@ def receive_packet():
         for rx_char in rx_bytes:
             #Putting the bytes recived into the packet depending on the
             #reception state (rx_state)
-            state_machine_dict[rx_state](packet, rx_char)
+            rx_state = state_machine_dict[rx_state](packet, rx_char)
+            
 
         if rx_state == RX_IDLE:
             buffer_use = UNUSED
