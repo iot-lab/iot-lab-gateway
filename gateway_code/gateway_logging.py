@@ -47,14 +47,11 @@ def logger():
     return LOGGER
 
 
-# création d'un second handler qui va rediriger chaque écriture de log
-# sur la console
+# console handler
 #stream_handler = logging.StreamHandler()
 #stream_handler.setLevel(logging.DEBUG)
 #LOGGER.addHandler(stream_handler)
 
-# Après 3 heures, on peut enfin logguer
-# Il est temps de spammer votre code avec des logs partout :
 #LOGGER.info('Hello')
 #LOGGER.warning('Testing %s', 'foo')
 
