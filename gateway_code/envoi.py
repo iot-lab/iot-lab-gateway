@@ -30,7 +30,8 @@ class RxTxSerial():
     to the serial link.
      """
     
-    def __init__(self, cb_dispatch):
+    def __init__(self, cb_dispatch, port='/dev/ttyFITECO_GWT', \
+                                                baudrate=500000 ):
         """:cb_dispatch Manager callback to dispatch packets to 
         the appropriate upper layer depending on their type 
         (from control node or OML)
@@ -38,20 +39,24 @@ class RxTxSerial():
         #Writes are blocking by default,the port is immediately opened 
         #on object creation because the port is given, timeout is by dlft
         #set to None therfore waits forever.
-        self.serial_port = serial.Serial(port='/dev/ttyFITECO_GWT', \
-                baudrate=500000)
+        self.serial_port = serial.Serial(port=port, \
+                baudrate=baudrate)
                 
         #Starting reciving thread       
         self.rx_thread = ReceiveThread(self.serial_port, cb_dispatch)
-        self.rx_thread.start()
+        
 
         
-    def write(self, tx_packet):
+    def write(self, data):
         """ Writes the packet to the serial port. """
+        tx_packet = self.make_header(data)
         self.serial_port.write(tx_packet)
-        
-            
-    def stop_rx_thread(self):
+    
+    def start(self):
+        """ Start thread."""
+        self.rx_thread.start()   
+         
+    def stop(self):
         """Stops receive thread by closing the serial port, Wait for the 
         thread to exit with a call to join().
         """
@@ -98,12 +103,17 @@ class Buffer(object):
 
 class ReceiveThread(Thread):
     """Threaded read"""
+    state_machine_dict =  {RX_IDLE: ReceiveThread.rx_idle,
+            RX_LEN : ReceiveThread.rx_length,
+            RX_PAYLOAD: ReceiveThread.rx_payload,
+            RX_PACKET_FULL: None,
+            }  
+           
     def __init__(self, serial_port, cb_dispatch ):
         Thread.__init__(self)
         self.cb_dispatch = cb_dispatch
         self.serial_port = serial_port
-        self.state_machine_dict = {}
-           
+        
       
     
     @staticmethod
@@ -157,11 +167,7 @@ class ReceiveThread(Thread):
 
         rx_state = RX_IDLE
         packet = Buffer()
-        self.state_machine_dict =  {RX_IDLE: ReceiveThread.rx_idle,
-            RX_LEN : ReceiveThread.rx_length,
-            RX_PAYLOAD: ReceiveThread.rx_payload,
-            RX_PACKET_FULL: None,
-            }  
+        
         while True:
             #call to read will block when no bytes are received
             try:
@@ -171,7 +177,8 @@ class ReceiveThread(Thread):
 
             # Putting the bytes received into the packet depending on the
             # reception state (rx_state)
-            rx_state = self.state_machine_dict[rx_state](packet, rx_char)
+            rx_state = ReceiveThread.state_machine_dict[rx_state](packet, \
+                                                                    rx_char)
 
 
             if rx_state == RX_PACKET_FULL:
