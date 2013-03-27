@@ -18,22 +18,23 @@ from logging.handlers import RotatingFileHandler
 
 LOGGER = logging.getLogger()
 
-# on met le niveau du logger à DEBUG, comme ça il écrit tout
+# set default logger level to DEBUG to log everything
 LOGGER.setLevel(logging.DEBUG)
-
-
 FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
-# création d'un handler qui va rediriger une écriture du log vers
-# un fichier en mode 'append', avec 1 backup et une taille max de 1Mo
 
-def add_rotating_handler(logfile):
+
+
+def add_rotating_handler(logfile, log_level=logging.DEBUG):
     """
-    Add a rotating file handler
+    Add a rotating file handler size 1Mo in append mode, with one backup
+
+    :param logfile: path of the log
+    :param level: debug level for the handler (default logging.DEBUG)
     """
     file_handler = RotatingFileHandler(logfile, 'a', \
            maxBytes=1000000, backupCount=1)
 
-    file_handler.setLevel(logging.DEBUG)
+    file_handler.setLevel(log_level)
     file_handler.setFormatter(FORMATTER)
 
     LOGGER.addHandler(file_handler)
