@@ -13,7 +13,7 @@ import json
 
 class GatewayRest(object):
     """
-    Gateway Rest class  
+    Gateway Rest class
 
     It calls the gateway manager to treat commands
     """

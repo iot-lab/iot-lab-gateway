@@ -1,5 +1,20 @@
 # -*- coding:utf-8 -*-
+
+"""
+
+Profile module, implementing the 'Profile' class
+and methods to convert it to config commands
+
+"""
+
 import json
+
+
+
+
+# Currently disable message 'too few public methods'
+# pylint: disable-msg=R0903
+# Should be removed
 
 class Consumption:
     """
