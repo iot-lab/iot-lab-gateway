@@ -89,8 +89,8 @@ class Buffer(object):
         self.payload = ""
 
     def __repr__(self):
-        result = " length=%d, payload=%s" % \
-                ( self.length,  self.payload)
+        result = "length=%d, payload=%s" % \
+                (self.length,  self.payload)
         return result
 
     def is_complete(self):
@@ -103,16 +103,18 @@ class Buffer(object):
 
 class ReceiveThread(Thread):
     """Threaded read"""
-    state_machine_dict =  {RX_IDLE: rx_idle,
-            RX_LEN : rx_length,
-            RX_PAYLOAD: rx_payload,
-            RX_PACKET_FULL: None,
-            }
 
     def __init__(self, serial_port, cb_dispatch ):
         Thread.__init__(self)
         self.cb_dispatch = cb_dispatch
         self.serial_port = serial_port
+
+        self.state_machine_dict = {
+                RX_IDLE: ReceiveThread.rx_idle,
+                RX_LEN : ReceiveThread.rx_length,
+                RX_PAYLOAD: ReceiveThread.rx_payload,
+                RX_PACKET_FULL: None,
+                }
 
 
 
@@ -177,14 +179,11 @@ class ReceiveThread(Thread):
 
             # Putting the bytes received into the packet depending on the
             # reception state (rx_state)
-            rx_state = ReceiveThread.state_machine_dict[rx_state](packet, \
-                                                                    rx_char)
-
+            rx_state = self.state_machine_dict[rx_state](packet, rx_char)
 
             if rx_state == RX_PACKET_FULL:
 
                 self.cb_dispatch(packet.payload)
-
                 rx_state = RX_IDLE
                 packet = Buffer()
 
