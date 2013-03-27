@@ -23,7 +23,7 @@ RX_IDLE, RX_LEN, RX_PAYLOAD, RX_PACKET_FULL = range(4)
 IN_USE = 5
 UNUSED = 6
 
-
+    
 class RxTxSerial():
     """ Class managing packet Rx and Tx on the serial link
     Rx made by ReceiveThread, byte by byte. Tx is reduced to writing the packet
@@ -103,9 +103,9 @@ class Buffer(object):
 
 class ReceiveThread(Thread):
     """Threaded read"""
-    state_machine_dict =  {RX_IDLE: ReceiveThread.rx_idle,
-            RX_LEN : ReceiveThread.rx_length,
-            RX_PAYLOAD: ReceiveThread.rx_payload,
+    state_machine_dict =  {RX_IDLE: rx_idle,
+            RX_LEN : rx_length,
+            RX_PAYLOAD: rx_payload,
             RX_PACKET_FULL: None,
             }  
            
