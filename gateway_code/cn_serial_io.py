@@ -13,28 +13,21 @@ from threading import  Thread
 SYNC_BYTE = chr(0x80)
 
 
-
-
-
 # States of the packet reception progression state machine.
 RX_IDLE, RX_LEN, RX_PAYLOAD, RX_PACKET_FULL = range(4)
 
-#Definitions used to trigger the creation of a new Buffer to receive the packet.
-IN_USE = 5
-UNUSED = 6
 
 
 class RxTxSerial():
     """ Class managing packet Rx and Tx on the serial link
-    Rx made by ReceiveThread, byte by byte. Tx is reduced to writing the packet
-    to the serial link.
-     """
+    Rx made by ReceiveThread, byte by byte.
+    Tx add header and write packet to the serial link.
+    """
 
-    def __init__(self, cb_dispatch, port='/dev/ttyFITECO_GWT', \
-                                                baudrate=500000 ):
-        """:cb_dispatch Manager callback to dispatch packets to
-        the appropriate upper layer depending on their type
-        (from control node or OML)
+    def __init__(self, cb_packet_received, port='/dev/ttyFITECO_GWT', \
+            baudrate=500000 ):
+        """
+        :param cb_packet_received: callback for when a packet is received
         """
         #Writes are blocking by default,the port is immediately opened
         #on object creation because the port is given, timeout is by dlft
@@ -43,12 +36,12 @@ class RxTxSerial():
                 baudrate=baudrate)
 
         #Starting reciving thread
-        self.rx_thread = ReceiveThread(self.serial_port, cb_dispatch)
+        self.rx_thread = ReceiveThread(self.serial_port, cb_packet_received)
 
 
 
     def write(self, data):
-        """ Writes the packet to the serial port. """
+        """ Add a header and write the packet to the serial port. """
         tx_packet = self.make_header(data)
         self.serial_port.write(tx_packet)
 
@@ -104,9 +97,9 @@ class Buffer(object):
 class ReceiveThread(Thread):
     """Threaded read"""
 
-    def __init__(self, serial_port, cb_dispatch ):
+    def __init__(self, serial_port, cb_packet_received):
         Thread.__init__(self)
-        self.cb_dispatch = cb_dispatch
+        self.cb_packet_received = cb_packet_received
         self.serial_port = serial_port
 
         self.state_machine_dict = {
@@ -183,7 +176,7 @@ class ReceiveThread(Thread):
 
             if rx_state == RX_PACKET_FULL:
 
-                self.cb_dispatch(packet.payload)
+                self.cb_packet_received(packet.payload)
                 rx_state = RX_IDLE
                 packet = Buffer()
 
