@@ -1,5 +1,6 @@
 from gateway_code import dispatch
 from gateway_code import cn_serial_io
+from gateway_code.cn_serial_io import SYNC_BYTE
 from mock import MagicMock
 import mock
 import Queue
@@ -7,38 +8,51 @@ import serial
 import threading
 
 @mock.patch('serial.Serial')
-
 def test_cb_dispatcher(serial_mock_class):
-    # configure test
-    payloads_rcvd = [chr(0xFF) + chr(3) + 'abc', \
-                'F' + chr(1)+ 'x', chr(0xFF) + chr(2) ] 
 
-    result_omlpackets = [chr(0xFF) + chr(3) + 'abc']
-    result_cnpackets = ['F' + chr(1)+ 'x', chr(0xFF) + chr(2)]
-    
     unlock_test = threading.Event()
+
+
+    # configure test
+    read_values = [SYNC_BYTE, chr(4), chr(0xFF) + 'a' + 'b' + 'c'] + \
+            [SYNC_BYTE, chr(4), chr(0x42) +  'def'] + \
+            [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
+
+    result_omlpackets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
+    result_cnpackets = [chr(0x42) + 'def']
+
     oml_queue = Queue.Queue(0)
-    oml_queue.put = MagicMock(name='put')
-    
     dis = dispatch.Dispatch(oml_queue)
+
+    # mock queues.put method
+    oml_queue.put = MagicMock(name='put')
     dis.queue_control_node.put = MagicMock(name='put')
-    
+
+    # mock serial.read method
     def read_mock():
-        if payloads_rcvd == []:
+        if read_values == []:
             unlock_test.set()
             raise ValueError
-        return payloads_rcvd.pop(0)
-
+        return read_values.pop(0)
     serial_mock = serial_mock_class.return_value
     serial_mock.read.side_effect = read_mock
-    
+
+
     rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
     rxtx.start()
-    
-    dis.queue_control_node.put.assert_called_with('F' + chr(1)+ 'x', chr(0xFF) + chr(2))
-    oml_queue.put.assert_called_once_with((chr(0xFF) + chr(3) + 'abc'))
-    
+
     # wait until read finished
     unlock_test.wait()
 
+
+
+    # check the multiple calls
+    cn_calls  = [mock.call(packet) for packet in result_cnpackets]
+    oml_calls = [mock.call(packet) for packet in result_omlpackets]
+    dis.queue_control_node.put.has_calls(cn_calls)
+    dis.queue_control_node.put.has_calls(oml_calls)
+
     rxtx.stop()
+
+
+
