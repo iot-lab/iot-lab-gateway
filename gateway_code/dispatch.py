@@ -17,6 +17,8 @@ class Dispatch():
         if packet[0] == self.OML_PKT_TYPE:
             self.queue_oml.put(packet)
         else:
+            #put the control node's answer into the queue, unlocking 
+            #send_command
             self.queue_control_node.put(packet)
             
             
@@ -26,6 +28,8 @@ class Dispatch():
         """
         self.protect_send.acquire()
         self.io_write(data)
+        #Waits for the control node to answer before unlocking send
+        #(unlocked by the callback cb_dispatcher
         answer_cn = self.queue_control_node.get(block=True)
         self.protect_send.release()
         return answer_cn

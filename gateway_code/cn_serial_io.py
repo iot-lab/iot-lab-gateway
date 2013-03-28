@@ -184,18 +184,3 @@ class ReceiveThread(Thread):
 
 
 
-#def send_packet(data):
-    #"""
-    #Send a packet and wait for the answer
-    #"""
-
-    #self.protect_send.acquire()
-
-    #tx_packet = make_header(data)
-    #SERIAL_PORT.write(tx_packet)
-
-    #rx_packet = RX_QUEUE.get(block=True)
-    #self.protect_send.release()
-
-    #return rx_packet
-
