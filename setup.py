@@ -32,7 +32,7 @@ class Lint(Command):
 
 
 setup(name='gateway_code',
-        version='0.1',
+        version='0.2',
         description='Linux Gateway code',
         author='SensLAB Team',
         author_email='admin@senslab.info',
