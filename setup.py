@@ -30,6 +30,10 @@ class Lint(Command):
         lint.Run(lint_args, exit=False)
 
 
+INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
+TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock']
+
+
 
 setup(name='gateway_code',
         version='0.2',
@@ -38,10 +42,11 @@ setup(name='gateway_code',
         author_email='admin@senslab.info',
         url='http://www.senslab.info',
         packages = ['gateway_code'],
+        scripts = ['flash_firmware.py', 'serial_redirection.py', 'server_rest.py'],
         cmdclass = {'lint': Lint,},
 
-        install_requires = ['argparse', 'bottle', 'paste', 'pyserial'],
-        setup_requires = ['nose>=1.0', 'pylint', 'nosexcover', 'mock'],
+        install_requires = INSTALL_REQUIRES,
+        setup_requires = TESTS_REQUIRES + INSTALL_REQUIRES,
         )
 
 
