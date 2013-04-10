@@ -118,12 +118,15 @@ class TestMainFunction(object):
         redirection = SerialRedirection(node)
 
         # cannot be stoped before start
-        assert redirection.stop() == 1
+        ret = redirection.stop()
+        assert ret == 1
 
-        assert redirection.start() == 0
+        ret = redirection.start()
+        assert ret == 0
         assert redirection.is_running == True
         # only one start possible
-        assert redirection.start() == 1
+        ret = redirection.start()
+        assert ret == 1
 
         # wait until that it is actually started
         while popen.communicate.call_count == 0:
@@ -163,7 +166,8 @@ class TestMainFunction(object):
         node = 'm3'
         redirection = SerialRedirection(node, error_handler)
 
-        assert redirection.start() == 0
+        ret = redirection.start()
+        assert ret == 0
         # wait until that it is actually started
         while popen.communicate.call_count == 0:
             time.sleep(0.1)
@@ -202,7 +206,7 @@ class TestParseArguments(object):
             assert ret == node
 
 
-    def invalid_call(self):
+    def test_invalid_call(self):
         """
         Test call with invalid node name
         """
