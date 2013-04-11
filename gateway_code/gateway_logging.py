@@ -3,55 +3,54 @@
 
 
 """
-
 Logger for gateway code
 
 Set 'logfile' path with 'add_rotating_handler'.
-
-Get logger with 'logger()'
-
-
 """
 
 import logging
 from logging.handlers import RotatingFileHandler
 
-LOGGER = logging.getLogger()
 
 # set default logger level to DEBUG to log everything
-LOGGER.setLevel(logging.DEBUG)
+LOGLEVEL = logging.DEBUG
+
+LOG_FOLDER = "/var/log/gateway-server/"
+
+
+
+LOGGER = logging.getLogger("gateway_logger")
+LOGGER.setLevel(LOGLEVEL)
+
 FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
 
 
-def add_rotating_handler(logfile, log_level=logging.DEBUG):
-    """
-    Add a rotating file handler size 1Mo in append mode, with one backup
 
-    :param logfile: path of the log
-    :param level: debug level for the handler (default logging.DEBUG)
-    """
-    file_handler = RotatingFileHandler(logfile, 'a', \
-           maxBytes=1000000, backupCount=1)
 
-    file_handler.setLevel(log_level)
-    file_handler.setFormatter(FORMATTER)
+# Server logs
+LOGFILE = LOG_FOLDER + "gateway-server.log"
+FILE = RotatingFileHandler(LOGFILE, 'a', maxBytes=1000000, backupCount=1)
 
-    LOGGER.addHandler(file_handler)
+FILE.setLevel = logging.DEBUG
+FILE.setFormatter(FORMATTER)
+LOGGER.addHandler(FILE)
 
-def logger():
-    """
-    :return: the logger
-    """
+LOGFILE_USER = LOG_FOLDER + "user.log"
+USER_FILE = RotatingFileHandler(LOGFILE_USER, 'a',\
+        maxBytes=100000, backupCount=1)
+USER_FILE.setLevel = logging.ERROR
+USER_FILE.setFormatter(FORMATTER)
+LOGGER.addHandler(USER_FILE)
 
-    return LOGGER
 
 
 # console handler
-#stream_handler = logging.StreamHandler()
-#stream_handler.setLevel(logging.DEBUG)
-#LOGGER.addHandler(stream_handler)
+# STREAM_HANDLER = logging.StreamHandler()
+# STREAM_HANDLER.setLevel(logging.DEBUG)
+
+# LOGGER.addHandler(STREAM_HANDLER)
+
 
 #LOGGER.info('Hello')
 #LOGGER.warning('Testing %s', 'foo')
-

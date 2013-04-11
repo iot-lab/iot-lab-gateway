@@ -5,11 +5,11 @@
 #
 set -x
 DESC="Gateway Server"
-NAME=gateway_server
+NAME=gateway-server
 PIDDIR=/var/run/${NAME}
 PIDFILE=$PIDDIR/${NAME}.pid
 LOGDIR=/var/log/${NAME}
-LOGFILE=$LOGDIR/${NAME}.log
+LOGFILE=$LOGDIR/bottle.log
 DAEMONUSER=www-data
 
 DAEMON=/usr/bin/server_rest.py
