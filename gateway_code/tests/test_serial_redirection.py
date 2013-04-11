@@ -294,7 +294,7 @@ class TestSerialRedirectionThread(object):
         # other cases treated by other test suites
         bad_error_handler = (lambda a, b: 0)
         try:
-            _SerialRedirectionThread('tty_file', bad_error_handler)
+            _SerialRedirectionThread('tty_file', 500000, bad_error_handler)
         except ValueError as e:
             pass
         else:
