@@ -16,8 +16,7 @@ from gateway_code import config
 from gateway_code.common_functions import num_arguments_required
 
 
-SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s '''
-
+SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s,b%d,echo=0,raw '''
 
 
 class SerialRedirection():
@@ -49,6 +48,7 @@ class SerialRedirection():
 
         self.redirector_thread = _SerialRedirectionThread(\
                 config.NODES_CFG[self.node]['tty'],\
+                config.NODES_CFG[self.node]['baudrate'],\
                 self.__cb_error_handler)
 
         self.error_handler = error_handler
@@ -110,7 +110,7 @@ class _SerialRedirectionThread(threading.Thread):
     """
 
 
-    def __init__(self, tty, error_handler):
+    def __init__(self, tty, baudrate, error_handler):
 
 
         super(_SerialRedirectionThread, self).__init__()
@@ -120,6 +120,7 @@ class _SerialRedirectionThread(threading.Thread):
 
         # serial link informations
         self.tty = tty
+        self.baudrate = baudrate
 
         # Handler called on error on socat
         if error_handler is not None:
@@ -142,7 +143,7 @@ class _SerialRedirectionThread(threading.Thread):
         """
         import shlex
 
-        cmd_list = shlex.split(SOCAT_CMD % self.tty)
+        cmd_list = shlex.split(SOCAT_CMD % (self.tty, self.baudrate))
 
         while not self.stop_thread:
             self.redirector_process = subprocess.Popen(\
