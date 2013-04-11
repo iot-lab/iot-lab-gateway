@@ -11,7 +11,9 @@ PIDFILE=$PIDDIR/${NAME}.pid
 LOGDIR=/var/log/${NAME}
 LOGFILE=$LOGDIR/${NAME}.log
 DAEMONUSER=www-data
+
 DAEMON=/usr/bin/server_rest.py
+DAEMON_OPTS="0.0.0.0 8080"
 
 
 
@@ -26,7 +28,7 @@ case "$1" in
          mkdir -p $LOGDIR
          chown $DAEMONUSER:$DAEMONUSER $LOGDIR
     fi
-    start-stop-daemon --start -m --pidfile $PIDFILE -b --chuid $DAEMONUSER:$DAEMONUSER --exec /bin/bash -- -c "exec $DAEMON >> $LOGFILE 2>&1"
+    start-stop-daemon --start -m --pidfile $PIDFILE -b --chuid $DAEMONUSER:$DAEMONUSER --exec /bin/bash -- -c "exec $DAEMON $DAEMON_OPTS >> $LOGFILE 2>&1"
     ;;
   stop)
     echo "Stopping $DESC ... "
