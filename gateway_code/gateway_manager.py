@@ -253,7 +253,7 @@ def _unimplemented_fct_str_():
     import sys
     # disable the pylint warning:
     # "Access to a protected member _getframe of a client class"
-    # pylint: disable-msg=W0212
+    # pylint: disable=W0212
     fct = sys._getframe(1).f_code.co_name
     ret_str = "Not implemented %s" % fct
     return ret_str

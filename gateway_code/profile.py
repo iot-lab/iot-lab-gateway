@@ -13,7 +13,7 @@ import json
 
 
 # Currently disable message 'too few public methods'
-# pylint: disable-msg=R0903
+# pylint: disable=R0903
 # Should be removed
 
 class Consumption:
