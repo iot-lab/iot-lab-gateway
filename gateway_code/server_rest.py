@@ -51,9 +51,9 @@ class GatewayRest(object):
 
         with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
             _file.write(firmware.file.read())
-            ret_dict = self.gateway_manager.exp_start(expid, username, \
+            ret = self.gateway_manager.exp_start(expid, username, \
                     _file.name, profile_obj)
-        return ret_dict
+        return ret
 
 
     def exp_stop(self):
@@ -63,8 +63,8 @@ class GatewayRest(object):
 
         # no files required, don't check
 
-        ret_dict = self.gateway_manager.exp_stop()
-        return ret_dict
+        ret = self.gateway_manager.exp_stop()
+        return ret
 
 
     def open_flash(self):
@@ -83,16 +83,16 @@ class GatewayRest(object):
         print "Start Open Node flash"
         with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
             _file.write(firmware.file.read())
-            ret_dict = self.gateway_manager.open_flash(_file.name)
+            ret = self.gateway_manager.node_flash('m3', _file.name)
 
-        return ret_dict
+        return ret
 
     def open_soft_reset(self):
         """
         Reset the open node with 'reset' pin
         """
-        ret_dict = self.gateway_manager.open_soft_reset()
-        return ret_dict
+        ret = self.gateway_manager.node_soft_reset('m3')
+        return ret
 
 
 def parse_arguments(args):

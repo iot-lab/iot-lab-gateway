@@ -37,11 +37,7 @@ class GatewayManager(object):
 
         self.serial_redirection = None
 
-    def cb_serial_redirection_error(self, handler_arg, error_code):
-        """ Callback for SerialRedirection error handler """
-        param_str = str((self, handler_arg, error_code))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        raise  NotImplementedError(0, ret_str)
+
 
 
     def exp_start(self, exp_id, user, firmware_path, profile):
@@ -57,59 +53,85 @@ class GatewayManager(object):
         """
 
         if self.experiment_is_running:
-            ret_dict = {'ret':1, 'err':'Experiment already running'}
-            return ret_dict
+            ret = 1
+            LOGGER.error('Experiment already running')
+            return ret
 
         self.exp_id = exp_id
         self.user = user
         self.experiment_is_running = True
         self.current_profile = profile
-        ret_dict = {}
+
+        ret_val = 0
+
+
+        # reset the control node
+        ret = self.node_soft_reset('gwt')
+        ret_val += ret
+
+
+
+        # start node and flash
+        self.open_power_start() # with DC current
+        ret_val += ret
+        # TODO  wait until node is ready ?
+        ret = self.node_flash('m3', firmware_path)
+        ret_val += ret
+
 
 
         # ret = self. set dc power
+        ret = self.exp_update_profile(profile)
+        ret_val += ret
 
-        ret, err = self.open_power_start()
-        ret = 0
-        if ret == 0:
-            # attente ready
-            ret_d = self.open_flash(firmware_path)
-            ret_dict['flash_firmware'] = ret_d
-            ret = ret_d['ret']
-
-        if ret == 0:
-            ret_d = self.exp_update_profile(profile)
-            ret_dict['update_profile'] = ret_d
-
-            # REMOVE ME
-            err = "NOT_IMPLEMENTED %s" % self.exp_update_profile.__name__
-            ret_dict['update_profile']['err'] = err
-            ret = ret_d['ret']
 
         # save the start experiment time
-        self.start_experiment_time = time.localtime()
+        self.start_experiment_time = time.time()
+        LOGGER.info('Start experiment time = %r', self.start_experiment_time)
+
+
         # set_time_0
         # set control node time to 0
 
 
         # start the serial port redirection
-        if ret == 0:
-            self.serial_redirection = SerialRedirection('m3', \
-                    error_handler = self.cb_serial_redirection_error)
-            ret = self.serial_redirection.start()
-            ret_dict['serial_redirection.start'] = {'ret':ret}
+        ret = self._open_serial_redirection_start()
+        ret_val += ret
 
 
         # start the gdb server
 
-        # reset the open node
-        if ret == 0:
-            ret_d = self.open_soft_reset()
-            ret_dict['reset'] = ret_d
-            ret = ret_d['ret']
 
 
-        return ret_dict
+        # final reset the open node
+        ret = self.node_soft_reset('m3')
+        ret_val += ret
+
+        LOGGER.info('Start experiment finished: ret_val: %d', ret_val)
+
+        return ret_val
+
+
+
+    def cb_serial_redirection_error(self, handler_arg, error_code):
+        """ Callback for SerialRedirection error handler """
+        param_str = str((self, handler_arg, error_code))
+        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
+        raise  NotImplementedError(0, ret_str)
+
+
+    def _open_serial_redirection_start(self):
+        """
+        Start the serial redirection
+        """
+        LOGGER.info('Open serial redirection start')
+        self.serial_redirection = SerialRedirection('m3', \
+                error_handler = self.cb_serial_redirection_error)
+        ret = self.serial_redirection.start()
+        if ret != 0:
+            LOGGER.error('Open serial redirection failed')
+        return ret
+
 
 
     def exp_stop(self):
@@ -117,7 +139,9 @@ class GatewayManager(object):
         Stop the current running experiment
         """
         if not self.experiment_is_running:
-            return {'ret': 1, 'err': 'No experiment running'}
+            ret = 1
+            LOGGER.error('No experiment running')
+            return ret
 
 
         # stop redirection
@@ -142,12 +166,9 @@ class GatewayManager(object):
         # reset the manager
         self.__init__()
 
+        LOGGER.warning(_unimplemented_fct_str_() + " implem not comlete")
+        return 0
 
-        param_str = str((self))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        ret_dict = {'ret':ret, 'err': ret_str, 'out': 'stop redirection'}
-
-        return ret_dict
 
 
     def exp_update_profile(self, profile):
@@ -156,14 +177,14 @@ class GatewayManager(object):
         """
         self.current_profile = profile
 
-        # send profile to CN
+        ret = 0
+        LOGGER.info('exp_update_profile')
+        LOGGER.warning(_unimplemented_fct_str_())
 
+        if ret != 0:
+            LOGGER.error('Open power start failed')
 
-        ret_dict = {'ret':0, 'out': 'update profile name : %s' % \
-                self.current_profile.profilename }
-
-        return ret_dict
-
+        return ret
 
 
     @staticmethod
@@ -171,8 +192,15 @@ class GatewayManager(object):
         """
         Power on the open node
         """
-        ret_str = _unimplemented_fct_str_()
-        return 0, ret_str
+        ret = 0
+
+
+        LOGGER.info('Open power start')
+        LOGGER.warning(_unimplemented_fct_str_())
+
+        if ret != 0:
+            LOGGER.error('Open power start failed')
+        return ret
 
     @staticmethod
     def open_power_stop():
@@ -180,39 +208,40 @@ class GatewayManager(object):
         Power off the open node
         """
 
-        ret_str = _unimplemented_fct_str_()
-        return 0, ret_str
+        LOGGER.warning(_unimplemented_fct_str_())
+        return 0
 
     @staticmethod
-    def open_soft_reset():
+    def node_soft_reset(node):
         """
-        Reset the open node using the 'reset' pin
+        Reset the given node using reset pin
+        :param node: Node name in {'gwt', 'm3'}
         """
-        ret, out, err = reset.reset('m3')
-        ret_dict = {'ret': ret, 'out': out, 'err': err}
-        return ret_dict
+        assert node in ['gwt', 'm3'], "Invalid node name"
+        LOGGER.info('Node %s reset', node)
 
+        ret, _out, _err = reset.reset(node)
 
-    @staticmethod
-    def open_flash(firmware_path):
-        """
-        Flash the given firmware on the open node
-        """
-        ret, out, err = flash_firmware.flash('m3', firmware_path)
-        ret_dict = {'ret': ret, 'out': out, 'err': err}
-        return ret_dict
+        if ret != 0:
+            LOGGER.error('Node %s reset failed: %d', node, ret)
+
+        return ret
 
 
     @staticmethod
-    def control_flash(firmware_path):
+    def node_flash(node, firmware_path):
         """
-        Flash the given firmware on the control node
+        Flash the given firmware on the given node
+        :param node: Node name in {'gwt', 'm3'}
+        """
+        assert node in ['gwt', 'm3'], "Invalid node name"
+        LOGGER.info('Flash firmware on %s: %s', node, firmware_path)
 
-        :note: Admin command
-        """
-        ret, out, err = flash_firmware.flash('gwt', firmware_path)
-        ret_dict = {'ret': ret, 'out': out, 'err': err}
-        return ret_dict
+        ret, _out, _err = flash_firmware.flash(node, firmware_path)
+
+        if ret != 0:
+            LOGGER.error('Flash firmware failed on %s: %d', node, ret)
+        return ret
 
 
 def _unimplemented_fct_str_():
