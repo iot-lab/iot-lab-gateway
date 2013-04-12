@@ -10,13 +10,23 @@ from gateway_code import flash_firmware, reset
 from gateway_code.serial_redirection import SerialRedirection
 import time
 
+import gateway_code.gateway_logging
+import logging
+
+LOGGER = logging.getLogger("gateway_logger")
+
 class GatewayManager(object):
     """
     Gateway Manager class,
 
     Manages experiments, open node and control node
     """
-    def __init__(self):
+    def __init__(self, log_folder='.'):
+
+        # configure the logger
+        gateway_code.gateway_logging.init_logger(log_folder)
+
+
         self.exp_id = None
         self.user = None
 

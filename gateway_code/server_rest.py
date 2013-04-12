@@ -6,10 +6,11 @@ Rest server listening to the experiment handler
 """
 
 from bottle import run, request, route
-from gateway_code.gateway_manager import GatewayManager
 from tempfile import NamedTemporaryFile
-from gateway_code.profile import ProfileJSONDecoder
 import json
+
+from gateway_code.gateway_manager import GatewayManager
+from gateway_code.profile import ProfileJSONDecoder
 
 class GatewayRest(object):
     """
@@ -108,9 +109,11 @@ def parse_arguments(args):
     parser.add_argument('host', type=str,
             help="Server address to bind to")
     parser.add_argument('port', type=int, help="Server port to bind to")
+    parser.add_argument('--log-folder', default='.', \
+            help="Folder where to write logs, default current folder")
     arguments = parser.parse_args(args)
 
-    return arguments.host, arguments.port
+    return arguments.host, arguments.port, arguments.log_folder
 
 def app_routing(app):
     """
@@ -127,7 +130,9 @@ def main(args):
     """
     Command line main function
     """
-    app = GatewayRest(GatewayManager())
+
+    host, port, log_folder = parse_arguments(args[1:])
+
+    app = GatewayRest(GatewayManager(log_folder))
     app_routing(app)
-    host, port = parse_arguments(args[1:])
     run(host=host, port=port, server='paste')
