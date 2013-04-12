@@ -13,7 +13,7 @@ LOGFILE=$LOGDIR/bottle.log
 DAEMONUSER=www-data
 
 DAEMON=/usr/bin/server_rest.py
-DAEMON_OPTS="0.0.0.0 8080"
+DAEMON_OPTS="0.0.0.0 8080 --log-folder=$LOGDIR"
 
 
 
