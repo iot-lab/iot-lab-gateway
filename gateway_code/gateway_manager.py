@@ -21,10 +21,12 @@ class GatewayManager(object):
 
     Manages experiments, open node and control node
     """
-    def __init__(self, log_folder='.'):
+    def __init__(self, log_folder=None):
 
         # configure the logger
-        gateway_code.gateway_logging.init_logger(log_folder)
+        # not reconfigure it when called from __stop__
+        if log_folder is not None:
+            gateway_code.gateway_logging.init_logger(log_folder)
 
 
         self.exp_id = None
