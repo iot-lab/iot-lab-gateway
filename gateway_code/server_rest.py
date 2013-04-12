@@ -43,7 +43,8 @@ class GatewayRest(object):
         """
         # verify passed files as request
         if not self.__valid_request(('firmware', 'profile')):
-            return "Wrong file arguments, should be 'firmware' and 'profile'"
+            return {'ret': 1, 'error': \
+                    "Wrong file args: required 'firmware' + 'profile'"}
 
         firmware = request.files['firmware']
         profile  = request.files['profile']
@@ -53,7 +54,7 @@ class GatewayRest(object):
             _file.write(firmware.file.read())
             ret = self.gateway_manager.exp_start(expid, username, \
                     _file.name, profile_obj)
-        return ret
+        return {'ret':ret}
 
 
     def exp_stop(self):
@@ -64,7 +65,7 @@ class GatewayRest(object):
         # no files required, don't check
 
         ret = self.gateway_manager.exp_stop()
-        return ret
+        return {'ret':ret}
 
 
     def open_flash(self):
@@ -77,7 +78,7 @@ class GatewayRest(object):
         """
         # verify passed files as request
         if not self.__valid_request(('firmware',)):
-            return "Wrong file arguments, should be 'firmware'"
+            return {'ret': 1, 'error':"Wrong file args: required 'firmware'"}
         firmware = request.files['firmware']
 
         print "Start Open Node flash"
@@ -85,14 +86,14 @@ class GatewayRest(object):
             _file.write(firmware.file.read())
             ret = self.gateway_manager.node_flash('m3', _file.name)
 
-        return ret
+        return {'ret':ret}
 
     def open_soft_reset(self):
         """
         Reset the open node with 'reset' pin
         """
         ret = self.gateway_manager.node_soft_reset('m3')
-        return ret
+        return {'ret':ret}
 
 
 def parse_arguments(args):

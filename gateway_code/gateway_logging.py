@@ -27,13 +27,7 @@ def init_logger(log_folder):
     log_folder += '/'
 
     logger = logging.getLogger(LOGGER_NAME)
-    #logger.setLevel(LOGLEVEL)
-
-    # Server logs
-    server_f = log_folder + 'gateway-server.log'
-    server = RotatingFileHandler(server_f, 'a', maxBytes=1000000, backupCount=1)
-    server.setLevel = logging.DEBUG
-    server.setFormatter(FORMATTER)
+    logger.setLevel(LOGLEVEL)
 
     # user logs
     # will be updated to be in user folder later
@@ -41,6 +35,13 @@ def init_logger(log_folder):
     user = RotatingFileHandler(user_f, 'a', maxBytes=100000, backupCount=1)
     user.setLevel = logging.ERROR
     user.setFormatter(FORMATTER)
+
+    # Server logs
+    server_f = log_folder + 'gateway-server.log'
+    server = RotatingFileHandler(server_f, 'a', maxBytes=1000000, backupCount=1)
+    server.setLevel = logging.DEBUG
+    server.setFormatter(FORMATTER)
+
 
     # add handlers
     logger.addHandler(server)
