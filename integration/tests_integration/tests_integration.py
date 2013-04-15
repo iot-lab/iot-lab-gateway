@@ -3,7 +3,10 @@
 from gateway_code import server_rest
 import multiprocessing
 import time
+import os
 
+
+CURRENT_DIR = os.path.realpath(__file__) + '/'
 URL = "http://localhost:8080/"
 
 import requests
@@ -32,8 +35,8 @@ def req_method(url, method='GET', data=None):
 
 
 def start_exp(exp_id = 123, user = 'clochette'):
-    with open('simple_idle.elf', 'rb') as firmware:
-        with open('profile.json', 'rb') as profile:
+    with open(CURRENT_DIR + 'simple_idle.elf', 'rb') as firmware:
+        with open(CURRENT_DIR + 'profile.json', 'rb') as profile:
             files = {'firmware': firmware, 'profile':profile}
             req_method('/exp/start/%d/%s' % (exp_id, user), 'MULTIPART', data=files)
 
@@ -42,7 +45,7 @@ def stop_exp():
 
 
 def flash_firmware():
-    with open('serial_echo.elf', 'rb') as firmware:
+    with open(CURRENT_DIR + 'serial_echo.elf', 'rb') as firmware:
         files = {'firmware': firmware}
         req_method('/open/flash', 'MULTIPART', data=files)
 
