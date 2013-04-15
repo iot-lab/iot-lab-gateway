@@ -6,7 +6,7 @@ import time
 import os
 
 
-CURRENT_DIR = os.path.realpath(__file__) + '/'
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 URL = "http://localhost:8080/"
 
 import requests
