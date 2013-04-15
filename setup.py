@@ -31,12 +31,12 @@ class Lint(Command):
 
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
-TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock']
+TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'requests']
 
 
 
 setup(name='gateway_code',
-        version='0.2',
+        version='0.21',
         description='Linux Gateway code',
         author='SensLAB Team',
         author_email='admin@senslab.info',
