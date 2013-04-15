@@ -7,7 +7,7 @@ import os
 
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
-URL = "http://localhost:8080/"
+URL = "http://localhost:8080"
 
 import requests
 def req_method(url, method='GET', data=None):
@@ -33,11 +33,10 @@ def req_method(url, method='GET', data=None):
         print("HTTP error code : %s \n%s" % (req.status_code, req.text))
 
 
-
 def start_exp(exp_id = 123, user = 'clochette'):
     with open(CURRENT_DIR + 'simple_idle.elf', 'rb') as firmware:
         with open(CURRENT_DIR + 'profile.json', 'rb') as profile:
-            files = {'firmware': firmware, 'profile':profile}
+            files = {'firmware': ('profile.json', firmware), 'profile':profile}
             req_method('/exp/start/%d/%s' % (exp_id, user), 'MULTIPART', data=files)
 
 def stop_exp():
@@ -46,16 +45,13 @@ def stop_exp():
 
 def flash_firmware():
     with open(CURRENT_DIR + 'serial_echo.elf', 'rb') as firmware:
-        files = {'firmware': firmware}
+        files = {'firmware': ('serial_echo.elf', firmware)}
         req_method('/open/flash', 'MULTIPART', data=files)
 
 def reset_open():
     req_method('/open/reset', 'PUT')
 
 
-
-
-#files = {'file': open('report.xls', 'rb')}
 
 import unittest
 
