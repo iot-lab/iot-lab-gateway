@@ -4,7 +4,7 @@ from gateway_code import server_rest
 import multiprocessing
 import time
 
-URL="http://localhost:8080/"
+URL = "http://localhost:8080/"
 
 import requests
 def req_method(url, method='GET', data=None):
@@ -13,29 +13,29 @@ def req_method(url, method='GET', data=None):
 
     if (method == 'POST'):
         headers = {'content-type': 'application/json'}
-        r = requests.post(method_url, data=data, headers=headers)
+        req = requests.post(method_url, data=data, headers=headers)
     elif (method == 'MULTIPART'):
-        r = requests.post(method_url, files=data)
+        req = requests.post(method_url, files=data)
     elif (method == 'DELETE'):
-        r = requests.delete(method_url)
-    elif (method = 'PUT')
-        r = requests.put(method_url)
+        req = requests.delete(method_url)
+    elif (method == 'PUT'):
+        req = requests.put(method_url)
     else:
-        r = requests.get(method_url)
+        req = requests.get(method_url)
 
-    if (r.status_code == requests.codes.ok):
-        return r.text
+    if (req.status_code == requests.codes.ok):
+        return req.text
     else:
         # we have HTTP error (code != 200)
-        print("HTTP error code : %s \n%s" % (r.status_code, r.text))
+        print("HTTP error code : %s \n%s" % (req.status_code, req.text))
 
 
 
-def start_exp(id = 123, user = 'clochette'):
+def start_exp(exp_id = 123, user = 'clochette'):
     with open('simple_idle.elf', 'rb') as firmware:
         with open('profile.json', 'rb') as profile:
             files = {'firmware': firmware, 'profile':profile}
-            req_method('/exp/start/%d/%s' % (id, user), 'MULTIPART', data=files)
+            req_method('/exp/start/%d/%s' % (exp_id, user), 'MULTIPART', data=files)
 
 def stop_exp():
     req_method('/exp/stop', 'DELETE')
@@ -59,15 +59,18 @@ import unittest
 class TestComplexExperimentRunning(unittest.TestCase):
 
     @classmethod
-    def setUpClass():
+    def setUpClass(cls):
         args = ['tests', 'localhost', '8080']
-        self.server_process = multiprocessing.Process(target=server_rest.main, args=[args])
-        self.server_process.start()
+        cls.server_process = multiprocessing.Process(\
+                target=server_rest.main, args=[args])
+        cls.server_process.start()
+
+        time.sleep(1)
 
     @classmethod
-    def tearDownClass():
-        self.server_process.terminate()
-        self.server_process.join()
+    def tearDownClass(cls):
+        cls.server_process.terminate()
+        cls.server_process.join()
 
     def a_tests_integration(self):
         """
@@ -81,6 +84,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
     def b_tests_integration(self):
         start_exp()
         flash_firmware()
+        reset_open()
         stop_exp()
 
 
