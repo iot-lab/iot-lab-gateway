@@ -60,6 +60,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
+        time.sleep(5)
         ret = self.app.exp_stop()
         assert ret == {'ret':0}
 
@@ -70,6 +71,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.request.files = {'firmware': self.idle, 'profile':self.profile}
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
+        time.sleep(5)
 
         # flash
         self.request.files = {'firmware': self.echo}
