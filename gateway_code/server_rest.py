@@ -96,7 +96,7 @@ class GatewayRest(object):
         return {'ret':ret}
 
 
-def parse_arguments(args):
+def parse_arguments(args): # pragma: no-cover
     """
     Parse arguments:
         [host, port]
@@ -116,7 +116,7 @@ def parse_arguments(args):
 
     return arguments.host, arguments.port, arguments.log_folder
 
-def app_routing(app):
+def app_routing(app): # pragma: no-cover
     """
     routing configuration
     :param app: default application
@@ -127,7 +127,7 @@ def app_routing(app):
     route('/open/reset', 'PUT')(app.open_soft_reset)
 
 
-def main(args):
+def main(args): # pragma: no-cover
     """
     Command line main function
     """
