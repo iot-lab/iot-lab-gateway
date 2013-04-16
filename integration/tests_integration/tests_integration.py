@@ -58,21 +58,31 @@ class TestComplexExperimentRunning(unittest.TestCase):
         """
         self.request.files = {'firmware': self.idle, 'profile':self.profile}
 
-        print >> sys.stderr, self.app.exp_start(123, 'clochette')
-        print >> sys.stderr, self.app.exp_stop()
+        ret = self.app.exp_start(123, 'clochette')
+        assert ret == {'ret':0}
+        ret = self.app.exp_stop()
+        assert ret == {'ret':0}
 
 
     def b_tests_integration(self):
-        return
 
+        # start
         self.request.files = {'firmware': self.idle, 'profile':self.profile}
-        print >> sys.stderr, self.app.exp_start(123, 'clochette')
+        ret = self.app.exp_start(123, 'clochette')
+        assert ret == {'ret':0}
 
+        # flash
         self.request.files = {'firmware': self.echo}
-        print >> sys.stderr, self.app.open_flash()
-        print >> sys.stderr, self.reset_open()
+        ret = self.app.open_flash()
+        assert ret == {'ret':0}
 
-        print >> sys.stderr, self.app.exp_stop()
+        # reset open node
+        ret = self.reset_open()
+        assert ret == {'ret':0}
+
+        # stop exp
+        ret = self.app.exp_stop()
+        assert ret == {'ret':0}
 
 
 
