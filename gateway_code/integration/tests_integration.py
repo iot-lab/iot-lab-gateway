@@ -44,7 +44,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
                 name = 'profile', filename = 'reduced_profile.json')
 
 
-        self.files = [self.idle.file, self.echo.file, self.profile.file, self.reduced_profile]
+        self.files = [self.idle.file, self.echo.file, self.profile.file, self.reduced_profile.file]
 
 
     def _reload_files(self):
