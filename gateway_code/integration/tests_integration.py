@@ -1,10 +1,8 @@
 #! /usr/bin/env python
 
 import gateway_code
-#from gateway_code import server_rest
 import time
 import os
-import sys
 
 from mock import patch
 
@@ -13,18 +11,40 @@ import unittest
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 class _FileUpload(object):
-    def __init__(self, file, name, filename, headers=None):
-        self.file     = file
+    def __init__(self, file_obj, name, filename, headers=None):
+        self.file     = file_obj
         self.name     = name
         self.filename = filename
         self.headers  = headers
+
+
+import socket
+def _send_command_open_node(host, port, command):
+    """
+    send a command to host/port and wait for an answer as a line
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.connect((host, port))
+    sock_file = sock.makefile('rw')
+    sock.settimeout(1.0)
+    ret = None
+    try:
+        sock_file.write(command)
+        ret = sock_file.readline
+    except socket.timeout:
+        ret = None
+    finally:
+        sock.close()
+    return ret
+
 
 class TestComplexExperimentRunning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
         args = ['tests', 'localhost', '8080']
-        cls.app = gateway_code.server_rest.GatewayRest(gateway_code.server_rest.GatewayManager('.'))
+        cls.app = gateway_code.server_rest.GatewayRest(\
+                gateway_code.server_rest.GatewayManager('.'))
 
     def setUp(self):
         self.app = TestComplexExperimentRunning.app
@@ -32,19 +52,24 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.request_patcher = patch('gateway_code.server_rest.request')
         self.request = self.request_patcher.start()
 
-        self.idle = _FileUpload(file = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
+        self.idle = _FileUpload(\
+                file = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
                 name = 'firmware', filename = 'simple_idle.elf')
 
-        self.echo = _FileUpload(file = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
+        self.echo = _FileUpload(\
+                file = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
                 name = 'firmware', filename = 'serial_echo.elf')
 
-        self.profile = _FileUpload(file = open(CURRENT_DIR + 'profile.json', 'rb'),
+        self.profile = _FileUpload(\
+                file = open(CURRENT_DIR + 'profile.json', 'rb'),
                 name = 'profile', filename = 'profile.json')
-        self.reduced_profile = _FileUpload(file = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
+        self.reduced_profile = _FileUpload(\
+                file = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
                 name = 'profile', filename = 'reduced_profile.json')
 
 
-        self.files = [self.idle.file, self.echo.file, self.profile.file, self.reduced_profile.file]
+        self.files = [self.idle.file, self.echo.file, \
+                self.profile.file, self.reduced_profile.file]
 
 
     def _reload_files(self):
@@ -77,6 +102,12 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.request.files = {'firmware': self.echo}
         ret = self.app.open_flash()
         assert ret == {'ret':0}
+
+        msg = 'HELLO WORLD\n'
+        ret = _send_command_open_node('localhost', 20000, msg)
+        import sys
+        print >> sys.stderr, ret
+
 
         # reset open node
         ret = self.app.open_soft_reset()
