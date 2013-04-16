@@ -102,8 +102,10 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         time.sleep(5)
 
+        # idle firmware, should be no reply
         ret = _send_command_open_node('localhost', 20000, msg)
         assert ret == None
+
 
         # flash
         self.request.files = {'firmware': self.echo}
@@ -112,6 +114,8 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         # wait node started
         time.sleep(2)
+
+        # echo firmware, should reply what was sent
         ret = _send_command_open_node('localhost', 20000, msg)
         assert ret == msg
 
