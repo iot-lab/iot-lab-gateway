@@ -44,6 +44,9 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.files = [self.idle.file, self.echo.file, self.profile.file]
 
 
+    def _reload_files(self):
+        for file_obj in self.files:
+            file_obj.seek(0)
 
 
     def tearDown(self):
@@ -92,6 +95,8 @@ class TestComplexExperimentRunning(unittest.TestCase):
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
 
+
+        self._reload_files()
         ret = self.app.exp_start(123, 'clochette')
         assert ret['ret'] != 0
 
