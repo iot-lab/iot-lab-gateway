@@ -99,7 +99,7 @@ class SerialRedirection():
         self.err = self.redirector_thread.err
         self.out = self.redirector_thread.out
 
-        if self.error_handler is not None:
+        if self.error_handler is not None: # pragma: no-cover
             self.error_handler(self.handler_arg, error_num)
 
 class _SerialRedirectionThread(threading.Thread):
@@ -123,7 +123,7 @@ class _SerialRedirectionThread(threading.Thread):
         self.baudrate = baudrate
 
         # Handler called on error on socat
-        if error_handler is not None:
+        if error_handler is not None: # pragma: no-cover
             if num_arguments_required(error_handler) != 1:
                 raise ValueError, 'Error handler should accept one argument'
         self.error_handler = error_handler
@@ -162,7 +162,7 @@ class _SerialRedirectionThread(threading.Thread):
 
             if retcode != 0 and (not self.stop_thread):
                 # don't call handler when 'terminate' causes the error
-                if self.error_handler is not None:
+                if self.error_handler is not None: # pragma: no-cover
                     self.error_handler(retcode)
                 break
 
