@@ -119,7 +119,6 @@ class GatewayManager(object):
         """ Callback for SerialRedirection error handler """
         param_str = str((self, handler_arg, error_code))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        import sys
         raise  NotImplementedError(0, ret_str)
 
 

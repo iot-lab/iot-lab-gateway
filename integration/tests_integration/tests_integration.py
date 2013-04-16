@@ -51,21 +51,15 @@ class TestComplexExperimentRunning(unittest.TestCase):
         for file_obj in self.files:
             file_obj.close()
 
-    def a_tests_integration(self):
+
+    def tests_complete_experiment(self):
         """
-        Start exp(idle)
-        Stop experiment
+        Test a complete experiment
+            start
+            flash
+            reset
+            stop
         """
-        self.request.files = {'firmware': self.idle, 'profile':self.profile}
-
-        ret = self.app.exp_start(123, 'clochette')
-        assert ret == {'ret':0}
-        time.sleep(5)
-        ret = self.app.exp_stop()
-        assert ret == {'ret':0}
-
-
-    def b_tests_integration(self):
 
         # start
         self.request.files = {'firmware': self.idle, 'profile':self.profile}
@@ -88,4 +82,17 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
 
 
+    def tests_invalid_calls(self):
+        """
+        Test invalid calls
+            * invalid start
+            * invalid flash
+        """
+        self.request.files = {}
+        ret = self.app.exp_start(123, 'clochett')
+        assert ret['ret'] != 0
+
+        self.request.files = {'firmware': self.idle, 'profile':self.profile}
+        ret = self.app.open_flash()
+        assert ret['ret'] != 0
 
