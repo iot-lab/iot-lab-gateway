@@ -105,7 +105,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
 
 
-    def tests_invalid_calls(self):
+    def tests_invalid_files(self):
         """
         Test invalid calls
             * invalid start
