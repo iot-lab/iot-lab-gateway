@@ -40,8 +40,11 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         self.profile = _FileUpload(file = open(CURRENT_DIR + 'profile.json', 'rb'),
                 name = 'profile', filename = 'profile.json')
+        self.reduced_profile = _FileUpload(file = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
+                name = 'profile', filename = 'reduced_profile.json')
 
-        self.files = [self.idle.file, self.echo.file, self.profile.file]
+
+        self.files = [self.idle.file, self.echo.file, self.profile.file, self.reduced_profile]
 
 
     def _reload_files(self):
@@ -91,7 +94,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
             * stop when stopped
         """
 
-        self.request.files = {'firmware': self.idle, 'profile':self.profile}
+        self.request.files = {'firmware': self.idle, 'profile':self.reduced_profile}
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
 
