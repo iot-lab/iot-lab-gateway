@@ -120,8 +120,8 @@ class GatewayManager(object):
         param_str = str((self, handler_arg, error_code))
         ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
         import sys
-        print >> sys.stderr, self.serial.redirector_thread.out
-        print >> sys.stderr, self.serial.redirector_thread.err
+        print >> sys.stderr, self.serial_redirection.redirector_thread.out
+        print >> sys.stderr, self.serial_redirection.redirector_thread.err
         raise  NotImplementedError(0, ret_str)
 
 
