@@ -26,11 +26,11 @@ def _send_command_open_node(host, port, command):
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     sock.connect((host, port))
     sock_file = sock.makefile('rw')
-    sock.settimeout(1.0)
+    sock.settimeout(5.0)
     ret = None
     try:
-        sock_file.write(command)
-        ret = sock_file.readline
+        sock.send(command)
+        ret = sock_file.readline()
     except socket.timeout:
         ret = None
     finally:
@@ -92,21 +92,28 @@ class TestComplexExperimentRunning(unittest.TestCase):
             stop
         """
 
+        msg = 'HELLO WORLD\n'
+
+
         # start
         self.request.files = {'firmware': self.idle, 'profile':self.profile}
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
+
         time.sleep(5)
+
+        ret = _send_command_open_node('localhost', 20000, msg)
+        assert ret == None
 
         # flash
         self.request.files = {'firmware': self.echo}
         ret = self.app.open_flash()
         assert ret == {'ret':0}
 
-        msg = 'HELLO WORLD\n'
+        # wait node started
+        time.sleep(2)
         ret = _send_command_open_node('localhost', 20000, msg)
-        import sys
-        print >> sys.stderr, ret
+        assert ret == msg
 
 
         # reset open node
