@@ -53,18 +53,18 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.request = self.request_patcher.start()
 
         self.idle = _FileUpload(\
-                file = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
+                file_obj = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
                 name = 'firmware', filename = 'simple_idle.elf')
 
         self.echo = _FileUpload(\
-                file = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
+                file_obj = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
                 name = 'firmware', filename = 'serial_echo.elf')
 
         self.profile = _FileUpload(\
-                file = open(CURRENT_DIR + 'profile.json', 'rb'),
+                file_obj = open(CURRENT_DIR + 'profile.json', 'rb'),
                 name = 'profile', filename = 'profile.json')
         self.reduced_profile = _FileUpload(\
-                file = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
+                file_obj = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
                 name = 'profile', filename = 'reduced_profile.json')
 
 
