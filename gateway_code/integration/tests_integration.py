@@ -81,6 +81,29 @@ class TestComplexExperimentRunning(unittest.TestCase):
         assert ret == {'ret':0}
 
 
+    def tests_invalid_calls(self):
+        """
+        Test start calls when not needed
+            * start when started
+            * stop when stopped
+        """
+
+        self.request.files = {'firmware': self.idle, 'profile':self.profile}
+        ret = self.app.exp_start(123, 'clochette')
+        assert ret == {'ret':0}
+
+        ret = self.app.exp_start(123, 'clochette')
+        assert ret['ret'] != 0
+
+        # stop exp
+        ret = self.app.exp_stop()
+        assert ret == {'ret':0}
+
+        ret = self.app.exp_stop()
+        assert ret['ret'] != 0
+
+
+
 
     def tests_invalid_calls(self):
         """
