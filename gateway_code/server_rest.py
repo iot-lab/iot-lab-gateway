@@ -68,25 +68,31 @@ class GatewayRest(object):
         return {'ret':ret}
 
 
-    def open_flash(self):
+    def _flash(self, node):
         """
-        Flash open node
+        Flash node
 
         Requires:
         request.files contains 'firmware' file argument
-
         """
+
         # verify passed files as request
         if not self.__valid_request(('firmware',)):
             return {'ret': 1, 'error':"Wrong file args: required 'firmware'"}
         firmware = request.files['firmware']
 
-        print "Start Open Node flash"
         with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
             _file.write(firmware.file.read())
-            ret = self.gateway_manager.node_flash('m3', _file.name)
+            ret = self.gateway_manager.node_flash(node, _file.name)
 
         return {'ret':ret}
+
+
+    def open_flash(self):
+        """
+        Flash open node
+        """
+        return self._flash('m3')
 
     def open_soft_reset(self):
         """
@@ -94,6 +100,23 @@ class GatewayRest(object):
         """
         ret = self.gateway_manager.node_soft_reset('m3')
         return {'ret':ret}
+
+
+
+
+    def admin_control_soft_reset(self):
+        """
+        Reset the control node with 'reset' pin
+        """
+        ret = self.gateway_manager.node_soft_reset('gwt')
+        return {'ret':ret}
+
+
+    def admin_control_flash(self):
+        """
+        Flash control node
+        """
+        return self._flash('gwt')
 
 
 def parse_arguments(args):

@@ -67,9 +67,14 @@ class TestComplexExperimentRunning(unittest.TestCase):
                 file_obj = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
                 name = 'profile', filename = 'reduced_profile.json')
 
+        self.control_node = _FileUpload(\
+                file_obj = open(CURRENT_DIR + 'control_node_april_11.elf', 'rb'),
+                name = 'profile', filename = 'control_node_april_11.elf')
 
-        self.files = [self.idle.file, self.echo.file, \
-                self.profile.file, self.reduced_profile.file]
+
+
+        self.files = [self.idle.file, self.echo.file, self.profile.file, \
+                self.reduced_profile.file, self.control_node.file]
 
 
     def _reload_files(self):
@@ -93,6 +98,15 @@ class TestComplexExperimentRunning(unittest.TestCase):
         """
 
         msg = 'HELLO WORLD\n'
+
+        # flash control node before starting
+        self.request.files = {'firmware': self.control_node}
+        ret = self.app.admin_control_flash()
+        assert ret == {'ret':0}
+
+        self.request.files = {}
+        ret = self.app.admin_control_soft_reset()
+        assert ret == {'ret':0}
 
 
         # start
