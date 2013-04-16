@@ -77,7 +77,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
         assert ret == {'ret':0}
 
         # reset open node
-        ret = self.reset_open()
+        ret = self.open_soft_reset()
         assert ret == {'ret':0}
 
         # stop exp
