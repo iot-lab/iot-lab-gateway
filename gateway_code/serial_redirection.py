@@ -99,7 +99,7 @@ class SerialRedirection():
         self.err = self.redirector_thread.err
         self.out = self.redirector_thread.out
 
-        if self.error_handler is not None: # pragma: no-cover
+        if self.error_handler is not None:
             self.error_handler(self.handler_arg, error_num)
 
 class _SerialRedirectionThread(threading.Thread):
@@ -123,7 +123,7 @@ class _SerialRedirectionThread(threading.Thread):
         self.baudrate = baudrate
 
         # Handler called on error on socat
-        if error_handler is not None: # pragma: no-cover
+        if error_handler is not None:
             if num_arguments_required(error_handler) != 1:
                 raise ValueError, 'Error handler should accept one argument'
         self.error_handler = error_handler
@@ -162,9 +162,8 @@ class _SerialRedirectionThread(threading.Thread):
 
             if retcode != 0 and (not self.stop_thread):
                 # don't call handler when 'terminate' causes the error
-                if self.error_handler is not None: # pragma: no-cover
+                if self.error_handler is not None:
                     self.error_handler(retcode)
-                break
 
 
 
@@ -180,14 +179,11 @@ class _SerialRedirectionThread(threading.Thread):
             try:
                 if self.redirector_process is not None:
                     self.redirector_process.terminate()
-            except OSError, err:
-                if err.errno == 3:
-                    # 'No such proccess'
-                    # It means that the current process is already terminated
-                    # not an issue
-                    pass
-                else:
-                    raise err
+            except OSError as err:
+                # errno == 3 'No such proccess'
+                # current process is already terminated not an issue
+                assert err.errno == 3, 'Unknown error num: %d' % err.errno
+                time.sleep(0.1)
             time.sleep(0.1)
 
         self.redirector_process = None

@@ -95,6 +95,10 @@ class TestSerialRedirectionInit(object):
 
 from threading import Semaphore
 import time
+
+from cStringIO import StringIO
+captured_err = StringIO()
+@mock.patch('sys.stderr', captured_err)
 @mock.patch('subprocess.Popen')
 class TestMainFunction(object):
 
@@ -176,6 +180,228 @@ class TestMainFunction(object):
         redirection.stop()
 
 
+    @mock.patch('gateway_code.serial_redirection.SerialRedirection')
+    def test_error_with_start_redirection(self, mock_open, mock_serial):
+        mock_redirection = mock_serial.return_value
+        mock_redirection.start.return_value = 1
+        try:
+            serial_redirection.main(['serial_redirection.py', 'm3'])
+        except SystemExit as ret:
+            assert ret.code == 1
+        else:
+            assert 0
+
+
+
+    def test_error_on_communicate(self, mock_popen):
+        """
+        Communicate error that runs main cb_error_handler
+        """
+        def communicate():
+            return mock.DEFAULT
+        def terminate():
+            pass
+
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "ERR_MSG")
+        popen.returncode = mock_ret = 42
+
+        node = 'm3'
+        args = ['serial_redirection.py', node]
+        serial_redirection.main(args)
+
+
+
+    def test_simple_case(self, mock_popen):
+
+        # stub Popen
+        sem = Semaphore(0)
+        def communicate():
+            sem.acquire(True)
+            return mock.DEFAULT
+        def terminate():
+            sem.release()
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
+        popen.returncode = mock_ret = 0
+
+        def wait_mock():
+            """
+            'wait' will call the ctrl+c handler has if a ctrl+c was got
+            """
+            import signal
+            handler = signal.getsignal(signal.SIGINT)
+            handler(None, None)
+
+        with mock.patch('gateway_code.serial_redirection.Event') as mock_event:
+            event = mock_event.return_value
+            event.wait.side_effect = wait_mock
+
+            serial_redirection.main(['serial_redirection.py', 'm3'])
+            assert event.wait.call_count == 1
+
+
+
+from cStringIO import StringIO
+captured_err = StringIO()
+@mock.patch('sys.stderr', captured_err)
+@mock.patch('subprocess.Popen')
+class TestSerialRedirection(object):
+
+    def test_run_with_handler_none(self, mock_popen):
+        """
+        Communicate error no error handler
+        """
+        def communicate():
+            return mock.DEFAULT
+        def terminate():
+            pass
+
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "ERR_MSG")
+        popen.returncode = mock_ret = 42
+
+        redirect = serial_redirection.SerialRedirection('m3')
+        redirect.start()
+        redirect.stop()
+
+        # wait condition
+        for i in range(0, 10):
+            if popen.communicate.call_count != 0:
+                break
+            time.sleep(0.1)
+        else:
+            assert popen.communicate.call_count != 0
+
+
+
+
+from gateway_code.serial_redirection import _SerialRedirectionThread
+@mock.patch('subprocess.Popen')
+class TestSerialRedirectionThread(object):
+
+    def test_wrong_parameters_init(self, _mock_popen):
+
+        # to get 100% coverage
+        # other cases treated by other test suites
+        bad_error_handler = (lambda a, b: 0)
+        try:
+            _SerialRedirectionThread('tty_file', 500000, bad_error_handler)
+        except ValueError as e:
+            pass
+        else:
+            assert 0, "No exception raised"
+
+    def test_handler_none(self, mock_popen):
+        def communicate():
+            return mock.DEFAULT
+        def terminate():
+            pass
+
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "ERR_MSG")
+        popen.returncode = mock_ret = 42
+
+        redirect = _SerialRedirectionThread('tty_file', 500000, error_handler=None)
+        redirect.start()
+        for i in range(0, 10):
+            if popen.communicate.call_count != 0:
+                break
+            time.sleep(0.1)
+        else:
+            assert popen.communicate.call_count != 0
+        redirect.stop()
+
+
+    def test_terminate_on_non_started_process(self, mock_popen):
+        """
+        Test terminate with self.redirector_process is None
+        """
+
+        # Start thread
+        # blocks on Popen
+        # run stop
+        # sigalarm unlocks popen so that terminate will work on next call
+
+        import signal
+
+        # stub Popen
+        sem = Semaphore(0)
+
+        def communicate():
+            mock_popen.side_effect = None
+            sem.acquire(True)
+            return mock.DEFAULT
+
+        def terminate():
+            sem.release()
+
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
+        popen.returncode = mock_ret = 0
+
+
+        # block on Popen creation
+        def acq(a, stdout, stderr):
+            sem.acquire(True)
+            return mock.DEFAULT
+        mock_popen.side_effect = acq
+
+
+        def handler(signum, frame):
+            sem.release()
+        # Set the signal handler and a 5-second alarm
+        signal.signal(signal.SIGALRM, handler)
+
+        redirect = serial_redirection._SerialRedirectionThread('tty', 42, None)
+        redirect.start()
+
+        signal.alarm(1)
+        redirect.stop()
+        signal.alarm(0)          # Disable the alarm
+
+
+
+    def test_process_allready_terminated_os_error(self, mock_popen):
+
+        #
+        # Does not represent the real case, where terminate would have
+        # been called when the process would allready be terminated
+        # but it's here for coverage
+        #
+
+        # stub Popen
+        sem = Semaphore(0)
+        def communicate():
+            sem.acquire(True)
+            return mock.DEFAULT
+        def terminate():
+            sem.release()
+            raise OSError(3, 'No such proccess')
+
+        popen = mock_popen.return_value
+        popen.terminate.side_effect = terminate
+        popen.communicate.side_effect = communicate
+        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
+        popen.returncode = mock_ret = 0
+
+        redirect = serial_redirection._SerialRedirectionThread('tty', 42, None)
+        redirect.start()
+        redirect.stop()
+        assert popen.terminate.call_count != 0
+
+
+
 
 from cStringIO import StringIO
 captured_err = StringIO()
@@ -218,88 +444,4 @@ class TestParseArguments(object):
             assert ret.code != 0
         else:
             assert 0
-
-from cStringIO import StringIO
-captured_err = StringIO()
-@mock.patch('sys.stderr', captured_err)
-@mock.patch('subprocess.Popen')
-class TestSerialRedirection(object):
-
-    def test_simple_case(self, mock_popen):
-
-        # stub Popen
-        sem = Semaphore(0)
-        def communicate():
-            sem.acquire(True)
-            return mock.DEFAULT
-        def terminate():
-            sem.release()
-        popen = mock_popen.return_value
-        popen.terminate.side_effect = terminate
-        popen.communicate.side_effect = communicate
-        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
-        popen.returncode = mock_ret = 0
-
-        def wait_mock():
-            """
-            'wait' will call the ctrl+c handler has if a ctrl+c was got
-            """
-            import signal
-            handler = signal.getsignal(signal.SIGINT)
-            handler(None, None)
-
-        with mock.patch('gateway_code.serial_redirection.Event') as mock_event:
-            event = mock_event.return_value
-            event.wait.side_effect = wait_mock
-
-            serial_redirection.main(['serial_redirection.py', 'm3'])
-            assert event.wait.call_count == 1
-
-
-    def test_error_on_communicate(self, mock_popen):
-
-        def communicate():
-            return mock.DEFAULT
-        def terminate():
-            pass
-
-        popen = mock_popen.return_value
-        popen.terminate.side_effect = terminate
-        popen.communicate.side_effect = communicate
-        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "ERR_MSG")
-        popen.returncode = mock_ret = 42
-
-        node = 'm3'
-        args = ['serial_redirection.py', node]
-        serial_redirection.main(args)
-
-    @mock.patch('gateway_code.serial_redirection.SerialRedirection')
-    def test_error_with_start_redirection(self, mock_open, mock_serial):
-        mock_redirection = mock_serial.return_value
-        mock_redirection.start.return_value = 1
-        try:
-            serial_redirection.main(['serial_redirection.py', 'm3'])
-        except SystemExit as ret:
-            assert ret.code == 1
-        else:
-            assert 0
-
-
-from gateway_code.serial_redirection import _SerialRedirectionThread
-class TestSerialRedirectionThread(object):
-
-    def test_wrong_parameters_init(self):
-
-        # to get 100% coverage
-        # other cases treated by other test suites
-        bad_error_handler = (lambda a, b: 0)
-        try:
-            _SerialRedirectionThread('tty_file', 500000, bad_error_handler)
-        except ValueError as e:
-            pass
-        else:
-            assert 0, "No exception raised"
-
-
-
 
