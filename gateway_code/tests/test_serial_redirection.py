@@ -269,8 +269,6 @@ class TestSerialRedirection(object):
 
         redirect = serial_redirection.SerialRedirection('m3')
         redirect.start()
-        redirect.stop()
-
         # wait condition
         for i in range(0, 50):
             if popen.communicate.call_count != 0:
@@ -278,6 +276,8 @@ class TestSerialRedirection(object):
             time.sleep(0.1)
         else:
             assert popen.communicate.call_count != 0
+        redirect.stop()
+
 
 
 
