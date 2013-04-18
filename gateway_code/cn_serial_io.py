@@ -4,6 +4,7 @@
 Serial IO layer for control node
 """
 import serial
+import select # used for 'select.error'
 from threading import  Thread
 
 
@@ -167,8 +168,8 @@ class ReceiveThread(Thread):
             #call to read will block when no bytes are received
             try:
                 rx_char = self.serial_port.read()
-            except ValueError:
-                break
+            except select.error:
+                break # pyserial has been closed
 
             # Putting the bytes received into the packet depending on the
             # reception state (rx_state)
