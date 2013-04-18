@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 
 import mock
+import select
 
 
 from gateway_code import cn_serial_io
@@ -27,7 +28,7 @@ def test_rx_multiple_packets(serial_mock_class):
     def read_mock():
         if read_values == []:
             unlock_test.set()
-            raise ValueError
+            raise select.error
         return read_values.pop(0)
 
     def cb_packet_received(packet):
@@ -62,7 +63,7 @@ def test_rx_wih_invalid_start(serial_mock_class):
     def read_mock():
         if read_values == []:
             unlock_test.set()
-            raise ValueError
+            raise select.error
         return read_values.pop(0)
 
     def cb_packet_received(packet):

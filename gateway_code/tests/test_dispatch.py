@@ -6,6 +6,7 @@ import mock
 import Queue
 import serial
 import threading
+import select
 
 @mock.patch('serial.Serial')
 def test_cb_dispatcher(serial_mock_class):
@@ -32,7 +33,7 @@ def test_cb_dispatcher(serial_mock_class):
     def read_mock():
         if read_values == []:
             unlock_test.set()
-            raise ValueError
+            raise select.error
         return read_values.pop(0)
     serial_mock = serial_mock_class.return_value
     serial_mock.read.side_effect = read_mock
@@ -84,7 +85,7 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
         unlock_rx_thread.wait()
         if read_values == []:
             unlock_test.set()
-            raise ValueError
+            raise select.error
         return read_values.pop(0)
     serial_mock = serial_mock_class.return_value
     serial_mock.read.side_effect = read_mock
