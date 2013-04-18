@@ -11,7 +11,6 @@ PROTOCOL = {}
 # SYNC_BYTE | LEN | TYPE | -?-?-?-?-
 
 SYNC_BYTE = chr(0x80)
-
 OML_PKT_TYPE = chr(0xF0)
 
 
@@ -68,7 +67,7 @@ def _print_packet(info, data):
     debug_out += "'"
     print debug_out
 
-def _valid_result_command(packet, type, length):
+def _valid_result_command(packet, pkt_type, length):
     """
     Validate type of packet,
     ACK/NACK
@@ -76,7 +75,7 @@ def _valid_result_command(packet, type, length):
     """
 
     ret = True
-    ret &= packet[0] == type
+    ret &= packet[0] == pkt_type
     ret &= packet[1] == ACK
     ret &= len(packet) == length
 
@@ -151,9 +150,9 @@ def parse_arguments(args):
     parse_stop.add_argument('alim', choices=['dc', 'batt'], \
             help='Alimentation, dc => charging battery')
 
-    parse_reset  = sub.add_parser('reset_time', help='Reset control node time')
+    _parse_reset  = sub.add_parser('reset_time', help='Reset control node time')
 
-    parse_get  = sub.add_parser('get_time', help='Get control node time')
+    _parse_get  = sub.add_parser('get_time', help='Get control node time')
 
 
     namespace = parser.parse_args(args)
