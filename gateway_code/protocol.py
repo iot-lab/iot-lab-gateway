@@ -21,7 +21,6 @@ BATT = chr(0x0)
 DC   = chr(0x1)
 
 
-
 # (res|g)et time
 RESET_OPEN_TIME = chr(0x72)
 
@@ -29,14 +28,8 @@ GET_OPEN_TIME = chr(0x73)
 TIME_FACTOR = 32768
 
 
-
 ACK  = chr(0x0A)
 NACK = chr(0x02)
-
-
-COMMAND = {'start': OPEN_NODE_START, 'stop': OPEN_NODE_STOP, \
-        'reset_time': RESET_OPEN_TIME, 'get_time': GET_OPEN_TIME}
-ALIM    = {'batt': BATT, 'dc': DC,}
 
 
 
@@ -46,18 +39,61 @@ ALIM    = {'batt': BATT, 'dc': DC,}
 # RADIO_NOISE   = chr(0x45) # ??? 0x4X too ? -> no monitoring values
 
 
-# Consumption byte configuration
+# CONSUMPTION VALUES
 
-#  CONSUMPTION_POWER   = 0
-#  CONSUMPTION_VOLTAGE = 1 << 0
-#  CONSUMPTION_CURRENT = 1 << 1
-#  # nothing on bit 3
-#  CONSUMPTION_3_3V    = 1 << 3
-#  CONSUMPTION_5V      = 1 << 4
-#  CONSUMPTION_BATT    = 1 << 5
-#  # bit 7
-#  CONSUMPTION_ENABLE  = 1 << 6
-#  CONSUMPTION_DISABLE = 0
+CONFIG_POWER_POLL   = chr(0x79)
+
+CONSUMPTION_POWER   = 1 << 0
+CONSUMPTION_VOLTAGE = 1 << 1
+CONSUMPTION_CURRENT = 1 << 2
+# nothing on bit 3
+CONSUMPTION_3_3V    = 1 << 4
+CONSUMPTION_5V      = 1 << 5
+CONSUMPTION_BATT    = 1 << 6
+# nothing on bit 7
+MEASURE_SOURCE = {
+        '3.3V':CONSUMPTION_3_3V,
+        '5V':CONSUMPTION_5V,
+        'BATT':CONSUMPTION_BATT,
+        }
+
+
+# CONFIG BYTE == [ PERIOD | AVERAGE << 4 | ENABLE(BIT7) ]
+
+# Period
+INA226_PERIOD_140US  = 0
+INA226_PERIOD_204US  = 1
+INA226_PERIOD_332US  = 2
+INA226_PERIOD_588US  = 3
+INA226_PERIOD_1100US = 4
+INA226_PERIOD_2116US = 5
+INA226_PERIOD_4156US = 6
+INA226_PERIOD_8244US = 7
+
+# Average
+INA226_AVERAGE_1     = 0
+INA226_AVERAGE_4     = 1
+INA226_AVERAGE_16    = 2
+INA226_AVERAGE_64    = 3
+INA226_AVERAGE_128   = 4
+INA226_AVERAGE_256   = 5
+INA226_AVERAGE_512   = 6
+INA226_AVERAGE_1024  = 7
+# ENABLE/DISABLE
+INA226_ENABLE        = 1 << 7
+INA226_DISABLE       = 0 << 7
+
+INA226_STATUS = {
+        'start': INA226_ENABLE,
+        'stop': INA226_DISABLE,
+        }
+
+
+
+COMMAND = {'start': OPEN_NODE_START, 'stop': OPEN_NODE_STOP, \
+        'reset_time': RESET_OPEN_TIME, 'get_time': GET_OPEN_TIME, \
+        'consumption': CONFIG_POWER_POLL}
+ALIM    = {'batt': BATT, 'dc': DC,}
 
 
 def _print_packet(info, data):
@@ -136,6 +172,38 @@ def get_time(dispatcher, command):
     return control_time_seconds
 
 
+
+def config_consumption(dispatcher, command, source, period, average, status):
+
+    meas_aux = CONSUMPTION_POWER | CONSUMPTION_VOLTAGE | CONSUMPTION_CURRENT
+
+    command_b = COMMAND[command]
+
+    source_b  = chr(meas_aux | MEASURE_SOURCE[source])
+    config_b = chr(period | average << 4 | INA226_STATUS[status])
+
+    data = command_b + source_b + config_b
+
+    result = send_cmd(dispatcher, data)
+
+    # only type and ACK
+    ret = _valid_result_command(result, command_b, 2)
+    return ret
+
+def listen(dispatcher, command):
+    oml_queue = dispatcher.queue_oml
+
+    while True:
+        pkt = oml_queue.get(True)
+        _print_packet('MEASURE_PKT', pkt)
+
+    return 0
+
+
+
+
+
+
 def parse_arguments(args):
     import argparse
     parser = argparse.ArgumentParser(prog='protocol')
@@ -154,10 +222,23 @@ def parse_arguments(args):
 
     _parse_get  = sub.add_parser('get_time', help='Get control node time')
 
+    # polling
+    parse_consumption  = sub.add_parser('consumption', \
+            help='Reset control node time')
+    parse_consumption.add_argument('status', choices=['start', 'stop'])
+    parse_consumption.add_argument('source', choices=['3.3V', '5V', 'BATT'])
+    parse_consumption.add_argument('-p', '--period', choices=range(0, 8), \
+            default=4, help = 'See definition in the code')
+    parse_consumption.add_argument('-a', '--average', choices=range(0, 8), \
+            default=5, help = 'See definition in the code')
+
+    _parse_listen_measures = sub.add_parser('listen', \
+            help='listen for measures packets')
+
 
     namespace = parser.parse_args(args)
+    print namespace
     return namespace.command, namespace
-
 
 
 _ARGS_COMMANDS = {
@@ -165,7 +246,10 @@ _ARGS_COMMANDS = {
         'stop':  start_stop,
         'reset_time': reset_time,
         'get_time': get_time,
+        'consumption':config_consumption,
+        'listen': listen,
         }
+
 
 
 
@@ -190,13 +274,5 @@ def main(args):
     print '%s: %r' % (command, ret)
 
     rxtx.stop()
-
-
-    # mock queues.put method
-    # may be replaced with a regular function for listening
-#    oml_queue.put = MagicMock(name='put')
-#    dis.queue_control_node.put = MagicMock(name='put')
-
-
 
 
