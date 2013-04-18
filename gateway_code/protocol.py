@@ -99,8 +99,8 @@ ALIM    = {'batt': BATT, 'dc': DC,}
 def _print_packet(info, data):
     debug_out = info + ": '"
     for i in data:
-        debug_out += '%02X.' % ord(i)
-    debug_out[-1] = "'"
+        debug_out += '%02X ' % ord(i)
+    debug_out += "'"
     print debug_out
 
 def _valid_result_command(packet, pkt_type, length):
