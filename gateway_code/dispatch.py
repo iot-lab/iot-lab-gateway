@@ -1,10 +1,11 @@
 import Queue
 from threading import Lock
 
-class Dispatch():
-    OML_PKT_TYPE = chr(0xFF)
-    def __init__(self, queue_oml, io_write = None):
+class Dispatch(object):
+    def __init__(self, queue_oml, oml_pkt_type, io_write = None):
+        self.oml_pkt_type = oml_pkt_type
         self.queue_oml = queue_oml
+
         self.queue_control_node = Queue.Queue(1)
         self.io_write = io_write
         self.protect_send = Lock()
@@ -13,8 +14,9 @@ class Dispatch():
     def cb_dispatcher(self, packet):
         """ Forwards the packet tot the appropriate queue depending on
         the packet type """
-        #check packet type (first byte)
-        if packet[0] == self.OML_PKT_TYPE:
+        # check packet type (first byte)
+        # only the first 4 bits
+        if (ord(packet[0]) & 0xF0) == ord(self.oml_pkt_type):
             self.queue_oml.put(packet)
         else:
             #put the control node's answer into the queue, unlocking
@@ -26,6 +28,7 @@ class Dispatch():
         """
         Send a packet and wait for the answer
         """
+        assert self.io_write is not None, 'io_write should be initialized'
         self.protect_send.acquire()
         self.io_write(data)
         #Waits for the control node to answer before unlocking send
