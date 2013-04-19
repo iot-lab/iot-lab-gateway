@@ -99,8 +99,12 @@ ALIM    = {'batt': BATT, 'dc': DC,}
 
 def _print_packet(info, data):
     debug_out = info + ": '"
-    for i in data:
-        debug_out += '%02X ' % ord(i)
+    if data is None:
+        debug_out += str(None)
+    else:
+        for i in data:
+            debug_out += '%02X ' % ord(i)
+
     debug_out += "'"
     print debug_out
 
@@ -111,6 +115,8 @@ def _valid_result_command(packet, pkt_type, length):
     and length
     """
 
+    if packet is None:
+        return False
     ret = True
     ret &= packet[0] == pkt_type
     ret &= packet[1] == ACK
