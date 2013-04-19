@@ -32,7 +32,6 @@ class Dispatch(object):
         self.protect_send.acquire()
 
         # remove existing item (old packet lost on timeout?)
-        assert self.queue_control_node.max_size == 1
         # if size > 1, add a loop
         if self.queue_control_node.full():
             self.queue_control_node.get_nowait()

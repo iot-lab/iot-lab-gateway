@@ -4,6 +4,7 @@ Protocol between gateway and control node
 
 import struct
 import Queue
+import struct
 
 PROTOCOL = {}
 
@@ -41,6 +42,8 @@ NACK = chr(0x02)
 
 
 # CONSUMPTION VALUES
+
+MEASURE_POWER = chr(0xFF)
 
 CONFIG_POWER_POLL   = chr(0x79)
 
@@ -197,6 +200,56 @@ def config_consumption(dispatcher, command, source, period, average, status):
     ret = _valid_result_command(result, command_b, 2)
     return ret
 
+
+CONSUMPTION_TUPLE = \
+        ((CONSUMPTION_POWER, 'p'), \
+        (CONSUMPTION_VOLTAGE, 'v'), \
+        (CONSUMPTION_CURRENT, 'c'))
+
+def decode_consumption_packet(pkt):
+
+    unpack_str = '!'
+    config = ord(pkt[1])
+    count  = ord(pkt[2])
+    values_count = 0
+
+    measures = ['t']
+    unpack_str += 'L'
+    values_count += 1
+    for meas, name in CONSUMPTION_TUPLE:
+        if config & meas:
+            measures.append(name)
+            unpack_str += 'f'
+            values_count += 1
+
+    all_measures = []
+    for num in range(0, ord(pkt[2])):
+        first_char = 2 + num * values_count * 4
+        results = list(struct.unpack(unpack_str, pkt[first_char:first_char + 4 * values_count]))
+        results[0] = results[0] / float(TIME_FACTOR)
+        res_dict = dict([ (name, results[num]) for num, name in enumerate(measures) ])
+        all_measures.append(res_dict)
+
+    return all_measures
+
+
+
+
+MEASURES_DECODE = {
+        MEASURE_POWER: decode_consumption_packet,
+        }
+
+def decode_measure_packet(pkt):
+    # ret = _valid_result_command(pkt, command_b, 2)
+    #   FF 17 01 4B BD A3 8E 3E 07 52 82 40 4F 0A 3D 3D 27 57 95
+    fct = MEASURES_DECODE.get(pkt[0], None)
+
+    if fct is None:
+        import sys
+        print >> sys.stderr, 'Uknown measure packet: %02X' % ord(pkt[0])
+    else:
+        print fct(pkt)
+
 def listen(dispatcher, command):
     oml_queue = dispatcher.queue_oml
 
@@ -204,6 +257,7 @@ def listen(dispatcher, command):
         try:
             pkt = oml_queue.get(True, timeout=1)
             _print_packet('MEASURE_PKT', pkt)
+            decode_measure_packet(pkt)
         except Queue.Empty:
             pass
         except KeyboardInterrupt:
