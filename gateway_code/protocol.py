@@ -206,6 +206,15 @@ CONSUMPTION_TUPLE = \
         (CONSUMPTION_VOLTAGE, 'v'), \
         (CONSUMPTION_CURRENT, 'c'))
 
+
+
+for conf in range(1, 1 << 4):
+    measures_list = ['m', 't'] + \
+            (['p'] if conf | CONSUMPTION_POWER else []) + \
+            (['v'] if conf | CONSUMPTION_VOLTAGE else []) + \
+            (['c'] if conf | CONSUMPTION_CURRENT else [])
+    unpack_str = '!L' + ('f' * (len(measures_list) - 2))
+
 def decode_consumption_packet(pkt):
 
     unpack_str = '!'
@@ -224,7 +233,7 @@ def decode_consumption_packet(pkt):
 
     all_measures = []
     for num in range(0, ord(pkt[2])):
-        first_char = 2 + num * values_count * 4
+        first_char = 3 + num * values_count * 4
         results = list(struct.unpack(unpack_str, pkt[first_char:first_char + 4 * values_count]))
         results[0] = results[0] / float(TIME_FACTOR)
         res_dict = dict([ (name, results[num]) for num, name in enumerate(measures) ])
