@@ -207,39 +207,43 @@ CONSUMPTION_TUPLE = \
         (CONSUMPTION_CURRENT, 'c'))
 
 
+# store list of measures and associated unpack strings for each config
+CONSUMPTION_DECODE_VALUES = {}
+for conf in range(1, 1 << 3):
+    measures_list = ['t'] + \
+            (['p'] if conf & CONSUMPTION_POWER else []) + \
+            (['v'] if conf & CONSUMPTION_VOLTAGE else []) + \
+            (['c'] if conf & CONSUMPTION_CURRENT else [])
+    unpack_str = '!L' + ('f' * (len(measures_list) - 1))
+    measures_len = 4 + 4 * (len(measures_list) -1) # 4 bytes for time + 4bytes per value (float)
+    CONSUMPTION_DECODE_VALUES[conf] = (measures_list, unpack_str, measures_len)
 
-for conf in range(1, 1 << 4):
-    measures_list = ['m', 't'] + \
-            (['p'] if conf | CONSUMPTION_POWER else []) + \
-            (['v'] if conf | CONSUMPTION_VOLTAGE else []) + \
-            (['c'] if conf | CONSUMPTION_CURRENT else [])
-    unpack_str = '!L' + ('f' * (len(measures_list) - 2))
+CONSUMPTION_SOURCE_VALUES = dict([(MEASURE_SOURCE[key], key) \
+        for key in MEASURE_SOURCE])
+
 
 def decode_consumption_packet(pkt):
 
+    header_size = 3
     unpack_str = '!'
     config = ord(pkt[1])
     count  = ord(pkt[2])
-    values_count = 0
 
-    measures = ['t']
-    unpack_str += 'L'
-    values_count += 1
-    for meas, name in CONSUMPTION_TUPLE:
-        if config & meas:
-            measures.append(name)
-            unpack_str += 'f'
-            values_count += 1
+    values, unpack_str, measures_len = CONSUMPTION_DECODE_VALUES[config & 0x7]
+    num_values = len(values)
+    power_source = CONSUMPTION_SOURCE_VALUES[config & 0x70]
+
+    chunks = [pkt[start:start + num_values * measures_len] for start in range(header_size, len(pkt), num_values * measures_len)]
+    assert len(chunks) == count
 
     all_measures = []
-    for num in range(0, ord(pkt[2])):
-        first_char = 3 + num * values_count * 4
-        results = list(struct.unpack(unpack_str, pkt[first_char:first_char + 4 * values_count]))
-        results[0] = results[0] / float(TIME_FACTOR)
-        res_dict = dict([ (name, results[num]) for num, name in enumerate(measures) ])
-        all_measures.append(res_dict)
+    for raw_measure in chunks:
+        measures = list(struct.unpack(unpack_str, raw_measure))
+        # convert time to float
+        measures[0] = measures[0] / float(TIME_FACTOR)
+        all_measures.append(measures)
 
-    return all_measures
+    return {power_source: (values, all_measures)}
 
 
 
@@ -339,8 +343,14 @@ def main(args):
 
     rxtx.start()
 
-    ret = _ARGS_COMMANDS[command](dispatcher = dis, **arguments.__dict__)
-    print '%s: %r' % (command, ret)
+    try:
+        ret = _ARGS_COMMANDS[command](dispatcher = dis, **arguments.__dict__)
+        print '%s: %r' % (command, ret)
+    except:
+        import sys
+        print 'Exception'
+        print sys.exc_info()[0]
+
 
     rxtx.stop()
 
