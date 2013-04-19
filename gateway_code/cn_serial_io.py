@@ -8,6 +8,7 @@ import select # used for 'select.error'
 from threading import  Thread
 
 
+
 # Remove for the moment
 #  from gateway_code.gateway_logging import logger
 
@@ -34,7 +35,8 @@ class RxTxSerial():
         #on object creation because the port is given, timeout is by dlft
         #set to None therfore waits forever.
         self.serial_port = serial.Serial(port=port, \
-                baudrate=baudrate)
+                baudrate=baudrate, timeout=1)
+        #timeout == 1 so that Reader thread can exit
 
         #Starting reciving thread
         self.rx_thread = ReceiveThread(self.serial_port, cb_packet_received)
@@ -168,18 +170,20 @@ class ReceiveThread(Thread):
             #call to read will block when no bytes are received
             try:
                 rx_char = self.serial_port.read()
-            except select.error:
+            except (select.error, serial.SerialException):
                 break # pyserial has been closed
 
-            # Putting the bytes received into the packet depending on the
-            # reception state (rx_state)
-            rx_state = self.state_machine_dict[rx_state](packet, rx_char)
+            if rx_char:
 
-            if rx_state == RX_PACKET_FULL:
+                # Putting the bytes received into the packet depending on the
+                # reception state (rx_state)
+                rx_state = self.state_machine_dict[rx_state](packet, rx_char)
 
-                self.cb_packet_received(packet.payload)
-                rx_state = RX_IDLE
-                packet = Buffer()
+                if rx_state == RX_PACKET_FULL:
+
+                    self.cb_packet_received(packet.payload)
+                    rx_state = RX_IDLE
+                    packet = Buffer()
 
 
 

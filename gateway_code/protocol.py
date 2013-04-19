@@ -3,6 +3,7 @@ Protocol between gateway and control node
 """
 
 import struct
+import Queue
 
 PROTOCOL = {}
 
@@ -194,12 +195,15 @@ def listen(dispatcher, command):
     oml_queue = dispatcher.queue_oml
 
     while True:
-        pkt = oml_queue.get(True)
-        _print_packet('MEASURE_PKT', pkt)
+        try:
+            pkt = oml_queue.get(True, timeout=1)
+            _print_packet('MEASURE_PKT', pkt)
+        except Queue.Empty:
+            pass
+        except KeyboardInterrupt:
+            break
 
     return 0
-
-
 
 
 
@@ -227,9 +231,9 @@ def parse_arguments(args):
             help='Reset control node time')
     parse_consumption.add_argument('status', choices=['start', 'stop'])
     parse_consumption.add_argument('source', choices=['3.3V', '5V', 'BATT'])
-    parse_consumption.add_argument('-p', '--period', choices=range(0, 8), \
+    parse_consumption.add_argument('-p', '--period', type=int, choices=range(0, 8), \
             default=4, help = 'See definition in the code')
-    parse_consumption.add_argument('-a', '--average', choices=range(0, 8), \
+    parse_consumption.add_argument('-a', '--average', type=int, choices=range(0, 8), \
             default=5, help = 'See definition in the code')
 
     _parse_listen_measures = sub.add_parser('listen', \
@@ -255,7 +259,6 @@ _ARGS_COMMANDS = {
 
 def main(args):
     from gateway_code import dispatch, cn_serial_io
-    import Queue
     command, arguments = parse_arguments(args[1:])
 
 
@@ -266,9 +269,6 @@ def main(args):
 
 
     rxtx.start()
-
-
-
 
     ret = _ARGS_COMMANDS[command](dispatcher = dis, **arguments.__dict__)
     print '%s: %r' % (command, ret)
