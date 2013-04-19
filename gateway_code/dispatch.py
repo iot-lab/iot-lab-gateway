@@ -30,10 +30,21 @@ class Dispatch(object):
         """
         assert self.io_write is not None, 'io_write should be initialized'
         self.protect_send.acquire()
+
+        # remove existing item (old packet lost on timeout?)
+        assert self.queue_control_node.max_size == 1
+        # if size > 1, add a loop
+        if self.queue_control_node.full():
+            self.queue_control_node.get_nowait()
+
         self.io_write(data)
         #Waits for the control node to answer before unlocking send
         #(unlocked by the callback cb_dispatcher
-        answer_cn = self.queue_control_node.get(block=True)
+        try:
+            answer_cn = self.queue_control_node.get(block=True, timeout=1.0)
+        except Queue.Empty:
+            answer_cn = None
+
         self.protect_send.release()
         return answer_cn
 

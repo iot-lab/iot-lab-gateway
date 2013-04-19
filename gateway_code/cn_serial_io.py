@@ -9,9 +9,6 @@ from threading import  Thread
 
 
 
-# Remove for the moment
-#  from gateway_code.gateway_logging import logger
-
 SYNC_BYTE = chr(0x80)
 
 
@@ -123,7 +120,6 @@ class ReceiveThread(Thread):
         if rx_char == SYNC_BYTE:
             return RX_LEN
         else:
-            #logger.debug("rx_idle : packet lost?")
             return RX_IDLE
 
     @staticmethod
@@ -147,7 +143,6 @@ class ReceiveThread(Thread):
         packet.payload += rx_char
 
         if packet.is_complete():
-            #logger.debug("\t rx_payload packet : %s" %(packet))
             return RX_PACKET_FULL
 
         return RX_PAYLOAD
@@ -169,12 +164,11 @@ class ReceiveThread(Thread):
         while True:
             #call to read will block when no bytes are received
             try:
-                rx_char = self.serial_port.read()
+                rx_char = self.serial_port.read(1)
             except (select.error, serial.SerialException):
                 break # pyserial has been closed
 
             if rx_char:
-
                 # Putting the bytes received into the packet depending on the
                 # reception state (rx_state)
                 rx_state = self.state_machine_dict[rx_state](packet, rx_char)
