@@ -10,51 +10,74 @@ PROTOCOL = {}
 
 # Packet send format
 # SYNC_BYTE | LEN | TYPE | -?-?-?-?-
-
 SYNC_BYTE = chr(0x80)
-OML_PKT_TYPE = chr(0xF0)
 
 
+
+#
+# TYPE of packets
+#
+
+# Commands
 # start stop
-OPEN_NODE_START = chr(0x70)
-OPEN_NODE_STOP  = chr(0x71)
+TYPE_CMD_OPEN_NODE_START = chr(0x70)
+TYPE_CMD_OPEN_NODE_STOP  = chr(0x71)
+# reset time
+TYPE_CMD_RESET_TIME = chr(0x72)
+# Config RADIO
+# TYPE_CMD_CONFIG_RADIO =
+
+# Radio Noise
+# TYPE_CMD_CONFIG_RADIO_NOISE = ? -> no monitoring values
+# fake sensor
+# TYPE_CMD_CONFIG_FAKE_SENSOR = ?
+
+# Config measures
+TYPE_CMD_CONFIG_MEASURES_CONSUMPTION = chr(0x79)
+# TYPE_CMD_CONFIG_MEASURES_RADIO = ?
+# TYPE_CMD_CONFIG_MEASURES_SNIFFER = ?
+
+
+
+
+
 BATT = chr(0x0)
 DC   = chr(0x1)
 
-
-# (res|g)et time
-RESET_OPEN_TIME = chr(0x72)
-
-GET_OPEN_TIME = chr(0x73)
 TIME_FACTOR = 32768
-
 
 ACK  = chr(0x0A)
 NACK = chr(0x02)
 
 
-
-# MONITOR_POWER = chr(0x42)
-# MONITOR_RADIO = chr(0x44)
 #
-# RADIO_NOISE   = chr(0x45) # ??? 0x4X too ? -> no monitoring values
+# Measures packets
+#
 
+# Config
+# SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | MEASURE_CONFIG
+# Measures values
+# SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | Measures_count | [TIME | Values ]*|
 
-# CONSUMPTION VALUES
+TYPE_MEASURES_MASK = 0xF0
 
-MEASURE_POWER = chr(0xFF)
+# Consumption measures
 
-CONFIG_POWER_POLL   = chr(0x79)
+TYPE_MEASURES_CONSUMPTION = chr(0xFF)
 
+# Measures sources flags
+# may be the 3 following
 CONSUMPTION_POWER   = 1 << 0
 CONSUMPTION_VOLTAGE = 1 << 1
 CONSUMPTION_CURRENT = 1 << 2
 # nothing on bit 3
+# Only one of the following
 CONSUMPTION_3_3V    = 1 << 4
 CONSUMPTION_5V      = 1 << 5
 CONSUMPTION_BATT    = 1 << 6
 # nothing on bit 7
-MEASURE_SOURCE = {
+
+MEASURE_POWER_SOURCE = {
         '3.3V':CONSUMPTION_3_3V,
         '5V':CONSUMPTION_5V,
         'BATT':CONSUMPTION_BATT,
@@ -93,9 +116,9 @@ INA226_STATUS = {
 
 
 
-COMMAND = {'start': OPEN_NODE_START, 'stop': OPEN_NODE_STOP, \
-        'reset_time': RESET_OPEN_TIME, 'get_time': GET_OPEN_TIME, \
-        'consumption': CONFIG_POWER_POLL}
+COMMAND = {'start': TYPE_CMD_OPEN_NODE_START, 'stop': TYPE_CMD_OPEN_NODE_STOP, \
+        'reset_time': TYPE_CMD_RESET_TIME, \
+        'consumption': TYPE_CMD_CONFIG_MEASURES_CONSUMPTION}
 ALIM    = {'batt': BATT, 'dc': DC,}
 
 
@@ -163,32 +186,14 @@ def reset_time(dispatcher, command):
     return ret
 
 
-def get_time(dispatcher, command):
-    command_b = COMMAND[command]
-    data = command_b
-
-    result = send_cmd(dispatcher, data)
-
-    # type, ACK, and an unsigned long (4bytes)
-    ret = _valid_result_command(result, command_b, 6)
-    if not ret:
-        raise ValueError
-
-    data_result = result[2:]
-    control_time_tick = struct.unpack('!L', data_result)[0]
-    control_time_seconds = control_time_tick / float(TIME_FACTOR)
-
-    return control_time_seconds
-
-
 
 def config_consumption(dispatcher, command, source, period, average, status):
 
-    meas_aux = CONSUMPTION_POWER | CONSUMPTION_VOLTAGE | CONSUMPTION_CURRENT
+    meas_values = CONSUMPTION_POWER | CONSUMPTION_VOLTAGE | CONSUMPTION_CURRENT
 
     command_b = COMMAND[command]
 
-    source_b  = chr(meas_aux | MEASURE_SOURCE[source])
+    source_b  = chr(meas_values | MEASURE_POWER_SOURCE[source])
     config_b = chr(period | average << 4 | INA226_STATUS[status])
 
     data = command_b + source_b + config_b
@@ -219,11 +224,11 @@ for conf in range(1, 1 << 3):
     CONSUMPTION_DECODE_VALUES[conf] = \
             (_measures_list, _unpack_str, _measures_len)
 
-CONSUMPTION_SOURCE_VALUES = dict([(MEASURE_SOURCE[key], key) \
-        for key in MEASURE_SOURCE])
+CONSUMPTION_SOURCE_VALUES = dict([(MEASURE_POWER_SOURCE[key], key) \
+        for key in MEASURE_POWER_SOURCE])
 
 
-def decode_consumption_packet(pkt):
+def decode_consumption_pkt(pkt):
 
     header_size = 3
     unpack_str = '!'
@@ -251,7 +256,7 @@ def decode_consumption_packet(pkt):
 
 
 MEASURES_DECODE = {
-        MEASURE_POWER: decode_consumption_packet,
+        TYPE_MEASURES_CONSUMPTION: decode_consumption_pkt,
         }
 
 def decode_measure_packet(pkt):
@@ -284,26 +289,31 @@ def listen(dispatcher, _command):
 
 
 def parse_arguments(args):
+    """
+    Parse the arguments, accept following commands
+        start, stop, reset_time,
+        consumption,
+        listen
+
+    """
     import argparse
     parser = argparse.ArgumentParser(prog='protocol')
     sub = parser.add_subparsers(help='commands', dest='command')
 
 
+    # Start stop commands
+    help_alim = 'Alimentation, dc => charging battery'
     parse_start = sub.add_parser('start', help='Start command')
-    parse_start.add_argument('alim', choices=['dc', 'batt'], \
-            help='Alimentation, dc => charging battery')
-
+    parse_start.add_argument('alim', choices=['dc', 'batt'], help=help_alim)
     parse_stop  = sub.add_parser('stop', help='Stop command')
-    parse_stop.add_argument('alim', choices=['dc', 'batt'], \
-            help='Alimentation, dc => charging battery')
+    parse_stop.add_argument('alim', choices=['dc', 'batt'], help=help_alim)
 
+    # Reset time
     _parse_reset  = sub.add_parser('reset_time', help='Reset control node time')
 
-    _parse_get  = sub.add_parser('get_time', help='Get control node time')
-
-    # polling
-    parse_consumption  = sub.add_parser('consumption', \
-            help='Reset control node time')
+    # Consumption config
+    parse_consumption = sub.add_parser('consumption', \
+            help='Config consumption measures')
     parse_consumption.add_argument('status', choices=['start', 'stop'])
     parse_consumption.add_argument('source', choices=['3.3V', '5V', 'BATT'])
     parse_consumption.add_argument('-p', '--period', type=int, \
@@ -311,12 +321,11 @@ def parse_arguments(args):
     parse_consumption.add_argument('-a', '--average', type=int, \
             choices=range(0, 8), default=5, help = 'See definition in the code')
 
+    # listen to sensor measures
     _parse_listen_measures = sub.add_parser('listen', \
             help='listen for measures packets')
 
-
     namespace = parser.parse_args(args)
-    print namespace
     return namespace.command, namespace
 
 
@@ -324,35 +333,33 @@ _ARGS_COMMANDS = {
         'start': start_stop,
         'stop':  start_stop,
         'reset_time': reset_time,
-        'get_time': get_time,
         'consumption':config_consumption,
         'listen': listen,
         }
 
 
-
-
 def main(args):
+    """
+    Main command line function
+    """
     from gateway_code import dispatch, cn_serial_io
+    import atexit
+
     command, arguments = parse_arguments(args[1:])
 
 
     oml_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(oml_queue, OML_PKT_TYPE)
+    dis = dispatch.Dispatch(oml_queue, TYPE_MEASURES_MASK)
     rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
     dis.io_write = rxtx.write
 
 
     rxtx.start()
+    atexit.register(rxtx.stop) # execute even if there is an exception
 
-    try:
-        ret = _ARGS_COMMANDS[command](dispatcher = dis, **arguments.__dict__)
-        print '%s: %r' % (command, ret)
-    except: # pylint: disable=W0702
-        # No exception type(s) specified
-        import sys
-        print 'Exception'
-        print sys.exc_info()[0]
+
+    ret = _ARGS_COMMANDS[command](dispatcher = dis, **arguments.__dict__)
+    print '%s: %r' % (command, ret)
 
 
     rxtx.stop()

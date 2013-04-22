@@ -2,8 +2,8 @@ import Queue
 from threading import Lock
 
 class Dispatch(object):
-    def __init__(self, queue_oml, oml_pkt_type, io_write = None):
-        self.oml_pkt_type = oml_pkt_type
+    def __init__(self, queue_oml, measures_pkt_mask, io_write = None):
+        self.measures_pkt_mask = measures_pkt_mask
         self.queue_oml = queue_oml
 
         self.queue_control_node = Queue.Queue(1)
@@ -16,7 +16,7 @@ class Dispatch(object):
         the packet type """
         # check packet type (first byte)
         # only the first 4 bits
-        if (ord(packet[0]) & 0xF0) == ord(self.oml_pkt_type):
+        if (ord(packet[0]) & self.measures_pkt_mask) == self.measures_pkt_mask:
             self.queue_oml.put(packet)
         else:
             #put the control node's answer into the queue, unlocking

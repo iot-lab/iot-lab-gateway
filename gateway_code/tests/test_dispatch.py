@@ -23,7 +23,7 @@ def test_cb_dispatcher(serial_mock_class):
     result_cnpackets = [chr(0x42) + 'def']
 
     oml_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(oml_queue, chr(0xF0))
+    dis = dispatch.Dispatch(oml_queue, 0xF0)
 
     # mock queues.put method
     oml_queue.put = MagicMock(name='put')
@@ -77,7 +77,7 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
     result_cnpackets = [chr(0x42) + 'def']
 
     oml_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(oml_queue, chr(0xF0))
+    dis = dispatch.Dispatch(oml_queue, 0xF0)
     rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
 
     dis.io_write = rxtx.write
