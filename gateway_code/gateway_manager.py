@@ -23,22 +23,19 @@ class GatewayManager(object):
     """
     def __init__(self, log_folder=None):
 
-        # configure the logger
-        # not reconfigure it when called from __stop__
-        if log_folder is not None:
-            gateway_code.gateway_logging.init_logger(log_folder)
-
-
-        self.exp_id = None
-        self.user = None
-
+        # current experiment infos
+        self.exp_id                = None
+        self.user                  = None
         self.experiment_is_running = False
-        self.current_profile = None
+        self.current_profile       = None
+        self.time_reference        = None
+        self.serial_redirection    = None
+        self.open_node_started     = False
 
-        self.start_experiment_time = None
-
-        self.serial_redirection = None
-
+        # don't reconfigure when called from __stop__
+        if log_folder is not None:
+            # configure logger
+            gateway_code.gateway_logging.init_logger(log_folder)
 
 
 
@@ -52,64 +49,69 @@ class GatewayManager(object):
         :param profile: profile to configure the experiment
         :type profile: class Profile
 
+
+        Experiment start steps
+        ======================
+
+        1) Prepare Gateway
+            a) Reset control node
+            b) Start control node serial communication
+            c) Start measures handler (OML thread)
+        2) Prepare Open node
+            a) Start Open Node DC (stopped before)
+            b) Flash open node (flash when started DC)
+            c) Start open node serial redirection
+            d) Start GDB server
+        3) Prepare Control node
+            a) Reset time control node, and update time reference
+            b) Configure profile
+        4) Finish
+            a) Final reset of open node
+        5) Experiment Started
+
         """
 
         if self.experiment_is_running:
-            ret = 1
             LOGGER.error('Experiment already running')
-            return ret
+            return 1
 
-        self.exp_id = exp_id
-        self.user = user
+        self.exp_id                = exp_id
+        self.user                  = user
         self.experiment_is_running = True
-        self.current_profile = profile
+        self.current_profile       = profile
 
         ret_val = 0
 
+        # start steps described in docstring
 
-        # reset the control node
-        ret = self.node_soft_reset('gwt')
+        ret      = self.node_soft_reset('gwt')
         ret_val += ret
 
+        # start control node reader/writer
+        # start measures Handler
 
-
-        # start node and flash
-        self.open_power_start() # with DC current
+        ret      = self.open_power_start(power='dc')
         ret_val += ret
-        # TODO  wait until node is ready ?
-        ret = self.node_flash('m3', firmware_path)
-        ret_val += ret
-
-
-
-        # ret = self. set dc power
-        ret = self.exp_update_profile(profile)
+        ret      = self.node_flash('m3', firmware_path)
         ret_val += ret
 
-
-        # save the start experiment time
-        self.start_experiment_time = time.time()
-        LOGGER.info('Start experiment time = %r', self.start_experiment_time)
-
-
-        # set_time_0
-        # set control node time to 0
-
-
-        # start the serial port redirection
-        ret = self._open_serial_redirection_start()
+        ret      = self.reset_time()
+        ret_val += ret
+        ret      = self.exp_update_profile(profile)
         ret_val += ret
 
+        ret      = self._open_serial_redirection_start()
+        ret_val += ret
 
         # start the gdb server
 
-
-
-        # final reset the open node
-        ret = self.node_soft_reset('m3')
+        ret      = self.node_soft_reset('m3')
         ret_val += ret
 
-        LOGGER.info('Start experiment finished: ret_val: %d', ret_val)
+        if ret_val == 0:
+            LOGGER.info('Start experiment Succeeded')
+        else:
+            LOGGER.error('Start experiment with errors: ret_val: %d', ret_val)
 
         return ret_val
 
@@ -191,14 +193,30 @@ class GatewayManager(object):
 
         return ret
 
+    def reset_time(self):
+        old_time = self.time_reference
+
+        # save the start experiment time
+        self.time_reference = time.time()
+        # reset control node time
+        # ret = self.
+        LOGGER.warning(_unimplemented_fct_str_())
+
+        # send new time to measures_handler
+
+        if old_time is None:
+            LOGGER.info('Start experiment time = %r', self.time_reference)
+        else:
+            LOGGER.info('New time reference = %r', self.time_reference)
+
 
     @staticmethod
-    def open_power_start():
+    def open_power_start(power=None):
         """
         Power on the open node
         """
         ret = 0
-
+        self.open_node_started = True
 
         LOGGER.info('Open power start')
         LOGGER.warning(_unimplemented_fct_str_())
@@ -208,13 +226,16 @@ class GatewayManager(object):
         return ret
 
     @staticmethod
-    def open_power_stop():
+    def open_power_stop(power=None):
         """
         Power off the open node
         """
 
+        self.open_node_started = False
+
         LOGGER.warning(_unimplemented_fct_str_())
         return 0
+
 
     @staticmethod
     def node_soft_reset(node):
