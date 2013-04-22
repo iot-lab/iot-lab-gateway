@@ -25,11 +25,17 @@ def test_rx_multiple_packets(serial_mock_class):
 
     unlock_test = threading.Event()
 
-    def read_mock():
+    def read_one_val():
         if read_values == []:
             unlock_test.set()
             raise select.error
         return read_values.pop(0)
+
+    def read_mock(val=1):
+        res = ''
+        for _i in range(0, val):
+            res += read_one_val()
+        return res
 
     def cb_packet_received(packet):
         assert packet == result_packets.pop(0)
@@ -60,11 +66,17 @@ def test_rx_wih_invalid_start(serial_mock_class):
 
     unlock_test = threading.Event()
 
-    def read_mock():
+    def read_one_val():
         if read_values == []:
             unlock_test.set()
             raise select.error
         return read_values.pop(0)
+
+    def read_mock(val=1):
+        res = ''
+        for _i in range(0, val):
+            res += read_one_val()
+        return res
 
     def cb_packet_received(packet):
         assert packet == result_packets.pop(0)

@@ -30,11 +30,17 @@ def test_cb_dispatcher(serial_mock_class):
     dis.queue_control_node.put = MagicMock(name='put')
 
     # mock serial.read method
-    def read_mock():
+    def read_one_val():
         if read_values == []:
             unlock_test.set()
             raise select.error
         return read_values.pop(0)
+
+    def read_mock(val=1):
+        res = ''
+        for _i in range(0, val):
+            res += read_one_val()
+        return res
     serial_mock = serial_mock_class.return_value
     serial_mock.read.side_effect = read_mock
 
@@ -81,12 +87,18 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
     first_run = True
 
     # mock serial.read method
-    def read_mock():
-        unlock_rx_thread.wait()
+    def read_one_val():
         if read_values == []:
             unlock_test.set()
             raise select.error
         return read_values.pop(0)
+
+    def read_mock(val=1):
+        unlock_rx_thread.wait()
+        res = ''
+        for _i in range(0, val):
+            res += read_one_val()
+        return res
     serial_mock = serial_mock_class.return_value
     serial_mock.read.side_effect = read_mock
     serial_mock.write.side_effect = lambda x: unlock_rx_thread.set()
