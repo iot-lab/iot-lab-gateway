@@ -194,6 +194,11 @@ class GatewayManager(object):
         return ret
 
     def reset_time(self):
+        """
+        Reset control node time and update absolute time reference
+
+        Updating time reference is propagated to measures handler
+        """
         old_time = self.time_reference
 
         # save the start experiment time
@@ -210,13 +215,16 @@ class GatewayManager(object):
             LOGGER.info('New time reference = %r', self.time_reference)
 
 
-    @staticmethod
-    def open_power_start(power=None):
+    def open_power_start(self, power=None):
         """
         Power on the open node
         """
         ret = 0
         self.open_node_started = True
+
+        if power is None:
+            # load power from profile
+            pass
 
         LOGGER.info('Open power start')
         LOGGER.warning(_unimplemented_fct_str_())
@@ -225,11 +233,14 @@ class GatewayManager(object):
             LOGGER.error('Open power start failed')
         return ret
 
-    @staticmethod
-    def open_power_stop(power=None):
+    def open_power_stop(self, power=None):
         """
         Power off the open node
         """
+
+        if power is None:
+            # load power from profile
+            pass
 
         self.open_node_started = False
 
