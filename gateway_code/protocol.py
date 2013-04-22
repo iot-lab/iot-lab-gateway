@@ -4,7 +4,6 @@ Protocol between gateway and control node
 
 import struct
 import Queue
-import struct
 
 PROTOCOL = {}
 
@@ -210,13 +209,15 @@ CONSUMPTION_TUPLE = \
 # store list of measures and associated unpack strings for each config
 CONSUMPTION_DECODE_VALUES = {}
 for conf in range(1, 1 << 3):
-    measures_list = ['t'] + \
+    _measures_list = ['t'] + \
             (['p'] if conf & CONSUMPTION_POWER else []) + \
             (['v'] if conf & CONSUMPTION_VOLTAGE else []) + \
             (['c'] if conf & CONSUMPTION_CURRENT else [])
-    unpack_str = '!L' + ('f' * (len(measures_list) - 1))
-    measures_len = 4 + 4 * (len(measures_list) -1) # 4 bytes for time + 4bytes per value (float)
-    CONSUMPTION_DECODE_VALUES[conf] = (measures_list, unpack_str, measures_len)
+    _unpack_str = '!L' + ('f' * (len(_measures_list) - 1))
+    # 4 bytes for time + 4bytes per value (float)
+    _measures_len = 4 + 4 * (len(_measures_list) -1)
+    CONSUMPTION_DECODE_VALUES[conf] = \
+            (_measures_list, _unpack_str, _measures_len)
 
 CONSUMPTION_SOURCE_VALUES = dict([(MEASURE_SOURCE[key], key) \
         for key in MEASURE_SOURCE])
@@ -233,7 +234,8 @@ def decode_consumption_packet(pkt):
     num_values = len(values)
     power_source = CONSUMPTION_SOURCE_VALUES[config & 0x70]
 
-    chunks = [pkt[start:start + num_values * measures_len] for start in range(header_size, len(pkt), num_values * measures_len)]
+    chunks = [pkt[start:start + num_values * measures_len] for start in \
+            range(header_size, len(pkt), num_values * measures_len)]
     assert len(chunks) == count
 
     all_measures = []
@@ -263,7 +265,7 @@ def decode_measure_packet(pkt):
     else:
         print fct(pkt)
 
-def listen(dispatcher, command):
+def listen(dispatcher, _command):
     oml_queue = dispatcher.queue_oml
 
     while True:
@@ -304,10 +306,10 @@ def parse_arguments(args):
             help='Reset control node time')
     parse_consumption.add_argument('status', choices=['start', 'stop'])
     parse_consumption.add_argument('source', choices=['3.3V', '5V', 'BATT'])
-    parse_consumption.add_argument('-p', '--period', type=int, choices=range(0, 8), \
-            default=4, help = 'See definition in the code')
-    parse_consumption.add_argument('-a', '--average', type=int, choices=range(0, 8), \
-            default=5, help = 'See definition in the code')
+    parse_consumption.add_argument('-p', '--period', type=int, \
+            choices=range(0, 8), default=4, help = 'See definition in the code')
+    parse_consumption.add_argument('-a', '--average', type=int, \
+            choices=range(0, 8), default=5, help = 'See definition in the code')
 
     _parse_listen_measures = sub.add_parser('listen', \
             help='listen for measures packets')
@@ -346,7 +348,8 @@ def main(args):
     try:
         ret = _ARGS_COMMANDS[command](dispatcher = dis, **arguments.__dict__)
         print '%s: %r' % (command, ret)
-    except:
+    except: # pylint: disable=W0702
+        # No exception type(s) specified
         import sys
         print 'Exception'
         print sys.exc_info()[0]
