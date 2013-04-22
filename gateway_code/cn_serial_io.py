@@ -28,12 +28,16 @@ class RxTxSerial():
         """
         :param cb_packet_received: callback for when a packet is received
         """
-        #Writes are blocking by default,the port is immediately opened
-        #on object creation because the port is given, timeout is by dlft
-        #set to None therfore waits forever.
+        # Writes are blocking by default, the port is immediately opened
+        # on object creation because the port is given
+        # Fail early if it should !
+
+        # timeout is set to != 0, to be able to kill the thread
+        # but are ignored in the code
+        # if blocking, read does not throw exception on close
+
         self.serial_port = serial.Serial(port=port, \
                 baudrate=baudrate, timeout=1)
-        #timeout == 1 so that Reader thread can exit
 
         #Starting reciving thread
         self.rx_thread = ReceiveThread(self.serial_port, cb_packet_received)
@@ -166,7 +170,7 @@ class ReceiveThread(Thread):
             try:
                 rx_char = self.serial_port.read(1)
             except (select.error, serial.SerialException):
-                break # pyserial has been closed
+                break  # pyserial has been closed
 
             if rx_char:
                 # Putting the bytes received into the packet depending on the
@@ -178,6 +182,8 @@ class ReceiveThread(Thread):
                     self.cb_packet_received(packet.payload)
                     rx_state = RX_IDLE
                     packet = Buffer()
+            # else: # timeout, ignore
+            #     pass
 
 
 
