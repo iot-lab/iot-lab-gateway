@@ -18,6 +18,8 @@ class TestServerRest(object):
     @patch('gateway_code.server_rest.run')
     def test_main_function(self, run_mock):
         args = ['server_rest.py', 'localhost', '8080']
-        gateway_code.server_rest.main(args)
+        import serial
+        with patch('serial.Serial') as mock_serial:
+            gateway_code.server_rest.main(args)
 
 

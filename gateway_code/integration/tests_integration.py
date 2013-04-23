@@ -96,9 +96,10 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.request_patcher.stop()
 
 
-    def tests_complete_experiment(self):
+    def tests_multiple_complete_experiment(self):
         """
-        Test a complete experiment
+        Test a complete experiment 3 times (loooong test)
+        Experiment ==
             start
             flash
             reset
@@ -112,46 +113,49 @@ class TestComplexExperimentRunning(unittest.TestCase):
         ret = self.app.admin_control_flash()
         assert ret == {'ret':0}
 
-
         self.request.files = {}
         ret = self.app.admin_control_soft_reset()
         assert ret == {'ret':0}
 
 
-        # start
-        self.request.files = {'firmware': self.files['idle'], \
-                'profile':self.files['profile']}
-        ret = self.app.exp_start(123, 'clochette')
-        assert ret == {'ret':0}
+        for i in range(0, 3):
 
-        time.sleep(1)
+            self._rewind_files()
 
-        # idle firmware, should be no reply
-        ret = _send_command_open_node('localhost', 20000, msg)
-        assert ret == None
+            # start
+            self.request.files = {'firmware': self.files['idle'], \
+                    'profile':self.files['profile']}
+            ret = self.app.exp_start(123, 'clochette')
+            assert ret == {'ret':0}
 
+            time.sleep(1)
 
-
-        # flash
-        self.request.files = {'firmware': self.files['echo']}
-        ret = self.app.open_flash()
-        assert ret == {'ret':0}
-
-        # wait node started
-        time.sleep(2)
-
-        # echo firmware, should reply what was sent
-        ret = _send_command_open_node('localhost', 20000, msg)
-        assert ret == msg
+            # idle firmware, should be no reply
+            ret = _send_command_open_node('localhost', 20000, msg)
+            assert ret == None
 
 
-        # reset open node
-        ret = self.app.open_soft_reset()
-        assert ret == {'ret':0}
 
-        # stop exp
-        ret = self.app.exp_stop()
-        assert ret == {'ret':0}
+            # flash
+            self.request.files = {'firmware': self.files['echo']}
+            ret = self.app.open_flash()
+            assert ret == {'ret':0}
+
+            # wait node started
+            time.sleep(1)
+
+            # echo firmware, should reply what was sent
+            ret = _send_command_open_node('localhost', 20000, msg)
+            assert ret == msg
+
+
+            # reset open node
+            ret = self.app.open_soft_reset()
+            assert ret == {'ret':0}
+
+            # stop exp
+            ret = self.app.exp_stop()
+            assert ret == {'ret':0}
 
 
     def tests_invalid_calls(self):

@@ -19,14 +19,14 @@ def test_cb_dispatcher(serial_mock_class):
             [SYNC_BYTE, chr(4), chr(0x42) +  'def'] + \
             [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
 
-    result_omlpackets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
-    result_cnpackets = [chr(0x42) + 'def']
+    result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
+    result_cn_packets = [chr(0x42) + 'def']
 
-    oml_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(oml_queue, 0xF0)
+    measures_queue = Queue.Queue(0)
+    dis = dispatch.Dispatch(measures_queue, 0xF0)
 
     # mock queues.put method
-    oml_queue.put = MagicMock(name='put')
+    measures_queue.put = MagicMock(name='put')
     dis.queue_control_node.put = MagicMock(name='put')
 
     # mock serial.read method
@@ -54,10 +54,10 @@ def test_cb_dispatcher(serial_mock_class):
 
 
     # check the multiple calls
-    cn_calls  = [mock.call(packet) for packet in result_cnpackets]
-    oml_calls = [mock.call(packet) for packet in result_omlpackets]
+    cn_calls  = [mock.call(packet) for packet in result_cn_packets]
+    measures_calls = [mock.call(packet) for packet in result_measures_packets]
     dis.queue_control_node.put.has_calls(cn_calls)
-    dis.queue_control_node.put.has_calls(oml_calls)
+    dis.queue_control_node.put.has_calls(measures_calls)
 
     rxtx.stop()
 
@@ -73,11 +73,11 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
             [SYNC_BYTE, chr(4), chr(0x42) +  'def'] + \
             [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
 
-    result_omlpackets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
-    result_cnpackets = [chr(0x42) + 'def']
+    result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
+    result_cn_packets = [chr(0x42) + 'def']
 
-    oml_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(oml_queue, 0xF0)
+    measures_queue = Queue.Queue(0)
+    dis = dispatch.Dispatch(measures_queue, 0xF0)
     rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
 
     dis.io_write = rxtx.write
@@ -111,7 +111,7 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
     # wait until read finished
     unlock_test.wait()
 
-    assert cn_answer == result_cnpackets[0]
+    assert cn_answer == result_cn_packets[0]
 
     rxtx.stop()
 

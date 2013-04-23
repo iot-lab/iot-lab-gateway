@@ -14,9 +14,9 @@ class Dispatch(object):
     It also implement a thread safe send_command function that sends
       a command to the control node and wait for it's answer
     """
-    def __init__(self, queue_oml, measures_pkt_mask, io_write = None):
+    def __init__(self, measures_queue, measures_pkt_mask, io_write = None):
         self.measures_pkt_mask = measures_pkt_mask
-        self.queue_oml = queue_oml
+        self.measures_queue = measures_queue
 
         self.queue_control_node = Queue.Queue(1)
         self.io_write = io_write
@@ -29,7 +29,7 @@ class Dispatch(object):
         # check packet type (first byte)
         # only the first 4 bits
         if (ord(packet[0]) & self.measures_pkt_mask) == self.measures_pkt_mask:
-            self.queue_oml.put(packet)
+            self.measures_queue.put(packet)
         else:
             #put the control node's answer into the queue, unlocking
             #send_command
