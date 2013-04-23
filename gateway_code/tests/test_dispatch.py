@@ -15,8 +15,8 @@ def test_cb_dispatcher(serial_mock_class):
 
 
     # configure test
-    read_values = [SYNC_BYTE, chr(4), chr(0xFF) + 'a' + 'b' + 'c'] + \
-            [SYNC_BYTE, chr(4), chr(0x42) +  'def'] + \
+    read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
+            [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
             [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
 
     result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
@@ -69,8 +69,8 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
     unlock_rx_thread = threading.Event()
 
     # configure test
-    read_values = [SYNC_BYTE, chr(4), chr(0xFF) + 'a' + 'b' + 'c'] + \
-            [SYNC_BYTE, chr(4), chr(0x42) +  'def'] + \
+    read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
+            [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
             [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
 
     result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
@@ -81,10 +81,6 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
     rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
 
     dis.io_write = rxtx.write
-
-
-    global first_run
-    first_run = True
 
     # mock serial.read method
     def read_one_val():
@@ -102,6 +98,10 @@ def test_cb_dispatcher_send_cmd(serial_mock_class):
     serial_mock = serial_mock_class.return_value
     serial_mock.read.side_effect = read_mock
     serial_mock.write.side_effect = lambda x: unlock_rx_thread.set()
+
+    # add old remaining packet in the queue
+    # should be removed when writing
+    dis.queue_control_node.put('OLD_PACKET')
 
 
     rxtx.start()
