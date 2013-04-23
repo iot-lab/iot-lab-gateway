@@ -53,14 +53,6 @@ class TestSerialRedirectionInit(object):
             assert redirection.node == node
             assert redirection.is_running == False
 
-            assert mock_thread.call_count == 1
-
-            node_cfg = config.NODES_CFG[node]
-            call_args = mock_thread.call_args[0]
-            assert node_cfg['tty'] ==  call_args[0]
-
-
-
     def test_error_handler_and_arg(self, mock_thread):
         """
         Test calling with an error handler and an argument
@@ -71,9 +63,6 @@ class TestSerialRedirectionInit(object):
         assert redirection.error_handler == valid_error_handler
         assert redirection.handler_arg == 'Test'
 
-        assert mock_thread.call_count == 1
-
-
 
     def test_no_error_handler(self, mock_thread):
         """
@@ -82,10 +71,6 @@ class TestSerialRedirectionInit(object):
         redirection = SerialRedirection('m3')
         assert redirection.error_handler is None
         assert redirection.handler_arg is None
-
-        assert mock_thread.call_count == 1
-
-
 
     def test_invalid_init(self, mock_thread):
         """
@@ -283,8 +268,6 @@ class TestSerialRedirection(object):
 
         redirect = serial_redirection.SerialRedirection('m3')
         redirect.start()
-        # wait condition
-
         _wait_call_count_not_null(popen.communicate, 2)
         redirect.stop()
 

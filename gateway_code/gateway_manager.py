@@ -7,8 +7,10 @@ manager script
 """
 
 from gateway_code import flash_firmware, reset
+from gateway_code import dispatch, cn_serial_io, protocol
 from gateway_code.serial_redirection import SerialRedirection
 import time
+import Queue
 
 import gateway_code.gateway_logging
 import logging
@@ -27,10 +29,20 @@ class GatewayManager(object):
         self.exp_id                = None
         self.user                  = None
         self.experiment_is_running = False
+
         self.current_profile       = None
         self.time_reference        = None
+
         self.serial_redirection    = None
         self.open_node_started     = False
+
+        # setup control node communication
+        measures_queue  = Queue.Queue(0)
+        self.dispatcher = dispatch.Dispatch(measures_queue, \
+                protocol.TYPE_MEASURES_MASK)
+
+        self.rxtx       = cn_serial_io.RxTxSerial(self.dispatcher.cb_dispatcher)
+        self.dispatcher.io_write = self.rxtx.write
 
         # don't reconfigure when called from __stop__
         if log_folder is not None:
@@ -88,6 +100,8 @@ class GatewayManager(object):
         ret_val += ret
 
         # start control node reader/writer
+
+        self.rxtx.start()
         # start measures Handler
 
         ret      = self.open_power_start(power='dc')
@@ -129,6 +143,8 @@ class GatewayManager(object):
         # stop redirection
         ret = self.serial_redirection.stop()
 
+        self.rxtx.stop()
+
         # stop gdb server
 
         # set dc ON
@@ -146,7 +162,15 @@ class GatewayManager(object):
         # shut down open node ?
 
         # reset the manager
-        self.__init__()
+        self.exp_id                = None
+        self.user                  = None
+        self.experiment_is_running = False
+
+        self.current_profile       = None
+        self.time_reference        = None
+
+        self.serial_redirection    = None
+        #self.__init__()
 
         LOGGER.warning(_unimplemented_fct_str_() + " implem not comlete")
         return 0
@@ -187,11 +211,13 @@ class GatewayManager(object):
         ret = 0
         LOGGER.info('exp_update_profile')
         LOGGER.warning(_unimplemented_fct_str_())
+        # TODO exp_update_profile
 
         if ret != 0:
             LOGGER.error('Open power start failed')
 
         return ret
+
 
     def reset_time(self):
         """
@@ -199,23 +225,24 @@ class GatewayManager(object):
 
         Updating time reference is propagated to measures handler
         """
-        old_time = self.time_reference
-        ret = 0
-
+        LOGGER.info('Reset control node time')
         # save the start experiment time
-        new_time = time.time()
-        # reset control node time
-        # ret = self.
-        LOGGER.warning(_unimplemented_fct_str_())
+        new_time_ref = time.time()
+        old_time_ref = self.time_reference
+
+        ret = protocol.reset_time(self.dispatcher.send_command, 'reset_time')
+
         if ret == 0:
-            self.time_reference = new_time
-
-        # send new time to measures_handler
-
-        if old_time is None:
-            LOGGER.info('Start experiment time = %r', self.time_reference)
+            self.time_reference = new_time_ref
+            if old_time_ref is None:
+                LOGGER.info('Start experiment time = %r', self.time_reference)
+            else:
+                LOGGER.info('New time reference = %r', self.time_reference)
         else:
-            LOGGER.info('New time reference = %r', self.time_reference)
+            LOGGER.error('Reset time failed')
+
+        # TODO send new time to measures_handler
+
         return ret
 
 
@@ -223,33 +250,47 @@ class GatewayManager(object):
         """
         Power on the open node
         """
-        ret = 0
-        self.open_node_started = True
+        LOGGER.info('Open power start')
 
         if power is None:
-            # load power from profile
-            pass
+            power = 'dc'
+            # TODO load power from profile
+            LOGGER.warning('Unimplemented load power from profile')
+            ret = 1
 
-        LOGGER.info('Open power start')
-        LOGGER.warning(_unimplemented_fct_str_())
+        ret = protocol.start_stop(self.dispatcher.send_command, 'start', power)
 
-        if ret != 0:
+        if ret == 0:
+            self.open_node_started = True
+        else:
             LOGGER.error('Open power start failed')
         return ret
+
+
 
     def open_power_stop(self, power=None):
         """
         Power off the open node
         """
+        LOGGER.info('Open power stop')
+        ret = 0
 
         if power is None:
-            # load power from profile
-            pass
+            power = 'dc'
+            # TODO load power from profile
+            LOGGER.warning('Unimplemented load power from profile')
+            ret = 1
 
-        self.open_node_started = False
+        if power is not None: # remove me
+            ret = protocol.start_stop(self.dispatcher.send_command, \
+                    'stop', power)
 
-        LOGGER.warning(_unimplemented_fct_str_())
-        return 0
+        if ret == 0:
+            self.open_node_started = False
+        else:
+            LOGGER.error('Open power stop failed')
+        return ret
+
 
 
     @staticmethod

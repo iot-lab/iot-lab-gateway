@@ -7,7 +7,7 @@ import serial
 import select # used for 'select.error'
 
 import recordtype # mutable namedtuple (for small classes)
-from threading import  Thread
+from threading import Thread
 
 
 
@@ -41,8 +41,8 @@ class RxTxSerial():
         self.serial_port = serial.Serial(port=port, \
                 baudrate=baudrate, timeout=1)
 
-        #Starting reciving thread
-        self.rx_thread = ReceiveThread(self.serial_port, cb_packet_received)
+        self.rx_thread = None
+        self.cb_packet_received = cb_packet_received
 
 
 
@@ -53,6 +53,9 @@ class RxTxSerial():
 
     def start(self):
         """ Start thread."""
+        self.rx_thread = ReceiveThread(self.serial_port, \
+                self.cb_packet_received)
+        self.serial_port.open()
         self.rx_thread.start()
 
     def stop(self):

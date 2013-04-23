@@ -149,10 +149,10 @@ def _valid_result_command(packet, pkt_type, length):
 
     return ret
 
-def send_cmd(dispatcher, data):
+def send_cmd(sender, data):
 
     _print_packet('Sent packet', data)
-    result = dispatcher.send_command(data)
+    result = sender(data)
     _print_packet('Rec packet', result)
 
     return result
@@ -160,26 +160,26 @@ def send_cmd(dispatcher, data):
 
 
 
-def start_stop(dispatcher, command, alim):
+def start_stop(sender, command, alim):
 
     command_b = COMMAND[command]
     alim_b    = ALIM[alim]
 
     data = command_b + alim_b
 
-    result = send_cmd(dispatcher, data)
+    result = send_cmd(sender, data)
 
     # only type and ACK
     ret = _valid_result_command(result, command_b, 2)
     return ret
 
 
-def reset_time(dispatcher, command):
+def reset_time(sender, command):
 
     command_b = COMMAND[command]
     data = command_b
 
-    result = send_cmd(dispatcher, data)
+    result = send_cmd(sender, data)
 
     # only type and ACK
     ret = _valid_result_command(result, command_b, 2)
@@ -187,7 +187,7 @@ def reset_time(dispatcher, command):
 
 
 
-def config_consumption(dispatcher, command, source, period, average, status):
+def config_consumption(sender, command, source, period, average, status):
 
     meas_values = CONSUMPTION_POWER | CONSUMPTION_VOLTAGE | CONSUMPTION_CURRENT
 
@@ -198,7 +198,7 @@ def config_consumption(dispatcher, command, source, period, average, status):
 
     data = command_b + source_b + config_b
 
-    result = send_cmd(dispatcher, data)
+    result = send_cmd(sender, data)
 
     # only type and ACK
     ret = _valid_result_command(result, command_b, 2)
@@ -270,12 +270,11 @@ def decode_measure_packet(pkt):
     else:
         print fct(pkt)
 
-def listen(dispatcher, _command):
-    oml_queue = dispatcher.queue_oml
+def listen(queue, _command):
 
     while True:
         try:
-            pkt = oml_queue.get(True, timeout=1)
+            pkt = queue.get(True, timeout=1)
             _print_packet('MEASURE_PKT', pkt)
             decode_measure_packet(pkt)
         except Queue.Empty:
@@ -348,8 +347,8 @@ def main(args):
     command, arguments = parse_arguments(args[1:])
 
 
-    oml_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(oml_queue, TYPE_MEASURES_MASK)
+    measures_queue = Queue.Queue(0)
+    dis = dispatch.Dispatch(measures_queue, TYPE_MEASURES_MASK)
     rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
     dis.io_write = rxtx.write
 
@@ -358,8 +357,17 @@ def main(args):
     atexit.register(rxtx.stop) # execute even if there is an exception
 
 
-    ret = _ARGS_COMMANDS[command](dispatcher = dis, **arguments.__dict__)
-    print '%s: %r' % (command, ret)
+    if command == 'listen':
+        ret = _ARGS_COMMANDS[command](queue = dis.measures_queue, \
+                **arguments.__dict__)
+        print '%s: %r' % (command, ret)
+
+    else: # simple command
+        ret = _ARGS_COMMANDS[command](sender = dis.send_command, \
+                **arguments.__dict__)
+        print '%s: %r' % (command, ret)
+
+
 
 
     rxtx.stop()

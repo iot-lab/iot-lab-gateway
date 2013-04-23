@@ -46,14 +46,11 @@ class SerialRedirection():
                 raise ValueError, 'Error handler should accept two arguments'
 
 
-        self.redirector_thread = _SerialRedirectionThread(\
-                config.NODES_CFG[self.node]['tty'],\
-                config.NODES_CFG[self.node]['baudrate'],\
-                self.__cb_error_handler)
 
         self.error_handler = error_handler
         self.handler_arg = handler_arg
 
+        self.redirector_thread = None
         self.is_running = False
         self.err = None
         self.out = None
@@ -66,6 +63,11 @@ class SerialRedirection():
 
         if self.is_running:
             return 1
+
+        self.redirector_thread = _SerialRedirectionThread(\
+                config.NODES_CFG[self.node]['tty'],\
+                config.NODES_CFG[self.node]['baudrate'],\
+                self.__cb_error_handler)
 
         self.err = ""
         self.out = ""
@@ -185,8 +187,8 @@ class _SerialRedirectionThread(threading.Thread):
                 assert err.errno == 3, 'Unknown error num: %d' % err.errno
                 # Disable: I0011 - locally disabled warning
                 # Disable: W0107 - Unneccessary pass statement
-                # required 'pass' in assert are disabled
                 pass # pylint: disable=I0011,W0107
+                # required 'pass' if assert are disabled
             time.sleep(0.1)
 
         self.redirector_process = None
