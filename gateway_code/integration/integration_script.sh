@@ -5,6 +5,6 @@ rm -f coverage.xml nosetests.xml pylint.out;
 cp ~/python_missing_files/* . ;
 git pull;
 
-set -e
+set -e;
 python setup.py nosetests -i='*integration/*';
 python setup.py lint --report | tee pylint.out;
