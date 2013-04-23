@@ -30,13 +30,13 @@ class Lint(Command):
         lint.Run(lint_args, exit=False)
 
 
-INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
+INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial', 'recordtype']
 TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'requests']
 
 
 
 setup(name='gateway_code',
-        version='0.21',
+        version='0.22',
         description='Linux Gateway code',
         author='SensLAB Team',
         author_email='admin@senslab.info',
