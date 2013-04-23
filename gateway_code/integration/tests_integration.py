@@ -4,7 +4,7 @@ import gateway_code
 import time
 import os
 
-import recordtype # mutable namedtuple (for to small classes)
+import recordtype # mutable namedtuple (for small classes)
 
 from mock import patch
 
@@ -17,7 +17,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 STABLE_FIRMWARE = os.environ['HOME'] + '/elf_m3c/' + 'main_stable.elf'
 
 # Bottle FileUpload class stub
-FileUpload = recordtype('FileUpload', \
+FileUpload = recordtype.recordtype('FileUpload', \
         ['file', 'name', 'filename', ('headers', None)])
 
 
