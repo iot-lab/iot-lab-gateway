@@ -16,6 +16,25 @@ from gateway_code import serial_redirection, config
 
 _SerialRedirection_str = 'gateway_code.serial_redirection._SerialRedirectionThread'
 
+def _wait_call_count_not_null(mock_method, max_wait):
+    """
+    Wait for at max 'time' seconds that mock_method get called
+    :param mock_method: mock method to wait on
+    :param max_mait: time to wait at max in seconds
+
+    """
+    import time
+
+    steps = 0.1
+    num_iteration = int(max_wait / steps)
+
+    for i in range(0, num_iteration):
+        if mock_method.communicate.call_count != 0:
+            break
+        time.sleep(steps)
+    else:
+        assert mock_method.call_count != 0
+
 @mock.patch(_SerialRedirection_str)
 class TestSerialRedirectionInit(object):
     """
@@ -94,7 +113,6 @@ class TestSerialRedirectionInit(object):
 
 
 from threading import Semaphore
-import time
 
 from cStringIO import StringIO
 captured_err = StringIO()
@@ -132,9 +150,7 @@ class TestMainFunction(object):
         ret = redirection.start()
         assert ret == 1
 
-        # wait until that it is actually started
-        while popen.communicate.call_count == 0:
-            time.sleep(0.1)
+        _wait_call_count_not_null(popen.communicate, 1)
 
         redirection.stop()
 
@@ -172,9 +188,7 @@ class TestMainFunction(object):
 
         ret = redirection.start()
         assert ret == 0
-        # wait until that it is actually started
-        while popen.communicate.call_count == 0:
-            time.sleep(0.1)
+        _wait_call_count_not_null(popen.communicate, 1)
 
         assert mock_handler.error_handler.call_count <= 1
         redirection.stop()
@@ -270,12 +284,8 @@ class TestSerialRedirection(object):
         redirect = serial_redirection.SerialRedirection('m3')
         redirect.start()
         # wait condition
-        for i in range(0, 50):
-            if popen.communicate.call_count != 0:
-                break
-            time.sleep(0.1)
-        else:
-            assert popen.communicate.call_count != 0
+
+        _wait_call_count_not_null(popen.communicate, 2)
         redirect.stop()
 
 
@@ -312,12 +322,7 @@ class TestSerialRedirectionThread(object):
 
         redirect = _SerialRedirectionThread('tty_file', 500000, error_handler=None)
         redirect.start()
-        for i in range(0, 10):
-            if popen.communicate.call_count != 0:
-                break
-            time.sleep(0.1)
-        else:
-            assert popen.communicate.call_count != 0
+        _wait_call_count_not_null(popen.communicate, 1)
         redirect.stop()
 
 
@@ -397,6 +402,7 @@ class TestSerialRedirectionThread(object):
 
         redirect = serial_redirection._SerialRedirectionThread('tty', 42, None)
         redirect.start()
+        _wait_call_count_not_null(popen.communicate, 1)
         redirect.stop()
 
 
