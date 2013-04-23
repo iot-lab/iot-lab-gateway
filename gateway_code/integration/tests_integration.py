@@ -50,23 +50,28 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         cls.files = {}
         cls.files['idle'] = FileUpload(\
-                file_obj = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
+                file = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
                 name = 'firmware', filename = 'simple_idle.elf')
 
         cls.files['echo'] = FileUpload(\
-                file_obj = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
+                file = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
                 name = 'firmware', filename = 'serial_echo.elf')
 
         cls.files['profile'] = FileUpload(\
-                file_obj = open(CURRENT_DIR + 'profile.json', 'rb'),
+                file = open(CURRENT_DIR + 'profile.json', 'rb'),
                 name = 'profile', filename = 'profile.json')
         cls.files['reduced_profile'] = FileUpload(\
-                file_obj = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
+                file = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
                 name = 'profile', filename = 'reduced_profile.json')
 
         cls.files['control_node'] = FileUpload(\
-                file_obj = open(STABLE_FIRMWARE, 'rb'),
+                file = open(STABLE_FIRMWARE, 'rb'),
                 name = 'profile', filename = 'control_node.elf')
+    @classmethod
+    def tearDownClass(cls):
+        for file_obj in cls.files.itervalues():
+            file_obj.file.close()
+
 
     def setUp(self):
         # get quick access to class attributes
@@ -83,14 +88,12 @@ class TestComplexExperimentRunning(unittest.TestCase):
         """
         Rewind files at start position
         """
-        for file_obj in self.files:
+        for file_obj in self.files.itervalues():
             file_obj.file.seek(0)
 
 
     def tearDown(self):
         self.request_patcher.stop()
-        for file_obj in self.files:
-            file_obj.file.close()
 
 
     def tests_complete_experiment(self):
@@ -109,6 +112,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
         ret = self.app.admin_control_flash()
         assert ret == {'ret':0}
 
+
         self.request.files = {}
         ret = self.app.admin_control_soft_reset()
         assert ret == {'ret':0}
@@ -120,11 +124,12 @@ class TestComplexExperimentRunning(unittest.TestCase):
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
 
-        time.sleep(5)
+        time.sleep(1)
 
         # idle firmware, should be no reply
         ret = _send_command_open_node('localhost', 20000, msg)
         assert ret == None
+
 
 
         # flash
