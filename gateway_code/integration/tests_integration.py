@@ -4,18 +4,21 @@ import gateway_code
 import time
 import os
 
+import recordtype # mutable namedtuple (for to small classes)
+
 from mock import patch
 
 import unittest
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
+# pylint: disable=C0103,R0904
 
-class _FileUpload(object):
-    def __init__(self, file_obj, name, filename, headers=None):
-        self.file     = file_obj
-        self.name     = name
-        self.filename = filename
-        self.headers  = headers
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
+STABLE_FIRMWARE = os.environ['HOME'] + '/elf_m3c/' + 'main_stable.elf'
+
+# Bottle FileUpload class stub
+FileUpload = recordtype('FileUpload', \
+        ['file', 'name', 'filename', ('headers', None)])
 
 
 import socket
@@ -42,50 +45,52 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        args = ['tests', 'localhost', '8080']
         cls.app = gateway_code.server_rest.GatewayRest(\
                 gateway_code.server_rest.GatewayManager('.'))
 
+        cls.files = {}
+        cls.files['idle'] = FileUpload(\
+                file_obj = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
+                name = 'firmware', filename = 'simple_idle.elf')
+
+        cls.files['echo'] = FileUpload(\
+                file_obj = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
+                name = 'firmware', filename = 'serial_echo.elf')
+
+        cls.files['profile'] = FileUpload(\
+                file_obj = open(CURRENT_DIR + 'profile.json', 'rb'),
+                name = 'profile', filename = 'profile.json')
+        cls.files['reduced_profile'] = FileUpload(\
+                file_obj = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
+                name = 'profile', filename = 'reduced_profile.json')
+
+        cls.files['control_node'] = FileUpload(\
+                file_obj = open(STABLE_FIRMWARE, 'rb'),
+                name = 'profile', filename = 'control_node.elf')
+
     def setUp(self):
-        self.app = TestComplexExperimentRunning.app
+        # get quick access to class attributes
+        self.app   = TestComplexExperimentRunning.app
+        self.files = TestComplexExperimentRunning.files
 
         self.request_patcher = patch('gateway_code.server_rest.request')
         self.request = self.request_patcher.start()
 
-        self.idle = _FileUpload(\
-                file_obj = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
-                name = 'firmware', filename = 'simple_idle.elf')
-
-        self.echo = _FileUpload(\
-                file_obj = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
-                name = 'firmware', filename = 'serial_echo.elf')
-
-        self.profile = _FileUpload(\
-                file_obj = open(CURRENT_DIR + 'profile.json', 'rb'),
-                name = 'profile', filename = 'profile.json')
-        self.reduced_profile = _FileUpload(\
-                file_obj = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
-                name = 'profile', filename = 'reduced_profile.json')
-
-        self.control_node = _FileUpload(\
-                file_obj = open(CURRENT_DIR + 'control_node_april_11.elf', 'rb'),
-                name = 'profile', filename = 'control_node_april_11.elf')
+        self._rewind_files()
 
 
-
-        self.files = [self.idle.file, self.echo.file, self.profile.file, \
-                self.reduced_profile.file, self.control_node.file]
-
-
-    def _reload_files(self):
+    def _rewind_files(self):
+        """
+        Rewind files at start position
+        """
         for file_obj in self.files:
-            file_obj.seek(0)
+            file_obj.file.seek(0)
 
 
     def tearDown(self):
-        self.request.stop()
+        self.request_patcher.stop()
         for file_obj in self.files:
-            file_obj.close()
+            file_obj.file.close()
 
 
     def tests_complete_experiment(self):
@@ -100,7 +105,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
         msg = 'HELLO WORLD\n'
 
         # flash control node before starting
-        self.request.files = {'firmware': self.control_node}
+        self.request.files = {'firmware': self.files['control_node']}
         ret = self.app.admin_control_flash()
         assert ret == {'ret':0}
 
@@ -110,7 +115,8 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
 
         # start
-        self.request.files = {'firmware': self.idle, 'profile':self.profile}
+        self.request.files = {'firmware': self.files['idle'], \
+                'profile':self.files['profile']}
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
 
@@ -122,7 +128,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
 
         # flash
-        self.request.files = {'firmware': self.echo}
+        self.request.files = {'firmware': self.files['echo']}
         ret = self.app.open_flash()
         assert ret == {'ret':0}
 
@@ -150,12 +156,13 @@ class TestComplexExperimentRunning(unittest.TestCase):
             * stop when stopped
         """
 
-        self.request.files = {'firmware': self.idle, 'profile':self.reduced_profile}
+        self.request.files = {'firmware': self.files['idle'], \
+                'profile':self.files['reduced_profile']}
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
 
 
-        self._reload_files()
+        self._rewind_files()
         ret = self.app.exp_start(123, 'clochette')
         assert ret['ret'] != 0
 
@@ -179,7 +186,8 @@ class TestComplexExperimentRunning(unittest.TestCase):
         ret = self.app.exp_start(123, 'clochett')
         assert ret['ret'] != 0
 
-        self.request.files = {'firmware': self.idle, 'profile':self.profile}
+        self.request.files = {'firmware': self.files['idle'], \
+                'profile':self.files['profile']}
         ret = self.app.open_flash()
         assert ret['ret'] != 0
 

@@ -1,7 +1,19 @@
+
+"""
+'dispatch' module.
+"""
+
 import Queue
 from threading import Lock
 
 class Dispatch(object):
+
+    """
+    'Dispatch' class handles received messages from the control node.
+
+    It also implement a thread safe send_command function that sends
+      a command to the control node and wait for it's answer
+    """
     def __init__(self, queue_oml, measures_pkt_mask, io_write = None):
         self.measures_pkt_mask = measures_pkt_mask
         self.queue_oml = queue_oml
