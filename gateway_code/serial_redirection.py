@@ -183,6 +183,10 @@ class _SerialRedirectionThread(threading.Thread):
                 # errno == 3 'No such proccess'
                 # current process is already terminated not an issue
                 assert err.errno == 3, 'Unknown error num: %d' % err.errno
+                # Disable: I0011 - locally disabled warning
+                # Disable: W0107 - Unneccessary pass statement
+                # required 'pass' in assert are disabled
+                pass # pylint: disable=I0011,W0107
             time.sleep(0.1)
 
         self.redirector_process = None
