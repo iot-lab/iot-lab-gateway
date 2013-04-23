@@ -116,31 +116,6 @@ class GatewayManager(object):
         return ret_val
 
 
-
-    def cb_serial_redirection_error(self, handler_arg, error_code):
-        """ Callback for SerialRedirection error handler """
-        param_str = str((self, handler_arg, error_code))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        import sys
-        print >> sys.stderr, self.serial_redirection.redirector_thread.out
-        print >> sys.stderr, self.serial_redirection.redirector_thread.err
-        raise  NotImplementedError(0, ret_str)
-
-
-    def _open_serial_redirection_start(self):
-        """
-        Start the serial redirection
-        """
-        LOGGER.info('Open serial redirection start')
-        self.serial_redirection = SerialRedirection('m3', \
-                error_handler = self.cb_serial_redirection_error)
-        ret = self.serial_redirection.start()
-        if ret != 0:
-            LOGGER.error('Open serial redirection failed')
-        return ret
-
-
-
     def exp_stop(self):
         """
         Stop the current running experiment
@@ -177,6 +152,31 @@ class GatewayManager(object):
         return 0
 
 
+    def cb_serial_redirection_error(self, handler_arg, error_code):
+        """ Callback for SerialRedirection error handler """
+        param_str = str((self, handler_arg, error_code))
+        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
+        import sys
+        print >> sys.stderr, self.serial_redirection.redirector_thread.out
+        print >> sys.stderr, self.serial_redirection.redirector_thread.err
+        raise  NotImplementedError(0, ret_str)
+
+
+    def _open_serial_redirection_start(self):
+        """
+        Start the serial redirection
+        """
+        LOGGER.info('Open serial redirection start')
+        self.serial_redirection = SerialRedirection('m3', \
+                error_handler = self.cb_serial_redirection_error)
+        ret = self.serial_redirection.start()
+        if ret != 0:
+            LOGGER.error('Open serial redirection failed')
+        return ret
+
+
+
+
 
     def exp_update_profile(self, profile):
         """
@@ -200,12 +200,15 @@ class GatewayManager(object):
         Updating time reference is propagated to measures handler
         """
         old_time = self.time_reference
+        ret = 0
 
         # save the start experiment time
-        self.time_reference = time.time()
+        new_time = time.time()
         # reset control node time
         # ret = self.
         LOGGER.warning(_unimplemented_fct_str_())
+        if ret == 0:
+            self.time_reference = new_time
 
         # send new time to measures_handler
 
@@ -213,6 +216,7 @@ class GatewayManager(object):
             LOGGER.info('Start experiment time = %r', self.time_reference)
         else:
             LOGGER.info('New time reference = %r', self.time_reference)
+        return ret
 
 
     def open_power_start(self, power=None):
