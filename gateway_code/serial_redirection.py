@@ -10,6 +10,7 @@ import sys
 from subprocess import PIPE
 import subprocess
 import threading
+import atexit
 
 from gateway_code import config
 
@@ -73,6 +74,9 @@ class SerialRedirection():
         self.out = ""
         self.is_running = True
         self.redirector_thread.start()
+
+        atexit.register(self.stop) # cleanup in case of error
+
 
         return 0
 

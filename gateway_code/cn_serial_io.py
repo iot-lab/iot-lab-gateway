@@ -5,6 +5,7 @@ Serial IO layer for control node
 """
 import serial
 import select # used for 'select.error'
+import atexit
 
 import recordtype # mutable namedtuple (for small classes)
 from threading import Thread
@@ -57,6 +58,8 @@ class RxTxSerial():
                 self.cb_packet_received)
         self.serial_port.open()
         self.rx_thread.start()
+        atexit.register(self.stop) # cleanup in case of error
+        return 0
 
     def stop(self):
         """Stops receive thread by closing the serial port, Wait for the
