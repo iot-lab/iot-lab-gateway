@@ -43,8 +43,9 @@ setup(name='gateway_code',
         url='http://www.senslab.info',
         packages = ['gateway_code'],
         scripts = ['flash_firmware.py', 'serial_redirection.py', 'server_rest.py'],
-        cmdclass = {'lint': Lint,},
+        package_data={'gateway_code':['static/*']},
 
+        cmdclass = {'lint': Lint,},
         install_requires = INSTALL_REQUIRES,
         setup_requires = TESTS_REQUIRES + INSTALL_REQUIRES,
         )
