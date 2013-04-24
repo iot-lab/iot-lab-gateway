@@ -45,6 +45,11 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        # setup control node
+        from gateway_code import flash_firmware, reset
+        flash_firmware.flash('gwt', STABLE_FIRMWARE)
+        reset.reset('gwt')
+
         cls.app = gateway_code.server_rest.GatewayRest(\
                 gateway_code.server_rest.GatewayManager('.'))
 
@@ -64,9 +69,6 @@ class TestComplexExperimentRunning(unittest.TestCase):
                 file = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
                 name = 'profile', filename = 'reduced_profile.json')
 
-        cls.files['control_node'] = FileUpload(\
-                file = open(STABLE_FIRMWARE, 'rb'),
-                name = 'profile', filename = 'control_node.elf')
     @classmethod
     def tearDownClass(cls):
         for file_obj in cls.files.itervalues():
@@ -108,14 +110,6 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         msg = 'HELLO WORLD\n'
 
-        # flash control node before starting
-        self.request.files = {'firmware': self.files['control_node']}
-        ret = self.app.admin_control_flash()
-        assert ret == {'ret':0}
-
-        self.request.files = {}
-        ret = self.app.admin_control_soft_reset()
-        assert ret == {'ret':0}
 
 
         for i in range(0, 3):
