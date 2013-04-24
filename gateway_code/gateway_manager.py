@@ -33,8 +33,12 @@ class GatewayManager(object):
         self.current_profile       = None
         self.time_reference        = None
 
-        self.serial_redirection    = None
         self.open_node_started     = False
+
+
+        # open node interraction
+        self.serial_redirection = SerialRedirection('m3', \
+                error_handler = self.cb_serial_redirection_error)
 
         # setup control node communication
         measures_queue  = Queue.Queue(0)
@@ -85,9 +89,10 @@ class GatewayManager(object):
             LOGGER.error('Experiment already running')
             return 1
 
+        self.experiment_is_running = True
+
         self.exp_id                = exp_id
         self.user                  = user
-        self.experiment_is_running = True
         self.current_profile       = profile
 
         ret_val = 0
@@ -98,7 +103,6 @@ class GatewayManager(object):
         # Prepare Gateway #
         # # # # # # # # # #
 
-        import sys
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
         self.rxtx.start()   # ret ?
@@ -128,7 +132,8 @@ class GatewayManager(object):
         # Finish Open Node  #
         # # # # # # # # # # #
 
-        ret      = self._open_serial_redirection_start()
+        #ret      = self._open_serial_redirection_start()
+        ret      = self.serial_redirection.start()
         ret_val += ret
         # start the gdb server
         ret      = self.node_soft_reset('m3')
@@ -146,7 +151,36 @@ class GatewayManager(object):
     def exp_stop(self):
         """
         Stop the current running experiment
+
+
+
+        Experiment stop steps
+        ======================
+
+        1) Remove open node access
+            a) Stop GDB server
+            b) Stop open node serial redirection
+
+        2) Cleanup Control node config and open node
+            a) Stop measures Control Node, Configure profile == None
+            b) Start Open Node DC (may be running on battery)
+            b) Flash Idle open node (when DC)
+            c) Shutdown open node (DC)
+
+        3) Cleanup control node interraction
+            a) Stop control node serial communication
+            b) Stop measures handler (OML thread)
+            c) Reset control node (just in case)
+
+        4) Cleanup experiment informations
+            a) remove current user
+            b) remove expid
+            c) Remove current profile
+            d) Remove time reference
+            e) 'Experiment running' = False
+
         """
+
         if not self.experiment_is_running:
             ret = 1
             LOGGER.error('No experiment running')
@@ -154,45 +188,47 @@ class GatewayManager(object):
 
         ret_val = 0
 
-        # stop redirection
+        # # # # # # # # # # # # # #
+        # Remove open node access #
+        # # # # # # # # # # # # # #
+
+        # stop gdb server
         ret      = self.serial_redirection.stop()
         ret_val += ret
 
+        # # # # # # # # # # # # # # # # # # # # # # #
+        # Cleanup Control node config and open node #
+        # # # # # # # # # # # # # # # # # # # # # # #
 
-        # stop gdb server
-
-        # set dc ON
-        # flash idle firmware
-        #
-
-
-        # update experiment profile with a
-        #   'no polling',
-        #   'battery charge',
-        #   'power off'
-        # profile
-
-
-        # shut down open node ?
+        # stop measures (profile default)
+            # update experiment profile with a
+            #   'no polling',  'battery charge',   'power off'
+        ret      = self.open_power_start(power='dc')
+        ret_val += ret
+        #  ret      = self.node_flash('m3', idle_firmware_path_?_?)
+        #  ret_val += ret
         ret      = self.open_power_stop(power='dc')
         ret_val += ret
 
-        # stop control node receive thread
+
+
+        # # # # # # # # # # # # # # # # # # #
+        # Cleanup control node interraction #
+        # # # # # # # # # # # # # # # # # # #
+
         self.rxtx.stop()
+        # stop measures handler (oml thread)
+        ret      = self.node_soft_reset('gwt')
+        ret_val += ret
 
-        # reset the manager
-        self.exp_id                = None
         self.user                  = None
-        self.experiment_is_running = False
-
+        self.exp_id                = None
         self.current_profile       = None
         self.time_reference        = None
 
-        self.serial_redirection    = None
-        #self.__init__()
+        self.experiment_is_running = False
 
-        LOGGER.warning(_unimplemented_fct_str_() + " implem not comlete")
-        return 0
+        return ret_val
 
 
     def cb_serial_redirection_error(self, handler_arg, error_code):
@@ -278,7 +314,8 @@ class GatewayManager(object):
             LOGGER.warning('Unimplemented load power from profile')
             ret = 1
 
-        ret_b = protocol.start_stop(self.dispatcher.send_command, 'start', power)
+        ret_b = protocol.start_stop(self.dispatcher.send_command, \
+                'start', power)
         ret   = 0 if ret_b else 1
 
         if ret == 0:
