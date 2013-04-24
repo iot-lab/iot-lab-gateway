@@ -124,9 +124,9 @@ class GatewayManager(object):
         ret      = self.exp_update_profile(profile)
         ret_val += ret
 
-        # # # # # # # # # # # #
-        # Finish Control Node #
-        # # # # # # # # # # # #
+        # # # # # # # # # # #
+        # Finish Open Node  #
+        # # # # # # # # # # #
 
         ret      = self._open_serial_redirection_start()
         ret_val += ret
