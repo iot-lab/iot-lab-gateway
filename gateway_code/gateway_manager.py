@@ -23,7 +23,7 @@ class GatewayManager(object):
 
     Manages experiments, open node and control node
     """
-    def __init__(self, log_folder=None):
+    def __init__(self, log_folder='.'):
 
         # current experiment infos
         self.exp_id                = None
@@ -44,10 +44,8 @@ class GatewayManager(object):
         self.rxtx       = cn_serial_io.RxTxSerial(self.dispatcher.cb_dispatcher)
         self.dispatcher.io_write = self.rxtx.write
 
-        # don't reconfigure when called from __stop__
-        if log_folder is not None:
-            # configure logger
-            gateway_code.gateway_logging.init_logger(log_folder)
+        # configure logger
+        gateway_code.gateway_logging.init_logger(log_folder)
 
 
 
@@ -72,13 +70,13 @@ class GatewayManager(object):
         2) Prepare Open node
             a) Start Open Node DC (stopped before)
             b) Flash open node (flash when started DC)
-            c) Start open node serial redirection
-            d) Start GDB server
         3) Prepare Control node
             a) Reset time control node, and update time reference
             b) Configure profile
-        4) Finish
-            a) Final reset of open node
+        4) Finish Open node
+            a) Start open node serial redirection
+            d) Start GDB server
+            c) Final reset of open node
         5) Experiment Started
 
         """
@@ -96,31 +94,46 @@ class GatewayManager(object):
 
         # start steps described in docstring
 
+        # # # # # # # # # #
+        # Prepare Gateway #
+        # # # # # # # # # #
+
+        import sys
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
-
-        # start control node reader/writer
-
-        self.rxtx.start()
+        self.rxtx.start()   # ret ?
         # start measures Handler
+
+        time.sleep(1) # wait control node Ready, reajust time later
+
+        # # # # # # # # # # #
+        # Prepare Open Node #
+        # # # # # # # # # # #
 
         ret      = self.open_power_start(power='dc')
         ret_val += ret
         ret      = self.node_flash('m3', firmware_path)
         ret_val += ret
 
+        # # # # # # # # # # # # #
+        # Prepare Control Node  #
+        # # # # # # # # # # # # #
+
         ret      = self.reset_time()
         ret_val += ret
         ret      = self.exp_update_profile(profile)
         ret_val += ret
 
+        # # # # # # # # # # # #
+        # Finish Control Node #
+        # # # # # # # # # # # #
+
         ret      = self._open_serial_redirection_start()
         ret_val += ret
-
         # start the gdb server
-
         ret      = self.node_soft_reset('m3')
         ret_val += ret
+
 
         if ret_val == 0:
             LOGGER.info('Start experiment Succeeded')
@@ -139,11 +152,12 @@ class GatewayManager(object):
             LOGGER.error('No experiment running')
             return ret
 
+        ret_val = 0
 
         # stop redirection
-        ret = self.serial_redirection.stop()
+        ret      = self.serial_redirection.stop()
+        ret_val += ret
 
-        self.rxtx.stop()
 
         # stop gdb server
 
@@ -160,6 +174,11 @@ class GatewayManager(object):
 
 
         # shut down open node ?
+        ret      = self.open_power_stop(power='dc')
+        ret_val += ret
+
+        # stop control node receive thread
+        self.rxtx.stop()
 
         # reset the manager
         self.exp_id                = None
@@ -230,7 +249,8 @@ class GatewayManager(object):
         new_time_ref = time.time()
         old_time_ref = self.time_reference
 
-        ret = protocol.reset_time(self.dispatcher.send_command, 'reset_time')
+        ret_b = protocol.reset_time(self.dispatcher.send_command, 'reset_time')
+        ret   = 0 if ret_b else 1
 
         if ret == 0:
             self.time_reference = new_time_ref
@@ -258,7 +278,8 @@ class GatewayManager(object):
             LOGGER.warning('Unimplemented load power from profile')
             ret = 1
 
-        ret = protocol.start_stop(self.dispatcher.send_command, 'start', power)
+        ret_b = protocol.start_stop(self.dispatcher.send_command, 'start', power)
+        ret   = 0 if ret_b else 1
 
         if ret == 0:
             self.open_node_started = True
@@ -281,9 +302,9 @@ class GatewayManager(object):
             LOGGER.warning('Unimplemented load power from profile')
             ret = 1
 
-        if power is not None: # remove me
-            ret = protocol.start_stop(self.dispatcher.send_command, \
-                    'stop', power)
+        ret_b = protocol.start_stop(self.dispatcher.send_command, \
+                'stop', power)
+        ret   = 0 if ret_b else 1
 
         if ret == 0:
             self.open_node_started = False
