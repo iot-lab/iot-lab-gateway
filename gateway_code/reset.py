@@ -37,7 +37,7 @@ def reset(node):
     if node not in config.NODES_CFG:
         raise ValueError, 'Unknown node, not in %r' \
                 % config.NODES_CFG.keys()
-    cfg_file = config.CONFIG_FILES_PATH + '/' + \
+    cfg_file = config.STATIC_FILES_PATH + '/' + \
             config.NODES_CFG[node]['openocd_cfg_file']
 
     # flash_cmd
