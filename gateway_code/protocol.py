@@ -271,7 +271,8 @@ def decode_measure_packet(pkt):
     else:
         print fct(pkt)
 
-def listen(queue, _command):
+def listen(queue, command):
+    _ = command
 
     while True:
         try:
