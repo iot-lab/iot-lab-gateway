@@ -3,26 +3,16 @@
 import gateway_code
 import time
 import os
-
 import recordtype # mutable namedtuple (for small classes)
 
 from mock import patch
-
 import unittest
-
-from gateway_code import config
 
 # pylint: disable=C0103,R0904
 
-
-import gateway_code
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 STATIC_DIR  = CURRENT_DIR + 'static/' # using the 'static' symbolic link
 STABLE_FIRMWARE = STATIC_DIR + 'control_node.elf'
-
-# Overwrite static files
-gateway_code.config.STATIC_FILES_PATH = STATIC_DIR
-
 
 
 # Bottle FileUpload class stub
@@ -50,6 +40,9 @@ def _send_command_open_node(host, port, command):
     return ret
 
 
+
+@patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
+@patch('gateway_code.gateway_manager.IDLE_FIRMWARE', STATIC_DIR + 'idle.elf')
 class TestComplexExperimentRunning(unittest.TestCase):
 
     @classmethod
@@ -66,7 +59,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
         # default files
         cls.files['idle'] = FileUpload(\
                 file = open(STATIC_DIR + 'idle.elf', 'rb'),
-                name = 'firmware', filename = 'simple_idle.elf')
+                name = 'firmware', filename = 'idle.elf')
         cls.files['default_profile'] = FileUpload(\
                 file = open(STATIC_DIR + 'default_profile.json', 'rb'),
                 name = 'profile', filename = 'default_profile.json')
@@ -80,6 +73,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
         cls.files['profile'] = FileUpload(\
                 file = open(CURRENT_DIR + 'profile.json', 'rb'),
                 name = 'profile', filename = 'profile.json')
+
 
     @classmethod
     def tearDownClass(cls):

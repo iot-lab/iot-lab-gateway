@@ -17,12 +17,18 @@ import logging
 
 LOGGER = logging.getLogger("gateway_logger")
 
+IDLE_FIRMWARE = config.STATIC_FILES_PATH + 'idle.elf'
+# with open(config.STATIC_FILES_PATH + 'default_profile.json') as _profile:
+#     DEFAULT_PROFILE =  json.load(_profile.read(), cls=ProfileJSONDecoder)
+DEFAULT_PROFILE = None # TODO load real profile
+
 class GatewayManager(object):
     """
     Gateway Manager class,
 
     Manages experiments, open node and control node
     """
+
     def __init__(self, log_folder='.'):
 
         # current experiment infos
@@ -53,7 +59,8 @@ class GatewayManager(object):
 
 
 
-    def exp_start(self, exp_id, user, firmware_path, profile):
+    def exp_start(self, exp_id, user, \
+            firmware_path=IDLE_FIRMWARE, profile=DEFAULT_PROFILE):
         """
         Start an experiment
 
@@ -200,16 +207,14 @@ class GatewayManager(object):
         # Cleanup Control node config and open node #
         # # # # # # # # # # # # # # # # # # # # # # #
 
-        # stop measures (profile default)
-            # update experiment profile with a
-            #   'no polling',  'battery charge',   'power off'
+        ret      = self.exp_update_profile(DEFAULT_PROFILE)
+        ret_val += ret
         ret      = self.open_power_start(power='dc')
         ret_val += ret
-        ret      = self.node_flash('m3', config.STATIC_FILES_PATH + 'idle.elf')
+        ret      = self.node_flash('m3', IDLE_FIRMWARE)
         ret_val += ret
         ret      = self.open_power_stop(power='dc')
         ret_val += ret
-
 
 
         # # # # # # # # # # # # # # # # # # #
