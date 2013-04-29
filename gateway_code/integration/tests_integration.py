@@ -10,11 +10,20 @@ from mock import patch
 
 import unittest
 
+from gateway_code import config
+
 # pylint: disable=C0103,R0904
 
 
+import gateway_code
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
-STABLE_FIRMWARE = os.environ['HOME'] + '/elf_m3c/' + 'main_stable.elf'
+STATIC_DIR  = CURRENT_DIR + 'static/' # using the 'static' symbolic link
+STABLE_FIRMWARE = STATIC_DIR + 'control_node.elf'
+
+# Overwrite static files
+gateway_code.config.STATIC_FILES_PATH = STATIC_DIR
+
+
 
 # Bottle FileUpload class stub
 FileUpload = recordtype.recordtype('FileUpload', \
@@ -54,10 +63,16 @@ class TestComplexExperimentRunning(unittest.TestCase):
                 gateway_code.server_rest.GatewayManager('.'))
 
         cls.files = {}
+        # default files
         cls.files['idle'] = FileUpload(\
-                file = open(CURRENT_DIR + 'simple_idle.elf', 'rb'),
+                file = open(STATIC_DIR + 'idle.elf', 'rb'),
                 name = 'firmware', filename = 'simple_idle.elf')
+        cls.files['default_profile'] = FileUpload(\
+                file = open(STATIC_DIR + 'default_profile.json', 'rb'),
+                name = 'profile', filename = 'default_profile.json')
 
+
+        # test specific files
         cls.files['echo'] = FileUpload(\
                 file = open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
                 name = 'firmware', filename = 'serial_echo.elf')
@@ -65,9 +80,6 @@ class TestComplexExperimentRunning(unittest.TestCase):
         cls.files['profile'] = FileUpload(\
                 file = open(CURRENT_DIR + 'profile.json', 'rb'),
                 name = 'profile', filename = 'profile.json')
-        cls.files['reduced_profile'] = FileUpload(\
-                file = open(CURRENT_DIR + 'reduced_profile.json', 'rb'),
-                name = 'profile', filename = 'reduced_profile.json')
 
     @classmethod
     def tearDownClass(cls):
@@ -160,7 +172,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
         """
 
         self.request.files = {'firmware': self.files['idle'], \
-                'profile':self.files['reduced_profile']}
+                'profile':self.files['default_profile']}
         ret = self.app.exp_start(123, 'clochette')
         assert ret == {'ret':0}
 

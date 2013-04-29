@@ -6,7 +6,7 @@
 manager script
 """
 
-from gateway_code import flash_firmware, reset
+from gateway_code import flash_firmware, reset, config
 from gateway_code import dispatch, cn_serial_io, protocol
 from gateway_code.serial_redirection import SerialRedirection
 import time
@@ -205,8 +205,8 @@ class GatewayManager(object):
             #   'no polling',  'battery charge',   'power off'
         ret      = self.open_power_start(power='dc')
         ret_val += ret
-        #  ret      = self.node_flash('m3', idle_firmware_path_?_?)
-        #  ret_val += ret
+        ret      = self.node_flash('m3', config.STATIC_FILES_PATH + 'idle.elf')
+        ret_val += ret
         ret      = self.open_power_stop(power='dc')
         ret_val += ret
 
