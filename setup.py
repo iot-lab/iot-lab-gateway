@@ -56,7 +56,9 @@ class Lint(Command):
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial', 'recordtype']
 TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'requests']
 
-
+import os
+from gateway_code import config
+STATIC_FILES = ['static/' + item for item in os.listdir('static')]
 
 setup(name='gateway_code',
         version='0.22',
@@ -66,7 +68,7 @@ setup(name='gateway_code',
         url='http://www.senslab.info',
         packages = ['gateway_code'],
         scripts = ['flash_firmware.py', 'serial_redirection.py', 'server_rest.py'],
-        package_data={'gateway_code':['static/*']},
+        data_files = [(config.STATIC_FILES_PATH, STATIC_FILES)],
 
         cmdclass = {'lint': Lint,},
         install_requires = INSTALL_REQUIRES,
