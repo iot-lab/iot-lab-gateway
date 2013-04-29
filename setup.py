@@ -12,22 +12,45 @@ class Install(install):
 
 class Lint(Command):
     user_options = [
-            ('report', 'r', "print errors and report")]
+            ('report', 'r', "print errors and report"),
+            ('outfile=', 'o', "duplicate output to file")]
     def initialize_options(self):
         self.report = False
+        self.outfile = None
 
     def finalize_options(self):
-        if  self.report:
+        if self.report:
             self.report_option = ['--reports=y']
         else:
             self.report_option = ['--reports=n']
 
     def run(self):
+
         from pylint import lint
         lint_args = ['--rcfile=pylint.rc', '-f', 'parseable', 'gateway_code/']
         lint_args = self.report_option + lint_args
-        # I didn't managed to catch the output of lint.Run function
+
+        # catch stdout to allow redirect to file
+        if self.outfile is not None:
+            from cStringIO import StringIO
+            import sys
+            sys.stdout = StringIO()
+
         lint.Run(lint_args, exit=False)
+
+        # write pylint output
+        if self.outfile is not None:
+            my_output = sys.stdout.getvalue()
+            # recover stdout
+            sys.stdout = sys.__stdout__
+
+            print my_output
+            # duplicate output to file
+            print 'Writing pylint output to file: %r' % self.outfile
+            with open(self.outfile, 'w') as out:
+                out.write(my_output)
+
+
 
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial', 'recordtype']
