@@ -166,7 +166,9 @@ class ReceiveThread(Thread):
             #call to read will block when no bytes are received
             try:
                 rx_char = self.serial_port.read(1)
-            except (select.error, serial.SerialException):
+            except (select.error, serial.SerialException, OSError, TypeError):
+                # All exceptions append at least once during tests
+                # The list is empirical and may evolve
                 break  # pyserial has been closed
 
             if rx_char:
