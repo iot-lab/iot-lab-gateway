@@ -4,7 +4,7 @@ Common configuration for openocd scripts
 """
 
 
-CONFIG_FILES_PATH = '/home/root/bin'
+STATIC_FILES_PATH = '/var/lib/gateway_code/'
 NODES_CFG   = {
         'gwt': { 'openocd_cfg_file':'fiteco-gwt.cfg',
             'tty':'/dev/ttyFITECO_GWT', 'baudrate':500000},
