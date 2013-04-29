@@ -15,5 +15,5 @@ git pull
 set -e
 
 # run as the same user as bottle server
-su -c "source /etc/profile; python setup.py nosetests -i='*integration/*'" www-data
-python setup.py lint --report | tee pylint.out
+su -c "source /etc/profile; python setup.py integration_tests" www-data
+python setup.py jenkins_lint
