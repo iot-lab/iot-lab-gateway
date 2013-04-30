@@ -17,7 +17,8 @@ import logging
 
 LOGGER = logging.getLogger("gateway_logger")
 
-IDLE_FIRMWARE = config.STATIC_FILES_PATH + 'idle.elf'
+CONTROL_NODE_FIRMWARE = config.STATIC_FILES_PATH + 'control_node.elf'
+IDLE_FIRMWARE         = config.STATIC_FILES_PATH + 'idle.elf'
 # with open(config.STATIC_FILES_PATH + 'default_profile.json') as _profile:
 #     DEFAULT_PROFILE =  json.load(_profile.read(), cls=ProfileJSONDecoder)
 DEFAULT_PROFILE = None # TODO load real profile
@@ -41,6 +42,11 @@ class GatewayManager(object):
 
         self.open_node_started     = False
 
+
+        ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
+        if ret != 0:
+            raise StandardError("Control node flash failed: {ret:%d, '%s')" % \
+                    (ret, CONTROL_NODE_FIRMWARE))
 
         # open node interraction
         self.serial_redirection = SerialRedirection('m3', \
