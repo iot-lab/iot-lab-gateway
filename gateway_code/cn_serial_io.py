@@ -40,7 +40,7 @@ class RxTxSerial():
         # if blocking, read does not throw exception on close
 
         self.serial_port = serial.Serial(port=port, \
-                baudrate=baudrate, timeout=1)
+                baudrate=baudrate, timeout=0.1)
 
         self.rx_thread = None
         self.cb_packet_received = cb_packet_received
