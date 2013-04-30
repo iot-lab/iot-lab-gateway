@@ -4,6 +4,7 @@ Protocol between gateway and control node
 
 import struct
 import Queue
+import gateway_code.profile
 
 PROTOCOL = {}
 
@@ -121,7 +122,7 @@ INA226_AVERAGE = {
 INA226_ENABLE        = 1 << 7
 INA226_DISABLE       = 0 << 7
 
-INA226_STATUS = {
+INA226_STATE = {
         'start': INA226_ENABLE,
         'stop': INA226_DISABLE,
         }
@@ -208,30 +209,59 @@ def reset_time(sender, command):
     return ret
 
 
+def config_consumption_command(sender, command, state, **kwargs):
+    """
+    Configure consumption measures.
+    Function called when used from command line.
+    """
 
-def config_consumption(sender, command, status, \
-        source=None, period=None, average=None,  \
-        power=False, voltage=False, current=False):
+    _ = command
+    consumption_kwargs = kwargs
+    consumption = None
+
+    if state == 'start':
+        consumption = gateway_code.profile.Consumption(**consumption_kwargs)
+
+    ret = config_consumption(sender, consumption)
+    return ret
+
+
+def config_consumption(sender, consumption=None):
     """
     Configure consumption measures
+
+    :param sender: function that sends command
+    :param consumption: the consumption object
+    :type consumption: gateway_code.profile.Consumption
     """
 
-    command_b = COMMAND[command]
-    measures_flag  = 0
-    measures_flag |= POWER_MEASURES['power']   if power   else 0
-    measures_flag |= POWER_MEASURES['voltage'] if voltage else 0
-    measures_flag |= POWER_MEASURES['current'] if current else 0
-    measures_flag |= POWER_SOURCE.get(source, 0)
-    config_flag  = 0
-    config_flag |= INA226_PERIOD.get(period, 0)
-    config_flag |= INA226_AVERAGE.get(average, 0) << 4
-    config_flag |= INA226_STATUS.get(status, 0)
-    data = command_b + chr(measures_flag) + chr(config_flag)
+    command_b     = COMMAND['consumption']
+    measures_flag = 0
+    config_flag   = 0
 
+    if consumption is not None:
+        # start and configure consumption
+        measures_flag |= POWER_MEASURES['power']   if consumption.power   else 0
+        measures_flag |= POWER_MEASURES['voltage'] if consumption.voltage else 0
+        measures_flag |= POWER_MEASURES['current'] if consumption.current else 0
+        measures_flag |= POWER_SOURCE[consumption.source]
+
+        config_flag |= INA226_PERIOD[consumption.period]
+        config_flag |= INA226_AVERAGE[consumption.average] << 4
+        config_flag |= INA226_STATE['start']
+
+    else:
+        # stop consumption measures
+        config_flag |= INA226_STATE['stop']
+
+
+    data = command_b + chr(measures_flag) + chr(config_flag)
     result = send_cmd(sender, data)
 
     ret = _valid_result_command(result, command_b, 2) # type and [N]ACK
     return ret
+
+
 
 
 CONSUMPTION_TUPLE = \
@@ -354,12 +384,20 @@ def parse_arguments(args):
     # Consumption config
     parse_consum = \
             sub.add_parser('consumption', help='Config consumption measures')
-    parse_consum.add_argument('status', choices=INA226_STATUS.keys())
-    parse_consum.add_argument('source', choices=POWER_SOURCE.keys())
-    parse_consum.add_argument('-p', '--period', default='1100us', \
-            choices=INA226_PERIOD.keys(), help = 'INA226 measure period')
-    parse_consum.add_argument('-a', '--average', default='256', \
-            choices=INA226_AVERAGE.keys(), help = 'INA226 measures average')
+    parse_consum.add_argument('state', choices=sorted(INA226_STATE.keys()))
+    parse_consum.add_argument('source', choices=sorted(POWER_SOURCE.keys()))
+    parse_consum.add_argument('--period', default='2116us', \
+            choices=sorted(INA226_PERIOD.keys(), key=(lambda x: int(x[:-2]))), \
+            help = 'INA226 measure period')
+    parse_consum.add_argument('--average', default='512', \
+            choices=sorted(INA226_AVERAGE.keys(), key=int), \
+            help = 'INA226 measures average')
+    parse_consum.add_argument(\
+            '-p', '--power',   help = 'Measure power', action="store_true")
+    parse_consum.add_argument(\
+            '-v', '--voltage', help = 'Measure voltage', action="store_true")
+    parse_consum.add_argument(\
+            '-c', '--current', help = 'Measure current', action="store_true")
 
 
     # listen to sensor measures
@@ -367,6 +405,7 @@ def parse_arguments(args):
             sub.add_parser('listen', help='listen for measures packets')
 
     namespace = parser.parse_args(args)
+    print namespace
     return namespace.command, namespace
 
 
@@ -374,7 +413,7 @@ _ARGS_COMMANDS = {
         'start': start_stop,
         'stop':  start_stop,
         'reset_time': reset_time,
-        'consumption':config_consumption,
+        'consumption':config_consumption_command,
         'listen': _listen,
         }
 
