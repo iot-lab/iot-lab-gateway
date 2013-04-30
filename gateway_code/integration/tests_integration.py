@@ -43,17 +43,17 @@ def _send_command_open_node(host, port, command):
 
 @patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
 @patch('gateway_code.gateway_manager.IDLE_FIRMWARE', STATIC_DIR + 'idle.elf')
+@patch('gateway_code.gateway_manager.CONTROL_NODE_FIRMWARE', \
+        STATIC_DIR + 'control_node.elf')
 class TestComplexExperimentRunning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # setup control node
-        from gateway_code import flash_firmware, reset
-        flash_firmware.flash('gwt', STABLE_FIRMWARE)
-        reset.reset('gwt')
-
-        cls.app = gateway_code.server_rest.GatewayRest(\
-                gateway_code.server_rest.GatewayManager('.'))
+        with patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR):
+            with patch('gateway_code.gateway_manager.CONTROL_NODE_FIRMWARE', \
+                    STATIC_DIR + 'control_node.elf'):
+                cls.app = gateway_code.server_rest.GatewayRest(\
+                        gateway_code.server_rest.GatewayManager('.'))
 
         cls.files = {}
         # default files
