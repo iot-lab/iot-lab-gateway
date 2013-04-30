@@ -6,7 +6,9 @@
 manager script
 """
 
-from gateway_code import flash_firmware, reset, config
+import gateway_code.profile
+from gateway_code import flash_firmware, reset
+from gateway_code import config
 from gateway_code import dispatch, cn_serial_io, protocol
 from gateway_code.serial_redirection import SerialRedirection
 import time
@@ -19,9 +21,6 @@ LOGGER = logging.getLogger("gateway_logger")
 
 CONTROL_NODE_FIRMWARE = config.STATIC_FILES_PATH + 'control_node.elf'
 IDLE_FIRMWARE         = config.STATIC_FILES_PATH + 'idle.elf'
-# with open(config.STATIC_FILES_PATH + 'default_profile.json') as _profile:
-#     DEFAULT_PROFILE =  json.load(_profile.read(), cls=ProfileJSONDecoder)
-DEFAULT_PROFILE = None # TODO load real profile
 
 class GatewayManager(object):
     """
@@ -60,13 +59,15 @@ class GatewayManager(object):
         self.rxtx       = cn_serial_io.RxTxSerial(self.dispatcher.cb_dispatcher)
         self.dispatcher.io_write = self.rxtx.write
 
+        self.sender = self.dispatcher.send_command
+
         # configure logger
         gateway_code.gateway_logging.init_logger(log_folder)
 
 
 
     def exp_start(self, exp_id, user, \
-            firmware_path=IDLE_FIRMWARE, profile=DEFAULT_PROFILE):
+            firmware_path=IDLE_FIRMWARE, profile=None):
         """
         Start an experiment
 
@@ -106,7 +107,8 @@ class GatewayManager(object):
 
         self.exp_id                = exp_id
         self.user                  = user
-        self.current_profile       = profile
+        self.current_profile       = profile \
+                if profile is not None else self.default_profile()
 
         ret_val = 0
 
@@ -213,7 +215,7 @@ class GatewayManager(object):
         # Cleanup Control node config and open node #
         # # # # # # # # # # # # # # # # # # # # # # #
 
-        ret      = self.exp_update_profile(DEFAULT_PROFILE)
+        ret      = self.exp_update_profile(self.default_profile())
         ret_val += ret
         ret      = self.open_power_start(power='dc')
         ret_val += ret
@@ -296,7 +298,7 @@ class GatewayManager(object):
         new_time_ref = time.time()
         old_time_ref = self.time_reference
 
-        ret_b = protocol.reset_time(self.dispatcher.send_command, 'reset_time')
+        ret_b = protocol.reset_time(self.sender, 'reset_time')
         ret   = 0 if ret_b else 1
 
         if ret == 0:
@@ -320,13 +322,11 @@ class GatewayManager(object):
         LOGGER.info('Open power start')
 
         if power is None:
-            power = 'dc'
-            # TODO load power from profile
-            LOGGER.warning('Unimplemented load power from profile')
-            ret = 1
+            assert self.current_profile is not None
+            power = self.current_profile.power
 
-        ret_b = protocol.start_stop(self.dispatcher.send_command, \
-                'start', power)
+
+        ret_b = protocol.start_stop(self.sender, 'start', power)
         ret   = 0 if ret_b else 1
 
         if ret == 0:
@@ -345,13 +345,10 @@ class GatewayManager(object):
         ret = 0
 
         if power is None:
-            power = 'dc'
-            # TODO load power from profile
-            LOGGER.warning('Unimplemented load power from profile')
-            ret = 1
+            assert self.current_profile is not None
+            power = self.current_profile.power
 
-        ret_b = protocol.start_stop(self.dispatcher.send_command, \
-                'stop', power)
+        ret_b = protocol.start_stop(self.sender, 'stop', power)
         ret   = 0 if ret_b else 1
 
         if ret == 0:
@@ -393,6 +390,17 @@ class GatewayManager(object):
         if ret != 0:
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
+
+    @staticmethod
+    def default_profile():
+        """
+        Get the default profile
+        """
+        import json
+        with open(config.STATIC_FILES_PATH + 'default_profile.json') as _prof:
+            profile_dict = json.load(_prof)
+            def_profile = gateway_code.profile.profile_from_dict(profile_dict)
+        return def_profile
 
 
 def _unimplemented_fct_str_():

@@ -70,6 +70,13 @@ TYPE_MEASURES_CONSUMPTION = chr(0xFF)
 CONSUMPTION_POWER   = 1 << 0
 CONSUMPTION_VOLTAGE = 1 << 1
 CONSUMPTION_CURRENT = 1 << 2
+
+POWER_MEASURES = {
+        'power': CONSUMPTION_POWER,
+        'voltage': CONSUMPTION_VOLTAGE,
+        'current': CONSUMPTION_CURRENT,
+        }
+
 # nothing on bit 3
 # Only one of the following
 CONSUMPTION_3_3V    = 1 << 4
@@ -77,34 +84,39 @@ CONSUMPTION_5V      = 1 << 5
 CONSUMPTION_BATT    = 1 << 6
 # nothing on bit 7
 
-MEASURE_POWER_SOURCE = {
-        '3.3V':CONSUMPTION_3_3V,
-        '5V':CONSUMPTION_5V,
-        'BATT':CONSUMPTION_BATT,
+POWER_SOURCE = {
+        '3.3V' : CONSUMPTION_3_3V,
+        '5V'   : CONSUMPTION_5V,
+        'BATT' : CONSUMPTION_BATT,
         }
 
 
 # CONFIG BYTE == [ PERIOD | AVERAGE << 4 | ENABLE(BIT7) ]
 
 # Period
-INA226_PERIOD_140US  = 0
-INA226_PERIOD_204US  = 1
-INA226_PERIOD_332US  = 2
-INA226_PERIOD_588US  = 3
-INA226_PERIOD_1100US = 4
-INA226_PERIOD_2116US = 5
-INA226_PERIOD_4156US = 6
-INA226_PERIOD_8244US = 7
+INA226_PERIOD = {
+        '140us' : 0,
+        '204us' : 1,
+        '332us' : 2,
+        '588us' : 3,
+        '1100us': 4,
+        '2116us': 5,
+        '4156us': 6,
+        '8244us': 7,
+        }
 
 # Average
-INA226_AVERAGE_1     = 0
-INA226_AVERAGE_4     = 1
-INA226_AVERAGE_16    = 2
-INA226_AVERAGE_64    = 3
-INA226_AVERAGE_128   = 4
-INA226_AVERAGE_256   = 5
-INA226_AVERAGE_512   = 6
-INA226_AVERAGE_1024  = 7
+INA226_AVERAGE = {
+        '1'    : 0,
+        '4'    : 1,
+        '16'   : 2,
+        '64'   : 3,
+        '128'  : 4,
+        '256'  : 5,
+        '512'  : 6,
+        '1024' : 7,
+        }
+
 # ENABLE/DISABLE
 INA226_ENABLE        = 1 << 7
 INA226_DISABLE       = 0 << 7
@@ -119,10 +131,13 @@ INA226_STATUS = {
 COMMAND = {'start': TYPE_CMD_OPEN_NODE_START, 'stop': TYPE_CMD_OPEN_NODE_STOP, \
         'reset_time': TYPE_CMD_RESET_TIME, \
         'consumption': TYPE_CMD_CONFIG_MEASURES_CONSUMPTION}
-ALIM    = {'batt': BATT, 'dc': DC,}
+ALIM    = {'battery': BATT, 'dc': DC,}
 
 
 def _print_packet(info, data):
+    """
+    Debug function that prints a packet
+    """
     import sys
     debug_out = info + ": '"
     if data is None:
@@ -151,6 +166,9 @@ def _valid_result_command(packet, pkt_type, length):
     return ret
 
 def send_cmd(sender, data):
+    """
+    Send a command to the control node and wait for it's answer.
+    """
 
     _print_packet('Sent packet', data)
     result = sender(data)
@@ -162,47 +180,57 @@ def send_cmd(sender, data):
 
 
 def start_stop(sender, command, alim):
+    """
+    Start or stop open node via the control node and use given alim.
+    """
 
     command_b = COMMAND[command]
     alim_b    = ALIM[alim]
-
-    data = command_b + alim_b
+    data      = command_b + alim_b
 
     result = send_cmd(sender, data)
 
-    # only type and ACK
-    ret = _valid_result_command(result, command_b, 2)
+    ret = _valid_result_command(result, command_b, 2) # type and [N]ACK
     return ret
 
 
 def reset_time(sender, command):
+    """
+    Reset the time reference on the control node at 0
+    """
 
     command_b = COMMAND[command]
-    data = command_b
+    data      = command_b
 
     result = send_cmd(sender, data)
 
-    # only type and ACK
-    ret = _valid_result_command(result, command_b, 2)
+    ret = _valid_result_command(result, command_b, 2) # type and [N]ACK
     return ret
 
 
 
-def config_consumption(sender, command, source, period, average, status):
-
-    meas_values = CONSUMPTION_POWER | CONSUMPTION_VOLTAGE | CONSUMPTION_CURRENT
+def config_consumption(sender, command, status, \
+        source=None, period=None, average=None,  \
+        power=False, voltage=False, current=False):
+    """
+    Configure consumption measures
+    """
 
     command_b = COMMAND[command]
-
-    source_b  = chr(meas_values | MEASURE_POWER_SOURCE[source])
-    config_b = chr(period | average << 4 | INA226_STATUS[status])
-
-    data = command_b + source_b + config_b
+    measures_flag  = 0
+    measures_flag |= POWER_MEASURES['power']   if power   else 0
+    measures_flag |= POWER_MEASURES['voltage'] if voltage else 0
+    measures_flag |= POWER_MEASURES['current'] if current else 0
+    measures_flag |= POWER_SOURCE.get(source, 0)
+    config_flag  = 0
+    config_flag |= INA226_PERIOD.get(period, 0)
+    config_flag |= INA226_AVERAGE.get(average, 0) << 4
+    config_flag |= INA226_STATUS.get(status, 0)
+    data = command_b + chr(measures_flag) + chr(config_flag)
 
     result = send_cmd(sender, data)
 
-    # only type and ACK
-    ret = _valid_result_command(result, command_b, 2)
+    ret = _valid_result_command(result, command_b, 2) # type and [N]ACK
     return ret
 
 
@@ -225,30 +253,35 @@ for conf in range(1, 1 << 3):
     CONSUMPTION_DECODE_VALUES[conf] = \
             (_measures_list, _unpack_str, _measures_len)
 
-CONSUMPTION_SOURCE_VALUES = dict([(MEASURE_POWER_SOURCE[key], key) \
-        for key in MEASURE_POWER_SOURCE])
+CONSUMPTION_SOURCE_VALUES = dict([(POWER_SOURCE[key], key) \
+        for key in POWER_SOURCE])
 
 
 def decode_consumption_pkt(pkt):
+    """
+    Extract measures stored in pkt.
+    """
 
     header_size = 3
-    unpack_str = '!'
+    unpack_str  = '!'
     config = ord(pkt[1])
     count  = ord(pkt[2])
 
-    values, unpack_str, measures_len = CONSUMPTION_DECODE_VALUES[config & 0x7]
-    num_values = len(values)
-    power_source = CONSUMPTION_SOURCE_VALUES[config & 0x70]
+    # decode current frame content
+    power_source                      = CONSUMPTION_SOURCE_VALUES[config & 0x70]
+    values, unpack_str, measures_size = CONSUMPTION_DECODE_VALUES[config & 0x7]
 
-    chunks = [pkt[start:start + num_values * measures_len] for start in \
-            range(header_size, len(pkt), num_values * measures_len)]
+    assert len(pkt) == header_size + count * measures_size
+    # extract list of raw measures from payload
+    chunks = [pkt[start:start + measures_size] for start in \
+            range(header_size, len(pkt), measures_size)]
     assert len(chunks) == count
 
+    # extract the 'count' measures
     all_measures = []
     for raw_measure in chunks:
         measures = list(struct.unpack(unpack_str, raw_measure))
-        # convert time to float
-        measures[0] = measures[0] / float(TIME_FACTOR)
+        measures[0] = measures[0] / float(TIME_FACTOR) # convert tick to seconds
         all_measures.append(measures)
 
     return {power_source: (values, all_measures)}
@@ -261,8 +294,10 @@ MEASURES_DECODE = {
         }
 
 def decode_measure_packet(pkt):
-    # ret = _valid_result_command(pkt, command_b, 2)
-    #   FF 17 01 4B BD A3 8E 3E 07 52 82 40 4F 0A 3D 3D 27 57 95
+    """
+    Generic measure decoding function.
+    Calls the appropriate function for each type.
+    """
     fct = MEASURES_DECODE.get(pkt[0], None)
 
     if fct is None:
@@ -271,7 +306,11 @@ def decode_measure_packet(pkt):
     else:
         print fct(pkt)
 
-def listen(queue, command):
+def _listen(queue, command):
+    """
+    Listen for incoming measures packets.
+    Debug function, to be called from Command line.
+    """
     _ = command
 
     while True:
@@ -305,26 +344,27 @@ def parse_arguments(args):
     # Start stop commands
     help_alim = 'Alimentation, dc => charging battery'
     parse_start = sub.add_parser('start', help='Start command')
-    parse_start.add_argument('alim', choices=['dc', 'batt'], help=help_alim)
-    parse_stop  = sub.add_parser('stop', help='Stop command')
-    parse_stop.add_argument('alim', choices=['dc', 'batt'], help=help_alim)
+    parse_stop  = sub.add_parser('stop',  help='Stop command')
+    parse_start.add_argument('alim', choices=ALIM.keys(), help=help_alim)
+    parse_stop.add_argument( 'alim', choices=ALIM.keys(), help=help_alim)
 
     # Reset time
     _parse_reset  = sub.add_parser('reset_time', help='Reset control node time')
 
     # Consumption config
-    parse_consumption = sub.add_parser('consumption', \
-            help='Config consumption measures')
-    parse_consumption.add_argument('status', choices=['start', 'stop'])
-    parse_consumption.add_argument('source', choices=['3.3V', '5V', 'BATT'])
-    parse_consumption.add_argument('-p', '--period', type=int, \
-            choices=range(0, 8), default=4, help = 'See definition in the code')
-    parse_consumption.add_argument('-a', '--average', type=int, \
-            choices=range(0, 8), default=5, help = 'See definition in the code')
+    parse_consum = \
+            sub.add_parser('consumption', help='Config consumption measures')
+    parse_consum.add_argument('status', choices=INA226_STATUS.keys())
+    parse_consum.add_argument('source', choices=POWER_SOURCE.keys())
+    parse_consum.add_argument('-p', '--period', default='1100us', \
+            choices=INA226_PERIOD.keys(), help = 'INA226 measure period')
+    parse_consum.add_argument('-a', '--average', default='256', \
+            choices=INA226_AVERAGE.keys(), help = 'INA226 measures average')
+
 
     # listen to sensor measures
-    _parse_listen_measures = sub.add_parser('listen', \
-            help='listen for measures packets')
+    _parse_listen_measures = \
+            sub.add_parser('listen', help='listen for measures packets')
 
     namespace = parser.parse_args(args)
     return namespace.command, namespace
@@ -335,7 +375,7 @@ _ARGS_COMMANDS = {
         'stop':  start_stop,
         'reset_time': reset_time,
         'consumption':config_consumption,
-        'listen': listen,
+        'listen': _listen,
         }
 
 

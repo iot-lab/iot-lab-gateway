@@ -1,14 +1,15 @@
 {
+    "profilename": "test_profile",
+    "power": "dc",
+
     "consumption": {
-        "current": true, 
-        "frequency": 5000, 
-        "power": false, 
-        "voltage": true
-    }, 
-    "power": "battery", 
-    "profilename": "test_profile", 
-    "radio": {
-        "frequency": 5000, 
-        "rssi": true
-    } 
+        "source" : "3.3V",
+
+        "period" : "1100us",
+        "average": "256",
+
+        "current": true,
+        "voltage": true,
+        "power"  : true
+    }
 }

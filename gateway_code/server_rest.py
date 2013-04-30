@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 import json
 
 from gateway_code.gateway_manager import GatewayManager
-from gateway_code.profile import ProfileJSONDecoder
+import gateway_code
 
 class GatewayRest(object):
     """
@@ -48,7 +48,8 @@ class GatewayRest(object):
 
         firmware = request.files['firmware']
         profile  = request.files['profile']
-        profile_obj = json.load(profile.file, cls=ProfileJSONDecoder)
+        profile_dict = json.load(profile.file)
+        profile_obj = gateway_code.profile.profile_from_dict(profile_dict)
 
         with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
             _file.write(firmware.file.read())

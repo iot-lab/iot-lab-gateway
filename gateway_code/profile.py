@@ -7,73 +7,54 @@ and methods to convert it to config commands
 
 """
 
-import json
+import recordtype
+
+# Disable: I0011 - 'locally disabling warning'
+# Disable: C0103 - Invalid name 'CamelCase' -> represents a class
+#pylint:disable=I0011,C0103
+
+Consumption = recordtype.recordtype('consumption',
+        ['source', 'period', 'average',
+            ('power', False), ('voltage', False), ('current', False), ])
+
+Profile     = recordtype.recordtype('profile',
+        ['profilename', 'power', ('consumption', None)]) #, ('radio', None)]
+
+#  class Radio:
+#      """
+#      Class Radio configuration  for Control Node
+#      """
+#      def __init__(self, rssi=None, frequency=None):
+#          self.rssi = rssi
+#          self.frequency = frequency
 
 
 
-
-# Currently disable message 'too few public methods'
-# pylint: disable=R0903
-# Should be removed
-
-class Consumption:
+def profile_from_dict(json_dict):
     """
-    Class Consumption configuration for Control Node polling
-
+    Create a profile from json extracted dictionary
     """
-    def __init__(self, current=None, voltage=None, power=None, frequency=None):
-        self.current = current
-        self.voltage = voltage
-        self.power = power
-        self.frequency = frequency
+    profile_args = {}
 
-class Radio:
-    """
-    Class Radio configuration  for Control Node polling
+    string_args = ('profilename', 'power')
+    class_args  = (('consumption', Consumption),) # ('radio', Radio)
 
-    """
-    def __init__(self, rssi=None, frequency=None):
-        self.rssi = rssi
-        self.frequency = frequency
 
-class Profile:
-    """
-    Class Profile configuration for Control Node polling
+    # Extract 'string arguments' from dictionary 'as is'
+    #     dict comprehensions not allowed before Python 2.7
+    #     using dict.update with iterable on (key/value tuple)
+    string_args_list = [(arg, json_dict[arg]) for arg in string_args]
+    profile_args.update(string_args_list)
 
-    """
-    def __init__(self, profilename=None, power=None, consumption=None, \
-            radio=None):
-        self.profilename = profilename
-        self.power = power
-        self.consumption = consumption
-        self.radio = radio
 
-class ProfileJSONDecoder(json.JSONDecoder):
-    """
-    Converts a json string profile configuration into python object Profile
+    # Extract existing arguments and initialize their class
+    for name, obj_class in class_args:
+        if name in json_dict:
+            profile_args[name] = obj_class(**json_dict[name])
 
-    """
-    def decode(self, profile_json):
-        # convert string to dict
-        json_dict = json.loads(profile_json)
 
-        simple_args = ('profilename', 'power')
-        class_mapping = (('radio', Radio),
-                ('consumption', Consumption))
+    # then create the final Profile object
+    profile = Profile(**profile_args)
 
-        # simple arguments
-        args = {}
-
-        # Extract existing arguments from dictionary 'as is'
-        args.update(((name, json_dict[name]) \
-                for name in simple_args if name in json_dict))
-                # dict comprehensions not allowed before Python 2.7
-                # using dict.update with iterable on (key/value tuple)
-
-        # Extract existing arguments and initialize their class
-        for name, obj_class in class_mapping:
-            if name in json_dict:
-                args[name] = obj_class(**json_dict[name])
-        profile = Profile(**args)
-        return profile
+    return profile
 
