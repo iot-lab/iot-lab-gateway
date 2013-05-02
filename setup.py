@@ -67,7 +67,7 @@ setup(name='gateway_code',
         author_email='admin@senslab.info',
         url='http://www.senslab.info',
         packages = ['gateway_code'],
-        scripts = ['flash_firmware.py', 'serial_redirection.py', 'server_rest.py'],
+        scripts = ['flash_firmware', 'serial_redirection', 'gateway-rest-server'],
         data_files = [(config.STATIC_FILES_PATH, STATIC_FILES)],
 
         cmdclass = {'lint': Lint,},
