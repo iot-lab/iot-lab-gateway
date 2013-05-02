@@ -1,3 +1,5 @@
+# -*- coding:utf-8 -*-
+
 
 """
 Common configuration for openocd scripts
