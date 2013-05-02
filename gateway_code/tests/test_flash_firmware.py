@@ -5,20 +5,21 @@ import sys
 
 import re
 import mock
+import unittest
 from cStringIO import StringIO
 
-# import package code from source folder if not installed
 from os.path import dirname, abspath
-current_folder = dirname(abspath(__file__))
-source_folder = dirname(dirname(current_folder))
-sys.path.append(source_folder)
 
+import gateway_code
 from gateway_code import flash_firmware
 
+CURRENT_DIR = dirname(abspath(__file__)) + '/'
+STATIC_DIR  = CURRENT_DIR + 'static/' # using the 'static' symbolic link
 
 from subprocess import PIPE
 @mock.patch('subprocess.Popen')
-class TestsFlashMethods:
+@mock.patch('gateway_code.flash_firmware.config.STATIC_FILES_PATH', new=STATIC_DIR)
+class TestsFlashMethods(unittest.TestCase):
     """
     Tests flash_firmware methods
     """
@@ -30,6 +31,7 @@ class TestsFlashMethods:
         popen = mock_popen.return_value
         popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
         popen.returncode = mock_ret = 0
+
 
         # valid nodes
         for node in ('m3', 'gwt', 'a8'):
@@ -49,6 +51,7 @@ class TestsFlashMethods:
         """
         Test with a flash with a successfull call
         """
+
         # config mock
         popen = mock_popen.return_value
         popen.returncode = mock_ret = 0
@@ -68,6 +71,7 @@ class TestsFlashMethods:
         """
         Test with a flash with a unsuccessfull call
         """
+
 
         popen = mock_popen.return_value
         popen.returncode = mock_ret = 42
@@ -94,7 +98,7 @@ captured_out = StringIO()
 captured_err = StringIO()
 @mock.patch('sys.stdout', captured_out)
 @mock.patch('sys.stderr', captured_err)
-class TestsCommandLineCalls:
+class TestsCommandLineCalls(unittest.TestCase):
     def test_error_no_arguments(self):
         """
         Running command line without arguments
@@ -121,7 +125,7 @@ class TestsCommandLineCalls:
 
 
 
-    @mock.patch.object(flash_firmware, 'flash')
+    @mock.patch('gateway_code.flash_firmware.flash')
     def test_normal_run(self, mock_fct):
         """
         Running command line with m3
@@ -137,7 +141,7 @@ class TestsCommandLineCalls:
         assert mock_fct.called
 
 
-    @mock.patch.object(flash_firmware, 'flash')
+    @mock.patch('gateway_code.flash_firmware.flash')
     def test_error_run(self, mock_fct):
         """
         Running command line with error during run

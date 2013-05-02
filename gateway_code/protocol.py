@@ -239,7 +239,14 @@ def config_consumption(sender, consumption=None):
     measures_flag = 0
     config_flag   = 0
 
-    if consumption is not None:
+    if (consumption is None):
+        # stop consumption measures
+        config_flag |= INA226_STATE['stop']
+    elif not (consumption.power or consumption.voltage or consumption.current):
+        # no values asked, disable
+        # stop consumption measures
+        config_flag |= INA226_STATE['stop']
+    else:
         # start and configure consumption
         measures_flag |= POWER_MEASURES['power']   if consumption.power   else 0
         measures_flag |= POWER_MEASURES['voltage'] if consumption.voltage else 0
@@ -249,10 +256,6 @@ def config_consumption(sender, consumption=None):
         config_flag |= INA226_PERIOD[consumption.period]
         config_flag |= INA226_AVERAGE[consumption.average] << 4
         config_flag |= INA226_STATE['start']
-
-    else:
-        # stop consumption measures
-        config_flag |= INA226_STATE['stop']
 
 
     data = command_b + chr(measures_flag) + chr(config_flag)

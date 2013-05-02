@@ -7,16 +7,17 @@ import re
 import mock
 from cStringIO import StringIO
 
-# import package code from source folder if not installed
+import os
 from os.path import dirname, abspath
-current_folder = dirname(abspath(__file__))
-source_folder = dirname(dirname(current_folder))
-sys.path.append(source_folder)
 
 from gateway_code import reset
 
 
+CURRENT_DIR = dirname(abspath(__file__)) + '/'
+STATIC_DIR  = CURRENT_DIR + 'static/' # using the 'static' symbolic link
+
 from subprocess import PIPE
+@mock.patch('gateway_code.reset.config.STATIC_FILES_PATH', new=STATIC_DIR)
 @mock.patch('subprocess.Popen')
 class TestsResetMethods:
     """
@@ -27,6 +28,7 @@ class TestsResetMethods:
         Test node detection
         """
         # config mock
+
         popen = mock_popen.return_value
         popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
         popen.returncode = mock_ret = 0
@@ -119,7 +121,7 @@ class TestsCommandLineCalls:
 
 
 
-    @mock.patch.object(reset, 'reset')
+    @mock.patch('gateway_code.reset.reset')
     def test_normal_run(self, mock_fct):
         """
         Running command line with m3
@@ -135,7 +137,7 @@ class TestsCommandLineCalls:
         assert mock_fct.called
 
 
-    @mock.patch.object(reset, 'reset')
+    @mock.patch('gateway_code.reset.reset')
     def test_error_run(self, mock_fct):
         """
         Running command line with error during run

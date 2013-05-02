@@ -11,6 +11,7 @@ import subprocess
 
 import shlex
 
+import os
 
 
 # import common configuration
@@ -37,8 +38,12 @@ def reset(node):
     if node not in config.NODES_CFG:
         raise ValueError, 'Unknown node, not in %r' \
                 % config.NODES_CFG.keys()
-    cfg_file = config.STATIC_FILES_PATH + '/' + \
-            config.NODES_CFG[node]['openocd_cfg_file']
+    cfg_file = os.path.abspath(config.STATIC_FILES_PATH + '/' + \
+            config.NODES_CFG[node]['openocd_cfg_file'])
+
+    if not os.path.isfile(cfg_file):
+        import errno
+        raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), cfg_file)
 
     # flash_cmd
     cmd = RESET_CMD % (cfg_file)
