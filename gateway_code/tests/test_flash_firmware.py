@@ -35,7 +35,8 @@ class TestsFlashMethods(unittest.TestCase):
 
         # valid nodes
         for node in ('m3', 'gwt', 'a8'):
-            ret, out, err = flash_firmware.flash(node, 'filename')
+            filename = STATIC_DIR + 'idle.elf'
+            ret, out, err = flash_firmware.flash(node, filename)
 
         # invalid nodes
         try:
@@ -58,7 +59,7 @@ class TestsFlashMethods(unittest.TestCase):
         popen.communicate.return_value = \
                 (mock_out, mock_err) = ("OUT_MSG", "")
 
-        filename = 'TEST_FILENAME'
+        filename = STATIC_DIR + 'idle.elf'
         ret, out, err = flash_firmware.flash('m3', filename)
 
         assert popen.communicate.call_count == 1
@@ -78,7 +79,7 @@ class TestsFlashMethods(unittest.TestCase):
         popen.communicate.return_value = \
                 (mock_out, mock_err) = ("OUT_ERR", "ERR_ERR")
 
-        filename = 'TEST_FILENAME'
+        filename = STATIC_DIR + 'idle.elf'
         ret, out, err = flash_firmware.flash('m3', filename)
 
         assert popen.communicate.call_count == 1

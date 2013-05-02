@@ -49,6 +49,7 @@ def flash(node, elf_file):
 
     if not os.path.isfile(absolute_file_path):
         LOGGER.error('Firmware not found: %s', absolute_file_path)
+        return 1, "", ""
 
     # flash_cmd
     cmd = FLASH_CMD % (cfg_file, absolute_file_path, absolute_file_path)

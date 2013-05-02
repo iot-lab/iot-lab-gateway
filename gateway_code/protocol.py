@@ -5,6 +5,7 @@ Protocol between gateway and control node
 import struct
 import Queue
 import gateway_code.profile
+import datetime
 
 PROTOCOL = {}
 
@@ -159,11 +160,12 @@ def _valid_result_command(packet, pkt_type, length):
 
     if packet is None:
         return False
-    ret = True
-    ret &= (packet[0] == pkt_type)
-    ret &= (packet[1] == ACK)
-    ret &= (len(packet) == length)
+    ret_b = True
+    ret_b &= (packet[0] == pkt_type)
+    ret_b &= (packet[1] == ACK)
+    ret_b &= (len(packet) == length)
 
+    ret   = 0 if ret_b else 1
     return ret
 
 def send_cmd(sender, data):
@@ -290,7 +292,7 @@ CONSUMPTION_SOURCE_VALUES = dict([(POWER_SOURCE[key], key) \
         for key in POWER_SOURCE])
 
 
-def decode_consumption_pkt(pkt):
+def decode_consumption_pkt(pkt, ref_time):
     """
     Extract measures stored in pkt.
     """
@@ -314,7 +316,9 @@ def decode_consumption_pkt(pkt):
     all_measures = []
     for raw_measure in chunks:
         measures = list(struct.unpack(unpack_str, raw_measure))
-        measures[0] = measures[0] / float(TIME_FACTOR) # convert tick to seconds
+        # convert tick to seconds + time reference
+        measures[0] = ref_time + \
+                datetime.timedelta(seconds=(measures[0] / float(TIME_FACTOR)))
         all_measures.append(measures)
 
     return {power_source: (values, all_measures)}
@@ -326,7 +330,7 @@ MEASURES_DECODE = {
         TYPE_MEASURES_CONSUMPTION: decode_consumption_pkt,
         }
 
-def decode_measure_packet(pkt):
+def decode_measure_packet(pkt, ref_time):
     """
     Generic measure decoding function.
     Calls the appropriate function for each type.
@@ -336,8 +340,12 @@ def decode_measure_packet(pkt):
     if fct is None:
         import sys
         print >> sys.stderr, 'Uknown measure packet: %02X' % ord(pkt[0])
+        ret = None
     else:
-        print fct(pkt)
+        ret = fct(pkt, ref_time)
+
+    return ret
+
 
 def _listen(queue, command):
     """
@@ -345,16 +353,16 @@ def _listen(queue, command):
     Debug function, to be called from Command line.
     """
     _ = command
+    ref_time = datetime.datetime.fromtimestamp(0)
 
     while True:
         try:
-            pkt = queue.get(True, timeout=1)
-            _print_packet('MEASURE_PKT', pkt)
-            decode_measure_packet(pkt)
+            raw_pkt = queue.get(True, timeout=1)
+            _print_packet('MEASURE_PKT', raw_pkt)
+            measure_pkt = decode_measure_packet(raw_pkt, ref_time)
+            print measure_pkt
         except Queue.Empty:
             pass
-        except KeyboardInterrupt:
-            break
 
     return 0
 
@@ -442,15 +450,19 @@ def main(args):
 
 
     if command == 'listen':
-        ret = _ARGS_COMMANDS[command](queue = dis.measures_queue, \
-                **arguments.__dict__)
-        print '%s: %r' % (command, ret)
+        try:
+            ret = _ARGS_COMMANDS[command](queue = dis.measures_queue, \
+                    **arguments.__dict__)
+        except KeyboardInterrupt:
+            print 'Got Ctrl+C Stopping'
+            ret = 0
+
 
     else: # simple command
         ret = _ARGS_COMMANDS[command](sender = dis.send_command, \
                 **arguments.__dict__)
-        print '%s: %r' % (command, ret)
 
+    print '%s: %r' % (command, ret)
 
 
 
