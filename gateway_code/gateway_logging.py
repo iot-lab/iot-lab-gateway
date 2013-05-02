@@ -14,7 +14,6 @@ from logging.handlers import RotatingFileHandler
 
 # set default logger level to DEBUG to log everything
 LOGLEVEL = logging.DEBUG
-LOGGER_NAME = 'gateway_logger'
 FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
 def init_logger(log_folder):
@@ -26,7 +25,7 @@ def init_logger(log_folder):
 
     log_folder += '/'
 
-    logger = logging.getLogger(LOGGER_NAME)
+    logger = logging.getLogger()
     logger.setLevel(LOGLEVEL)
 
     # user logs

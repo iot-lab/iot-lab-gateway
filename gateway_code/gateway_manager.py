@@ -17,7 +17,7 @@ import Queue
 import gateway_code.gateway_logging
 import logging
 
-LOGGER = logging.getLogger("gateway_logger")
+LOGGER = logging.getLogger()
 
 CONTROL_NODE_FIRMWARE = config.STATIC_FILES_PATH + 'control_node.elf'
 IDLE_FIRMWARE         = config.STATIC_FILES_PATH + 'idle.elf'

@@ -43,14 +43,22 @@ def profile_from_dict(json_dict):
     # Extract 'string arguments' from dictionary 'as is'
     #     dict comprehensions not allowed before Python 2.7
     #     using dict.update with iterable on (key/value tuple)
-    string_args_list = [(arg, json_dict[arg]) for arg in string_args]
+    try:
+        string_args_list = [(arg, json_dict[arg]) for arg in string_args]
+    except KeyError as ex:
+        raise ValueError("Missing entry: %r" % ex.args[0])
+
+
     profile_args.update(string_args_list)
 
 
     # Extract existing arguments and initialize their class
     for name, obj_class in class_args:
         if name in json_dict:
-            profile_args[name] = obj_class(**json_dict[name])
+            try:
+                profile_args[name] = obj_class(**json_dict[name])
+            except TypeError as ex:
+                raise ValueError("Invalid arguments in %r field" % name)
 
 
     # then create the final Profile object

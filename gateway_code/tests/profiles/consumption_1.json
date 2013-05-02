@@ -1,0 +1,15 @@
+{
+    "profilename": "consumption_1",
+    "power": "dc",
+
+    "consumption": {
+        "source" : "3.3V",
+
+        "period" : "1100us",
+        "average": "256",
+
+        "current": true,
+        "voltage": true,
+        "power"  : true
+    }
+}
