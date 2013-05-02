@@ -20,7 +20,7 @@ RX_IDLE, RX_LEN, RX_PAYLOAD, RX_PACKET_FULL = range(4)
 
 
 
-class RxTxSerial():
+class RxTxSerial(object):
     """ Class managing packet Rx and Tx on the serial link
     Rx made by ReceiveThread, byte by byte.
     Tx add header and write packet to the serial link.
@@ -82,14 +82,16 @@ class RxTxSerial():
         length = len(data)
         packet = SYNC_BYTE + chr(length) + data
         return packet
-# Buffer to hold a packet while being created
-# too simple to do a class
 
+
+
+
+# Buffer to hold a packet while being created
 # Disable: I0011 - 'locally disabling warning'
 # Disable: C0103 - Invalid name 'Buffer' -> represents a class
-Buffer = recordtype.recordtype('Buffer', #pylint:disable=I0011,C0103
+
+Buffer = recordtype.recordtype('Buffer',             #pylint:disable=I0011,C0103
         [('length', None), ('payload', "")])
-# Tells if the packet is complete
 Buffer.is_complete = (lambda self: \
         (self.length is not None) and (self.length == len(self.payload)))
 

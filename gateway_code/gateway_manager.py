@@ -7,12 +7,13 @@ manager script
 """
 
 import gateway_code.profile
-from gateway_code import flash_firmware, reset
 from gateway_code import config
-from gateway_code import dispatch, cn_serial_io, protocol
+from gateway_code import flash_firmware, reset
+from gateway_code import dispatch, cn_serial_io, protocol, measures_handler
 from gateway_code.serial_redirection import SerialRedirection
-import time
+
 import Queue
+import time
 
 import gateway_code.gateway_logging
 import logging
@@ -41,7 +42,6 @@ class GatewayManager(object):
 
         self.open_node_started     = False
 
-
         ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
         if ret != 0:
             raise StandardError("Control node flash failed: {ret:%d, '%s')" % \
@@ -52,7 +52,7 @@ class GatewayManager(object):
                 error_handler = self.cb_serial_redirection_error)
 
         # setup control node communication
-        measures_queue  = Queue.Queue(0)
+        measures_queue  = Queue.Queue(1024)
         self.dispatcher = dispatch.Dispatch(measures_queue, \
                 protocol.TYPE_MEASURES_MASK)
 
@@ -60,6 +60,11 @@ class GatewayManager(object):
         self.dispatcher.io_write = self.rxtx.write
 
         self.sender = self.dispatcher.send_command
+
+        # TODO put OML callback here
+        self.measure_handler = measures_handler.MeasuresReader(\
+                measures_queue, handler=\
+                (lambda pkt, arg: arg.write(str(pkt) + '\n')))
 
         # configure logger
         gateway_code.gateway_logging.init_logger(log_folder)
@@ -123,6 +128,9 @@ class GatewayManager(object):
         self.rxtx.start()   # ret ?
         # start measures Handler
 
+        self._measures_outfile = open('/tmp/%s_%s_measures.log' % (self.user, self.exp_id), 'wa')
+        self.measure_handler.start(handler_arg = self._measures_outfile)
+
         time.sleep(1) # wait control node Ready, reajust time later
 
         # # # # # # # # # # #
@@ -140,7 +148,7 @@ class GatewayManager(object):
 
         ret      = self.reset_time()
         ret_val += ret
-        ret      = self.exp_update_profile(profile)
+        ret      = self.exp_update_profile()
         ret_val += ret
 
         # # # # # # # # # # #
@@ -231,6 +239,9 @@ class GatewayManager(object):
 
         self.rxtx.stop()
         # stop measures handler (oml thread)
+        self.measure_handler.stop()
+        self._measures_outfile.close()
+
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
 
@@ -270,20 +281,23 @@ class GatewayManager(object):
 
 
 
-    def exp_update_profile(self, profile):
+    def exp_update_profile(self, profile=None):
         """
         Update the control node profile
         """
-        self.current_profile = profile
 
+        LOGGER.info('Update profile')
         ret = 0
-        LOGGER.info('exp_update_profile')
-        LOGGER.warning(_unimplemented_fct_str_())
-        # TODO exp_update_profile
+
+        if profile is not None:
+            self.current_profile = profile
+
+        ret += protocol.config_consumption(self.sender, \
+                self.current_profile.consumption)
+        # Radio
 
         if ret != 0:
-            LOGGER.error('Open power start failed')
-
+            LOGGER.error('Profile update failed')
         return ret
 
 
@@ -293,13 +307,13 @@ class GatewayManager(object):
 
         Updating time reference is propagated to measures handler
         """
+        from datetime import datetime
         LOGGER.info('Reset control node time')
         # save the start experiment time
-        new_time_ref = time.time()
+        new_time_ref = datetime.now()
         old_time_ref = self.time_reference
 
-        ret_b = protocol.reset_time(self.sender, 'reset_time')
-        ret   = 0 if ret_b else 1
+        ret = protocol.reset_time(self.sender, 'reset_time')
 
         if ret == 0:
             self.time_reference = new_time_ref
@@ -326,8 +340,7 @@ class GatewayManager(object):
             power = self.current_profile.power
 
 
-        ret_b = protocol.start_stop(self.sender, 'start', power)
-        ret   = 0 if ret_b else 1
+        ret = protocol.start_stop(self.sender, 'start', power)
 
         if ret == 0:
             self.open_node_started = True
@@ -348,8 +361,7 @@ class GatewayManager(object):
             assert self.current_profile is not None
             power = self.current_profile.power
 
-        ret_b = protocol.start_stop(self.sender, 'stop', power)
-        ret   = 0 if ret_b else 1
+        ret = protocol.start_stop(self.sender, 'stop', power)
 
         if ret == 0:
             self.open_node_started = False

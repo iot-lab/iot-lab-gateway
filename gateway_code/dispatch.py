@@ -6,6 +6,9 @@
 import Queue
 from threading import Lock
 
+import logging
+LOGGER = logging.getLogger()
+
 class Dispatch(object):
 
     """
@@ -29,11 +32,18 @@ class Dispatch(object):
         # check packet type (first byte)
         # only the first 4 bits
         if (ord(packet[0]) & self.measures_pkt_mask) == self.measures_pkt_mask:
-            self.measures_queue.put(packet)
+            try:
+                self.measures_queue.put_nowait(packet)
+            except Queue.Full:
+                LOGGER.warning('Measures queue Full')
         else:
-            #put the control node's answer into the queue, unlocking
-            #send_command
-            self.queue_control_node.put(packet)
+            # put the control node's answer into the queue,
+            # unlocking `send_command`
+            try:
+                self.queue_control_node.put_nowait(packet)
+            except Queue.Full:
+                LOGGER.error('Control node answer queue full')
+
 
 
     def send_command(self, data):
@@ -44,8 +54,7 @@ class Dispatch(object):
         self.protect_send.acquire()
 
         # remove existing item (old packet lost on timeout?)
-        # if size > 1, add a loop
-        if self.queue_control_node.full():
+        while not self.queue_control_node.empty():
             self.queue_control_node.get_nowait()
 
         self.io_write(data)

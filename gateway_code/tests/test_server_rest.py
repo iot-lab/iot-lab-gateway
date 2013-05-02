@@ -16,6 +16,8 @@ CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 STATIC_DIR  = CURRENT_DIR + '/static/' # using the 'static' symbolic link
 
 @patch('gateway_code.flash_firmware.config.STATIC_FILES_PATH', new=STATIC_DIR)
+@patch('gateway_code.gateway_manager.CONTROL_NODE_FIRMWARE', \
+        STATIC_DIR + 'control_node.elf')
 class TestServerRest(unittest.TestCase):
     """
     Cover functions uncovered by unit tests
