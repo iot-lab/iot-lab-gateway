@@ -1,0 +1,14 @@
+{
+    "profilename": "consumption_2",
+    "power": "dc",
+
+    "consumption": {
+        "source" : "5V",
+
+        "average": "1",
+
+        "power"  : true,
+        "current": false,
+        "period" : "8244us"
+    }
+}
