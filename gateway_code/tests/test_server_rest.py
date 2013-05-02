@@ -9,13 +9,14 @@ Complement the 'integration' tests
 from mock import patch
 
 import gateway_code
+import unittest
 
 import os
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 STATIC_DIR  = CURRENT_DIR + '/static/' # using the 'static' symbolic link
 
 @patch('gateway_code.flash_firmware.config.STATIC_FILES_PATH', new=STATIC_DIR)
-class TestServerRest(object):
+class TestServerRest(unittest.TestCase):
     """
     Cover functions uncovered by unit tests
     """
