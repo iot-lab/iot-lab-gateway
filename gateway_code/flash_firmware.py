@@ -6,17 +6,13 @@
 flash_firmware script
 """
 
-import sys
-import subprocess
-
-import shlex
-from os.path import abspath
-
-
-
-# import common configuration
+import subprocess, shlex
+import os
 from gateway_code import config
 
+
+import logging
+LOGGER = logging.getLogger()
 
 FLASH_CMD = """
           openocd --debug=0
@@ -41,14 +37,20 @@ def flash(node, elf_file):
     if node not in config.NODES_CFG:
         raise ValueError, 'Unknown node, not in %r' \
                 % config.NODES_CFG.keys()
-    cfg_file = config.STATIC_FILES_PATH + '/' + \
-            config.NODES_CFG[node]['openocd_cfg_file']
+    cfg_file = os.path.abspath(config.STATIC_FILES_PATH + '/' + \
+            config.NODES_CFG[node]['openocd_cfg_file'])
 
     # get the absolute file path required for openocd
-    absolute_file_path = abspath(elf_file)
+    absolute_file_path = os.path.abspath(elf_file)
+
+    if not os.path.isfile(cfg_file):
+        import errno
+        raise OSError(errno.ENOENT, os.strerror(errno.ENOENT), cfg_file)
+
+    if not os.path.isfile(absolute_file_path):
+        LOGGER.error('Firmware not found: %s', absolute_file_path)
 
     # flash_cmd
-
     cmd = FLASH_CMD % (cfg_file, absolute_file_path, absolute_file_path)
     cmd_list = shlex.split(cmd)
 
@@ -86,6 +88,7 @@ def main(args):
     """
     Command line main function
     """
+    import sys
 
     node, firmware = parse_arguments(args[1:])
 
