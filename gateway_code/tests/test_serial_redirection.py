@@ -5,11 +5,6 @@ import mock
 import re
 import sys
 
-# import package code from source folder if not installed
-from os.path import dirname, abspath
-current_folder = dirname(abspath(__file__))
-source_folder = dirname(dirname(current_folder))
-sys.path.append(source_folder)
 
 from gateway_code.serial_redirection import SerialRedirection
 from gateway_code import serial_redirection, config
