@@ -59,6 +59,11 @@ TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'requests']
 import os
 from gateway_code import config
 STATIC_FILES = ['static/' + item for item in os.listdir('static')]
+STATIC_FILES_PATH  = config.STATIC_FILES_PATH
+
+# unload 'gateway_code.config'
+# either it's not included in the coverage report...
+import sys; del sys.modules['gateway_code.config']
 
 setup(name='gateway_code',
         version='0.22',
@@ -68,7 +73,7 @@ setup(name='gateway_code',
         url='http://www.senslab.info',
         packages = ['gateway_code'],
         scripts = ['flash_firmware', 'serial_redirection', 'gateway-rest-server'],
-        data_files = [(config.STATIC_FILES_PATH, STATIC_FILES)],
+        data_files = [(STATIC_FILES_PATH, STATIC_FILES)],
 
         cmdclass = {'lint': Lint,},
         install_requires = INSTALL_REQUIRES,
