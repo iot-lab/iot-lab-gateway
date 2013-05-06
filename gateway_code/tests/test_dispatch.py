@@ -1,117 +1,152 @@
-from gateway_code import dispatch
-from gateway_code import cn_serial_io
+# -*- coding:utf-8 -*-
+from gateway_code import dispatch, cn_serial_io
 from gateway_code.cn_serial_io import SYNC_BYTE
+
 from mock import MagicMock
 import mock
+import unittest
+
 import Queue
-import serial
 import threading
-import select
-
-@mock.patch('serial.Serial')
-def test_cb_dispatcher(serial_mock_class):
-
-    unlock_test = threading.Event()
+import serial
+import time
 
 
-    # configure test
-    read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
-            [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
-            [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
+class TestDispatch(unittest.TestCase):
 
-    result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
-    result_cn_packets = [chr(0x42) + 'def']
+    def setUp(self):
+        self.unlock_test = threading.Event()
 
-    measures_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(measures_queue, 0xF0)
+        self.serial_patcher = mock.patch('serial.Serial')
+        serial_class_mock   = self.serial_patcher.start()
+        serial_mock         = serial_class_mock.return_value
+        self.serial_mock    = serial_mock
 
-    # mock queues.put method
-    measures_queue.put = MagicMock(name='put')
-    dis.queue_control_node.put = MagicMock(name='put')
+        serial_mock.read.side_effect  = self._read_mock
+        def mock_close():
+            serial_mock.read.side_effect = serial.SerialException
+        serial_mock.close.side_effect = mock_close
 
-    # mock serial.read method
-    def read_one_val():
-        if read_values == []:
-            unlock_test.set()
-            raise select.error
-        return read_values.pop(0)
+        self.measures_queue = Queue.Queue(0)
+        self.dis            = dispatch.Dispatch(self.measures_queue, 0xF0)
+        self.rxtx           = cn_serial_io.RxTxSerial(self.dis.cb_dispatcher)
+        self.dis.io_write   = self.rxtx.write
 
-    def read_mock(val=1):
-        res = ''
-        for _i in range(0, val):
-            res += read_one_val()
-        return res
-    serial_mock = serial_mock_class.return_value
-    serial_mock.read.side_effect = read_mock
+    def tearDown(self):
+        self.serial_patcher.stop()
+        self.rxtx.stop() # cleanup on error
 
-
-    rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
-    rxtx.start()
-
-    # wait until read finished
-    unlock_test.wait()
+    def _read_mock(self, val=1):
+        result = ''
+        try:
+            for _i in range(0, val):
+                result += self.read_values.pop(0)
+        except IndexError: # last Item
+            time.sleep(0.1)
+            if result == '':
+                self.unlock_test.set()
+        return result
 
 
 
-    # check the multiple calls
-    cn_calls  = [mock.call(packet) for packet in result_cn_packets]
-    measures_calls = [mock.call(packet) for packet in result_measures_packets]
-    dis.queue_control_node.put.has_calls(cn_calls)
-    dis.queue_control_node.put.has_calls(measures_calls)
+    def test_cb_dispatcher(self):
+        """
+        Test cb_dispatcher callback
 
-    rxtx.stop()
+        Write bytes on 'serial' interface and see that the output is correct
+        """
 
+        # configure test
+        self.read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
+                [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
+                [SYNC_BYTE, chr(2), chr(0xFD), 'Q']
 
-@mock.patch('serial.Serial')
-def test_cb_dispatcher_send_cmd(serial_mock_class):
+        self.result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFD) + 'Q']
+        self.result_cn_packets = [chr(0x42) + 'def']
 
-    unlock_test = threading.Event()
-    unlock_rx_thread = threading.Event()
+        # replace Queue with an infinite queue
+        self.dis.queue_control_node = Queue.Queue(0)
+        self.rxtx.start()
 
-    # configure test
-    read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
-            [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
-            [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
+        self.unlock_test.wait()     # wait until read finished
 
-    result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
-    result_cn_packets = [chr(0x42) + 'def']
+        self.rxtx.stop()
 
-    measures_queue = Queue.Queue(0)
-    dis = dispatch.Dispatch(measures_queue, 0xF0)
-    rxtx = cn_serial_io.RxTxSerial(dis.cb_dispatcher)
-
-    dis.io_write = rxtx.write
-
-    # mock serial.read method
-    def read_one_val():
-        if read_values == []:
-            unlock_test.set()
-            raise select.error
-        return read_values.pop(0)
-
-    def read_mock(val=1):
-        unlock_rx_thread.wait()
-        res = ''
-        for _i in range(0, val):
-            res += read_one_val()
-        return res
-    serial_mock = serial_mock_class.return_value
-    serial_mock.read.side_effect = read_mock
-    serial_mock.write.side_effect = lambda x: unlock_rx_thread.set()
-
-    # add old remaining packet in the queue
-    # should be removed when writing
-    dis.queue_control_node.put('OLD_PACKET')
+        # check received packets
+        for result_measure in self.result_measures_packets:
+            self.assertEquals(result_measure, self.measures_queue.get_nowait())
+        for result_measure in self.result_cn_packets:
+            self.assertEquals(result_measure, self.dis.queue_control_node.get_nowait())
 
 
-    rxtx.start()
 
-    cn_answer = dis.send_command('A')
+    def test_cb_dispatcher_send_cmd(self):
 
-    # wait until read finished
-    unlock_test.wait()
+        unlock_rx_thread = threading.Event()
 
-    assert cn_answer == result_cn_packets[0]
+        # configure test
+        self.read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
+                [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
+                [SYNC_BYTE, chr(4), chr(0x42), 'g', 'h', 'i'] + \
+                [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
 
-    rxtx.stop()
+        self.result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
+        self.result_cn_packets = [chr(0x42) + 'def'] # second packet is not awaited
+
+
+        def read_mock(val=1):
+            unlock_rx_thread.wait()
+            return self._read_mock(val)
+        self.serial_mock.read.side_effect = read_mock
+        self.serial_mock.write.side_effect = lambda x: unlock_rx_thread.set()
+
+        # old remaining packet in the queue should be removed
+        self.dis.queue_control_node.put('OLD_PACKET')
+
+        self.rxtx.start()
+
+        cn_answer = self.dis.send_command('A')
+
+        self.unlock_test.wait()
+        self.rxtx.stop()
+
+
+        self.assertEquals(cn_answer, self.result_cn_packets[0])
+        for result_measure in self.result_measures_packets:
+            self.assertEquals(result_measure, self.measures_queue.get_nowait())
+
+
+
+    def test_control_node_timeout_and_measure_queue_full(self):
+        """
+        test_control_node_timeout_and_measure_queue_full
+
+        Send a command with no answer from control node
+        Put too many packets in the measure_queue
+        """
+
+        # configure test
+        self.read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
+                [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
+                # no result packet
+
+        self.result_measures_packets = [chr(0xFF) + 'abc']
+        # second packet is droped due to queue full
+
+        # replace queue with a limited queue to force 'Queue.Full'
+        self.measures_queue = Queue.Queue(1)
+        self.dis.measures_queue = self.measures_queue
+
+        self.rxtx.start()
+        cn_answer = self.dis.send_command('A')
+        self.unlock_test.wait()
+        self.rxtx.stop()
+
+        # checks received packets
+        self.assertEquals(cn_answer, None) # timeout
+        for result_measure in self.result_measures_packets:
+            self.assertEquals(result_measure, self.measures_queue.get_nowait())
+        self.assertRaises(Queue.Empty, self.measures_queue.get_nowait)
+
+
 

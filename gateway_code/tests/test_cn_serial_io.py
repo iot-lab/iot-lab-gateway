@@ -13,7 +13,6 @@ import threading
 class TestsCnSerialIo(unittest.TestCase):
 
     def setUp(self):
-        self.read_values = None
         self.unlock_test = threading.Event()
 
         self.serial_patcher = mock.patch('serial.Serial')
