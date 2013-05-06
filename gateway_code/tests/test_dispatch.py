@@ -87,11 +87,10 @@ class TestDispatch(unittest.TestCase):
         # configure test
         self.read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
                 [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
-                [SYNC_BYTE, chr(4), chr(0x42), 'g', 'h', 'i'] + \
                 [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
 
         self.result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
-        self.result_cn_packets = [chr(0x42) + 'def'] # second packet is not awaited
+        self.result_cn_packets = [chr(0x42) + 'def']
 
 
         def read_mock(val=1):
@@ -115,6 +114,27 @@ class TestDispatch(unittest.TestCase):
         for result_measure in self.result_measures_packets:
             self.assertEquals(result_measure, self.measures_queue.get_nowait())
 
+    def test_non_waited_control_node_answers(self):
+
+        # configure test
+        self.read_values = [SYNC_BYTE, chr(4), chr(0xFF), 'a', 'b', 'c'] + \
+                [SYNC_BYTE, chr(6), chr(0x42), 'f', 'i', 'r', 's', 't'] + \
+                [SYNC_BYTE, chr(4), chr(0x42), 'd', 'e', 'f'] + \
+                [SYNC_BYTE, chr(2), chr(0xFF), 'Q']
+
+        self.result_measures_packets = [chr(0xFF) + 'abc'] + [chr(0xFF) + 'Q']
+        self.result_cn_packets = [chr(0x42) + 'first']
+
+        self.rxtx.start()
+
+        for result_measure in self.result_measures_packets:
+            self.assertEquals(result_measure, self.measures_queue.get())
+
+        self.unlock_test.wait()
+        self.rxtx.stop()
+
+        for result_cn in self.result_cn_packets:
+            self.assertEquals(result_cn, self.dis.queue_control_node.get_nowait())
 
 
     def test_control_node_timeout_and_measure_queue_full(self):
