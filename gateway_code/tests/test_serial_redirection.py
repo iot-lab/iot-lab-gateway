@@ -167,7 +167,6 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         # first call will fail, second will wait
         def communicate():
             self.popen.communicate.side_effect = self._communicate
-            self.returncode = 0
             return mock.DEFAULT
         self.popen.communicate.side_effect = communicate
         self.popen.returncode        = 42
@@ -185,9 +184,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         # for coverage
         # first call will fail, second will wait
         def communicate():
-            self.communicate_called.set()
             self.popen.communicate.side_effect = self._communicate
-            self.returncode = 0
             return mock.DEFAULT
         self.popen.communicate.side_effect = communicate
         self.popen.returncode        = 42
