@@ -10,17 +10,16 @@ import threading
 
 class MeasuresReader(object):
 
-    def __init__(self, measures_queue, handler=None):
+    def __init__(self, measures_queue):
         self.measures_queue = measures_queue
-        self.handler = handler
         self.reader_thread = None
 
 
-    def start(self, handler_arg=None):
+    def start(self, user, exp_id):
         if self.reader_thread is not None:
             return 1
         self.reader_thread = MeasuresReaderThread(self.measures_queue, \
-                self.handler, handler_arg)
+                user, exp_id)
         self.reader_thread.start()
         return 0
 
@@ -35,14 +34,14 @@ class MeasuresReader(object):
 
 class MeasuresReaderThread(threading.Thread):
 
-    def __init__(self, measures_queue, handler=None, handler_arg=None):
+    def __init__(self, measures_queue, user, exp_id):
 
         super(MeasuresReaderThread, self).__init__()
 
         self.queue       = measures_queue
-        self.handler     = handler
+        self.out_file    = open('/tmp/%s_%s_measures.log' % (user, exp_id), \
+                'wa')
         self.stopped     = False
-        self.handler_arg = handler_arg
 
         self.ref_time    = datetime.now()
 
@@ -54,6 +53,7 @@ class MeasuresReaderThread(threading.Thread):
 
     def stop(self):
         self.stopped = True
+        self.out_file.close()
 
 
     def run(self):
@@ -65,8 +65,9 @@ class MeasuresReaderThread(threading.Thread):
                 raw_pkt = self.queue.get(True, timeout=1)
                 measure_pkt = protocol.decode_measure_packet(raw_pkt, \
                         self.ref_time)
-                if self.handler is not None:
-                    self.handler(measure_pkt, self.handler_arg)
+
+                # temporary output
+                self.out_file.write(str(measure_pkt) + '\n')
             except Queue.Empty:
                 pass
 
