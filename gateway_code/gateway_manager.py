@@ -49,7 +49,8 @@ class GatewayManager(object):
 
         # open node interraction
         self.serial_redirection = SerialRedirection('m3', \
-                error_handler = self.cb_serial_redirection_error)
+                error_handler = self.cb_serial_redirection_error,
+                handler_arg = self)
 
         # setup control node communication
         measures_queue  = Queue.Queue(1024)
@@ -58,13 +59,9 @@ class GatewayManager(object):
 
         self.rxtx       = cn_serial_io.RxTxSerial(self.dispatcher.cb_dispatcher)
         self.dispatcher.io_write = self.rxtx.write
-
         self.sender = self.dispatcher.send_command
 
-        # TODO put OML callback here
-        self.measure_handler = measures_handler.MeasuresReader(\
-                measures_queue, handler=\
-                (lambda pkt, arg: arg.write(str(pkt) + '\n')))
+        self.measure_handler = measures_handler.MeasuresReader(measures_queue)
 
         # configure logger
         gateway_code.gateway_logging.init_logger(log_folder)
@@ -128,8 +125,7 @@ class GatewayManager(object):
         self.rxtx.start()   # ret ?
         # start measures Handler
 
-        self._measures_outfile = open('/tmp/%s_%s_measures.log' % (self.user, self.exp_id), 'wa')
-        self.measure_handler.start(handler_arg = self._measures_outfile)
+        self.measure_handler.start(self.user, self.exp_id)
 
         time.sleep(1) # wait control node Ready, reajust time later
 
@@ -155,7 +151,6 @@ class GatewayManager(object):
         # Finish Open Node  #
         # # # # # # # # # # #
 
-        #ret      = self._open_serial_redirection_start()
         ret      = self.serial_redirection.start()
         ret_val += ret
         # start the gdb server
@@ -240,7 +235,6 @@ class GatewayManager(object):
         self.rxtx.stop()
         # stop measures handler (oml thread)
         self.measure_handler.stop()
-        self._measures_outfile.close()
 
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
@@ -255,31 +249,12 @@ class GatewayManager(object):
         return ret_val
 
 
-    def cb_serial_redirection_error(self, handler_arg, error_code):
+    @staticmethod
+    def cb_serial_redirection_error(handler_arg, error_code):
         """ Callback for SerialRedirection error handler """
-        param_str = str((self, handler_arg, error_code))
-        ret_str = "%s: %s" % (_unimplemented_fct_str_(), param_str)
-        import sys
-        print >> sys.stderr, self.serial_redirection.redirector_thread.out
-        print >> sys.stderr, self.serial_redirection.redirector_thread.err
-        raise  NotImplementedError(0, ret_str)
-
-
-    def _open_serial_redirection_start(self):
-        """
-        Start the serial redirection
-        """
-        LOGGER.info('Open serial redirection start')
-        self.serial_redirection = SerialRedirection('m3', \
-                error_handler = self.cb_serial_redirection_error)
-        ret = self.serial_redirection.start()
-        if ret != 0:
-            LOGGER.error('Open serial redirection failed')
-        return ret
-
-
-
-
+        LOGGER.error('Serial Redirection process failed "socat: ret == %d"', \
+                error_code)
+        time.sleep(0.5) # prevent quick loop
 
     def exp_update_profile(self, profile=None):
         """
@@ -413,19 +388,4 @@ class GatewayManager(object):
             profile_dict = json.load(_prof)
             def_profile = gateway_code.profile.profile_from_dict(profile_dict)
         return def_profile
-
-
-def _unimplemented_fct_str_():
-    """
-    Current function name
-
-    :note: 'current' means the caller
-    """
-    import sys
-    # disable the pylint warning:
-    # "Access to a protected member _getframe of a client class"
-    # pylint: disable=W0212
-    fct = sys._getframe(1).f_code.co_name
-    ret_str = "Not implemented %s" % fct
-    return ret_str
 
