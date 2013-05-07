@@ -267,6 +267,8 @@ class GatewayManager(object):
         if profile is not None:
             self.current_profile = profile
 
+        ret += self.open_power_start(power=self.current_profile.power)
+
         ret += protocol.config_consumption(self.sender, \
                 self.current_profile.consumption)
         # Radio

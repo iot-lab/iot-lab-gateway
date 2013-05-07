@@ -62,9 +62,6 @@ class GatewayRest(object):
         """
         Stop the current experiment
         """
-
-        # no files required, don't check
-
         ret = self.gateway_manager.exp_stop()
         return {'ret':ret}
 
@@ -103,11 +100,19 @@ class GatewayRest(object):
         return self._flash('m3')
 
     def open_soft_reset(self):
-        """
-        Reset the open node with 'reset' pin
-        """
+        """ Reset the open node with 'reset' pin """
         ret = self.gateway_manager.node_soft_reset('m3')
         return {'ret':ret}
+
+    def open_start(self):
+        """ Start open node. Alimentation mode stays the same """
+        ret = self.gateway_manager.open_power_start(power=None)
+        return {'ret':ret}
+    def open_stop(self):
+        """ Stop open node. Alimentation mode stays the same """
+        ret = self.gateway_manager.open_power_stop(power=None)
+        return {'ret':ret}
+
 
 
 
@@ -156,6 +161,8 @@ def app_routing(app):
     route('/exp/stop', 'DELETE')(app.exp_stop)
     route('/open/flash', 'POST')(app.open_flash)
     route('/open/reset', 'PUT')(app.open_soft_reset)
+    route('/open/start', 'PUT')(app.open_start)
+    route('/open/stop', 'PUT')(app.open_stop)
 
 
 def main(args):
