@@ -69,7 +69,6 @@ class TestMainFunction(unittest.TestCase):
         Test error handler called if error
         """
         def communicate():
-            self.communicate_called.set()
             self.popen.communicate.side_effect = self._communicate
             return mock.DEFAULT
         # Popen mock
