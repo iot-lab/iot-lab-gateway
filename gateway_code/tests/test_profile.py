@@ -44,8 +44,15 @@ class TestsProfile(unittest.TestCase):
     def test_invalid_profiles(self):
 
         files = [ PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR) \
-                if re.match("invalid", _json)]
+                if re.match("invalid_simple", _json)]
 
+        for profile_file in files:
+            with open(profile_file) as _file:
+                profile_dict = json.load(_file)
+                self.assertRaises(ValueError, gateway_code.profile.profile_from_dict, profile_dict)
+
+        files = [ PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR) \
+                if re.match("invalid_consumption", _json)]
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
