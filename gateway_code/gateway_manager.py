@@ -23,6 +23,9 @@ LOGGER = logging.getLogger()
 CONTROL_NODE_FIRMWARE = config.STATIC_FILES_PATH + 'control_node.elf'
 IDLE_FIRMWARE         = config.STATIC_FILES_PATH + 'idle.elf'
 
+# Disable: I0011 - 'locally disabling warning'
+# too many instance attributes
+# pylint:disable=I0011,R0902
 class GatewayManager(object):
     """
     Gateway Manager class,
@@ -123,8 +126,6 @@ class GatewayManager(object):
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
         self.rxtx.start()   # ret ?
-        # start measures Handler
-
         self.measure_handler.start(self.user, self.exp_id)
 
         time.sleep(1) # wait control node Ready, reajust time later
@@ -290,6 +291,10 @@ class GatewayManager(object):
         new_time_ref = datetime.now()
         old_time_ref = self.time_reference
 
+        # measure handler will update its time when it gets
+        # measure_time_ack from control node
+        self.measure_handler.set_time_ref(new_time_ref)
+
         ret = protocol.reset_time(self.sender, 'reset_time')
 
         if ret == 0:
@@ -300,8 +305,6 @@ class GatewayManager(object):
                 LOGGER.info('New time reference = %r', self.time_reference)
         else:
             LOGGER.error('Reset time failed')
-
-        # TODO send new time to measures_handler
 
         return ret
 

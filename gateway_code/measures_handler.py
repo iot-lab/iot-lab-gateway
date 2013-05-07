@@ -9,6 +9,9 @@ from gateway_code import protocol
 import threading
 
 class MeasuresReader(object):
+    """
+    Control node Measures manager
+    """
 
     def __init__(self, measures_queue):
         self.measures_queue = measures_queue
@@ -16,6 +19,9 @@ class MeasuresReader(object):
 
 
     def start(self, user, exp_id):
+        """
+        Start measures thread handler and manager
+        """
         if self.reader_thread is not None:
             return 1
         self.reader_thread = MeasuresReaderThread(self.measures_queue, \
@@ -25,6 +31,9 @@ class MeasuresReader(object):
 
 
     def stop(self):
+        """
+        Stop measures thread handler and manager
+        """
         if self.reader_thread is None:
             return 1
         self.reader_thread.stop()
@@ -32,7 +41,20 @@ class MeasuresReader(object):
         return 0
 
 
+    def set_time_ref(self, new_time):
+        """
+        Set the new time reference for measures
+        """
+        if self.reader_thread is None:
+            return 1
+        self.reader_thread.new_ref_time = new_time
+        return 0
+
+
 class MeasuresReaderThread(threading.Thread):
+    """
+    Handle messages received from control node
+    """
 
     def __init__(self, measures_queue, user, exp_id):
 
@@ -42,20 +64,33 @@ class MeasuresReaderThread(threading.Thread):
         self.out_file = open('/tmp/%s_%s_measures.log' % (user, exp_id), 'wa')
         self.stopped  = False
 
-        self.ref_time = datetime.now()
+        self.ref_time     = datetime.now()
+        self.new_ref_time = None
 
 
-    def update_time(self, new_time):
+    def update_time(self):
+        """
+        Update reference time
+        call when reset_time message comes from control node
+        """
         # TODO, update time when apropriate packet is received
-        self.ref_time = new_time
+        assert self.new_ref_time is not None
+        self.ref_time = self.new_ref_time
+
 
 
     def stop(self):
+        """
+        stop thread
+        """
         self.stopped = True
         self.out_file.close()
 
 
     def run(self):
+        """
+        Poll on measures queues and handle values
+        """
 
         self.stopped = False
 
