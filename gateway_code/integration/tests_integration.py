@@ -151,21 +151,23 @@ class TestComplexExperimentRunning(unittest.TestCase):
             ret = self.app.open_flash()
             self.assertEquals(ret, {'ret':0})
 
+            self.app.reset_time()
+
             # wait node started
             time.sleep(1)
 
             # echo firmware, should reply what was sent
             ret = _send_command_open_node('localhost', 20000, msg)
-            assert ret == msg
+            self.assertEquals(ret, msg)
 
 
             # reset open node
             ret = self.app.open_soft_reset()
-            assert ret == {'ret':0}
+            self.assertEquals(ret, {'ret':0})
 
             # stop exp
             ret = self.app.exp_stop()
-            assert ret == {'ret':0}
+            self.assertEquals(ret, {'ret':0})
 
 
     def tests_invalid_calls(self):
@@ -178,19 +180,19 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.request.files = {'firmware': self.files['idle'], \
                 'profile':self.files['default_profile']}
         ret = self.app.exp_start(123, 'clochette')
-        assert ret == {'ret':0}
+        self.assertEquals(ret, {'ret':0})
 
 
         self._rewind_files()
-        ret = self.app.exp_start(123, 'clochette')
-        assert ret['ret'] != 0
+        ret = self.app.exp_start(123, 'clochette') # cannot start started exp
+        self.assertNotEquals(ret, {'ret':0})
 
         # stop exp
         ret = self.app.exp_stop()
-        assert ret == {'ret':0}
+        self.assertEquals(ret, {'ret':0})
 
-        ret = self.app.exp_stop()
-        assert ret['ret'] != 0
+        ret = self.app.exp_stop() # cannot stop stoped exp
+        self.assertNotEquals(ret, {'ret':0})
 
 
 
@@ -203,10 +205,10 @@ class TestComplexExperimentRunning(unittest.TestCase):
         """
         self.request.files = {}
         ret = self.app.exp_start(123, 'clochett')
-        assert ret['ret'] != 0
+        self.assertNotEquals(ret, {'ret':0})
 
         self.request.files = {'firmware': self.files['idle'], \
                 'profile':self.files['profile']}
         ret = self.app.open_flash()
-        assert ret['ret'] != 0
+        self.assertNotEquals(ret, {'ret':0})
 

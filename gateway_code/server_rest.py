@@ -68,6 +68,13 @@ class GatewayRest(object):
         ret = self.gateway_manager.exp_stop()
         return {'ret':ret}
 
+    def reset_time(self):
+        """
+        Reset Control node time and update time reference
+        """
+        ret = self.gateway_manager.reset_time()
+        return {'ret':ret}
+
 
     def _flash(self, node):
         """
