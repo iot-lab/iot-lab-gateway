@@ -189,10 +189,8 @@ class _SerialRedirectionThread(threading.Thread):
                 # errno == 3 'No such proccess'
                 # current process is already terminated not an issue
                 assert err.errno == 3, 'Unknown error num: %d' % err.errno
-                # Disable: I0011 - locally disabled warning
-                # Disable: W0107 - Unneccessary pass statement
-                pass # pylint: disable=I0011,W0107
-                # required 'pass' if assert are disabled
+                # required instruction if assert disabled
+                _ = err.errno
             time.sleep(0.1)
 
         self.redirector_process = None
@@ -238,18 +236,15 @@ def main(args):
         """
         # release main thread
         print >> sys.stderr, "Error_handler"
-        print >> sys.stderr, "arg: %r" % arg
-        print >> sys.stderr, "errornum: '%d'" % error_num
+        print >> sys.stderr, "arg: %r, error_num %d" % (arg, error_num)
         print >> sys.stderr, "Stopping..."
         unlock_main_thread.set()
-
 
     # Create the redirector
     redirect = SerialRedirection(node, __main_error_handler)
     if redirect.start() != 0:
         print >> sys.stderr, "Could not start redirection"
         exit(1)
-
 
     # Wait ctrl+C to stop
     def cb_signal_handler(sig, frame):

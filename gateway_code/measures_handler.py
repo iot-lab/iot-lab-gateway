@@ -38,12 +38,11 @@ class MeasuresReaderThread(threading.Thread):
 
         super(MeasuresReaderThread, self).__init__()
 
-        self.queue       = measures_queue
-        self.out_file    = open('/tmp/%s_%s_measures.log' % (user, exp_id), \
-                'wa')
-        self.stopped     = False
+        self.queue    = measures_queue
+        self.out_file = open('/tmp/%s_%s_measures.log' % (user, exp_id), 'wa')
+        self.stopped  = False
 
-        self.ref_time    = datetime.now()
+        self.ref_time = datetime.now()
 
 
     def update_time(self, new_time):
