@@ -57,6 +57,10 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         cls.files = {}
         # default files
+        cls.files['control_node'] = FileUpload(\
+                file = open(STATIC_DIR + 'control_node.elf', 'rb'),
+                name = 'firmware', filename = 'control_node.elf')
+
         cls.files['idle'] = FileUpload(\
                 file = open(STATIC_DIR + 'idle.elf', 'rb'),
                 name = 'firmware', filename = 'idle.elf')
@@ -116,6 +120,12 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
         msg = 'HELLO WORLD\n'
 
+        self.request.files = {'firmware': self.files['control_node']}
+        ret = self.app.admin_control_flash()
+        self.assertEquals(ret, {'ret':0})
+
+        ret = self.app.admin_control_soft_reset()
+        self.assertEquals(ret, {'ret':0})
 
 
         for i in range(0, 3):
@@ -126,20 +136,20 @@ class TestComplexExperimentRunning(unittest.TestCase):
             self.request.files = {'firmware': self.files['idle'], \
                     'profile':self.files['profile']}
             ret = self.app.exp_start(123, 'clochette')
-            assert ret == {'ret':0}
+            self.assertEquals(ret, {'ret':0})
 
             time.sleep(1)
 
             # idle firmware, should be no reply
             ret = _send_command_open_node('localhost', 20000, msg)
-            assert ret == None
+            self.assertEquals(ret, None)
 
 
 
             # flash
             self.request.files = {'firmware': self.files['echo']}
             ret = self.app.open_flash()
-            assert ret == {'ret':0}
+            self.assertEquals(ret, {'ret':0})
 
             # wait node started
             time.sleep(1)
