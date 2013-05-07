@@ -1,0 +1,12 @@
+{
+    "profilename": "invalid_consumption_1",
+    "power": "dc",
+
+    "consumption": {
+        "source" : "3.3V",
+
+        "current": true,
+        "voltage": true,
+        "power"  : true
+    }
+}
