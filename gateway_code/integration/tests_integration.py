@@ -161,8 +161,12 @@ class TestComplexExperimentRunning(unittest.TestCase):
             self.assertEquals(ret, msg)
 
 
-            # reset open node
             ret = self.app.open_soft_reset()
+            self.assertEquals(ret, {'ret':0})
+
+            ret = self.app.open_start()
+            self.assertEquals(ret, {'ret':0})
+            ret = self.app.open_stop()
             self.assertEquals(ret, {'ret':0})
 
             # stop exp
