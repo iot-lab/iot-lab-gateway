@@ -224,7 +224,8 @@ def config_consumption_command(sender, command, state, **kwargs):
     if state == 'start':
         consumption = gateway_code.profile.Consumption(**consumption_kwargs)
         # check correct configuration
-        if not (consumption.power or consumption.voltage or consumption.current):
+        if not (consumption.power or consumption.voltage or \
+                consumption.current):
             import sys
             print >> sys.stderr, "WARNING:",
             print >> sys.stderr, "No 'power', 'voltage' or 'current' flag set!",
