@@ -54,7 +54,7 @@ class Lint(Command):
 
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial', 'recordtype']
-TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'requests']
+TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock']
 
 import os
 from gateway_code import config
