@@ -8,12 +8,14 @@ cd "$script_folder"
 source /etc/profile
 pkill socat
 rm -f coverage.xml nosetests.xml pylint.out
-cp ~/python_missing_files/* .
+
+# cp ~/python_missing_files/* .   # missing files for 'requests' and 'pylint'
+cp ~/python_missing_files/contextlib.py .   # missing for pylint
 
 git pull
 
 set -e
 
 # run as the same user as bottle server
-su -c "source /etc/profile; python setup.py integration_tests $@" www-data
+su  www-data   -c "source /etc/profile; python setup.py integration_tests $@"
 python setup.py jenkins_lint
