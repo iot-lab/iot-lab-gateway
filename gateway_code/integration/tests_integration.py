@@ -106,6 +106,10 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
     def tearDown(self):
         self.request_patcher.stop()
+        with patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR):
+            with patch('gateway_code.gateway_manager.CONTROL_NODE_FIRMWARE', \
+                    STATIC_DIR + 'control_node.elf'):
+                self.app.exp_stop() # just in case, post error cleanup
 
 
     def tests_multiple_complete_experiment(self):
