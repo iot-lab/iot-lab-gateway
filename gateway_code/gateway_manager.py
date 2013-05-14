@@ -40,7 +40,7 @@ class GatewayManager(object):
         self.user                  = None
         self.experiment_is_running = False
 
-        self.current_profile       = None
+        self.profile       = None
         self.time_reference        = None
 
         self.open_node_started     = False
@@ -62,9 +62,11 @@ class GatewayManager(object):
 
         self.rxtx       = cn_serial_io.RxTxSerial(self.dispatcher.cb_dispatcher)
         self.dispatcher.io_write = self.rxtx.write
-        self.sender = self.dispatcher.send_command
+        self.protocol = protocol.Protocol(self.dispatcher.send_command)
 
-        self.measure_handler = measures_handler.MeasuresReader(measures_queue)
+        self.measure_handler = measures_handler.MeasuresReader(\
+                decoder        = self.protocol.decode_measure_packet,
+                measures_queue = measures_queue)
 
         # configure logger
         gateway_code.gateway_logging.init_logger(log_folder)
@@ -112,7 +114,7 @@ class GatewayManager(object):
 
         self.exp_id                = exp_id
         self.user                  = user
-        self.current_profile       = profile \
+        self.profile               = profile \
                 if profile is not None else self.default_profile()
 
         ret_val = 0
@@ -242,7 +244,7 @@ class GatewayManager(object):
 
         self.user                  = None
         self.exp_id                = None
-        self.current_profile       = None
+        self.profile               = None
         self.time_reference        = None
 
         self.experiment_is_running = False
@@ -266,12 +268,12 @@ class GatewayManager(object):
         ret = 0
 
         if profile is not None:
-            self.current_profile = profile
+            self.profile = profile
 
-        ret += self.open_power_start(power=self.current_profile.power)
+        ret += self.open_power_start(power=self.profile.power)
 
-        ret += protocol.config_consumption(self.sender, \
-                self.current_profile.consumption)
+        ret += self.protocol.config_consumption(
+                self.profile.consumption)
         # Radio
 
         if ret != 0:
@@ -287,19 +289,25 @@ class GatewayManager(object):
         """
         from datetime import datetime
         LOGGER.info('Reset control node time')
+
         # save the start experiment time
-        new_time_ref = datetime.now()
-        old_time_ref = self.time_reference
+        new_time = datetime.now()
+        old_time = self.time_reference
 
-        # measure handler will update its time when it gets
-        # measure_time_ack from control node
-        self.measure_handler.set_time_ref(new_time_ref)
+        # protocol will update its time when it gets
+        # reset_time_ack from control node
+        # must be done before the command is actually executed
+        # to be sure it's set before the packet arrives
+        self.protocol.new_time = new_time
 
-        ret = protocol.reset_time(self.sender, 'reset_time')
+        # TODO REMOVE ME when reset_time_ack is in place
+        self.protocol.time = new_time
+
+        ret = self.protocol.reset_time('reset_time')
 
         if ret == 0:
-            self.time_reference = new_time_ref
-            if old_time_ref is None:
+            self.time_reference = new_time
+            if old_time is None:
                 LOGGER.info('Start experiment time = %r', self.time_reference)
             else:
                 LOGGER.info('New time reference = %r', self.time_reference)
@@ -316,11 +324,11 @@ class GatewayManager(object):
         LOGGER.info('Open power start')
 
         if power is None:
-            assert self.current_profile is not None
-            power = self.current_profile.power
+            assert self.profile is not None
+            power = self.profile.power
 
 
-        ret = protocol.start_stop(self.sender, 'start', power)
+        ret = self.protocol.start_stop('start', power)
 
         if ret == 0:
             self.open_node_started = True
@@ -338,10 +346,10 @@ class GatewayManager(object):
         ret = 0
 
         if power is None:
-            assert self.current_profile is not None
-            power = self.current_profile.power
+            assert self.profile is not None
+            power = self.profile.power
 
-        ret = protocol.start_stop(self.sender, 'stop', power)
+        ret = self.protocol.start_stop('stop', power)
 
         if ret == 0:
             self.open_node_started = False
