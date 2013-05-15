@@ -185,13 +185,8 @@ class TestComplexExperimentRunning(unittest.TestCase):
             * stop when stopped
         """
 
-        self.request.files = {'firmware': self.files['idle'], \
-                'profile':self.files['default_profile']}
         ret = self.app.exp_start(123, 'clochette')
         self.assertEquals(ret, {'ret':0})
-
-
-        self._rewind_files()
         ret = self.app.exp_start(123, 'clochette') # cannot start started exp
         self.assertNotEquals(ret, {'ret':0})
 
@@ -211,12 +206,8 @@ class TestComplexExperimentRunning(unittest.TestCase):
             * invalid start
             * invalid flash
         """
-        self.request.files = {}
-        ret = self.app.exp_start(123, 'clochett')
-        self.assertNotEquals(ret, {'ret':0})
 
-        self.request.files = {'firmware': self.files['idle'], \
-                'profile':self.files['profile']}
+        self.request.files = {'profile':self.files['profile']}
         ret = self.app.open_flash()
         self.assertNotEquals(ret, {'ret':0})
 
