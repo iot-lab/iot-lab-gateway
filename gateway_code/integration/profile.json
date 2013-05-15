@@ -10,6 +10,6 @@
 
         "current": true,
         "voltage": true,
-        "power"  : true
+        "power"  : false
     }
 }

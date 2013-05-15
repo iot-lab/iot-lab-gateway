@@ -5,6 +5,15 @@ Protocol between gateway and control node
 Packet send format
 SYNC_BYTE | LEN | TYPE | -?-?-?-?-
 
+
+
+
+Measures Config packet format
+SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | MEASURE_CONFIG
+
+Measures values packet format
+SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | Measures_count | [TIME | Values ]*|
+
 """
 
 import gateway_code.profile
@@ -18,6 +27,7 @@ NACK = chr(0x02)
 
 TIME_FACTOR = 32768
 
+TYPE_MEASURES_MASK = 0xF0
 
 
 #
@@ -27,6 +37,8 @@ TIME_FACTOR = 32768
 # Commands
 TYPE_CMD_OPEN_NODE_START = chr(0x70)
 TYPE_CMD_OPEN_NODE_STOP  = chr(0x71)
+BATT = chr(0x0)
+DC   = chr(0x1)
 TYPE_CMD_RESET_TIME = chr(0x72)
 
 # Config measures
@@ -37,39 +49,19 @@ TYPE_CMD_CONFIG_MEASURES_CONSUMPTION = chr(0x79)
 # TYPE_CMD_CONFIG_FAKE_SENSOR = ?
 
 
-# defines
-
-BATT = chr(0x0)
-DC   = chr(0x1)
-
-
 #
 # Measures packets
 #
 
-# Config
-# SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | MEASURE_CONFIG
-# Measures values
-# SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | Measures_count | [TIME | Values ]*|
-
-TYPE_MEASURES_MASK = 0xF0
 
 # Consumption measures
 
 TYPE_MEASURES_CONSUMPTION = chr(0xFF)
-
 # Measures sources flags
 # may be the 3 following
 CONSUMPTION_POWER   = 1 << 0
 CONSUMPTION_VOLTAGE = 1 << 1
 CONSUMPTION_CURRENT = 1 << 2
-
-POWER_MEASURES = {
-        'power': CONSUMPTION_POWER,
-        'voltage': CONSUMPTION_VOLTAGE,
-        'current': CONSUMPTION_CURRENT,
-        }
-
 # nothing on bit 3
 # Only one of the following
 CONSUMPTION_3_3V    = 1 << 4
@@ -77,19 +69,21 @@ CONSUMPTION_5V      = 1 << 5
 CONSUMPTION_BATT    = 1 << 6
 # nothing on bit 7
 
+POWER_MEASURES = {
+        'power'   : CONSUMPTION_POWER,
+        'voltage' : CONSUMPTION_VOLTAGE,
+        'current' : CONSUMPTION_CURRENT,
+        }
 POWER_SOURCE = {
         '3.3V' : CONSUMPTION_3_3V,
         '5V'   : CONSUMPTION_5V,
         'BATT' : CONSUMPTION_BATT,
         }
-
 POWER_SOURCE_VAL = dict([(POWER_SOURCE[key], key) \
         for key in POWER_SOURCE])
 
 
 # CONFIG BYTE == [ PERIOD | AVERAGE << 4 | ENABLE(BIT7) ]
-
-# Period
 INA226_PERIOD = {
         '140us' : 0,
         '204us' : 1,
@@ -100,8 +94,6 @@ INA226_PERIOD = {
         '4156us': 6,
         '8244us': 7,
         }
-
-# Average
 INA226_AVERAGE = {
         '1'    : 0,
         '4'    : 1,
@@ -112,11 +104,8 @@ INA226_AVERAGE = {
         '512'  : 6,
         '1024' : 7,
         }
-
-# ENABLE/DISABLE
 INA226_ENABLE        = 1 << 7
 INA226_DISABLE       = 0 << 7
-
 INA226_STATE = {
         'start': INA226_ENABLE,
         'stop': INA226_DISABLE,
@@ -130,29 +119,9 @@ COMMAND = {'start': TYPE_CMD_OPEN_NODE_START, 'stop': TYPE_CMD_OPEN_NODE_STOP, \
 ALIM    = {'battery': BATT, 'dc': DC,}
 
 
-
-
-
-# store list of measures and associated unpack strings for each config
-CONSUMPTION_DECODE_VALUES = {}
-for conf in range(1, 1 << 3):
-    _measures_list = ['t'] + \
-            (['p'] if conf & CONSUMPTION_POWER else []) + \
-            (['v'] if conf & CONSUMPTION_VOLTAGE else []) + \
-            (['c'] if conf & CONSUMPTION_CURRENT else [])
-    _unpack_str = '!L' + ('f' * (len(_measures_list) - 1))
-    # 4 bytes for time + 4bytes per value (float)
-    _measures_len = 4 + 4 * (len(_measures_list) -1)
-    CONSUMPTION_DECODE_VALUES[conf] = \
-            (_measures_list, _unpack_str, _measures_len)
-
-
-
-
 def _str_packet(info, data):
     """
     Debug function that prints a packet
-
 
     >>> _str_packet('Msg', chr(0x20) + chr(0xFF))
     "Msg: '20 FF '"
@@ -171,22 +140,19 @@ def _str_packet(info, data):
     debug_out += "'"
     return debug_out
 
-def _valid_result_command(packet, pkt_type, length):
+def _valid_result_command(packet, pkt_type):
     """
     Validate type of packet,
     ACK/NACK
-    and length
 
-    >>> _valid_result_command(chr(0x42) + ACK, chr(0x42), 2)
+    >>> _valid_result_command(chr(0x42) + ACK, chr(0x42))
     0
 
-    >>> _valid_result_command(None, '', 42)
+    >>> _valid_result_command(chr(0x42) + NACK, chr(0x42))
     1
-    >>> _valid_result_command(chr(0x42) + NACK, chr(0x42), 2)
+    >>> _valid_result_command(chr(0x42) + ACK, chr(0x66))
     1
-    >>> _valid_result_command(chr(0x42) + ACK, chr(0x42), 5)
-    1
-    >>> _valid_result_command(chr(0x42) + ACK, chr(0x66), 2)
+    >>> _valid_result_command(None, '')
     1
 
     """
@@ -197,7 +163,6 @@ def _valid_result_command(packet, pkt_type, length):
         ret_b = True
         ret_b &= (packet[0] == pkt_type)
         ret_b &= (packet[1] == ACK)
-        ret_b &= (len(packet) == length)
 
     ret   = 0 if ret_b else 1
     return ret
@@ -244,7 +209,7 @@ class Protocol(object):
 
         result = self.send_cmd(data)
 
-        ret = _valid_result_command(result, command_b, 2) # type and [N]ACK
+        ret = _valid_result_command(result, command_b)
         return ret
 
     def reset_time(self, command):
@@ -257,7 +222,7 @@ class Protocol(object):
 
         result = self.send_cmd(data)
 
-        ret = _valid_result_command(result, command_b, 2) # type and [N]ACK
+        ret = _valid_result_command(result, command_b)
         return ret
 
 
@@ -296,7 +261,7 @@ class Protocol(object):
         data = command_b + chr(measures_flag) + chr(config_flag)
         result = self.send_cmd(data)
 
-        ret = _valid_result_command(result, command_b, 2) # type and [N]ACK
+        ret = _valid_result_command(result, command_b)
         return ret
 
 
