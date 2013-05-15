@@ -18,6 +18,8 @@ SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | Measures_count | [TIME | Values ]*|
 
 import gateway_code.profile
 from datetime import timedelta, datetime
+import logging
+LOGGER = logging.getLogger()
 
 
 SYNC_BYTE = chr(0x80)
@@ -48,6 +50,8 @@ TYPE_CMD_CONFIG_MEASURES_CONSUMPTION = chr(0x79)
 # TYPE_CMD_CONFIG_RADIO_NOISE = ? -> no monitoring values
 # TYPE_CMD_CONFIG_FAKE_SENSOR = ?
 
+# answers
+TYPE_CMD_ACK = chr(0xFA)
 
 #
 # Measures packets
@@ -173,6 +177,16 @@ class Protocol(object):
     Class protocol containing current configuration for packets reception
     """
 
+    measures_decode = {
+            TYPE_MEASURES_CONSUMPTION : 'decode_consumption_pkt',
+            TYPE_CMD_ACK              : 'decode_command_ack',
+            }
+
+    ack_decode = {
+            TYPE_CMD_RESET_TIME                  : 'ack_reset_time',
+            TYPE_CMD_CONFIG_MEASURES_CONSUMPTION : 'ack_config_consumption',
+            }
+
     def __init__(self, sender):
 
         self.sender   = sender
@@ -181,9 +195,6 @@ class Protocol(object):
 
         self.conso_conf = {}
 
-        self.measures_decode = {
-                chr(0xFF): self.decode_consumption_pkt,
-                }
 
     def send_cmd(self, data):
         """
@@ -274,32 +285,33 @@ class Protocol(object):
         """
         measure_type = pkt[0]
         try:
-            ret = self.measures_decode[measure_type](pkt)
+            # find appropriate method to call
+            # using 'Protocol.measures_decode' association
+            method_name = type(self).measures_decode[measure_type]
+            fct = getattr(self, method_name)
+            ret = fct(pkt)
         except KeyError: #pragma: no cover
-            from sys import stderr # TODO replace with logger
-            print >> stderr, 'Uknown measure packet: %02X' % ord(measure_type)
+            LOGGER.error('Uknown measure packet: %02X', ord(measure_type))
             ret = None
 
         return ret
 
 
-    def update_consumption_config(self, config_byte):
+    def decode_command_ack(self, pkt):
         """
-        Update the current configuration for consumption decoding
+        Generic ack decoding function.
+        Calls the appropriate function for each ack type.
         """
+        ack_type = pkt[1]
+        try:
+            # find appropriate method to call
+            # using 'Protocol.ack_decode' association
+            method_name = type(self).ack_decode[ack_type]
+            fct = getattr(self, method_name)
+            fct(pkt)
 
-        self.conso_conf['source'] = POWER_SOURCE_VAL[config_byte & 0x70]
-
-        self.conso_conf['measures'] = ['t'] + \
-            (['p'] if config_byte & CONSUMPTION_POWER else []) + \
-            (['v'] if config_byte & CONSUMPTION_VOLTAGE else []) + \
-            (['c'] if config_byte & CONSUMPTION_CURRENT else [])
-        _num_measures = len(self.conso_conf['measures']) - 1 # without time
-
-
-        # Time = uint, values = float
-        self.conso_conf['len']        = 4    + _num_measures * 4
-        self.conso_conf['unpack_str'] = '!L' + _num_measures * 'f'
+        except KeyError: #pragma: no cover
+            LOGGER.error('Uknown ack type: %02X', ord(pkt[1]))
 
 
     def decode_consumption_pkt(self, pkt):
@@ -314,7 +326,7 @@ class Protocol(object):
 
         # decode current frame content
         # TODO remove after ack update
-        self.update_consumption_config(config)
+        self.ack_config_consumption(chr(00) + chr(01) + chr(config))
 
 
         assert len(pkt) == header_size + count * self.conso_conf['len']
@@ -336,6 +348,40 @@ class Protocol(object):
         return {self.conso_conf['source']: \
                 (self.conso_conf['measures'], all_measures)}
 
+
+
+    #
+    # Command acks
+    #
+
+    def ack_reset_time(self, pkt):
+        """
+        Update the current time reference
+        """
+        _ = pkt
+        assert self.new_time is not None
+        self.time = self.new_time
+        self.new_time = None
+
+
+    def ack_config_consumption(self, pkt):
+        """
+        Update the current configuration for consumption decoding
+        """
+        config_byte = ord(pkt[2])
+
+        self.conso_conf['source'] = POWER_SOURCE_VAL[config_byte & 0x70]
+
+        self.conso_conf['measures'] = ['t'] + \
+            (['p'] if config_byte & CONSUMPTION_POWER else []) + \
+            (['v'] if config_byte & CONSUMPTION_VOLTAGE else []) + \
+            (['c'] if config_byte & CONSUMPTION_CURRENT else [])
+        _num_measures = len(self.conso_conf['measures']) - 1 # without time
+
+
+        # Time = uint, values = float
+        self.conso_conf['len']        = 4    + _num_measures * 4
+        self.conso_conf['unpack_str'] = '!L' + _num_measures * 'f'
 
 
 
@@ -481,6 +527,8 @@ def main(args): #pragma: no cover
     atexit.register(rxtx.stop) # execute even if there is an exception
 
 
+
+
     if command == 'listen':
         try:
             protocol      = Protocol(dis.send_command)
@@ -492,7 +540,9 @@ def main(args): #pragma: no cover
                 if getattr(arguments, measure):
                     measures_flag |= POWER_MEASURES[measure]
             measures_flag |= POWER_SOURCE[arguments.consumption_source]
-            protocol.update_consumption_config(measures_flag)
+            protocol.ack_config_consumption(\
+                    chr(00) + chr(01) + chr(measures_flag)) # dummy ack pkt
+
 
             # configure reception for radio
 
