@@ -305,7 +305,7 @@ class GatewayManager(object):
         self.protocol.new_time = new_time
 
         # TODO REMOVE ME when reset_time_ack is in place
-        self.protocol.time = new_time
+        #  self.protocol.time = new_time
 
         ret = self.protocol.reset_time('reset_time')
 

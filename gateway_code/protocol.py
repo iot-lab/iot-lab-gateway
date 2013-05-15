@@ -307,7 +307,9 @@ class Protocol(object):
             # find appropriate method to call
             # using 'Protocol.ack_decode' association
             method_name = type(self).ack_decode[ack_type]
-            fct = getattr(self, method_name)
+            import sys
+            print >> sys.stderr, 'Ack received: %s ' % method_name
+            fct         = getattr(self, method_name)
             fct(pkt)
 
         except KeyError: #pragma: no cover
@@ -330,7 +332,10 @@ class Protocol(object):
 
         # decode current frame content
         # TODO remove after ack update
-        self.ack_config_consumption(chr(00) + chr(01) + chr(config))
+        # self.ack_config_consumption(chr(00) + chr(01) + chr(config))
+        import sys
+        if config != self.conso_config_byte:
+            print >> sys.stderr,  "Got Measure with wrong configuration"
 
 
         assert len(pkt) == header_size + count * self.conso_conf['len']
@@ -373,6 +378,8 @@ class Protocol(object):
         Update the current configuration for consumption decoding
         """
         config_byte = ord(pkt[2])
+
+        self.conso_config_byte = config_byte # TODO remove me, only tests
 
         self.conso_conf['source'] = POWER_SOURCE_VAL[config_byte & 0x70]
 
