@@ -21,19 +21,6 @@ class GatewayRest(object):
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
 
-    @staticmethod
-    def __valid_request(required_files_seq):
-        """
-        Check the file arguments in the request.
-
-        :param required_files_seq: file arguments required in 'request.files'
-        :type required_files_seq:  sequence
-        :return: If files match required files
-        """
-        # compare that the two lists have the same elements
-        return set(request.files.keys()) == set(required_files_seq)
-
-
     def exp_start(self, expid, username):
         """
         Start an experiment
@@ -42,19 +29,31 @@ class GatewayRest(object):
         :param username: username of the experiment owner
         """
         # verify passed files as request
-        if not self.__valid_request(('firmware', 'profile')):
-            return {'ret': 1, 'error': \
-                    "Wrong file args: required 'firmware' + 'profile'"}
 
-        firmware = request.files['firmware']
-        profile  = request.files['profile']
-        profile_dict = json.load(profile.file)
-        profile_obj = gateway_code.profile.profile_from_dict(profile_dict)
+        firmware_path = None
+        firmware_file = None
+        profile       = None
 
-        with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
-            _file.write(firmware.file.read())
-            ret = self.gateway_manager.exp_start(expid, username, \
-                    _file.name, profile_obj)
+        # create profile object from json
+        if 'profile' in request.files:
+            _prof        = request.files['profile']
+            profile_dict = json.load(_prof.file)
+            profile      = gateway_code.profile.profile_from_dict(profile_dict)
+
+        # save http file to disk
+        if 'firmware' in request.files:
+            _firm         = request.files['firmware']
+            firmware_file = NamedTemporaryFile(suffix = '--' + _firm.filename)
+            firmware_path = firmware_file.name
+            firmware_file.write(_firm.file.read())
+
+        ret = self.gateway_manager.exp_start(expid, username, \
+                firmware_path, profile)
+
+        # cleanup of temp file
+        if firmware_file is not None:
+            firmware_file.close()
+
         return {'ret':ret}
 
 
@@ -81,9 +80,11 @@ class GatewayRest(object):
         request.files contains 'firmware' file argument
         """
 
-        # verify passed files as request
-        if not self.__valid_request(('firmware',)):
-            return {'ret': 1, 'error':"Wrong file args: required 'firmware'"}
+        # save http file to disk
+        if 'firmware' not in request.files:
+            return {'ret': 1, 'error': \
+                    "Wrong file args: required 'firmware'"}
+
         firmware = request.files['firmware']
 
         with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:

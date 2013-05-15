@@ -74,7 +74,7 @@ class GatewayManager(object):
 
 
     def exp_start(self, exp_id, user, \
-            firmware_path=IDLE_FIRMWARE, profile=None):
+            firmware_path=None, profile=None):
         """
         Start an experiment
 
@@ -114,8 +114,12 @@ class GatewayManager(object):
 
         self.exp_id                = exp_id
         self.user                  = user
+
+        # default values
+        firmware_path              = firmware_path or IDLE_FIRMWARE
         self.profile               = profile \
                 if profile is not None else self.default_profile()
+
 
         ret_val = 0
 
