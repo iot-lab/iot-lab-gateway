@@ -46,7 +46,7 @@ class GatewayManager(object):
         self.open_node_started     = False
 
         ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
-        if ret != 0:
+        if ret != 0: # pragma: no cover
             raise StandardError("Control node flash failed: {ret:%d, '%s')" % \
                     (ret, CONTROL_NODE_FIRMWARE))
 
@@ -163,7 +163,7 @@ class GatewayManager(object):
 
         if ret_val == 0:
             LOGGER.info('Start experiment Succeeded')
-        else:
+        else: # pragma: no cover
             LOGGER.error('Start experiment with errors: ret_val: %d', ret_val)
 
         return ret_val
@@ -253,7 +253,7 @@ class GatewayManager(object):
 
 
     @staticmethod
-    def cb_serial_redirection_error(handler_arg, error_code):
+    def cb_serial_redirection_error(handler_arg, error_code): # pragma: no cover
         """ Callback for SerialRedirection error handler """
         LOGGER.error('Serial Redirection process failed "socat: ret == %d"', \
                 error_code)
@@ -276,7 +276,7 @@ class GatewayManager(object):
                 self.profile.consumption)
         # Radio
 
-        if ret != 0:
+        if ret != 0: # pragma: no cover
             LOGGER.error('Profile update failed')
         return ret
 
@@ -311,7 +311,7 @@ class GatewayManager(object):
                 LOGGER.info('Start experiment time = %r', self.time_reference)
             else:
                 LOGGER.info('New time reference = %r', self.time_reference)
-        else:
+        else: # pragma: no cover
             LOGGER.error('Reset time failed')
 
         return ret
@@ -332,7 +332,7 @@ class GatewayManager(object):
 
         if ret == 0:
             self.open_node_started = True
-        else:
+        else: # pragma: no cover
             LOGGER.error('Open power start failed')
         return ret
 
@@ -353,7 +353,7 @@ class GatewayManager(object):
 
         if ret == 0:
             self.open_node_started = False
-        else:
+        else: # pragma: no cover
             LOGGER.error('Open power stop failed')
         return ret
 
@@ -370,7 +370,7 @@ class GatewayManager(object):
 
         ret, _out, _err = reset.reset(node)
 
-        if ret != 0:
+        if ret != 0: # pragma: no cover
             LOGGER.error('Node %s reset failed: %d', node, ret)
 
         return ret
@@ -387,7 +387,7 @@ class GatewayManager(object):
 
         ret, _out, _err = flash_firmware.flash(node, firmware_path)
 
-        if ret != 0:
+        if ret != 0: # pragma: no cover
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
 
