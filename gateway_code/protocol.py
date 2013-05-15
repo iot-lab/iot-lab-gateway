@@ -204,7 +204,7 @@ class Protocol(object):
         import sys
         print >> sys.stderr, _str_packet('Sent packet', data)
         result = self.sender(data)
-        print >> sys.stderr, _str_packet('Rec packet', data)
+        print >> sys.stderr, _str_packet('Rec packet', result)
 
         return result
 
@@ -313,6 +313,10 @@ class Protocol(object):
         except KeyError: #pragma: no cover
             LOGGER.error('Uknown ack type: %02X', ord(pkt[1]))
 
+
+    #
+    # measure packets
+    #
 
     def decode_consumption_pkt(self, pkt):
         """
