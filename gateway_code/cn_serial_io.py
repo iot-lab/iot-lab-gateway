@@ -10,8 +10,6 @@ import atexit
 import recordtype # mutable namedtuple (for small classes)
 from threading import Thread
 
-
-
 SYNC_BYTE = chr(0x80)
 
 
@@ -90,12 +88,13 @@ class RxTxSerial(object):
 # Disable: I0011 - 'locally disabling warning'
 # Disable: C0103 - Invalid name 'Buffer' -> represents a class
 
-Buffer = recordtype.recordtype('Buffer',             #pylint:disable=I0011,C0103
-        [('length', None), ('payload', "")])
-Buffer.is_complete = (lambda self: \
-        (self.length is not None) and (self.length == len(self.payload)))
-
-
+Buffer = recordtype.recordtype('Buffer',        #pylint:disable=I0011,C0103
+        [('length', None), ('payload', None)])
+def empty(self):
+    """ Empty current buffer """
+    self.length = None
+    self.payload = bytearray()
+Buffer.empty = empty
 
 class ReceiveThread(Thread):
     """Threaded read"""
@@ -105,52 +104,59 @@ class ReceiveThread(Thread):
         self.cb_packet_received = cb_packet_received
         self.serial_port = serial_port
 
-        self.state_machine_dict = {
-                RX_IDLE: ReceiveThread.rx_idle,
-                RX_LEN : ReceiveThread.rx_length,
-                RX_PAYLOAD: ReceiveThread.rx_payload,
-                RX_PACKET_FULL: None,
-                }
 
-
-
-    @staticmethod
-    def rx_idle(_packet, rx_char):
+    def rx_idle(self, _packet, rx_byte_array):
         """
         Adds the sync byte to the packet and changes the rx_State
         to RX_LEN in order to get the next length byte.
         """
-        if rx_char == SYNC_BYTE:
-            return RX_LEN
-        else:
-            return RX_IDLE
+        try:
+            index = rx_byte_array.index(SYNC_BYTE)
+            del(rx_byte_array[:index+1])
+            return self.rx_length
 
-    @staticmethod
-    def rx_length(packet, rx_char):
+        except ValueError: #pragma: no cover
+            del(rx_byte_array[:])
+            return self.rx_idle
+
+    def rx_length(self, packet, rx_byte_array):
         """
         'length' byte received, store it into packet
         :return: new state for the state machine
         """
+        length = rx_byte_array.pop(0)
+        if length == 0:
+            return self.rx_idle
 
-        packet.length = ord(rx_char)
-        return RX_PAYLOAD
+        packet.length = length
+        return self.rx_payload
 
-    @staticmethod
-    def rx_payload(packet, rx_char):
+
+
+    def rx_payload(self, packet, rx_byte_array):
         """
         Adds the received byte to payload.
 
         If packet complete, change state to PACKET_FULL
         else, keep waiting for bytes
         """
-        packet.payload += rx_char
+        available = len(rx_byte_array)
+        needed    = packet.length - len(packet.payload)
 
-        if packet.is_complete():
-            return RX_PACKET_FULL
+        if available >= needed:
+            # packet can be completed
+            packet.payload.extend(rx_byte_array[:needed])
+            del(rx_byte_array[:needed])
 
-        return RX_PAYLOAD
+            self.cb_packet_received(str(packet.payload))
 
-
+            # clean packet
+            packet.empty()
+            return self.rx_idle
+        else:
+            packet.payload.extend(rx_byte_array)
+            del(rx_byte_array[:])
+            return self.rx_payload
 
 
     def run(self):
@@ -160,29 +166,27 @@ class ReceiveThread(Thread):
         Packet have the format:
             | SYNC  |  LENGTH | DATA |
         """
-
-        rx_state = RX_IDLE
         packet = Buffer()
+        packet.empty() # should be empty before using
+        next_fct = self.rx_idle
 
         while True:
             #call to read will block when no bytes are received
             try:
-                rx_char = self.serial_port.read(1)
+                rx_str = self.serial_port.read(2048)
             except (select.error, serial.SerialException, OSError, TypeError):
                 # All exceptions append at least once during tests
                 # The list is empirical and may evolve
                 break  # pyserial has been closed
 
-            if rx_char:
-                # Putting the bytes received into the packet depending on the
-                # reception state (rx_state)
-                rx_state = self.state_machine_dict[rx_state](packet, rx_char)
 
-                if rx_state == RX_PACKET_FULL:
+            if rx_str:
+                rx_b_array = bytearray(rx_str)
+                while len(rx_b_array) != 0:
+                    # Putting the bytes received into the packet depending on
+                    # the reception state (rx_state)
+                    next_fct = next_fct(packet, rx_b_array)
 
-                    self.cb_packet_received(packet.payload)
-                    rx_state = RX_IDLE
-                    packet = Buffer()
             # else: # timeout, ignore
             #     pass
 

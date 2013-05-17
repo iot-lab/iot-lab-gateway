@@ -19,7 +19,11 @@ SYNC_BYTE | LEN | TYPE | MEASURE_SOURCES | Measures_count | [TIME | Values ]*|
 import gateway_code.profile
 from datetime import timedelta, datetime
 import logging
+from struct import unpack
 LOGGER = logging.getLogger()
+
+
+import sys
 
 
 SYNC_BYTE = chr(0x80)
@@ -201,7 +205,6 @@ class Protocol(object):
         Send a command to the control node and wait for it's answer.
         """
 
-        import sys
         print >> sys.stderr, _str_packet('Sent packet', data)
         result = self.sender(data)
         print >> sys.stderr, _str_packet('Rec packet', result)
@@ -307,8 +310,6 @@ class Protocol(object):
             # find appropriate method to call
             # using 'Protocol.ack_decode' association
             method_name = type(self).ack_decode[ack_type]
-            import sys
-            print >> sys.stderr, 'Ack received: %s ' % method_name
             fct         = getattr(self, method_name)
             fct(pkt)
 
@@ -324,25 +325,24 @@ class Protocol(object):
         """
         Extract measures stored in pkt.
         """
-        from struct import unpack
 
         header_size = 3
         config = ord(pkt[1])
         count  = ord(pkt[2])
 
         # decode current frame content
-        # TODO remove after ack update
-        # self.ack_config_consumption(chr(00) + chr(01) + chr(config))
-        import sys
         if config != self.conso_config_byte:
             print >> sys.stderr,  "Got Measure with wrong configuration"
 
 
-        assert len(pkt) == header_size + count * self.conso_conf['len']
+        if len(pkt) != header_size + count * self.conso_conf['len']:
+            return None
+
         # extract list of raw measures from payload
         chunks = [pkt[start:start + self.conso_conf['len']] for start in \
                 range(header_size, len(pkt), self.conso_conf['len'])]
-        assert len(chunks) == count
+        if len(chunks) != count:
+            return None
 
 
         # extract the 'count' measures
@@ -416,7 +416,6 @@ def config_consumption_command(protocol_obj, command, state, \
         # check correct configuration
         if not (consumption.power or consumption.voltage or \
                 consumption.current):
-            import sys
             print >> sys.stderr, "WARNING:",
             print >> sys.stderr, "No 'power', 'voltage' or 'current' flag set!",
             print >> sys.stderr, "Consumption disabled\n"
@@ -432,12 +431,17 @@ def _listen(queue, protocol): #pragma: no cover
     Debug function, to be called from Command line.
     """
     import Queue
+    count = 0
     while True:
         try:
             raw_pkt = queue.get(True, timeout=1)
             print _str_packet('MEASURE_PKT', raw_pkt)
             measure_pkt = protocol.decode_measure_packet(raw_pkt)
             print measure_pkt
+            count += 1
+            if count == 5000:
+                break
+
         except Queue.Empty:
             pass
 
@@ -504,7 +508,6 @@ def parse_arguments(args): #pragma: no cover
 
 
     namespace = parser.parse_args(args)
-    print namespace
     return namespace.command, namespace
 
 
@@ -514,7 +517,7 @@ _ARGS_COMMANDS = {
         'start'       : 'start_stop',
         'stop'        : 'start_stop',
         'reset_time'  : 'reset_time',
-        'consumption' : 'config_consumption_command',
+        'consumption' : config_consumption_command,
         }
 
 
@@ -538,13 +541,12 @@ def main(args): #pragma: no cover
     atexit.register(rxtx.stop) # execute even if there is an exception
 
 
+    protocol      = Protocol(dis.send_command)
+    protocol.time = datetime.now()
 
 
     if command == 'listen':
         try:
-            protocol      = Protocol(dis.send_command)
-            protocol.time = datetime.now()
-
             # configure reception for consumption
             measures_flag = 0
             for measure in 'power', 'voltage', 'current':
@@ -562,11 +564,12 @@ def main(args): #pragma: no cover
         except KeyboardInterrupt:
             print 'Got Ctrl+C Stopping'
             ret = 0
-
-
+    elif command == 'consumption':
+        fct = config_consumption_command
+        ret = fct(protocol, **arguments.__dict__)
     else: # simple command
-        ret = _ARGS_COMMANDS[command](sender = dis.send_command, \
-                **arguments.__dict__)
+        fct = getattr(protocol, _ARGS_COMMANDS[command])
+        ret = fct(**arguments.__dict__)
 
     print '%s: %r' % (command, ret)
 
