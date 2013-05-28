@@ -16,10 +16,14 @@ LDFLAGS    = $(CFLAGS)
 SRCS       = $(wildcard *.c)
 OBJS       = $(SRCS:.c=.o)
 
-.PHONY: all clean realclean
-
+.PHONY: all clean realclean run
+.DEFAULT: all
 
 all: $(TARGET)
+
+run: all
+	./$(TARGET)
+
 
 clean:
 	rm -rf $(OBJS)
