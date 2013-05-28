@@ -1,0 +1,7 @@
+*.out
+*.gcov
+*.gcda
+*.gcno
+*.o
+
+control_node_interface
