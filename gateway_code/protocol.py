@@ -392,7 +392,7 @@ class Protocol(object):
 
         # Time = uint, values = float
         self.conso_conf['len']        = 4    + _num_measures * 4
-        self.conso_conf['unpack_str'] = '!L' + _num_measures * 'f'
+        self.conso_conf['unpack_str'] = '=L' + _num_measures * 'f'
 
 
 
