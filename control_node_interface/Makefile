@@ -2,6 +2,7 @@ TARGET     = control_node_interface
 CC         = gcc
 
 
+WARNINGS  += -Wall -Wextra
 WARNINGS  += -Wpointer-arith -Wbad-function-cast
 WARNINGS  += -Wcast-align -Wsign-compare -Waggregate-return -Wmissing-prototypes
 WARNINGS  += -Wmissing-declarations
@@ -9,8 +10,11 @@ WARNINGS  += -Wmissing-declarations
 COV        = -fprofile-arcs -ftest-coverage
 PROF       = -pg
 
-CFLAGS     = -g -O2 $(WARNINGS) $(COV) $(PROF)
+CFLAGS     = -std=c99 -g -O3 -fstrict-aliasing $(WARNINGS) $(COV) $(PROF)
 LDFLAGS    = $(CFLAGS)
+
+
+ #   -O2 activates -fstrict-aliasing and -Wall is supposed
 
 
 SRCS       = $(wildcard *.c)
