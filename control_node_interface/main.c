@@ -113,11 +113,6 @@ static void decode_pkt()
                         printf("ERROR unknown packet\n");
                         break;
         }
-
-
-
-
-
 }
 
 
