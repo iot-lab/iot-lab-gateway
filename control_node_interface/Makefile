@@ -11,8 +11,8 @@ COV        = -fprofile-arcs -ftest-coverage
 PROF       = -pg
 DEP_RULES  = -MMD -MD -MF $(basename $@).d
 
-CFLAGS     = -std=c99 -g -O3 -fstrict-aliasing $(WARNINGS) $(COV) $(PROF) $(DEP_RULES)
-LDFLAGS    = $(CFLAGS)
+CFLAGS     += -std=c99 -g -O3 -fstrict-aliasing $(WARNINGS) $(COV) $(PROF) $(DEP_RULES)
+LDFLAGS    += $(CFLAGS)
 
 
 SRCS       = $(wildcard *.c)
@@ -28,7 +28,7 @@ run: all
 	./$(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $(LDFLAGS) $<
+	$(CC) -o $@ $(LDFLAGS) $^
 
 %.o : %.c Makefile
 	$(CC) -c $(CFLAGS) $< -o $@
