@@ -9,16 +9,15 @@ WARNINGS  += -Wmissing-declarations
 
 COV        = -fprofile-arcs -ftest-coverage
 PROF       = -pg
+DEP_RULES  = -MMD -MD -MF $(basename $@).d
 
-CFLAGS     = -std=c99 -g -O3 -fstrict-aliasing $(WARNINGS) $(COV) $(PROF)
+CFLAGS     = -std=c99 -g -O3 -fstrict-aliasing $(WARNINGS) $(COV) $(PROF) $(DEP_RULES)
 LDFLAGS    = $(CFLAGS)
-
-
- #   -O2 activates -fstrict-aliasing and -Wall is supposed
 
 
 SRCS       = $(wildcard *.c)
 OBJS       = $(SRCS:.c=.o)
+DEPS       = $(SRCS:.c=.d)
 
 .PHONY: all clean realclean run
 .DEFAULT: all
@@ -28,14 +27,17 @@ all: $(TARGET)
 run: all
 	./$(TARGET)
 
+$(TARGET): $(OBJS)
+	$(CC) -o $@ $(LDFLAGS) $<
+
+%.o : %.c Makefile
+	$(CC) -c $(CFLAGS) $< -o $@
+
+
 
 clean:
-	rm -rf $(OBJS)
+	rm -rf $(OBJS) $(DEPS)
 realclean: clean
 	rm -rf $(TARGET)
-
-
-$(TARGET): $(OBJS)
-	gcc -o $@ $(LDFLAGS) $<
-
+-include $(DEPS)
 

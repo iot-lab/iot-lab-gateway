@@ -3,5 +3,6 @@
 *.gcda
 *.gcno
 *.o
+*.d
 
 control_node_interface
