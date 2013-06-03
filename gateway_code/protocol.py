@@ -91,7 +91,8 @@ POWER_SOURCE_VAL = dict([(POWER_SOURCE[key], key) \
         for key in POWER_SOURCE])
 
 
-# CONFIG BYTE == [ PERIOD | AVERAGE << 4 | ENABLE(BIT7) ]
+# CONFIG BYTE == [ PERIOD |X| AVERAGE << 4 | ENABLE(BIT7) ]
+# X == padding = 0
 INA226_PERIOD = {
         '140us' : 0,
         '204us' : 1,
