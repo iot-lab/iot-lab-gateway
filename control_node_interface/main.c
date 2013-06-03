@@ -10,6 +10,10 @@
 
 #include <sys/param.h>
 
+
+
+#include "protocol.h"
+
 static const char *tty_path = "/dev/ttyFITECO_GWT";
 
 // Documentation
@@ -97,6 +101,7 @@ static void decode_pkt()
                         current_pkt_index = &current_pkt.data[3];
 
                         for (int i = 0; i < num_measures; i++) {
+
                                 memcpy(&current_values, current_pkt_index, sizeof(current_values));
                                 current_pkt_index += sizeof(current_values);
 
@@ -213,12 +218,6 @@ static void start_listening(int fd)
                                 printf("Error %d: %s\n", err, strerror(err));
                         }
                 }
-
-                /* printf("Read done: n_chars = %d\n", n_chars);
-
-                for (int i = 0; i < n_chars; i++) {
-                        printf("%02X\n", rx_buff[i]);
-                } */
                 handle_packet(rx_buff, n_chars);
         }
 
@@ -245,8 +244,6 @@ int main(int argc, char *argv[])
         }
 
         start_listening(fd);
-
-
 
         close(fd);
 
