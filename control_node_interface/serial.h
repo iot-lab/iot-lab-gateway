@@ -10,6 +10,6 @@ struct pkt {
 
 int configure_tty(int fd);
 
-void start_listening(int fd, void (*decode_pkt)(struct pkt*));
+void start_listening(int fd, void (*handle_pkt)(struct pkt*));
 
 #endif // SERIAL_H
