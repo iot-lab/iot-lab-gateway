@@ -35,17 +35,21 @@ class GatewayRest(object):
         profile       = None
 
         # create profile object from json
-        if 'profile' in request.files:
-            _prof        = request.files['profile']
-            profile_dict = json.load(_prof.file)
-            profile      = gateway_code.profile.profile_from_dict(profile_dict)
+        try:
+            if 'profile' in request.files:
+                _prof        = request.files['profile']
+                profile_dict = json.load(_prof.file)
+                profile      = gateway_code.profile.profile_from_dict(profile_dict)
 
-        # save http file to disk
-        if 'firmware' in request.files:
-            _firm         = request.files['firmware']
-            firmware_file = NamedTemporaryFile(suffix = '--' + _firm.filename)
-            firmware_path = firmware_file.name
-            firmware_file.write(_firm.file.read())
+            # save http file to disk
+            if 'firmware' in request.files:
+                _firm         = request.files['firmware']
+                firmware_file = NamedTemporaryFile(suffix = '--' + _firm.filename)
+                firmware_path = firmware_file.name
+                firmware_file.write(_firm.file.read())
+        except ValueError:
+            # no files provided
+            pass
 
         ret = self.gateway_manager.exp_start(expid, username, \
                 firmware_path, profile)
