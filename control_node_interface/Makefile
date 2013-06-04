@@ -11,9 +11,10 @@ COV        = -fprofile-arcs -ftest-coverage
 PROF       = -pg
 DEP_RULES  = -MMD -MD -MF $(basename $@).d
 
-CFLAGS     += -std=c99 -g -O3 -fstrict-aliasing $(WARNINGS) $(COV) $(PROF) $(DEP_RULES)
-LDFLAGS    += $(CFLAGS)
 
+CFLAGS    += -std=c99 -g -O3 -fstrict-aliasing
+CFLAGS    += $(WARNINGS) $(COV) $(PROF) $(DEP_RULES) $(LIBS) -pthread
+LDFLAGS   += $(CFLAGS) -lpthread
 
 SRCS       = $(wildcard *.c)
 OBJS       = $(SRCS:.c=.o)

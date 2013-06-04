@@ -4,8 +4,10 @@
 #include <fcntl.h> // open
 #include <unistd.h> // close
 
-#include "protocol.h"
 #include "serial.h"
+
+#include <sys/time.h>
+
 
 static const char *tty_path = "/dev/ttyFITECO_GWT";
 
@@ -83,6 +85,10 @@ int main(int argc, char *argv[])
 
         int fd;
 
+        printf("sizeof struct timeval: %lu\n", sizeof(struct timeval));
+        printf("sizeof time_t: %lu\n", sizeof(time_t));
+        printf("sizeof suseconds_t: %lu\n", sizeof(suseconds_t));
+
         fd = open(tty_path, O_RDWR | O_NOCTTY | O_NDELAY);
         if (fd == -1) {
                 printf("ERROR: Could not open %s\n", tty_path);
@@ -94,7 +100,7 @@ int main(int argc, char *argv[])
                 return -1;
         }
 
-        start_listening(fd, decode_pkt);
+//        start_listening(fd, decode_pkt);
 
         close(fd);
 
