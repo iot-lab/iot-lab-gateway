@@ -1,6 +1,10 @@
-#ifndef PROTOCOL_H
-#define PROTOCOL_H
+#include <pthread.h>
+#include <stdio.h>
 
+//#include <sys/types.h>
+#include <signal.h>
+
+#include "command_reader.h"
 #include "constants.h"
 
 struct dict_entry {
@@ -36,4 +40,44 @@ struct dict_entry power_source_d[] = {
         {"BATT",  SOURCE_BATT},
 };
 
-#endif // PROTOCOL_H
+int pthread_kill(pthread_t thread, int sig);   // implicit declaration ?
+
+static void *read_commands(void *attr);
+
+
+static struct {
+        pthread_t reader_thread;
+
+} reader_state;
+
+
+
+int command_reader_start(int serial_fd)
+{
+        (void) serial_fd;
+
+        pthread_create(&reader_state.reader_thread, NULL, read_commands, NULL);
+        return 0;
+}
+
+int command_reader_stop()
+{
+        pthread_kill(reader_state.reader_thread, SIGINT);
+        return 0;
+}
+
+
+
+static void *read_commands(void *attr)
+{
+        (void) attr;
+
+
+        return NULL;
+}
+
+
+
+
+
+// getline
