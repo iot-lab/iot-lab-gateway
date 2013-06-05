@@ -1,8 +1,12 @@
-#include <pthread.h>
-#include <stdio.h>
+// getline (for glibc > 2.10)
+#define _POSIX_C_SOURCE  200809L
 
-//#include <sys/types.h>
-#include <signal.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <pthread.h>
 
 #include "command_reader.h"
 #include "constants.h"
@@ -11,6 +15,37 @@ struct dict_entry {
         char *str;
         unsigned char val;
 };
+struct command_buffer {
+        union {
+                struct {
+                        unsigned char sync;
+                        unsigned char len;
+                        unsigned char payload[256];
+                };
+                unsigned char pkt[258];
+        };
+};
+
+static int get_val(char *key, struct dict_entry dict[], size_t size,
+                uint8_t *val)
+{
+        if (!key)
+                return -1;
+        for (size_t i = 0; i < size; i ++) {
+                if (!strcmp(dict[i].str, key)) {
+                        *val = dict[i].val;
+                        return 0;
+                }
+        }
+        return -1;
+}
+
+struct dict_entry alim_d[] = {
+        {"dc", DC},
+        {"battery", BATTERY},
+};
+
+
 
 struct dict_entry periods_d[] = {
         {"140us",  PERIOD_140us},
@@ -40,29 +75,139 @@ struct dict_entry power_source_d[] = {
         {"BATT",  SOURCE_BATT},
 };
 
-int pthread_kill(pthread_t thread, int sig);   // implicit declaration ?
-
 static void *read_commands(void *attr);
 
-
-static struct {
-        pthread_t reader_thread;
-
+static struct state {
+        int       serial_fd;
 } reader_state;
-
 
 
 int command_reader_start(int serial_fd)
 {
-        (void) serial_fd;
+        int ret;
+        pthread_t reader_thread;
 
-        pthread_create(&reader_state.reader_thread, NULL, read_commands, NULL);
-        return 0;
+        reader_state.serial_fd = serial_fd;
+        ret = pthread_create(&reader_thread, NULL, read_commands, &reader_state);
+        return ret;
 }
 
-int command_reader_stop()
+
+static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 {
-        pthread_kill(reader_state.reader_thread, SIGINT);
+        char *command = NULL;
+        char *arg = NULL;
+
+        unsigned char frame_type = 0;
+        unsigned char val = 0;
+        int got_error = 0;
+
+
+        cmd_buff->sync = SYNC_BYTE;
+        cmd_buff->len  = 0;
+        memset(&cmd_buff->payload, 0, sizeof(cmd_buff->payload));
+
+
+        command = strtok(line_buff, " ");
+        if (!command) {
+                return 1; //empty lines
+        }
+
+
+        if (strcmp(command, "reset_time") == 0) {
+                frame_type = RESET_TIME;
+                cmd_buff->payload[cmd_buff->len++] = frame_type;
+
+        } else if (strcmp(command, "start") == 0) {
+                frame_type = OPEN_NODE_START;
+                cmd_buff->payload[cmd_buff->len++] = frame_type;
+
+                // DC BATT
+                arg = strtok(NULL, " ");
+                got_error |= get_val(arg, alim_d, sizeof(alim_d), &val);
+                cmd_buff->payload[cmd_buff->len++] = val;
+
+        } else if (strcmp(command, "stop") == 0) {
+                frame_type = OPEN_NODE_STOP;
+                cmd_buff->payload[cmd_buff->len++] = frame_type;
+
+                // DC BATT
+                arg = strtok(NULL, " ");
+                got_error |= get_val(arg, alim_d, sizeof(alim_d), &val);
+                cmd_buff->payload[cmd_buff->len++] = val;
+
+        } else if (strcmp(command, "consumption") == 0) {
+                frame_type = CONFIG_POWER_POLL;
+                cmd_buff->payload[cmd_buff->len++] = frame_type;
+
+                // start stop
+                arg = strtok(NULL, " ");
+                if (strcmp(arg, "stop") == 0) {
+                        // measures | source
+                        // empty when 'stop'
+                        cmd_buff->len++;
+                        // status | period | average
+                        cmd_buff->payload[cmd_buff->len] |= CONSUMPTION_STOP;
+                        cmd_buff->len++;
+                } else if (strcmp(arg, "start") == 0) {
+
+
+                        // measures | source
+                        // Source
+                        arg = strtok(NULL, " ");
+                        got_error |= get_val(arg, power_source_d, sizeof(power_source_d), &val);
+                        cmd_buff->payload[cmd_buff->len] |= val;
+                        // Power
+                        arg = strtok(NULL, " ");
+                        got_error |= strcmp(arg, "p");
+                        arg = strtok(NULL, " ");
+                        if (atoi(arg))
+                                cmd_buff->payload[cmd_buff->len] |= MEASURE_POWER;
+                        // Voltage
+                        arg = strtok(NULL, " ");
+                        got_error |= strcmp(arg, "v");
+                        arg = strtok(NULL, " ");
+                        if (atoi(arg))
+                                cmd_buff->payload[cmd_buff->len] |= MEASURE_VOLTAGE;
+                        // Current
+                        arg = strtok(NULL, " ");
+                        got_error |= strcmp(arg, "c");
+                        arg = strtok(NULL, " ");
+                        if (atoi(arg))
+                                cmd_buff->payload[cmd_buff->len] |= MEASURE_CURRENT;
+
+                        cmd_buff->len++;
+
+
+                        // status | period | average
+                        cmd_buff->payload[cmd_buff->len] |= CONSUMPTION_START;
+                        // period
+                        arg = strtok(NULL, " ");
+                        got_error |= strcmp(arg, "-p");
+                        arg = strtok(NULL, " ");
+                        got_error |= get_val(arg, periods_d, sizeof(periods_d), &val);
+                        cmd_buff->payload[cmd_buff->len] |= val;
+                        // average
+                        arg = strtok(NULL, " ");
+                        got_error |= strcmp(arg, "-a");
+                        arg = strtok(NULL, " ");
+                        got_error |= get_val(arg, average_d, sizeof(average_d), &val);
+                        cmd_buff->payload[cmd_buff->len] |= val;
+
+                        cmd_buff->len++;
+
+                } else {
+                        got_error |= 1;
+                }
+        } else {
+                got_error = 1;
+        }
+
+        arg = strtok(NULL, " ");
+        while (arg != NULL) {
+                printf("  '%s'\n", arg);
+                arg = strtok(NULL, " ");
+        }
         return 0;
 }
 
@@ -70,14 +215,31 @@ int command_reader_stop()
 
 static void *read_commands(void *attr)
 {
-        (void) attr;
+        struct state *reader_state = (struct state *) attr;
+        (void) reader_state;
 
+        struct command_buffer cmd_buff;
+        size_t buff_size = 2048;
+        char *line_buff  = malloc(buff_size);
+        int ret;
+
+        int n;
+        while ((n = getline(&line_buff, &buff_size, stdin)) != -1) {
+                line_buff[n - 1] = '\0'; // remove new line
+                printf("Command: %s: ", line_buff);
+                ret = parse_cmd(line_buff, &cmd_buff);
+                if (ret) {
+                        printf("Error parsing\n");
+                } else {
+                        printf("\n\t");
+                        for (int i=0; i < 2 + cmd_buff.len; i++) {
+                                printf(" %02X", cmd_buff.pkt[i]);
+                        }
+                        printf("\n");
+                }
+        }
 
         return NULL;
 }
 
 
-
-
-
-// getline
