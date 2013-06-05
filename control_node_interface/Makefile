@@ -2,13 +2,16 @@ TARGET     = control_node_interface
 CC         = gcc
 
 
+# VERB = 1
+quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
+
 WARNINGS  += -Wall -Wextra
 WARNINGS  += -Wpointer-arith -Wbad-function-cast
-WARNINGS  += -Wcast-align -Wsign-compare -Waggregate-return -Wmissing-prototypes
+WARNINGS  += -Wcast-align -Waggregate-return -Wmissing-prototypes
 WARNINGS  += -Wmissing-declarations
 
-COV        = -fprofile-arcs -ftest-coverage
-PROF       = -pg
+#  COV        = -fprofile-arcs -ftest-coverage
+#  PROF       = -pg
 DEP_RULES  = -MMD -MD -MF $(basename $@).d
 
 
@@ -29,10 +32,10 @@ run: all
 	./$(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) -o $@ $(LDFLAGS) $^
+	$(call quiet-cmd, $(CC) -o $@ $(LDFLAGS) $^,   "  LD      $@")
 
 %.o : %.c Makefile
-	$(CC) -c $(CFLAGS) $< -o $@
+	$(call quiet-cmd, $(CC) -c $(CFLAGS) $< -o $@, "  CC      $@")
 
 
 
