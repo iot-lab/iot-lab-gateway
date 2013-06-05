@@ -21,7 +21,7 @@ LDFLAGS   += $(CFLAGS) -lpthread
 
 SRCS       = $(wildcard $(SRCDIR)/*.c)
 OBJS       = $(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
-DEPS       = $(SRCS:.c=.d)
+DEPS       = $(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.d)
 
 SRCDIR     = src
 OBJDIR     = obj
