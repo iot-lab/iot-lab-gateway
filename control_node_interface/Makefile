@@ -12,21 +12,24 @@ WARNINGS  += -Wmissing-declarations
 
 #  COV        = -fprofile-arcs -ftest-coverage
 #  PROF       = -pg
-DEP_RULES  = -MMD -MD -MF $(basename $@).d
+DEP_RULES  = -MMD -MD -MF $(OBJDIR)/$*.d
 
 
 CFLAGS    += -std=c99 -g -O3 -fstrict-aliasing
 CFLAGS    += $(WARNINGS) $(COV) $(PROF) $(DEP_RULES) $(LIBS) -pthread
 LDFLAGS   += $(CFLAGS) -lpthread
 
-SRCS       = $(wildcard *.c)
-OBJS       = $(SRCS:.c=.o)
+SRCS       = $(wildcard $(SRCDIR)/*.c)
+OBJS       = $(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 DEPS       = $(SRCS:.c=.d)
+
+SRCDIR     = src
+OBJDIR     = obj
 
 .PHONY: all clean realclean run
 .DEFAULT: all
 
-all: $(TARGET)
+all: $(OBJDIR) $(TARGET)
 
 run: all
 	./$(TARGET)
@@ -34,8 +37,11 @@ run: all
 $(TARGET): $(OBJS)
 	$(call quiet-cmd, $(CC) -o $@ $(LDFLAGS) $^,   "  LD      $@")
 
-%.o : %.c Makefile
+$(OBJDIR)/%.o : $(SRCDIR)/%.c Makefile
 	$(call quiet-cmd, $(CC) -c $(CFLAGS) $< -o $@, "  CC      $@")
+
+$(OBJDIR):
+	$(call quiet-cmd, mkdir -p $(@),)
 
 
 
