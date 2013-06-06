@@ -3,6 +3,7 @@
 
 enum sync_byte {
         SYNC_BYTE = 0x80,
+        MEASURES_FRAME_MASK = 0x70,
 };
 
 // type byte

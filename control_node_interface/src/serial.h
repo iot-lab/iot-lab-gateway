@@ -8,8 +8,8 @@ struct pkt {
         unsigned char data[2048];
 };
 
-int configure_tty(int fd);
+extern int configure_tty(char *tty_path);
 
-void start_listening(int fd, void (*handle_pkt)(struct pkt*));
+extern void start_listening(int fd, void (*handle_pkt)(struct pkt*));
 
 #endif // SERIAL_H
