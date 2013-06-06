@@ -18,11 +18,18 @@ static const unsigned char sync_byte = 0x80;
 
 struct pkt current_pkt;
 
-int configure_tty(int fd)
+int configure_tty(char *tty_path)
 {
         int ret = 0;
         struct termios tty;
         memset(&tty, 0, sizeof(tty));
+
+        serial_fd = open(tty_path, O_RDWR | O_NOCTTY | O_NDELAY);
+        if (serial_fd == -1) {
+                printf("ERROR: Could not open %s\n", tty_path);
+                return -1;
+        }
+
 
         if (tcgetattr(fd, &tty)) {
                 perror("Error in tcgetattr");
@@ -46,7 +53,7 @@ int configure_tty(int fd)
 
         // maybe redo a get and check that it worked (see tcsetattr manpage)
 
-        return ret;
+        return serial_fd;
 }
 
 
