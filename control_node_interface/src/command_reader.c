@@ -19,13 +19,13 @@ struct dict_entry {
 };
 struct command_buffer {
         union {
-                struct {
+                struct _pkt{
                         unsigned char sync;
                         unsigned char len;
                         unsigned char payload[256];
-                };
+                } s;
                 unsigned char pkt[258];
-        };
+        } u;
 };
 
 static int get_val(char *key, struct dict_entry dict[], uint8_t *val)
@@ -110,9 +110,9 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         int got_error = 0;
 
 
-        cmd_buff->sync = SYNC_BYTE;
-        cmd_buff->len  = 0;
-        memset(&cmd_buff->payload, 0, sizeof(cmd_buff->payload));
+        cmd_buff->u.s.sync = SYNC_BYTE;
+        cmd_buff->u.s.len  = 0;
+        memset(&cmd_buff->u.s.payload, 0, sizeof(cmd_buff->u.s.payload));
 
 
         command = strtok(line_buff, " ");
@@ -123,77 +123,76 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 
         if (strcmp(command, "reset_time") == 0) {
                 frame_type = RESET_TIME;
-                cmd_buff->payload[cmd_buff->len++] = frame_type;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
         } else if (strcmp(command, "start") == 0) {
                 frame_type = OPEN_NODE_START;
-                cmd_buff->payload[cmd_buff->len++] = frame_type;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
                 // DC BATT
                 arg = strtok(NULL, " ");
                 got_error |= get_val(arg, alim_d, &val);
-                cmd_buff->payload[cmd_buff->len++] = val;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
 
         } else if (strcmp(command, "stop") == 0) {
                 frame_type = OPEN_NODE_STOP;
-                cmd_buff->payload[cmd_buff->len++] = frame_type;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
                 // DC BATT
                 arg = strtok(NULL, " ");
                 got_error |= get_val(arg, alim_d, &val);
-                cmd_buff->payload[cmd_buff->len++] = val;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
 
         } else if (strcmp(command, "consumption") == 0) {
                 frame_type = CONFIG_POWER_POLL;
-                cmd_buff->payload[cmd_buff->len++] = frame_type;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
                 // start stop
                 arg = strtok(NULL, " ");
                 if (strcmp(arg, "stop") == 0) {
                         // measures | source
                         // empty when 'stop'
-                        cmd_buff->len++;
+                        cmd_buff->u.s.len++;
                         // status | period | average
-                        cmd_buff->payload[cmd_buff->len] |= CONSUMPTION_STOP;
-                        cmd_buff->len++;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len] |= CONSUMPTION_STOP;
+                        cmd_buff->u.s.len++;
                 } else if (strcmp(arg, "start") == 0) {
-
-
                         // measures | source
                         // Source
                         arg = strtok(NULL, " ");
                         got_error |= get_val(arg, power_source_d, &val);
-                        cmd_buff->payload[cmd_buff->len] |= val;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len] |= val;
+                        // measures
                         // Power
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "p");
                         arg = strtok(NULL, " ");
                         if (atoi(arg))
-                                cmd_buff->payload[cmd_buff->len] |= MEASURE_POWER;
+                                cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_POWER;
                         // Voltage
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "v");
                         arg = strtok(NULL, " ");
                         if (atoi(arg))
-                                cmd_buff->payload[cmd_buff->len] |= MEASURE_VOLTAGE;
+                                cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_VOLTAGE;
                         // Current
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "c");
                         arg = strtok(NULL, " ");
                         if (atoi(arg))
-                                cmd_buff->payload[cmd_buff->len] |= MEASURE_CURRENT;
+                                cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_CURRENT;
 
-                        cmd_buff->len++;
+                        cmd_buff->u.s.len++;
 
 
                         // status | period | average
-                        cmd_buff->payload[cmd_buff->len] |= CONSUMPTION_START;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len] |= CONSUMPTION_START;
                         // period
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "-p");
                         arg = strtok(NULL, " ");
                         got_error |= get_val(arg, periods_d, &val);
-                        cmd_buff->payload[cmd_buff->len] |= val;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len] |= val;
 
 
                         // average
@@ -201,9 +200,9 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         got_error |= strcmp(arg, "-a");
                         arg = strtok(NULL, " ");
                         got_error |= get_val(arg, average_d, &val);
-                        cmd_buff->payload[cmd_buff->len] |= val;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len] |= val;
 
-                        cmd_buff->len++;
+                        cmd_buff->u.s.len++;
 
                 } else {
                         got_error |= 1;
@@ -242,8 +241,8 @@ static void *read_commands(void *attr)
                         DEBUG_PRINT("Error parsing\n");
                 } else {
                         DEBUG_PRINT("\n\t");
-                        for (int i=0; i < 2 + cmd_buff.len; i++) {
-                                DEBUG_PRINT(" %02X", cmd_buff.pkt[i]);
+                        for (int i=0; i < 2 + cmd_buff.u.s.len; i++) {
+                                DEBUG_PRINT(" %02X", cmd_buff.u.pkt[i]);
                         }
                         DEBUG_PRINT("\n");
                 }
