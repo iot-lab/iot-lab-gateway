@@ -7,11 +7,11 @@
 #include <string.h>
 
 #include <pthread.h>
+#include "common.h"
 
 #include "command_reader.h"
 #include "constants.h"
 
-#include "common.h"
 
 struct dict_entry {
         char *str;
@@ -36,6 +36,20 @@ static int get_val(char *key, struct dict_entry dict[], uint8_t *val)
         while (dict[i].str != NULL) {
                 if (!strcmp(dict[i].str, key)) {
                         *val = dict[i].val;
+                        return 0;
+                }
+                i++;
+        }
+        return -1;
+}
+static int get_key(uint8_t val, struct dict_entry dict[], char **key)
+{
+        if (!key)
+                return -1;
+        size_t i = 0;
+        while (dict[i].str != NULL) {
+                if (val == dict[i].val) {
+                        *key = dict[i].str;
                         return 0;
                 }
                 i++;
@@ -82,6 +96,33 @@ struct dict_entry power_source_d[] = {
         {NULL, 0},
 };
 
+
+/* dict used for answers, to translate code to string */
+
+struct dict_entry answers_d[] = {
+        {"error", ERROR_FRAME},
+        {"start", OPEN_NODE_START},
+        {"stop", OPEN_NODE_STOP},
+        {"reset_time", RESET_TIME},
+
+        {"config_radio", CONFIG_RADIO},
+        {"config_radio_measure", CONFIG_RADIO_POLL},
+        {"config_radio_noise", CONFIG_RADIO_NOISE},
+        {"config_radio_sniffer", CONFIG_SNIFFER},
+
+        {"config_fake_sensor", CONFIG_SENSOR},
+
+        {"config_consumption_measure", CONFIG_POWER_POLL},
+        {NULL, 0},
+};
+
+
+struct dict_entry ack_d[] = {
+        {"ACK", ACK},
+        {"NACK", NACK},
+        {NULL, 0},
+};
+
 static void *read_commands(void *attr);
 
 static struct state {
@@ -124,6 +165,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         if (strcmp(command, "reset_time") == 0) {
                 frame_type = RESET_TIME;
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
+                // TODO save time and pass to measure handler
 
         } else if (strcmp(command, "start") == 0) {
                 frame_type = OPEN_NODE_START;
@@ -143,7 +185,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 got_error |= get_val(arg, alim_d, &val);
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
 
-        } else if (strcmp(command, "consumption") == 0) {
+        } else if (strcmp(command, "config_consumption_measure") == 0) {
                 frame_type = CONFIG_POWER_POLL;
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
@@ -220,6 +262,42 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         return got_error;
 }
 
+int write_answer(char *data, size_t len)
+{
+        (void) len;
+        if (len != 2)
+                return -1;
+
+
+        // errors
+        uint8_t type = data[0];
+        int got_error;
+        char *cmd;
+
+        got_error = 0;
+        if (type == ERROR_FRAME) {
+                int error_code;
+                // handle error frame
+                got_error |= get_key(type, alim_d, &cmd);
+                error_code = (int) ((char) data[1]); // sign extend
+                if (got_error)
+                        return -3;
+                printf("%s %d\n", cmd, error_code);
+        } else if ((type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
+                return -2; // Measure packet should not be here
+        } else {
+                char *arg;
+                got_error |= get_key(type, alim_d, &cmd);
+                got_error |= get_key(data[1], ack_d, &arg);
+                // CMDs acks
+                if (got_error)
+                        return -3;
+                printf("%s %s\n", cmd, arg);
+        }
+
+
+        return 0;
+}
 
 
 static void *read_commands(void *attr)

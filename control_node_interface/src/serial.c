@@ -20,7 +20,7 @@ struct pkt current_pkt;
 
 int configure_tty(char *tty_path)
 {
-        int ret = 0;
+        int serial_fd;
         struct termios tty;
         memset(&tty, 0, sizeof(tty));
 
@@ -31,7 +31,7 @@ int configure_tty(char *tty_path)
         }
 
 
-        if (tcgetattr(fd, &tty)) {
+        if (tcgetattr(serial_fd, &tty)) {
                 perror("Error in tcgetattr");
                 return -1;
         }
@@ -42,12 +42,12 @@ int configure_tty(char *tty_path)
         tty.c_cc[VMIN]  = 1; // blocking mode, should read at least 1 char
 
 
-        if (tcsetattr(fd, TCSANOW, &tty) == -1) {
+        if (tcsetattr(serial_fd, TCSANOW, &tty) == -1) {
                 perror("Could not set attribute to tty");
                 return -1;
         }
 
-        if (fcntl(fd, F_SETFL, 0)) {
+        if (fcntl(serial_fd, F_SETFL, 0)) {
                 printf("fcntl failed\n");
         }
 
