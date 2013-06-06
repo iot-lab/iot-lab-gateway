@@ -83,26 +83,21 @@ int main(int argc, char *argv[])
         (void) argc;
         (void) argv;
 
-        int fd;
+        int serial_fd;
 
         printf("sizeof struct timeval: %lu\n", sizeof(struct timeval));
         printf("sizeof time_t: %lu\n", sizeof(time_t));
         printf("sizeof suseconds_t: %lu\n", sizeof(suseconds_t));
 
-        fd = open(tty_path, O_RDWR | O_NOCTTY | O_NDELAY);
-        if (fd == -1) {
-                printf("ERROR: Could not open %s\n", tty_path);
-                return -1;
-        }
-        if (configure_tty(fd)) {
-                printf("ERROR: Could not configure TTY %s\n", tty_path);
-                close(fd);
+        if ((serial_fd = configure_tty(tty_path)) <= 0) {
+                printf("ERROR: Could not open and configure TTY %s\n", tty_path);
+                close(serial_fd);
                 return -1;
         }
 
-        start_listening(fd, decode_pkt);
+        start_listening(serial_fd, decode_pkt);
 
-        close(fd);
+        close(serial_fd);
 
         return 0;
 }
