@@ -11,6 +11,8 @@
 #include "command_reader.h"
 #include "constants.h"
 
+#include "common.h"
+
 struct dict_entry {
         char *str;
         unsigned char val;
@@ -26,16 +28,17 @@ struct command_buffer {
         };
 };
 
-static int get_val(char *key, struct dict_entry dict[], size_t size,
-                uint8_t *val)
+static int get_val(char *key, struct dict_entry dict[], uint8_t *val)
 {
         if (!key)
                 return -1;
-        for (size_t i = 0; i < size; i ++) {
+        size_t i = 0;
+        while (dict[i].str != NULL) {
                 if (!strcmp(dict[i].str, key)) {
                         *val = dict[i].val;
                         return 0;
                 }
+                i++;
         }
         return -1;
 }
@@ -43,6 +46,7 @@ static int get_val(char *key, struct dict_entry dict[], size_t size,
 struct dict_entry alim_d[] = {
         {"dc", DC},
         {"battery", BATTERY},
+        {NULL, 0},
 };
 
 
@@ -56,6 +60,7 @@ struct dict_entry periods_d[] = {
         {"2116us", PERIOD_2116us},
         {"4156us", PERIOD_4156us},
         {"8244us", PERIOD_8244us},
+        {NULL, 0},
 };
 
 struct dict_entry average_d[] = {
@@ -67,12 +72,14 @@ struct dict_entry average_d[] = {
         {"256",  AVERAGE_256},
         {"512",  AVERAGE_512},
         {"1024", AVERAGE_1024},
+        {NULL, 0},
 };
 
 struct dict_entry power_source_d[] = {
         {"3.3V",  SOURCE_3_3V},
         {"5V",    SOURCE_5V},
         {"BATT",  SOURCE_BATT},
+        {NULL, 0},
 };
 
 static void *read_commands(void *attr);
@@ -124,7 +131,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 
                 // DC BATT
                 arg = strtok(NULL, " ");
-                got_error |= get_val(arg, alim_d, sizeof(alim_d), &val);
+                got_error |= get_val(arg, alim_d, &val);
                 cmd_buff->payload[cmd_buff->len++] = val;
 
         } else if (strcmp(command, "stop") == 0) {
@@ -133,7 +140,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 
                 // DC BATT
                 arg = strtok(NULL, " ");
-                got_error |= get_val(arg, alim_d, sizeof(alim_d), &val);
+                got_error |= get_val(arg, alim_d, &val);
                 cmd_buff->payload[cmd_buff->len++] = val;
 
         } else if (strcmp(command, "consumption") == 0) {
@@ -155,7 +162,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         // measures | source
                         // Source
                         arg = strtok(NULL, " ");
-                        got_error |= get_val(arg, power_source_d, sizeof(power_source_d), &val);
+                        got_error |= get_val(arg, power_source_d, &val);
                         cmd_buff->payload[cmd_buff->len] |= val;
                         // Power
                         arg = strtok(NULL, " ");
@@ -185,13 +192,15 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "-p");
                         arg = strtok(NULL, " ");
-                        got_error |= get_val(arg, periods_d, sizeof(periods_d), &val);
+                        got_error |= get_val(arg, periods_d, &val);
                         cmd_buff->payload[cmd_buff->len] |= val;
+
+
                         // average
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "-a");
                         arg = strtok(NULL, " ");
-                        got_error |= get_val(arg, average_d, sizeof(average_d), &val);
+                        got_error |= get_val(arg, average_d, &val);
                         cmd_buff->payload[cmd_buff->len] |= val;
 
                         cmd_buff->len++;
@@ -205,10 +214,11 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 
         arg = strtok(NULL, " ");
         while (arg != NULL) {
-                printf("  '%s'\n", arg);
+                got_error |= 1;
+                DEBUG_PRINT("  '%s'\n", arg);
                 arg = strtok(NULL, " ");
         }
-        return 0;
+        return got_error;
 }
 
 
@@ -226,19 +236,18 @@ static void *read_commands(void *attr)
         int n;
         while ((n = getline(&line_buff, &buff_size, stdin)) != -1) {
                 line_buff[n - 1] = '\0'; // remove new line
-                printf("Command: %s: ", line_buff);
+                DEBUG_PRINT("Command: %s: ", line_buff);
                 ret = parse_cmd(line_buff, &cmd_buff);
                 if (ret) {
-                        printf("Error parsing\n");
+                        DEBUG_PRINT("Error parsing\n");
                 } else {
-                        printf("\n\t");
+                        DEBUG_PRINT("\n\t");
                         for (int i=0; i < 2 + cmd_buff.len; i++) {
-                                printf(" %02X", cmd_buff.pkt[i]);
+                                DEBUG_PRINT(" %02X", cmd_buff.pkt[i]);
                         }
-                        printf("\n");
+                        DEBUG_PRINT("\n");
                 }
         }
-
         return NULL;
 }
 
