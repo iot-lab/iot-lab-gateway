@@ -58,6 +58,10 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                 t_s  = pw_vals.time / TIME_FACTOR;
                 t_us = (1000000 * (pw_vals.time % TIME_FACTOR)) / TIME_FACTOR;
 
+
+                // TODO remove later with OML
+                p = v = c = 0.0;
+
                 if (mh_state.power.p)
                         p = pw_vals.val[i++];
                 if (mh_state.power.v)
