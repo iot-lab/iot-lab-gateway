@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include <pthread.h>
 #include "common.h"
@@ -262,9 +263,9 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         return got_error;
 }
 
-int write_answer(char *data, size_t len)
+int write_answer(unsigned char *data, size_t len)
 {
-        (void) len;
+        DEBUG_PRINT("write answer, pkt len  %zu\n", len);
         if (len != 2)
                 return -1;
 
@@ -272,10 +273,11 @@ int write_answer(char *data, size_t len)
         // errors
         uint8_t type = data[0];
         int got_error;
-        char *cmd;
+        char *cmd = NULL;
 
         got_error = 0;
         if (type == ERROR_FRAME) {
+                DEBUG_PRINT("error frame\n");
                 int error_code;
                 // handle error frame
                 got_error |= get_key(type, alim_d, &cmd);
@@ -284,15 +286,17 @@ int write_answer(char *data, size_t len)
                         return -3;
                 printf("%s %d\n", cmd, error_code);
         } else if ((type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
+                DEBUG_PRINT("measure frame\n");
                 return -2; // Measure packet should not be here
         } else {
+                DEBUG_PRINT("measure frame\n");
                 char *arg;
-                got_error |= get_key(type, alim_d, &cmd);
+                got_error |= get_key(data[0], answers_d, &cmd);
                 got_error |= get_key(data[1], ack_d, &arg);
                 // CMDs acks
                 if (got_error)
                         return -3;
-                printf("%s %s\n", cmd, arg);
+                DEBUG_PRINT("\t%s %s\n", cmd, arg);
         }
 
 
@@ -318,11 +322,13 @@ static void *read_commands(void *attr)
                 if (ret) {
                         DEBUG_PRINT("Error parsing\n");
                 } else {
-                        DEBUG_PRINT("\n\t");
+                        DEBUG_PRINT("    ");
                         for (int i=0; i < 2 + cmd_buff.u.s.len; i++) {
                                 DEBUG_PRINT(" %02X", cmd_buff.u.pkt[i]);
                         }
-                        DEBUG_PRINT("\n");
+
+                        ret = write(reader_state->serial_fd, cmd_buff.u.pkt, cmd_buff.u.s.len + 2);
+                        DEBUG_PRINT("    write ret: %i\n", ret);
                 }
         }
         return NULL;

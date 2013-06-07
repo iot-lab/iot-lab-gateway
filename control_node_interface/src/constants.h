@@ -1,9 +1,10 @@
 #ifndef CONSTANTS_H
 #define CONSTANTS_H
 
-enum sync_byte {
-        SYNC_BYTE = 0x80,
-        MEASURES_FRAME_MASK = 0x70,
+enum defines {
+        SYNC_BYTE           = 0x80,
+        MEASURES_FRAME_MASK = 0xF0,
+        TIME_FACTOR         = 32768,
 };
 
 // type byte
