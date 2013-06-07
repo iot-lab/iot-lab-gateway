@@ -3,11 +3,13 @@
 
 #include <inttypes.h> // TODO remove me when not printing measures anymore
 #include <stdio.h> // TODO remove me when not printing measures anymore
+#include <sys/time.h>
 
 #include "common.h"
 
 #include "constants.h"
 #include "measures_handler.h"
+#include "time_update.h"
 
 
 struct power_vals {
@@ -16,6 +18,7 @@ struct power_vals {
 };
 
 static struct _measure_handler_state {
+        struct timeval time_ref;
         struct {
                 int p;
                 int v;
@@ -58,7 +61,6 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                 t_s  = pw_vals.time / TIME_FACTOR;
                 t_us = (1000000 * (pw_vals.time % TIME_FACTOR)) / TIME_FACTOR;
 
-
                 // TODO remove later with OML
                 p = v = c = 0.0;
 
@@ -70,7 +72,8 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                         c = pw_vals.val[i++];
 
                 // Handle absolute time with  reference time
-                fprintf(stderr, "%" PRIu64 ".%u: %f %f %f\n", t_s, t_us, p, v, c);
+                fprintf(stderr, "%lu.%lu:%"PRIu64".%u: %f %f %f\n",
+                                mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
         }
 }
 
@@ -83,8 +86,7 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
 
         switch (ack_type) {
                 case RESET_TIME:
-                        // TODO ack reset
-                        DEBUG_PRINT("NOT IMPLEMENTED RESET_TIME FRAME\n");
+                        memcpy(&mh_state.time_ref, &new_time_ref, sizeof(struct timeval));
                         break;
                 case CONFIG_POWER_POLL:
                         mh_state.power.conf = config;

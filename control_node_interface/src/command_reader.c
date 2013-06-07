@@ -6,12 +6,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 #include <pthread.h>
 #include "common.h"
 
 #include "command_reader.h"
 #include "constants.h"
+#include "time_update.h"
 
 
 struct dict_entry {
@@ -166,7 +168,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         if (strcmp(command, "reset_time") == 0) {
                 frame_type = RESET_TIME;
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
-                // TODO save time and pass to measure handler
+                gettimeofday(&new_time_ref, NULL); // update time reference
 
         } else if (strcmp(command, "start") == 0) {
                 frame_type = OPEN_NODE_START;
