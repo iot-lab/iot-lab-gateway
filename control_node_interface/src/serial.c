@@ -8,6 +8,8 @@
 #include <errno.h>
 #include <sys/param.h> // MIN
 
+#include "common.h"
+
 
 #include "serial.h"
 
@@ -26,7 +28,7 @@ int configure_tty(char *tty_path)
 
         serial_fd = open(tty_path, O_RDWR | O_NOCTTY | O_NDELAY);
         if (serial_fd == -1) {
-                printf("ERROR: Could not open %s\n", tty_path);
+                fprintf(stderr, "ERROR: Could not open %s\n", tty_path);
                 return -1;
         }
 
@@ -48,7 +50,7 @@ int configure_tty(char *tty_path)
         }
 
         if (fcntl(serial_fd, F_SETFL, 0)) {
-                printf("fcntl failed\n");
+                fprintf(stderr, "fcntl failed\n");
         }
 
         // maybe redo a get and check that it worked (see tcsetattr manpage)
@@ -69,12 +71,17 @@ void start_listening(int fd, void (*handle_pkt)(struct pkt*))
 
                 while (n_chars <= 0) {
                         n_chars = read(fd, rx_buff, sizeof(rx_buff));
-                        printf("n_chars %d\n", n_chars);
+                        DEBUG_PRINT("n_chars %d\n", n_chars);
                         if (n_chars == -1) {
                                 err = errno;
-                                printf("Error %d: %s\n", err, strerror(err));
+                                DEBUG_PRINT("Error %d: %s\n", err, strerror(err)); (void) err;
                         }
                 }
+                for (int i=0; i < n_chars; i++) {
+                        DEBUG_PRINT(" %02X", rx_buff[i]);
+                }
+                DEBUG_PRINT("\n");
+
                 parse_rx_data(rx_buff, n_chars, handle_pkt);
         }
 
@@ -144,7 +151,7 @@ static void parse_rx_data(unsigned char *rx_buff, unsigned int len, void (*handl
 
                                 break;
                         case STATE_FULL:
-                                printf("got packet with length: %d\n'", current_pkt.len);
+                                DEBUG_PRINT("got packet with length: %d\n", current_pkt.len);
                                 handle_pkt(&current_pkt);
 
                                 current_pkt.len = 0;

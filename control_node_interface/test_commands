@@ -1,0 +1,21 @@
+#! /bin/sh -x
+
+sleep 3
+echo config_consumption_measure stop
+sleep 1
+echo start battery
+sleep 1
+echo stop battery
+sleep 1
+echo stop dc
+sleep 1
+echo start dc
+sleep 1
+echo reset_time
+sleep 1
+echo config_consumption_measure start 3.3V p 1 v 1 c 1 -p 1100us -a 512
+sleep 10
+echo reset_time
+sleep 1
+sleep 10
+echo config_consumption_measure stop
