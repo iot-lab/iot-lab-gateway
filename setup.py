@@ -3,10 +3,36 @@
 
 from setuptools import setup, Command
 from setuptools.command.install import install
+import os
+from subprocess import Popen
+
+
+
+def build_c_executable():
+    saved_path = os.getcwd()
+    os.chdir('control_node_serial')
+
+    process = Popen(['make', 'realclean', 'all'])
+    process.wait()
+
+    os.chdir(saved_path)
+    if process.returncode != 0:
+        exit(0)
+
+
+class BuildSerial(Command):
+    user_options = []
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+    def run(self):
+        build_c_executable()
 
 
 class Install(install):
     def run(self):
+        build_c_executable()
         install.run(self)
 
 
@@ -72,10 +98,10 @@ setup(name='gateway_code',
         author_email='admin@senslab.info',
         url='http://www.senslab.info',
         packages = ['gateway_code'],
-        scripts = ['flash_firmware', 'serial_redirection', 'gateway-rest-server'],
+        scripts = ['flash_firmware', 'serial_redirection', 'gateway-rest-server', 'control_node_serial/control_node_serial_interface'],
         data_files = [(STATIC_FILES_PATH, STATIC_FILES)],
 
-        cmdclass = {'lint': Lint,},
+        cmdclass = {'lint': Lint, 'install': Install, 'build_cn_serial': BuildSerial},
         install_requires = INSTALL_REQUIRES,
         setup_requires = TESTS_REQUIRES + INSTALL_REQUIRES,
         )
