@@ -20,7 +20,7 @@ import gateway_code.profile
 from datetime import timedelta, datetime
 import logging
 from struct import unpack
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('gateway_code')
 
 
 import sys

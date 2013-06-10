@@ -10,7 +10,11 @@ from tempfile import NamedTemporaryFile
 import json
 
 from gateway_code.gateway_manager import GatewayManager
+from gateway_code.profile import profile_from_dict
 import gateway_code
+
+import logging
+LOGGER = logging.getLogger('gateway_code')
 
 class GatewayRest(object):
     """
@@ -28,30 +32,26 @@ class GatewayRest(object):
         :param expid: experiment id
         :param username: username of the experiment owner
         """
-        # verify passed files as request
+        LOGGER.info('Start experiment: %s-%i', username, expid)
 
         firmware_path = None
         firmware_file = None
         profile       = None
 
-        # create profile object from json
+        # verify passed files as request
         try:
             if 'profile' in request.files:
+                # create profile object from json
                 _prof        = request.files['profile']
-                profile_dict = json.load(_prof.file)
-                profile      = \
-                        gateway_code.profile.profile_from_dict(profile_dict)
-
-            # save http file to disk
+                profile      = profile_from_dict(json.load(_prof.file))
             if 'firmware' in request.files:
+                # save http file to disk
                 _firm         = request.files['firmware']
-                firmware_file = \
-                        NamedTemporaryFile(suffix = '--' + _firm.filename)
+                firmware_file = NamedTemporaryFile(suffix = '--'+_firm.filename)
                 firmware_path = firmware_file.name
                 firmware_file.write(_firm.file.read())
-        except ValueError:
-            # no files provided
-            pass
+        except ValueError: # pragma: no-cover
+            pass # no files in multipart request
 
         ret = self.gateway_manager.exp_start(expid, username, \
                 firmware_path, profile)
@@ -60,21 +60,33 @@ class GatewayRest(object):
         if firmware_file is not None:
             firmware_file.close()
 
+        if ret == 0:
+            LOGGER.info('Start experiment Succeeded')
+        else: # pragma: no cover
+            LOGGER.error('Start experiment with errors: ret: %d', ret)
+
         return {'ret':ret}
 
 
     def exp_stop(self):
-        """
-        Stop the current experiment
-        """
+        """ Stop the current experiment """
+        LOGGER.info('Stop experiment')
+
         ret = self.gateway_manager.exp_stop()
+        if ret == 0:
+            LOGGER.info('Stop experiment Succeeded')
+        else: # pragma: no cover
+            LOGGER.error('Stop experiment errors: ret: %d', ret)
+
         return {'ret':ret}
 
     def reset_time(self):
         """
         Reset Control node time and update time reference
         """
+        LOGGER.info('Reset Time')
         ret = self.gateway_manager.reset_time()
+
         return {'ret':ret}
 
 
@@ -85,31 +97,35 @@ class GatewayRest(object):
         Requires:
         request.files contains 'firmware' file argument
         """
+        ret = 0
+        try:
+            firmware = request.files['firmware']
+        except KeyError:
+            return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
+        LOGGER.info("Flash Firmware '%s', on %s", \
+                request.files.get('firmware').filename, node)
 
         # save http file to disk
-        if 'firmware' not in request.files:
-            return {'ret': 1, 'error': \
-                    "Wrong file args: required 'firmware'"}
-
-        firmware = request.files['firmware']
-
         with NamedTemporaryFile(suffix = '--' + firmware.filename) as _file:
             _file.write(firmware.file.read())
             ret = self.gateway_manager.node_flash(node, _file.name)
 
         return {'ret':ret}
 
+    def _reset(self, node):
+        """ Reset given node with 'reset' pin """
+        LOGGER.info("Reset node: %s", node)
+        return self.gateway_manager.node_soft_reset(node)
+
 
     def open_flash(self):
-        """
-        Flash open node
-        """
+        """ Flash open node """
         return self._flash('m3')
-
     def open_soft_reset(self):
-        """ Reset the open node with 'reset' pin """
-        ret = self.gateway_manager.node_soft_reset('m3')
+        """ Soft reset open node """
+        ret = self._reset('m3')
         return {'ret':ret}
+
 
     def open_start(self):
         """ Start open node. Alimentation mode stays the same """
@@ -121,21 +137,13 @@ class GatewayRest(object):
         return {'ret':ret}
 
 
-
-
-
+    # Admins commands
     def admin_control_soft_reset(self):
-        """
-        Reset the control node with 'reset' pin
-        """
-        ret = self.gateway_manager.node_soft_reset('gwt')
+        """ Soft reset control node """
+        ret = self._reset('gwt')
         return {'ret':ret}
-
-
     def admin_control_flash(self):
-        """
-        Flash control node
-        """
+        """ Flash control node """
         return self._flash('gwt')
 
 

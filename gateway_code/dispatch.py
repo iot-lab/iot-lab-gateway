@@ -7,7 +7,7 @@ import Queue
 from threading import Lock
 
 import logging
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('gateway_code')
 
 class Dispatch(object):
 
