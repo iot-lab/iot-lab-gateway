@@ -11,6 +11,8 @@ Set 'logfile' path with 'add_rotating_handler'.
 import logging
 from logging.handlers import RotatingFileHandler
 
+
+
 # set default logger level to DEBUG to log everything
 LOGLEVEL = logging.DEBUG
 FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
@@ -24,7 +26,7 @@ def init_logger(log_folder):
 
     log_folder += '/'
 
-    logger = logging.getLogger()
+    logger = logging.getLogger('gateway_code')
     logger.setLevel(LOGLEVEL)
 
     # user logs

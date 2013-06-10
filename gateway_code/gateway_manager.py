@@ -18,7 +18,7 @@ import time
 import gateway_code.gateway_logging
 import logging
 
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('gateway_code')
 
 CONTROL_NODE_FIRMWARE = config.STATIC_FILES_PATH + 'control_node.elf'
 IDLE_FIRMWARE         = config.STATIC_FILES_PATH + 'idle.elf'
@@ -107,7 +107,7 @@ class GatewayManager(object):
         """
 
         if self.experiment_is_running:
-            LOGGER.error('Experiment already running')
+            LOGGER.warning('Experiment already running')
             return 1
 
         self.experiment_is_running = True
@@ -164,12 +164,6 @@ class GatewayManager(object):
         ret      = self.node_soft_reset('m3')
         ret_val += ret
 
-
-        if ret_val == 0:
-            LOGGER.info('Start experiment Succeeded')
-        else: # pragma: no cover
-            LOGGER.error('Start experiment with errors: ret_val: %d', ret_val)
-
         return ret_val
 
 
@@ -205,10 +199,9 @@ class GatewayManager(object):
             e) 'Experiment running' = False
 
         """
-
         if not self.experiment_is_running:
             ret = 1
-            LOGGER.error('No experiment running')
+            LOGGER.warning('No experiment running')
             return ret
 
         ret_val = 0
@@ -268,7 +261,7 @@ class GatewayManager(object):
         Update the control node profile
         """
 
-        LOGGER.info('Update profile')
+        LOGGER.debug('Update profile')
         ret = 0
 
         if profile is not None:
@@ -292,7 +285,7 @@ class GatewayManager(object):
         Updating time reference is propagated to measures handler
         """
         from datetime import datetime
-        LOGGER.info('Reset control node time')
+        LOGGER.debug('Reset control node time')
 
         # save the start experiment time
         new_time = datetime.now()
@@ -311,10 +304,6 @@ class GatewayManager(object):
 
         if ret == 0:
             self.time_reference = new_time
-            if old_time is None:
-                LOGGER.info('Start experiment time = %r', self.time_reference)
-            else:
-                LOGGER.info('New time reference = %r', self.time_reference)
         else: # pragma: no cover
             LOGGER.error('Reset time failed')
 
@@ -322,10 +311,8 @@ class GatewayManager(object):
 
 
     def open_power_start(self, power=None):
-        """
-        Power on the open node
-        """
-        LOGGER.info('Open power start')
+        """ Power on the open node """
+        LOGGER.debug('Open power start')
 
         if power is None:
             assert self.profile is not None
@@ -343,10 +330,8 @@ class GatewayManager(object):
 
 
     def open_power_stop(self, power=None):
-        """
-        Power off the open node
-        """
-        LOGGER.info('Open power stop')
+        """ Power off the open node """
+        LOGGER.debug('Open power stop')
         ret = 0
 
         if power is None:
@@ -370,7 +355,7 @@ class GatewayManager(object):
         :param node: Node name in {'gwt', 'm3'}
         """
         assert node in ['gwt', 'm3'], "Invalid node name"
-        LOGGER.info('Node %s reset', node)
+        LOGGER.debug('Node %s reset', node)
 
         ret, _out, _err = reset.reset(node)
 
@@ -387,7 +372,7 @@ class GatewayManager(object):
         :param node: Node name in {'gwt', 'm3'}
         """
         assert node in ['gwt', 'm3'], "Invalid node name"
-        LOGGER.info('Flash firmware on %s: %s', node, firmware_path)
+        LOGGER.debug('Flash firmware on %s: %s', node, firmware_path)
 
         ret, _out, _err = flash_firmware.flash(node, firmware_path)
 

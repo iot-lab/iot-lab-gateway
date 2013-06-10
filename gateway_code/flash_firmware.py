@@ -12,7 +12,7 @@ from gateway_code import config
 
 
 import logging
-LOGGER = logging.getLogger()
+LOGGER = logging.getLogger('gateway_code')
 
 FLASH_CMD = """
           openocd --debug=0
