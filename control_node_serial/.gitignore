@@ -5,4 +5,4 @@
 *.o
 *.d
 
-control_node_interface
+control_node_serial_interface

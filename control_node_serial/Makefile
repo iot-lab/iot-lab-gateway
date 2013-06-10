@@ -1,4 +1,4 @@
-TARGET     = control_node_interface
+TARGET     = control_node_serial_interface
 CC         = gcc
 
 
