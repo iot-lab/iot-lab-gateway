@@ -77,10 +77,12 @@ void start_listening(int fd, void (*handle_pkt)(struct pkt*))
                                 DEBUG_PRINT("Error %d: %s\n", err, strerror(err)); (void) err;
                         }
                 }
+#if DEBUG
                 for (int i=0; i < n_chars; i++) {
                         DEBUG_PRINT(" %02X", rx_buff[i]);
                 }
                 DEBUG_PRINT("\n");
+#endif
 
                 parse_rx_data(rx_buff, n_chars, handle_pkt);
         }

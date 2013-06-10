@@ -15,10 +15,12 @@ static void decode_pkt(struct pkt *current_pkt)
 {
         uint8_t pkt_type = current_pkt->data[0];
 
+#if DEBUG
         for (uint8_t i=0; i < current_pkt->len; i++) {
                 DEBUG_PRINT(" %02X", current_pkt->data[i]);
         }
         DEBUG_PRINT("\n");
+#endif
 
         if ((pkt_type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
                 // send to measures packets handler
