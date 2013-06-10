@@ -288,7 +288,7 @@ int write_answer(unsigned char *data, size_t len)
                         return -3;
                 printf("%s %d\n", cmd, error_code);
         } else if ((type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
-                DEBUG_PRINT("measure frame\n");
+                DEBUG_PRINT("ERROR measure frame\n");
                 return -2; // Measure packet should not be here
         } else {
                 DEBUG_PRINT("measure frame\n");
@@ -298,7 +298,7 @@ int write_answer(unsigned char *data, size_t len)
                 // CMDs acks
                 if (got_error)
                         return -3;
-                DEBUG_PRINT("\t%s %s\n", cmd, arg);
+                printf("%s %s\n", cmd, arg);
         }
 
 

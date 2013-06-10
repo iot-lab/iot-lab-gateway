@@ -11,7 +11,6 @@ import json
 
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code.profile import profile_from_dict
-import gateway_code
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
