@@ -9,14 +9,18 @@ manager script
 import gateway_code.profile
 from gateway_code import config
 from gateway_code import flash_firmware, reset
-from gateway_code import dispatch, cn_serial_io, protocol, measures_handler
+# from gateway_code import dispatch, cn_serial_io, protocol, measures_handler
 from gateway_code.serial_redirection import SerialRedirection
 
-import Queue
+from gateway_code import control_node_interface, protocol_cn
+
+# import Queue
 import time
 
 import gateway_code.gateway_logging
 import logging
+
+import atexit
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -56,20 +60,24 @@ class GatewayManager(object):
                 handler_arg = self)
 
         # setup control node communication
-        measures_queue  = Queue.Queue(1024)
-        self.dispatcher = dispatch.Dispatch(measures_queue, \
-                protocol.TYPE_MEASURES_MASK)
+        # measures_queue  = Queue.Queue(1024)
+        # self.dispatcher = dispatch.Dispatch(measures_queue, \
+        #         protocol.TYPE_MEASURES_MASK)
 
-        self.rxtx       = cn_serial_io.RxTxSerial(self.dispatcher.cb_dispatcher)
-        self.dispatcher.io_write = self.rxtx.write
-        self.protocol = protocol.Protocol(self.dispatcher.send_command)
+        #  self.rxtx    = cn_serial_io.RxTxSerial(self.dispatcher.cb_dispatcher)
+        #  self.dispatcher.io_write = self.rxtx.write
+        #  self.protocol = protocol.Protocol(self.dispatcher.send_command)
+        self.cn_serial = control_node_interface.ControlNodeSerial()
+        self.protocol  = protocol_cn.Protocol(self.cn_serial.send_command)
 
-        self.measure_handler = measures_handler.MeasuresReader(\
-                decoder        = self.protocol.decode_measure_packet,
-                measures_queue = measures_queue)
+        # self.measure_handler = measures_handler.MeasuresReader(\
+        #         decoder        = self.protocol.decode_measure_packet,
+        #         measures_queue = measures_queue)
 
         # configure logger
         gateway_code.gateway_logging.init_logger(log_folder)
+
+        atexit.register(self.exp_stop)
 
 
 
@@ -131,9 +139,11 @@ class GatewayManager(object):
 
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
-        self.rxtx.start()   # ret ?
-        self.measure_handler.start(self.user, self.exp_id)
+        # self.rxtx.start()   # ret ?
+        # self.measure_handler.start(self.user, self.exp_id)
 
+        time.sleep(1) # wait control node Ready, reajust time later
+        self.cn_serial.start()
         time.sleep(1) # wait control node Ready, reajust time later
 
         # # # # # # # # # # #
@@ -163,6 +173,7 @@ class GatewayManager(object):
         # start the gdb server
         ret      = self.node_soft_reset('m3')
         ret_val += ret
+
 
         return ret_val
 
@@ -232,9 +243,10 @@ class GatewayManager(object):
         # Cleanup control node interraction #
         # # # # # # # # # # # # # # # # # # #
 
-        self.rxtx.stop()
+        # self.rxtx.stop()
         # stop measures handler (oml thread)
-        self.measure_handler.stop()
+        # self.measure_handler.stop()
+        self.cn_serial.stop()
 
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
@@ -284,28 +296,29 @@ class GatewayManager(object):
 
         Updating time reference is propagated to measures handler
         """
-        from datetime import datetime
+        #   from datetime import datetime
         LOGGER.debug('Reset control node time')
 
         # save the start experiment time
-        new_time = datetime.now()
-        old_time = self.time_reference
+        #  new_time = datetime.now()
+        #  old_time = self.time_reference
 
         # protocol will update its time when it gets
         # reset_time_ack from control node
         # must be done before the command is actually executed
         # to be sure it's set before the packet arrives
-        self.protocol.new_time = new_time
+        # self.protocol.new_time = new_time
 
         # TODO REMOVE ME when reset_time_ack is in place
         #  self.protocol.time = new_time
 
-        ret = self.protocol.reset_time('reset_time')
+        # ret = self.protocol.reset_time('reset_time')
+        ret = self.protocol.reset_time()
 
-        if ret == 0:
-            self.time_reference = new_time
-        else: # pragma: no cover
-            LOGGER.error('Reset time failed')
+        # if ret == 0:
+        #     self.time_reference = new_time
+        # else: # pragma: no cover
+        #     LOGGER.error('Reset time failed')
 
         return ret
 

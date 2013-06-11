@@ -56,6 +56,8 @@ class SerialRedirection():
         self.err = None
         self.out = None
 
+        atexit.register(self.stop) # cleanup in case of error
+
 
     def start(self):
         """
@@ -74,9 +76,6 @@ class SerialRedirection():
         self.out = ""
         self.is_running = True
         self.redirector_thread.start()
-
-        atexit.register(self.stop) # cleanup in case of error
-
 
         return 0
 

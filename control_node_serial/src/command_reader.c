@@ -284,21 +284,23 @@ int write_answer(unsigned char *data, size_t len)
                 // handle error frame
                 got_error |= get_key(type, alim_d, &cmd);
                 error_code = (int) ((char) data[1]); // sign extend
-                if (got_error)
+                if (got_error) {
                         return -3;
-                printf("%s %d\n", cmd, error_code);
+                }
+                fprintf(MSG_OUT, "%s %d\n", cmd, error_code);
         } else if ((type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
                 DEBUG_PRINT("ERROR measure frame\n");
                 return -2; // Measure packet should not be here
         } else {
-                DEBUG_PRINT("measure frame\n");
+                DEBUG_PRINT("Commands ACKS\n");
                 char *arg;
                 got_error |= get_key(data[0], answers_d, &cmd);
                 got_error |= get_key(data[1], ack_d, &arg);
                 // CMDs acks
-                if (got_error)
+                if (got_error) {
                         return -3;
-                printf("%s %s\n", cmd, arg);
+                }
+                fprintf(MSG_OUT, "%s %s\n", cmd, arg);
         }
 
 
@@ -318,6 +320,7 @@ static void *read_commands(void *attr)
 
         int n;
         while ((n = getline(&line_buff, &buff_size, stdin)) != -1) {
+                DEBUG_PRINT("Command: %s: ", line_buff);
                 line_buff[n - 1] = '\0'; // remove new line
                 DEBUG_PRINT("Command: %s: ", line_buff);
                 ret = parse_cmd(line_buff, &cmd_buff);

@@ -18,4 +18,5 @@ NODES_CFG   = {
 
 NODES = NODES_CFG.keys()
 
+CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 
