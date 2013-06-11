@@ -17,5 +17,5 @@ git pull
 set -e
 
 # run as the same user as bottle server
-su  www-data   -c "source /etc/profile; python setup.py integration_tests $@"
+su  www-data   -c "source /etc/profile; PATH=./control_node_serial/:$PATH python setup.py build_cn_serial integration_tests $@"
 python setup.py jenkins_lint

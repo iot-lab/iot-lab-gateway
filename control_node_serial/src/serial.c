@@ -28,7 +28,7 @@ int configure_tty(char *tty_path)
 
         serial_fd = open(tty_path, O_RDWR | O_NOCTTY | O_NDELAY);
         if (serial_fd == -1) {
-                fprintf(stderr, "ERROR: Could not open %s\n", tty_path);
+                fprintf(LOG, "ERROR: Could not open %s\n", tty_path);
                 return -1;
         }
 
@@ -50,7 +50,7 @@ int configure_tty(char *tty_path)
         }
 
         if (fcntl(serial_fd, F_SETFL, 0)) {
-                fprintf(stderr, "fcntl failed\n");
+                fprintf(LOG, "fcntl failed\n");
         }
 
         // maybe redo a get and check that it worked (see tcsetattr manpage)

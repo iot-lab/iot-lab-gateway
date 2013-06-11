@@ -61,9 +61,6 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                 t_s  = pw_vals.time / TIME_FACTOR;
                 t_us = (1000000 * (pw_vals.time % TIME_FACTOR)) / TIME_FACTOR;
 
-                // TODO remove later with OML
-                p = v = c = 0.0;
-
                 if (mh_state.power.p)
                         p = pw_vals.val[i++];
                 if (mh_state.power.v)
@@ -72,7 +69,7 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                         c = pw_vals.val[i++];
 
                 // Handle absolute time with  reference time
-                fprintf(stderr, "%lu.%lu:%"PRIu64".%u: %f %f %f\n",
+                fprintf(LOG, "%lu.%lu:%"PRIu64".%u: %f %f %f\n",
                                 mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
         }
 }
