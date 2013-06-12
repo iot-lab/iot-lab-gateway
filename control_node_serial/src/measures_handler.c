@@ -44,14 +44,16 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
         size_t values_len = mh_state.power.raw_values_len;
 
         // TODO REMOVE 1 when CONFIG is no more in packet
-        num_measures     = data[1 + 1];
-        current_data_ptr = &data[2 + 1];
+        num_measures     = data[1];
+        current_data_ptr = &data[2];
 
         // TODO REMOVE 1 when CONFIG is no more in packet
-        if ((values_len * num_measures + 2 + 1) != len) {
+        if ((values_len * num_measures + 2) != len) {
                 DEBUG_PRINT("Invalid measure pkt len\n");
                 return;
         }
+
+        fprintf(LOG, "num measures %d\n", num_measures);
 
         for (int j = 0; j < num_measures; j++) {
                 int i = 0;
