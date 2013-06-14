@@ -14,12 +14,9 @@
 #include "command_reader.h"
 #include "constants.h"
 #include "time_update.h"
+#include "utils.h"
 
 
-struct dict_entry {
-        char *str;
-        unsigned char val;
-};
 struct command_buffer {
         union {
                 struct _pkt{
@@ -31,35 +28,6 @@ struct command_buffer {
         } u;
 };
 
-static int get_val(char *key, struct dict_entry dict[], uint8_t *val)
-{
-        if (!key)
-                return -1;
-        size_t i = 0;
-        while (dict[i].str != NULL) {
-                if (!strcmp(dict[i].str, key)) {
-                        *val = dict[i].val;
-                        return 0;
-                }
-                i++;
-        }
-        return -1;
-}
-static int get_key(uint8_t val, struct dict_entry dict[], char **key)
-{
-        if (!key)
-                return -1;
-        size_t i = 0;
-        while (dict[i].str != NULL) {
-                if (val == dict[i].val) {
-                        *key = dict[i].str;
-                        return 0;
-                }
-                i++;
-        }
-        return -1;
-}
-
 struct dict_entry alim_d[] = {
         {"dc", DC},
         {"battery", BATTERY},
@@ -67,7 +35,7 @@ struct dict_entry alim_d[] = {
 };
 
 
-
+/* Consumption dicts */
 struct dict_entry periods_d[] = {
         {"140us",  PERIOD_140us},
         {"204us",  PERIOD_204us},
@@ -79,7 +47,6 @@ struct dict_entry periods_d[] = {
         {"8244us", PERIOD_8244us},
         {NULL, 0},
 };
-
 struct dict_entry average_d[] = {
         {"1",    AVERAGE_1},
         {"4",    AVERAGE_4},
@@ -91,7 +58,6 @@ struct dict_entry average_d[] = {
         {"1024", AVERAGE_1024},
         {NULL, 0},
 };
-
 struct dict_entry power_source_d[] = {
         {"3.3V",  SOURCE_3_3V},
         {"5V",    SOURCE_5V},
@@ -118,8 +84,6 @@ struct dict_entry answers_d[] = {
         {"config_consumption_measure", CONFIG_POWER_POLL},
         {NULL, 0},
 };
-
-
 struct dict_entry ack_d[] = {
         {"ACK", ACK},
         {"NACK", NACK},
@@ -149,9 +113,9 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         char *command = NULL;
         char *arg = NULL;
 
-        unsigned char frame_type = 0;
-        unsigned char val = 0;
-        int got_error = 0;
+        uint8_t frame_type = 0;
+        uint8_t val        = 0;
+        int got_error      = 0;
 
 
         cmd_buff->u.s.sync = SYNC_BYTE;
