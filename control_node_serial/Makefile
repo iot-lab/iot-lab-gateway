@@ -26,13 +26,15 @@ DEPS       = $(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.d)
 SRCDIR     = src
 OBJDIR     = obj
 
-.PHONY: all clean realclean run
+.PHONY: all clean realclean run test
 .DEFAULT: all
 
 all: $(OBJDIR) $(TARGET)
 
 run: all
 	./$(TARGET)
+test: all
+	make --no-print-directory -C tests run
 
 $(TARGET): $(OBJS)
 	$(call quiet-cmd, $(CC) -o $@ $(LDFLAGS) $^,   "  LD      $@")
