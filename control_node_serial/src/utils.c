@@ -26,8 +26,6 @@ int get_val(char *key, struct dict_entry dict[], uint8_t *val)
 
 int get_key(uint8_t val, struct dict_entry dict[], char **key)
 {
-        if (!key)
-                return -1;
         size_t i = 0;
         while (dict[i].str != NULL) {
                 if (val == dict[i].val) {
