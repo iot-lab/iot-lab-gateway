@@ -3,21 +3,46 @@
 
 from setuptools import setup, Command
 from setuptools.command.install import install
+
 import os
 from subprocess import Popen
 
+from gateway_code import config
 
+
+STATIC_FILES_PATH = config.STATIC_FILES_PATH
+STATIC_FILES      = ['static/' + item for item in os.listdir('static')]
+INIT_SCRIPT       = ('/etc/init.d/', ['bin/init_script/gateway-server-daemon'])
+DATA              = [(STATIC_FILES_PATH, STATIC_FILES), INIT_SCRIPT]
+
+
+SCRIPTS           = ['control_node_serial/control_node_serial_interface']
+SCRIPTS          += ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
 
 def build_c_executable():
     saved_path = os.getcwd()
     os.chdir('control_node_serial')
-
     process = Popen(['make', 'realclean', 'all'])
     process.wait()
 
     os.chdir(saved_path)
     if process.returncode != 0:
         exit(0)
+
+def setup_permissions():
+
+    import stat
+    # set init script executable
+    init_script_path = INIT_SCRIPT[0] + os.path.basename(INIT_SCRIPT[1][0])
+    mode = 0755
+    os.chmod(init_script_path, mode)
+    print "changing mode of %s to %d" % (init_script_path, mode)
+
+    usermod_args = ['usermod', '-G', 'dialout', 'www-data']
+    usermod = Popen(usermod_args)
+    usermod.wait()
+    print "%s: %d" % (' '.join(usermod_args), usermod.returncode)
+
 
 
 class BuildSerial(Command):
@@ -34,6 +59,7 @@ class Install(install):
     def run(self):
         build_c_executable()
         install.run(self)
+        setup_permissions()
 
 
 class Lint(Command):
@@ -77,19 +103,8 @@ class Lint(Command):
                 out.write(my_output)
 
 
-
-
-INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial', 'recordtype']
-TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock']
-
-import os
-from gateway_code import config
-STATIC_FILES = ['static/' + item for item in os.listdir('static')]
-STATIC_FILES_PATH  = config.STATIC_FILES_PATH
-
-# unload 'gateway_code.config'
-# either it's not included in the coverage report...
-import sys; del sys.modules['gateway_code.config']
+INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'pyserial', 'recordtype']
+TESTS_REQUIRES    = ['nose>=1.0', 'pylint', 'nosexcover', 'mock']
 
 setup(name='gateway_code',
         version='0.22',
@@ -98,12 +113,16 @@ setup(name='gateway_code',
         author_email='admin@senslab.info',
         url='http://www.senslab.info',
         packages = ['gateway_code'],
-        scripts = ['flash_firmware', 'serial_redirection', 'gateway-rest-server', 'control_node_serial/control_node_serial_interface'],
-        data_files = [(STATIC_FILES_PATH, STATIC_FILES)],
+        scripts = SCRIPTS,
+        data_files = DATA,
 
-        cmdclass = {'lint': Lint, 'install': Install, 'build_cn_serial': BuildSerial},
+        cmdclass = {'lint': Lint, 'install': Install, \
+                'build_cn_serial': BuildSerial},
         install_requires = INSTALL_REQUIRES,
         setup_requires = TESTS_REQUIRES + INSTALL_REQUIRES,
         )
 
 
+# unload 'gateway_code.config'
+# either it's not included in the coverage report...
+import sys; del sys.modules['gateway_code.config']
