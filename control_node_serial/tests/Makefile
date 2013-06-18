@@ -32,7 +32,10 @@ run: all $(TEST_RESULTS) $(RESULTDIR)/c_code_coverage.xml
 
 $(RESULTDIR)/c_code_coverage.xml: all
 	$(call quiet-cmd, gcovr -x -e '/usr' -e '.*/tests' \
-		-f'.*/gateway_code_python' -x >$@, "  GCOV    $@")
+		-f'.*/gateway_code_python' >$@, "  GCOV    $@")
+	$(call quiet-cmd, gcovr -e '/usr' -e '.*/tests' \
+		-f'.*/gateway_code_python', "  GCOV    STDOUT")
+
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
 	$(call quiet-cmd, ./$^ --gtest_output=xml:$@, "  $^")
 
