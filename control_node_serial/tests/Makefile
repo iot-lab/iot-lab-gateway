@@ -27,10 +27,10 @@ TEST_RESULTS = $(SRCTESTS:%.c=$(RESULTDIR)/%.xml)
 all: $(DIRS) $(TESTS)
 
 
-run: all $(TEST_RESULTS) $(RESULTDIR)/coverage.xml
+run: all $(TEST_RESULTS) $(RESULTDIR)/c_code_coverage.xml
 
 
-$(RESULTDIR)/coverage.xml: all
+$(RESULTDIR)/c_code_coverage.xml: all
 	$(call quiet-cmd, gcovr -x -e '/usr' -e '.*/tests' \
 		-f'.*/fit-dev' -x >$@, "  GCOV    $@")
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
