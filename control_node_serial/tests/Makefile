@@ -30,9 +30,9 @@ all: $(DIRS) $(TESTS)
 run: all $(TEST_RESULTS) $(RESULTDIR)/coverage.xml
 
 
-$(RESULTDIR)/coverage.xml:
+$(RESULTDIR)/coverage.xml: all
 	$(call quiet-cmd, gcovr -x -e '/usr' -e '.*/tests' \
-		-f'.*/gateway_code_python' -x >$@, "  GCOV    $@")
+		-f'.*/fit-dev' -x >$@, "  GCOV    $@")
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
 	$(call quiet-cmd, ./$^ --gtest_output=xml:$@, "  $^")
 

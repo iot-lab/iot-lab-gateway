@@ -1,5 +1,0 @@
-start prout
-stop lala
-reset_time youhou
-consumption start 220V p 0 v 0 c 1 -p 240us -a 16
-consumption stop  3.3V p 0 v 0 c 1 -p 240us -a 16
