@@ -1,7 +1,9 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#ifndef DEBUG
 #define DEBUG 0
+#endif // DEBUG
 
 #define MSG_OUT   (stderr)
 #define LOG       (stdout)

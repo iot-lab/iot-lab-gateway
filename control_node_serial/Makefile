@@ -34,7 +34,7 @@ all: $(OBJDIR) $(TARGET)
 run: all
 	./$(TARGET)
 test: all
-	make --no-print-directory -C tests run
+	make -C tests --no-print-directory run
 
 $(TARGET): $(OBJS)
 	$(call quiet-cmd, $(CC) -o $@ $(LDFLAGS) $^,   "  LD      $@")
@@ -49,7 +49,9 @@ $(OBJDIR):
 
 clean:
 	rm -rf $(OBJS) $(DEPS)
+	make -C tests --no-print-directory clean
 realclean: clean
 	rm -rf $(TARGET)
+	make -C tests --no-print-directory realclean
 -include $(DEPS)
 
