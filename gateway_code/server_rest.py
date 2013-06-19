@@ -31,6 +31,7 @@ class GatewayRest(object):
         :param expid: experiment id
         :param username: username of the experiment owner
         """
+        exp_id = int(exp_id)
         LOGGER.info('Start experiment: %s-%i', username, expid)
 
         firmware_path = None
