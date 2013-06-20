@@ -1,9 +1,12 @@
 #! /bin/sh
 
+
 script_folder=$(dirname "$0")
-echo "$script_folder"
-chmod -R o+w "$script_folder" # allow www-data to write tests output
-cd "$script_folder"
+base_folder=$(readlink -e ${script_folder}/..)
+
+echo "$base_folder"
+chmod -R o+w "$base_folder" # allow www-data to write tests output
+cd "$base_folder"
 
 source /etc/profile
 pkill socat
