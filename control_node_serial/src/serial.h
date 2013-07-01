@@ -3,8 +3,6 @@
 
 struct pkt {
         unsigned int len;
-        unsigned int missing;
-        unsigned int current_len;
         unsigned char data[2048];
 };
 

@@ -46,7 +46,7 @@ enum alimentation {
         DC      = 0x1,
 };
 
-enum error_t {
+enum cn_error_t {
 	OK                         = 0,
         NETWORK_QUEUE_OVERFLOW     = -1,
         APPLICATION_QUEUE_OVERFLOW = -2,

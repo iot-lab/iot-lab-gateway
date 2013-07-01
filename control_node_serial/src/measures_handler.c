@@ -1,8 +1,15 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <inttypes.h> // TODO remove me when not printing measures anymore
-#include <stdio.h> // TODO remove me when not printing measures anymore
+
+// TODO remove me when not printing measures anymore
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
+#include <stdio.h>
+// TODO remove me when not printing measures anymore
+
+
+
 #include <sys/time.h>
 
 #include "common.h"

@@ -1,5 +1,7 @@
 // cfmakeraw needs
+#ifndef _BSD_SOURCE
 #define _BSD_SOURCE
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -12,16 +14,15 @@
 #include <sys/param.h> // MIN
 
 #include "common.h"
+#include "constants.h"
 
 
 #include "serial.h"
 
 static void parse_rx_data(unsigned char *rx_buff, unsigned int len,
                 void (*handle_pkt)(struct pkt*));
-static const unsigned char sync_byte = 0x80;
+static const unsigned char sync_byte = (unsigned char) SYNC_BYTE;
 
-
-struct pkt current_pkt;
 
 int configure_tty(char *tty_path)
 {
@@ -80,24 +81,20 @@ void start_listening(int fd, void (*handle_pkt)(struct pkt*))
 {
         unsigned char rx_buff[2048];
         int n_chars = 0;
-        int err;
 
         while (1) {
-                n_chars = 0;
-
-                while (n_chars <= 0) {
+                do {
                         n_chars = read(fd, rx_buff, sizeof(rx_buff));
+
                         DEBUG_PRINT("n_chars %d\n", n_chars);
-                        if (n_chars == -1) {
-                                err = errno;
-                                DEBUG_PRINT("Error %d: %s\n",
-                                                err, strerror(err)); (void) err;
-                        }
-                }
+                        if (n_chars == -1)
+                                fprintf(LOG, "Error %d: %s\n", errno,
+                                                strerror(errno));
+                } while (n_chars <= 0);
+
 #if DEBUG
-                for (int i=0; i < n_chars; i++) {
+                for (int i=0; i < n_chars; i++)
                         DEBUG_PRINT(" %02X", rx_buff[i]);
-                }
                 DEBUG_PRINT("\n");
 #endif
 
@@ -115,70 +112,71 @@ enum state_t {
         STATE_FULL = 3
 };
 
-static void parse_rx_data(unsigned char *rx_buff, unsigned int len, void (*handle_pkt)(struct pkt*))
+static void parse_rx_data(unsigned char *rx_buff, unsigned len,
+                void (*handle_pkt)(struct pkt*))
 {
-        static enum state_t current_state = STATE_IDLE;
-
+        // Current packet state
+        static struct {
+                struct pkt p;
+                unsigned int cur_idx;
+        } pkt;
+        // Current parser state
+        static enum state_t state = STATE_IDLE;
         unsigned int cur_idx   = 0;
-        unsigned int remaining = len;
+        // tmp variables
         unsigned char *sync_byte_addr;
-        unsigned int num_bytes;
+        unsigned int n_bytes;
 
-        while (remaining > 0 || current_state == STATE_FULL) {
-                switch (current_state) {
+        while (len > cur_idx || state == STATE_FULL) {
+                switch (state) {
                         case STATE_IDLE:
-                                sync_byte_addr = memchr(&rx_buff[cur_idx], sync_byte, remaining);
-                                if (sync_byte_addr == NULL) {
-                                        // Not found
-                                        cur_idx   = len;
-                                        remaining = 0;
-                                } else {
-                                        // cur_idx -> sync_byte
-                                        cur_idx = sync_byte_addr - rx_buff; // size_t
-                                        // process sync_byte
-                                        cur_idx++;
-                                        remaining = len - cur_idx;
-                                        current_state = STATE_WAIT_LEN;
-                                }
+                                /*
+                                 * Search for 'SYNC_BYTE' byte
+                                 */
+                                sync_byte_addr = (unsigned char *) memchr(
+                                                &rx_buff[cur_idx], sync_byte,
+                                                (len - cur_idx));
+                                if (sync_byte_addr == NULL)
+                                        return; // SYNC not found: drop data
+
+                                cur_idx = (sync_byte_addr - rx_buff);
+                                cur_idx++; // consume 'SYNC' byte
+                                state   = STATE_WAIT_LEN;
                                 break;
                         case STATE_WAIT_LEN:
-                                current_pkt.len         = rx_buff[cur_idx];
-                                current_pkt.missing     = current_pkt.len;
-                                current_pkt.current_len = 0;
+                                /*
+                                 * Read 'length' byte and initialize packet
+                                 */
+                                pkt.p.len   = rx_buff[cur_idx];
+                                pkt.cur_idx = 0;
 
-                                cur_idx++;
-                                remaining = len - cur_idx;
-
-                                current_state = STATE_GET_PAYLOAD;
-
+                                cur_idx++; // process 'len' byte
+                                state = STATE_GET_PAYLOAD;
                                 break;
                         case STATE_GET_PAYLOAD:
-                                num_bytes = MIN(current_pkt.missing, remaining);
+                                /*
+                                 * Get missing bytes in payload,
+                                 * or as much as available
+                                 */
+                                n_bytes = MIN((pkt.p.len - pkt.cur_idx),
+                                                (len - cur_idx));
+                                // copy data in 'pkt'
+                                memcpy(&pkt.p.data[pkt.cur_idx],
+                                                &rx_buff[cur_idx], n_bytes);
+                                pkt.cur_idx += n_bytes;
+                                cur_idx     += n_bytes;
 
-                                memcpy(&current_pkt.data[current_pkt.current_len], &rx_buff[cur_idx], num_bytes);
-
-                                // update pkt
-                                current_pkt.missing     -= num_bytes;
-                                current_pkt.current_len += num_bytes;
-                                // update current buffer status
-                                cur_idx                 += num_bytes;
-                                remaining               -= num_bytes;
-
-
-                                if (current_pkt.missing == 0) {
-                                        current_state = STATE_FULL;
-                                } // else same state
-
+                                // Packet full
+                                if (pkt.p.len == pkt.cur_idx)
+                                        state = STATE_FULL;
                                 break;
                         case STATE_FULL:
-                                DEBUG_PRINT("got packet with length: %d\n", current_pkt.len);
-                                handle_pkt(&current_pkt);
-
-                                current_pkt.len = 0;
-                                current_pkt.missing = 0;
-                                current_pkt.current_len = 0;
-
-                                current_state = STATE_IDLE;
+                                /*
+                                 * Handle packet and get back to idle
+                                 */
+                                DEBUG_PRINT("Got pkt: len = %d\n", pkt.p.len);
+                                handle_pkt(&pkt.p);
+                                state = STATE_IDLE;
                                 break;
                         default:
                                 break;
