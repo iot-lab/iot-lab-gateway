@@ -279,7 +279,7 @@ static void *read_commands(void *attr)
 
         struct command_buffer cmd_buff;
         size_t buff_size = 2048;
-        char *line_buff  = malloc(buff_size);
+        char *line_buff  = (char *)malloc(buff_size);
         int ret;
 
         int n;
