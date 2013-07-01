@@ -19,12 +19,21 @@ RESULTDIR    = results
 DIRS         = $(OBJDIR) $(BINDIR) $(RESULTDIR)
 
 
-SRCTESTS     = $(wildcard *.c)
+SRCTESTS     = $(sort $(wildcard *.c) empty_test.c)
 TESTS        = $(SRCTESTS:%.c=$(BINDIR)/%)
 TEST_RESULTS = $(SRCTESTS:%.c=$(RESULTDIR)/%.xml)
 
 
-all: $(DIRS) $(TESTS)
+all: $(DIRS) empty_test.c $(TESTS)
+
+# empty_test contains all C files but does nothing
+# file is here only to see coverage of all source files
+empty_test.c: $(wildcard $(SRCDIR)/*.c)
+	@echo "Generating $@ file"
+	@echo '#include <gtest/gtest.h>' > $@
+	@find ../src/ -name '*.c' -exec basename '{}' \; | grep -v main.c | \
+		sed 's/.*/#include "&"/' \
+		>> $@
 
 
 run: all $(TEST_RESULTS) $(RESULTDIR)/c_code_coverage.xml
@@ -32,22 +41,23 @@ run: all $(TEST_RESULTS) $(RESULTDIR)/c_code_coverage.xml
 
 $(RESULTDIR)/c_code_coverage.xml: all
 	$(call quiet-cmd, gcovr -x -e '/usr' -e '.*/tests' \
-		-f'.*/gateway_code_python' >$@, "  GCOV    $@")
+		-f'.*/gateway_code_python' >$@, "  GCOV  $@")
 	$(call quiet-cmd, gcovr -e '/usr' -e '.*/tests' \
-		-f'.*/gateway_code_python', "  GCOV    STDOUT")
+		-f'.*/gateway_code_python', "  GCOV  STDOUT")
 
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
 	$(call quiet-cmd, ./$^ --gtest_output=xml:$@, "  $^")
 
 
 $(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a
-	$(call quiet-cmd, $(CXX) -lgcov $(CPPFLAGS) $(CXXFLAGS) $^ -o $@, "  CXX    $@")
+	$(call quiet-cmd, $(CXX) -lgcov $(CPPFLAGS) $(CXXFLAGS) $^ -o $@, \
+		"  CXX   $@")
 
 
 $(OBJDIR)/%_test.o: %_test.c
-	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX      $@")
+	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
 $(OBJDIR)/%.o: $(SRCDIR)/%.c
-	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX      $@")
+	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
 
 
 $(DIRS):%:
@@ -55,7 +65,7 @@ $(DIRS):%:
 clean:
 	rm -rf $(GTEST_LIBS) $(OBJDIR) $(BINDIR)
 realclean: clean
-	rm -rf $(RESULTDIR)
+	rm -rf $(RESULTDIR) empty_test.c
 
 
 GTEST_HEADERS  = $(GTEST_DIR)/include/gtest/*.h
@@ -64,7 +74,8 @@ GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 GTEST_OBJS = $(OBJDIR)/gtest_main.o $(OBJDIR)/gtest-all.o
 
 $(GTEST_OBJS) : $(OBJDIR)/%.o : $(GTEST_DIR)/src/%.cc $(GTEST_SRCS_)
-	$(call quiet-cmd, $(CXX) -I$(GTEST_DIR) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@, "  CXX     $@")
+	$(call quiet-cmd, $(CXX) -I$(GTEST_DIR) $(CPPFLAGS) $(CXXFLAGS) \
+		-c $< -o $@, "  CXX   $@")
 
 $(OBJDIR)/gtest.a : $(OBJDIR)/gtest-all.o
 	$(call quiet-cmd, $(AR) $(ARFLAGS) $@ $^, "  AR    $@")
