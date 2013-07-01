@@ -15,9 +15,17 @@ STATIC_FILES      = ['static/' + item for item in os.listdir('static')]
 INIT_SCRIPT       = ('/etc/init.d/', ['bin/init_script/gateway-server-daemon'])
 DATA              = [(STATIC_FILES_PATH, STATIC_FILES), INIT_SCRIPT]
 
-
 SCRIPTS           = ['control_node_serial/control_node_serial_interface']
 SCRIPTS          += ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
+
+# unload 'gateway_code.config'
+# either it's not included in the coverage report...
+import sys; del sys.modules['gateway_code.config']
+
+
+
+
+
 
 def build_c_executable():
     saved_path = os.getcwd()
@@ -123,6 +131,3 @@ setup(name='gateway_code',
         )
 
 
-# unload 'gateway_code.config'
-# either it's not included in the coverage report...
-import sys; del sys.modules['gateway_code.config']
