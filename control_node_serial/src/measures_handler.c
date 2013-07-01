@@ -85,9 +85,11 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
 
         switch (ack_type) {
                 case RESET_TIME:
+                        fprintf(LOG, "reset_time ACK frame\n");
                         memcpy(&mh_state.time_ref, &new_time_ref, sizeof(struct timeval));
                         break;
                 case CONFIG_POWER_POLL:
+                        fprintf(LOG, "config_consumption_measure ACK frame\n");
                         mh_state.power.conf = config;
                         mh_state.power.power_source = config &
                                 (SOURCE_3_3V | SOURCE_5V | SOURCE_BATT);
@@ -107,7 +109,7 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
                         }
                         break;
                 default:
-                        DEBUG_PRINT("NOT IMPLEMENTED UNKOWN ACK 0x%02X\n", ack_type);
+                        fprintf(LOG, "EE Unkown ACK frame\n");
                         break;
         }
 }

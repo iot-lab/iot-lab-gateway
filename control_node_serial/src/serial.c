@@ -1,9 +1,12 @@
+// cfmakeraw needs
+#define _BSD_SOURCE
+
 #include <stdio.h>
 #include <string.h>
 
 #include <termios.h>
 #include <unistd.h> // tcgetattr
-#include <fcntl.h>  // open, fcntl
+#include <fcntl.h>  // open
 
 #include <errno.h>
 #include <sys/param.h> // MIN
@@ -22,39 +25,52 @@ struct pkt current_pkt;
 
 int configure_tty(char *tty_path)
 {
+        /*
+         * TTY configuration inspired by:
+         *   - Contiki/tunslip code
+         *   - http://www.unixwiz.net/techtips/termios-vmin-vtime.html
+         *   - termios manpage
+         *   - http://www.tldp.org/HOWTO/Serial-Programming-HOWTO/x115.html
+         */
         int serial_fd;
         struct termios tty;
         memset(&tty, 0, sizeof(tty));
 
-        serial_fd = open(tty_path, O_RDWR | O_NOCTTY | O_NDELAY);
+        serial_fd = open(tty_path, O_RDWR | O_NOCTTY | O_SYNC);
         if (serial_fd == -1) {
                 fprintf(LOG, "ERROR: Could not open %s\n", tty_path);
                 return -1;
         }
-
-
+        if (tcflush(serial_fd, TCIOFLUSH) == -1) {
+                perror("Error in tcflush");
+                return -1;
+        }
         if (tcgetattr(serial_fd, &tty)) {
                 perror("Error in tcgetattr");
                 return -1;
         }
 
-        cfsetospeed(&tty, B500000);
-        cfsetispeed(&tty, B500000);
-
-        tty.c_cc[VMIN]  = 1; // blocking mode, should read at least 1 char
-
-
-        if (tcsetattr(serial_fd, TCSANOW, &tty) == -1) {
-                perror("Could not set attribute to tty");
+        /*
+         * Configure TTY
+         */
+        cfmakeraw(&tty);
+        // blocking mode, should read at least 1 char and then can return
+        tty.c_cc[VMIN]  = 1;
+        tty.c_cc[VTIME] = 0;
+        // Disable control characters and signals and all
+        tty.c_cflag &= ~CRTSCTS; // Disable RTS/CTS (hardware) flow control
+        tty.c_cflag &= ~HUPCL;   // No "hanging up" when closing
+        tty.c_cflag |=  CLOCAL;  // ignore modem status line
+        if (cfsetspeed(&tty, B500000)) {
+                perror("Error while setting terminal speed");
                 return -1;
         }
 
-        if (fcntl(serial_fd, F_SETFL, 0)) {
-                fprintf(LOG, "fcntl failed\n");
+        // Apply and discard characters that may have arrived
+        if (tcsetattr(serial_fd, TCSAFLUSH, &tty) == -1) {
+                perror("Could not set attribute to tty");
+                return -1;
         }
-
-        // maybe redo a get and check that it worked (see tcsetattr manpage)
-
         return serial_fd;
 }
 
@@ -74,7 +90,8 @@ void start_listening(int fd, void (*handle_pkt)(struct pkt*))
                         DEBUG_PRINT("n_chars %d\n", n_chars);
                         if (n_chars == -1) {
                                 err = errno;
-                                DEBUG_PRINT("Error %d: %s\n", err, strerror(err)); (void) err;
+                                DEBUG_PRINT("Error %d: %s\n",
+                                                err, strerror(err)); (void) err;
                         }
                 }
 #if DEBUG
@@ -133,6 +150,7 @@ static void parse_rx_data(unsigned char *rx_buff, unsigned int len, void (*handl
                                 remaining = len - cur_idx;
 
                                 current_state = STATE_GET_PAYLOAD;
+
                                 break;
                         case STATE_GET_PAYLOAD:
                                 num_bytes = MIN(current_pkt.missing, remaining);
