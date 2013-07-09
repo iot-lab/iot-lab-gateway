@@ -66,7 +66,7 @@ class TestMainFunction(unittest.TestCase):
 
     def test_program_error(self):
         """
-        Test error handler called if error
+        Test program error
         """
         def communicate():
             self.popen.communicate.side_effect = self._communicate
@@ -75,31 +75,15 @@ class TestMainFunction(unittest.TestCase):
         self.popen.communicate.side_effect = communicate
         self.popen.returncode = 42
 
-        self.error_handler_called = 0
-        def error_handler(arg, error_str):
-            self.popen.returncode = 0
-            self.error_handler_called = 1
+        with mock.patch('gateway_code.serial_redirection.LOGGER.error') \
+                as mock_logger:
+            self.redirection = SerialRedirection('m3')
 
-        self.redirection = SerialRedirection('m3', error_handler)
+            self.assertEquals(self.redirection.start(), 0)
+            self.communicate_called.wait()
+            self.redirection.stop()
 
-        self.assertEquals(self.redirection.start(), 0)
-        self.communicate_called.wait()
-        self.redirection.stop()
-
-        self.assertNotEquals(self.error_handler_called, 0) # error handler called
-
-    def test_error_on_communicate(self):
-        """ Communicate error that runs main cb_error_handler """
-
-        def communicate():
-            # restore normal side_effect
-            self.popen.communicate.side_effect = self._communicate
-            return mock.DEFAULT
-        self.popen.communicate.side_effect = communicate
-        self.popen.returncode = 42
-
-        serial_redirection.main(['serial_redirection.py', 'm3'])
-
+            mock_logger.assert_called_with('Open node serial redirection exited: %d', 42)
 
 
     def test_simple_case(self):
@@ -160,41 +144,6 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
 
 
 
-    def test_serial_redirection_with_handler_none(self):
-        """ Communicate error no error handler """
-        # for coverage
-
-        # first call will fail, second will wait
-        def communicate():
-            self.popen.communicate.side_effect = self._communicate
-            return mock.DEFAULT
-        self.popen.communicate.side_effect = communicate
-        self.popen.returncode        = 42
-
-        self.redirect = serial_redirection.SerialRedirection('m3')
-        self.redirect.start()
-
-        self.communicate_called.wait()
-
-        self.redirect.stop()
-
-
-    def test_handler_none(self):
-        """ Communicate error in thread without error handler """
-        # for coverage
-        # first call will fail, second will wait
-        def communicate():
-            self.popen.communicate.side_effect = self._communicate
-            return mock.DEFAULT
-        self.popen.communicate.side_effect = communicate
-        self.popen.returncode        = 42
-
-        self.redirect = _SerialRedirectionThread('tty_file', 500000, error_handler=None)
-        self.redirect.start()
-        self.communicate_called.wait()
-        self.redirect.stop()
-
-
     def test_terminate_on_non_started_process(self):
         """
         Test terminate with self.redirector_process is None
@@ -220,7 +169,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         self.popen_class.side_effect = blocking_popen
         self.popen.communicate.side_effect = communicate
 
-        self.redirect = serial_redirection._SerialRedirectionThread('tty', 42, None)
+        self.redirect = serial_redirection._SerialRedirectionThread('tty', 42)
         self.redirect.start()
 
         signal.signal(signal.SIGALRM, (lambda a,b: unlock_popen.set()))
@@ -244,18 +193,10 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
 
         self.popen.terminate.side_effect = terminate
 
-        self.redirect = serial_redirection._SerialRedirectionThread('tty', 42, None)
+        self.redirect = serial_redirection._SerialRedirectionThread('tty', 42)
         self.redirect.start()
         self.communicate_called.wait()
         self.redirect.stop()
-
-
-    def test_wrong_parameters_init(self):
-        # coverage, missing case in other tests
-        self.assertRaises(ValueError, \
-                _SerialRedirectionThread, 'tty_file', 500000, (lambda a, b:0))
-
-
 
 
 
@@ -264,22 +205,14 @@ class TestSerialRedirectionInit(unittest.TestCase):
     """ Test the SerialRedirection class init """
 
     def test_valid_init(self, mock_thread):
-        """ Test valid init calls
-        All nodes and error handler """
-
+        """ Test valid init calls"""
         for node in ('m3', 'gwt', 'a8'):
-            redirection = SerialRedirection(node) # no handler
-        valid_error_handler = (lambda x,y:0)
-        redirection = SerialRedirection('m3', valid_error_handler, \
-                handler_arg = 'Test')
+            redirection = SerialRedirection(node)
 
     def test_invalid_init(self, mock_thread):
         """ Test Invalid init calls """
         # invalid node name
         self.assertRaises(ValueError, SerialRedirection, 'INVALID_NODE')
-
-        false_error_handler = (lambda x:0)   # invalid error handlers
-        self.assertRaises(ValueError, SerialRedirection,'m3', false_error_handler)
 
 
 captured_err = StringIO()

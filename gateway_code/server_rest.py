@@ -50,7 +50,7 @@ class GatewayRest(object):
                 firmware_file = NamedTemporaryFile(suffix = '--'+_firm.filename)
                 firmware_path = firmware_file.name
                 firmware_file.write(_firm.file.read())
-        except ValueError: # pragma: no-cover
+        except ValueError: # pragma: no cover
             pass # no files in multipart request
 
         ret = self.gateway_manager.exp_start(expid, username, \

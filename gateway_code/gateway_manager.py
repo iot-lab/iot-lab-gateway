@@ -53,9 +53,7 @@ class GatewayManager(object):
                     (ret, CONTROL_NODE_FIRMWARE))
 
         # open node interraction
-        self.serial_redirection = SerialRedirection('m3', \
-                error_handler = self.cb_serial_redirection_error,
-                handler_arg = self)
+        self.serial_redirection = SerialRedirection('m3')
 
         # setup control node communication
         self.cn_serial = control_node_interface.ControlNodeSerial()
@@ -242,13 +240,6 @@ class GatewayManager(object):
         return ret_val
 
 
-    @staticmethod
-    def cb_serial_redirection_error(handler_arg, error_code): # pragma: no cover
-        """ Callback for SerialRedirection error handler """
-        LOGGER.error('Serial Redirection process failed "socat: ret == %d"', \
-                error_code)
-        time.sleep(0.5) # prevent quick loop
-
     def exp_update_profile(self, profile=None):
         """
         Update the control node profile
@@ -279,7 +270,7 @@ class GatewayManager(object):
         """
         LOGGER.debug('Reset control node time')
         ret = self.protocol.reset_time()
-        if ret != 0:
+        if ret != 0: # pragma: no cover
             LOGGER.error('Reset time failed')
         return ret
 
