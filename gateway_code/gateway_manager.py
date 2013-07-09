@@ -34,6 +34,7 @@ class GatewayManager(object):
 
     Manages experiments, open node and control node
     """
+    board_type = None
 
     def __init__(self, log_folder='.'):
 
@@ -41,28 +42,27 @@ class GatewayManager(object):
         self.exp_id                = None
         self.user                  = None
         self.experiment_is_running = False
+        self.profile               = None
 
-        self.profile       = None
-        self.time_reference        = None
+        # Init cleanup, logger and board type
+        atexit.register(self.exp_stop)
+        gateway_code.gateway_logging.init_logger(log_folder)
+        self.board_type = GatewayManager.get_board_type()
 
-        self.open_node_started     = False
 
+        # Setup control node
         ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
         if ret != 0: # pragma: no cover
             raise StandardError("Control node flash failed: {ret:%d, '%s')" % \
                     (ret, CONTROL_NODE_FIRMWARE))
+        self.cn_serial = control_node_interface.ControlNodeSerial()
+        self.protocol  = protocol_cn.Protocol(self.cn_serial.send_command)
+
 
         # open node interraction
         self.serial_redirection = SerialRedirection('m3')
 
-        # setup control node communication
-        self.cn_serial = control_node_interface.ControlNodeSerial()
-        self.protocol  = protocol_cn.Protocol(self.cn_serial.send_command)
 
-        # configure logger
-        gateway_code.gateway_logging.init_logger(log_folder)
-
-        atexit.register(self.exp_stop)
 
 
 
@@ -85,38 +85,31 @@ class GatewayManager(object):
             a) Reset control node
             b) Start control node serial communication
             c) Start measures handler (OML thread)
-        2) Prepare Open node
+        2) Prepare Control node
             a) Start Open Node DC (stopped before)
-            b) Flash open node (flash when started DC)
-        3) Prepare Control node
-            a) Reset time control node, and update time reference
-            b) Configure profile
-        4) Finish Open node
-            a) Start open node serial redirection
-            d) Start GDB server
-            c) Final reset of open node
-        5) Experiment Started
+            b) Reset time control node, and update time reference
+            c) Configure profile
+        3) Prepare Open node
+            a) Flash open node
+            b) Start open node serial redirection
+            c) Start GDB server
+        4) Experiment Started
 
         """
 
         if self.experiment_is_running:
             LOGGER.warning('Experiment already running')
             return 1
-
         self.experiment_is_running = True
 
-        self.exp_id                = exp_id
-        self.user                  = user
+        self.exp_id   = exp_id
+        self.user     = user
+        self.profile  = profile or self.default_profile()
+        firmware_path = firmware_path or IDLE_FIRMWARE
 
-        # default values
-        firmware_path              = firmware_path or IDLE_FIRMWARE
-        self.profile               = profile \
-                if profile is not None else self.default_profile()
-
-
-        ret_val = 0
 
         # start steps described in docstring
+        ret_val = 0
 
         # # # # # # # # # #
         # Prepare Gateway #
@@ -125,37 +118,32 @@ class GatewayManager(object):
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
         self.cn_serial.start() # ret ?
-
         time.sleep(1) # wait control node Ready, reajust time later
-
-        # # # # # # # # # # #
-        # Prepare Open Node #
-        # # # # # # # # # # #
-
-        ret      = self.open_power_start(power='dc')
-        ret_val += ret
-        ret      = self.node_flash('m3', firmware_path)
-        ret_val += ret
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #
         # # # # # # # # # # # # #
 
+        ret      = self.open_power_start(power='dc')
+        ret_val += ret
         ret      = self.reset_time()
         ret_val += ret
         ret      = self.exp_update_profile()
         ret_val += ret
 
         # # # # # # # # # # #
-        # Finish Open Node  #
+        # Prepare Open Node #
         # # # # # # # # # # #
 
-        ret      = self.serial_redirection.start()
-        ret_val += ret
-        # start the gdb server
-        ret      = self.node_soft_reset('m3')
-        ret_val += ret
-
+        if self.board_type == 'M3':
+            ret      = self.node_flash('m3', firmware_path)
+            ret_val += ret
+            ret      = self.serial_redirection.start()
+            ret_val += ret
+            # ret      = self.gdb_server.start()
+            # ret_val += ret
+        else: # pragma: no cover
+            raise NotImplementedError, 'Board type not managed'
 
         return ret_val
 
@@ -164,32 +152,22 @@ class GatewayManager(object):
         """
         Stop the current running experiment
 
-
-
         Experiment stop steps
         ======================
 
-        1) Remove open node access
-            a) Stop GDB server
-            b) Stop open node serial redirection
-
-        2) Cleanup Control node config and open node
+        1) Cleanup Control node config
             a) Stop measures Control Node, Configure profile == None
             b) Start Open Node DC (may be running on battery)
-            b) Flash Idle open node (when DC)
-            c) Shutdown open node (DC)
-
+        2) Cleanup open node
+            a) Stop GDB server
+            b) Stop open node serial redirection
+            c) Flash Idle open node (when DC)
+            d) Shutdown open node (DC)
         3) Cleanup control node interraction
             a) Stop control node serial communication
-            b) Stop measures handler (OML thread)
-            c) Reset control node (just in case)
-
-        4) Cleanup experiment informations
-            a) remove current user
-            b) remove expid
-            c) Remove current profile
-            d) Remove time reference
-            e) 'Experiment running' = False
+            b) Reset control node (just in case)
+        4) Cleanup Manager state
+        5) Experiment Stopped
 
         """
         if not self.experiment_is_running:
@@ -199,26 +177,31 @@ class GatewayManager(object):
 
         ret_val = 0
 
-        # # # # # # # # # # # # # #
-        # Remove open node access #
-        # # # # # # # # # # # # # #
 
-        # stop gdb server
-        ret      = self.serial_redirection.stop()
-        ret_val += ret
-
-        # # # # # # # # # # # # # # # # # # # # # # #
-        # Cleanup Control node config and open node #
-        # # # # # # # # # # # # # # # # # # # # # # #
+        # # # # # # # # # # # # # # # #
+        # Cleanup Control node config #
+        # # # # # # # # # # # # # # # #
 
         ret      = self.exp_update_profile(self.default_profile())
         ret_val += ret
         ret      = self.open_power_start(power='dc')
         ret_val += ret
-        ret      = self.node_flash('m3', IDLE_FIRMWARE)
-        ret_val += ret
-        ret      = self.open_power_stop(power='dc')
-        ret_val += ret
+
+
+        # # # # # # # # # # #
+        # Cleanup open node #
+        # # # # # # # # # # #
+        if self.board_type == 'M3':
+            # ret      = self.gdb_server.stop()
+            # ret_val += ret
+            ret      = self.serial_redirection.stop()
+            ret_val += ret
+            ret      = self.node_flash('m3', IDLE_FIRMWARE)
+            ret_val += ret
+            ret      = self.open_power_stop(power='dc')
+            ret_val += ret
+        else: # pragma: no cover
+            raise NotImplementedError, 'Board type not managed'
 
 
         # # # # # # # # # # # # # # # # # # #
@@ -226,14 +209,12 @@ class GatewayManager(object):
         # # # # # # # # # # # # # # # # # # #
 
         self.cn_serial.stop()
-
         ret      = self.node_soft_reset('gwt')
         ret_val += ret
 
         self.user                  = None
         self.exp_id                = None
         self.profile               = None
-        self.time_reference        = None
 
         self.experiment_is_running = False
 
@@ -284,9 +265,7 @@ class GatewayManager(object):
 
         ret = self.protocol.start_stop('start', power)
 
-        if ret == 0:
-            self.open_node_started = True
-        else: # pragma: no cover
+        if ret != 0: # pragma: no cover
             LOGGER.error('Open power start failed')
         return ret
 
@@ -303,9 +282,7 @@ class GatewayManager(object):
 
         ret = self.protocol.start_stop('stop', power)
 
-        if ret == 0:
-            self.open_node_started = False
-        else: # pragma: no cover
+        if ret != 0: # pragma: no cover
             LOGGER.error('Open power stop failed')
         return ret
 
@@ -351,6 +328,22 @@ class GatewayManager(object):
         import json
         with open(config.STATIC_FILES_PATH + 'default_profile.json') as _prof:
             profile_dict = json.load(_prof)
-            def_profile = gateway_code.profile.profile_from_dict(profile_dict)
+            def_profile = gateway_code.profile.profile_from_dict(profile_dict, \
+                    GatewayManager.get_board_type())
         return def_profile
+
+    @classmethod
+    def get_board_type(cls):
+        """
+        Return the board type 'M3' or 'A8'
+        """
+        if cls.board_type is None:
+            try:
+                board = open(config.GATEWAY_CONFIG_PATH + 'board_type')
+                cls.board_type = board.read().strip()
+                board.close()
+            except IOError as err: # pragma: no cover
+                raise StandardError("Could not find board type:\n  %s" % err)
+
+        return cls.board_type
 

@@ -43,7 +43,8 @@ class GatewayRest(object):
             if 'profile' in request.files:
                 # create profile object from json
                 _prof        = request.files['profile']
-                profile      = profile_from_dict(json.load(_prof.file))
+                profile      = profile_from_dict(json.load(_prof.file), \
+                        GatewayManager.get_board_type())
             if 'firmware' in request.files:
                 # save http file to disk
                 _firm         = request.files['firmware']

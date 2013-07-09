@@ -18,6 +18,14 @@ from gateway_code import config
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
+def _empty_queue(queue):
+    """
+    Remove all items in Queue
+    """
+    while not queue.empty():
+        answer = queue.get_nowait()
+        LOGGER.debug('Dropped old control node answer: %s', answer[0])
+
 class ControlNodeSerial(object):
     """
     Class handling the communication with the control node serial program
@@ -92,9 +100,7 @@ class ControlNodeSerial(object):
         """
         self.protect_send.acquire()
         # remove existing items (old not treated answers)
-        while not self.control_node_msg_queue.empty():
-            answer = self.control_node_msg_queue.get_nowait()
-            LOGGER.debug('Dropped old control node answer: %s', answer[0])
+        _empty_queue(self.control_node_msg_queue)
 
 
         command_str = ' '.join(command_list) + '\n'

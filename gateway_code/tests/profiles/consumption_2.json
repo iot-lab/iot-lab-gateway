@@ -3,7 +3,6 @@
     "power": "dc",
 
     "consumption": {
-        "source" : "5V",
 
         "average": "1",
 

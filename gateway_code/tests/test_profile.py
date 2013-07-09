@@ -25,7 +25,7 @@ class TestsProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.profile_from_dict(profile_dict)
+                ret = gateway_code.profile.profile_from_dict(profile_dict, 'M3')
                 self.assertTrue(ret.consumption is None, str(ret))
 
     def test_consumption_profiles(self):
@@ -36,7 +36,7 @@ class TestsProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.profile_from_dict(profile_dict)
+                ret = gateway_code.profile.profile_from_dict(profile_dict, 'M3')
                 self.assertTrue(ret.consumption is not None, str(ret))
 
 
@@ -49,11 +49,11 @@ class TestsProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(ValueError, gateway_code.profile.profile_from_dict, profile_dict)
+                self.assertRaises(ValueError, gateway_code.profile.profile_from_dict, profile_dict, 'M3')
 
         files = [ PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR) \
                 if re.match("invalid_consumption", _json)]
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(ValueError, gateway_code.profile.profile_from_dict, profile_dict)
+                self.assertRaises(ValueError, gateway_code.profile.profile_from_dict, profile_dict, 'M3')
