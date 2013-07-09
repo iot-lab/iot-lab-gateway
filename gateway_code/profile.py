@@ -28,9 +28,15 @@ Profile     = recordtype.recordtype('profile',
 #          self.rssi = rssi
 #          self.frequency = frequency
 
+CONSUMPTION_SOURCE = {
+        ('M3', 'dc'):'3.3V',
+        ('A8', 'dc'):'5V',
+        ('M3', 'battery'):'BATT',
+        ('A8', 'battery'):'BATT',
+}
 
 
-def profile_from_dict(json_dict):
+def profile_from_dict(json_dict, board_type):
     """
     Create a profile from json extracted dictionary
     """
@@ -39,7 +45,6 @@ def profile_from_dict(json_dict):
     string_args = ('profilename', 'power')
     class_args  = (('consumption', Consumption),) # ('radio', Radio)
 
-
     # Extract 'string arguments' from dictionary 'as is'
     #     dict comprehensions not allowed before Python 2.7
     #     using dict.update with iterable on (key/value tuple)
@@ -47,6 +52,11 @@ def profile_from_dict(json_dict):
         string_args_list = [(arg, json_dict[arg]) for arg in string_args]
     except KeyError as ex:
         raise ValueError("Missing entry: %r" % ex.args[0])
+
+    # Add the power source
+    if 'consumption' in json_dict:
+        json_dict['consumption']['source'] = \
+                CONSUMPTION_SOURCE[(board_type, json_dict['power'])]
 
 
     profile_args.update(string_args_list)

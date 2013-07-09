@@ -4,7 +4,6 @@
 
     "consumption": {
         "power"  : false,
-        "source" : "BATT",
 
         "average": "1024",
 
