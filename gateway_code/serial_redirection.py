@@ -7,49 +7,35 @@ serial_redirection script
 """
 
 import sys
+import time
 from subprocess import PIPE
 import subprocess
 import threading
 import atexit
+import logging
 
 from gateway_code import config
 
-from gateway_code.common_functions import num_arguments_required
-
-
 SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s,b%d,echo=0,raw '''
+LOGGER    = logging.getLogger('gateway_code')
 
 
 class SerialRedirection():
     """
     Class providing node serial redirection to a tcp socket
 
-    Using non-blocking start, stop and cb_error_handler callback
+    Using non-blocking start, stop
 
     """
 
-    def __init__(self, node,
-            error_handler = None, handler_arg = None):
-
+    def __init__(self, node):
         """
-        error_handler signature:
-            def error_handler(handler_arg, error_num)
-
+        Init SerialRedirection
         """
         if node not in config.NODES_CFG:
             raise ValueError, 'Unknown node, not in %r' \
                     % config.NODES_CFG.keys()
         self.node = node
-
-        # check handler signature
-        if error_handler is not None:
-            if num_arguments_required(error_handler) != 2:
-                raise ValueError, 'Error handler should accept two arguments'
-
-
-
-        self.error_handler = error_handler
-        self.handler_arg = handler_arg
 
         self.redirector_thread = None
         self.is_running = False
@@ -69,8 +55,7 @@ class SerialRedirection():
 
         self.redirector_thread = _SerialRedirectionThread(\
                 config.NODES_CFG[self.node]['tty'],\
-                config.NODES_CFG[self.node]['baudrate'],\
-                self.__cb_error_handler)
+                config.NODES_CFG[self.node]['baudrate'])
 
         self.err = ""
         self.out = ""
@@ -96,26 +81,13 @@ class SerialRedirection():
         self.is_running = False
         return 0
 
-    def __cb_error_handler(self, error_num):
-        """
-        Error callback passed to the thread
-        Calls the caller error_handler
-        """
-        self.err = self.redirector_thread.err
-        self.out = self.redirector_thread.out
-
-        if self.error_handler is not None:
-            self.error_handler(self.handler_arg, error_num)
-
 class _SerialRedirectionThread(threading.Thread):
     """
     Stoppable thread that redirects node serial port to tcp
-
-    It calls 'error_handler' on error.
     """
 
 
-    def __init__(self, tty, baudrate, error_handler):
+    def __init__(self, tty, baudrate):
 
 
         super(_SerialRedirectionThread, self).__init__()
@@ -126,12 +98,6 @@ class _SerialRedirectionThread(threading.Thread):
         # serial link informations
         self.tty = tty
         self.baudrate = baudrate
-
-        # Handler called on error on socat
-        if error_handler is not None:
-            if num_arguments_required(error_handler) != 1:
-                raise ValueError, 'Error handler should accept one argument'
-        self.error_handler = error_handler
 
         # Stopping thread
         self.stop_thread = False
@@ -165,10 +131,10 @@ class _SerialRedirectionThread(threading.Thread):
             #   a positive value on error
             #   a negative value on fatal error.
 
+            # don't print error when 'terminate' causes the error
             if retcode != 0 and (not self.stop_thread):
-                # don't call handler when 'terminate' causes the error
-                if self.error_handler is not None:
-                    self.error_handler(retcode)
+                LOGGER.error('Open node serial redirection exited: %d', retcode)
+                time.sleep(0.5) # prevent quick loop
 
 
 
@@ -176,7 +142,6 @@ class _SerialRedirectionThread(threading.Thread):
         """
         Stop the running thread
         """
-        import time
         self.stop_thread = True
 
         # kill
@@ -229,18 +194,8 @@ def main(args):
     node = parse_arguments(args[1:])
     unlock_main_thread = Event()
 
-    def __main_error_handler(arg, error_num):
-        """
-        Error handler in command line
-        """
-        # release main thread
-        print >> sys.stderr, "Error_handler"
-        print >> sys.stderr, "arg: %r, error_num %d" % (arg, error_num)
-        print >> sys.stderr, "Stopping..."
-        unlock_main_thread.set()
-
     # Create the redirector
-    redirect = SerialRedirection(node, __main_error_handler)
+    redirect = SerialRedirection(node)
     if redirect.start() != 0:
         print >> sys.stderr, "Could not start redirection"
         exit(1)
