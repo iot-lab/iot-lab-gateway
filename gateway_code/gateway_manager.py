@@ -343,7 +343,7 @@ class GatewayManager(object):
                 cls.board_type = board.read().strip()
                 board.close()
             except IOError as err: # pragma: no cover
-                raise StandardError("Could not find board type:\n  %s" % err)
+                raise StandardError("Could not find board type:\n  '%s'" % err)
 
         return cls.board_type
 
