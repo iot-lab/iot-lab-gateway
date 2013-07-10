@@ -47,7 +47,8 @@ class ControlNodeSerial(object):
             Start the control_node_serial_interface and listen for answers
         """
 
-        args = [config.CONTROL_NODE_SERIAL_INTERFACE]
+        args = [config.CONTROL_NODE_SERIAL_INTERFACE, \
+                config.NODES_CFG['gwt']['tty']]
         self.cn_interface_process = Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)

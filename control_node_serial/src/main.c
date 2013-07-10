@@ -33,10 +33,13 @@ static void decode_pkt(struct pkt *current_pkt)
 
 int main(int argc, char *argv[])
 {
-        (void) argc;
-        (void) argv;
-
         int serial_fd = 0;
+
+        // Get tty_path from arguments if available
+        // allow simple running and more advanced from application and tests
+        if (argc == 2)
+                tty_path = argv[1];
+
 
         if ((serial_fd = configure_tty(tty_path)) <= 0) {
                 fprintf(LOG, "ERROR: Could not open and configure TTY %s\n", tty_path);
