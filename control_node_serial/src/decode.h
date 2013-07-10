@@ -3,6 +3,6 @@
 
 #include "serial.h"
 
-void decode_pkt(struct pkt *current_pkt);
+extern void decode_pkt(struct pkt *current_pkt);
 
 #endif // DECODE_H
