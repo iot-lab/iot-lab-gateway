@@ -93,6 +93,9 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
                         break;
                 case CONFIG_POWER_POLL:
                         fprintf(LOG, "config_consumption_measure ACK frame\n");
+                        // cleanup for new configuration
+                        memset(&mh_state.power, 0, sizeof(mh_state.power));
+
                         mh_state.power.conf = config;
                         mh_state.power.power_source = config &
                                 (SOURCE_3_3V | SOURCE_5V | SOURCE_BATT);
