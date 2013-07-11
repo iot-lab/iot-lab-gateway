@@ -110,9 +110,8 @@ class Lint(Command):
             with open(self.outfile, 'w') as out:
                 out.write(my_output)
 
-
-INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'pyserial', 'recordtype']
-TESTS_REQUIRES    = ['nose>=1.0', 'pylint', 'nosexcover', 'mock']
+INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'recordtype']
+TESTS_REQUIRES    = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
 
 setup(name='gateway_code',
         version='0.3',

@@ -22,3 +22,4 @@ set -e
 # run as the same user as bottle server
 su  www-data   -c "source /etc/profile; PATH=./control_node_serial/:$PATH python setup.py build_cn_serial integration_tests $@"
 python setup.py jenkins_lint
+python -mpep8 | tee pep8.out
