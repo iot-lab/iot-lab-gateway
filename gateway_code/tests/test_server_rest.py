@@ -36,8 +36,6 @@ class TestServerRest(unittest.TestCase):
         popen.returncode = mock_ret = 0
 
         args = ['server_rest.py', 'localhost', '8080']
-        import serial
-        with patch('serial.Serial') as mock_serial:
-            gateway_code.server_rest.main(args)
+        gateway_code.server_rest.main(args)
 
 

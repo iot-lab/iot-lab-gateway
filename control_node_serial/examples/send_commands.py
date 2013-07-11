@@ -1,10 +1,8 @@
 #! /usr/bin/python -u
 # -*- coding:utf-8 -*-
 
-
 import sys
 import time
-
 
 
 def main(command_file_path):
@@ -39,4 +37,3 @@ if __name__ == '__main__':
     command_file_path = sys.argv[1]
 
     main(command_file_path)
-
