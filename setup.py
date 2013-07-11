@@ -21,10 +21,7 @@ SCRIPTS          += ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
 # unload 'gateway_code.config'
 # either it's not included in the coverage report...
 import sys; del sys.modules['gateway_code.config']
-
-
-
-
+#
 
 
 def build_c_executable():
@@ -36,6 +33,7 @@ def build_c_executable():
     os.chdir(saved_path)
     if process.returncode != 0:
         exit(0)
+
 
 def setup_permissions():
 
@@ -110,6 +108,17 @@ class Lint(Command):
             with open(self.outfile, 'w') as out:
                 out.write(my_output)
 
+class Pep8(Command):
+    user_options = []
+    def initialize_options(self):
+        self.exclude = None
+    def finalize_options(self):
+        pass
+    def run(self):
+        import pep8
+        sys.argv = ['./pep8.py', 'gateway_code/']
+        pep8._main()
+
 INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'recordtype']
 TESTS_REQUIRES    = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
 
@@ -124,7 +133,7 @@ setup(name='gateway_code',
         data_files = DATA,
 
         cmdclass = {'lint': Lint, 'install': Install, \
-                'build_cn_serial': BuildSerial},
+                'build_cn_serial': BuildSerial, 'pep8': Pep8},
         install_requires = INSTALL_REQUIRES,
         setup_requires = TESTS_REQUIRES + INSTALL_REQUIRES,
         )
