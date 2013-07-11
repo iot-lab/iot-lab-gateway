@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-
 """
 serial_redirection script
 """
@@ -17,7 +16,7 @@ import logging
 from gateway_code import config
 
 SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s,b%d,echo=0,raw '''
-LOGGER    = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger('gateway_code')
 
 
 class SerialRedirection():
@@ -33,8 +32,8 @@ class SerialRedirection():
         Init SerialRedirection
         """
         if node not in config.NODES_CFG:
-            raise ValueError, 'Unknown node, not in %r' \
-                    % config.NODES_CFG.keys()
+            raise ValueError('Unknown node, not in %r',
+                             config.NODES_CFG.keys())
         self.node = node
 
         self.redirector_thread = None
@@ -42,21 +41,18 @@ class SerialRedirection():
         self.err = None
         self.out = None
 
-        atexit.register(self.stop) # cleanup in case of error
-
+        atexit.register(self.stop)  # cleanup in case of error
 
     def start(self):
         """
         Start a new SerialRedirection
         """
-
         if self.is_running:
             return 1
 
-        self.redirector_thread = _SerialRedirectionThread(\
-                config.NODES_CFG[self.node]['tty'],\
-                config.NODES_CFG[self.node]['baudrate'])
-
+        self.redirector_thread = _SerialRedirectionThread(
+            config.NODES_CFG[self.node]['tty'],
+            config.NODES_CFG[self.node]['baudrate'])
         self.err = ""
         self.out = ""
         self.is_running = True
@@ -64,12 +60,10 @@ class SerialRedirection():
 
         return 0
 
-
     def stop(self):
         """
         Stop the current Serial Redirection
         """
-
         if not self.is_running:
             return 1
 
@@ -81,14 +75,13 @@ class SerialRedirection():
         self.is_running = False
         return 0
 
+
 class _SerialRedirectionThread(threading.Thread):
     """
     Stoppable thread that redirects node serial port to tcp
     """
 
-
     def __init__(self, tty, baudrate):
-
 
         super(_SerialRedirectionThread, self).__init__()
 
@@ -105,7 +98,6 @@ class _SerialRedirectionThread(threading.Thread):
         # Current process running socat
         self.redirector_process = None
 
-
     def run(self):
         """
         Run the thread
@@ -117,15 +109,14 @@ class _SerialRedirectionThread(threading.Thread):
         cmd_list = shlex.split(SOCAT_CMD % (self.tty, self.baudrate))
 
         while not self.stop_thread:
-            self.redirector_process = subprocess.Popen(\
-                    cmd_list, stdout=PIPE, stderr=PIPE)
+            self.redirector_process = subprocess.Popen(
+                cmd_list, stdout=PIPE, stderr=PIPE)
 
             # blocks until socat terminates
             out, err = self.redirector_process.communicate()
             self.out += out
             self.err += err
             retcode = self.redirector_process.returncode
-
             # On exit, socat gives status:
             #   0 if it terminated due to EOF or inactivity timeout
             #   a positive value on error
@@ -133,10 +124,8 @@ class _SerialRedirectionThread(threading.Thread):
 
             # don't print error when 'terminate' causes the error
             if retcode != 0 and (not self.stop_thread):
-                LOGGER.error('Open node serial redirection exited: %d', retcode)
-                time.sleep(0.5) # prevent quick loop
-
-
+                LOGGER.error('Open node serial redirection exit: %d', retcode)
+                time.sleep(0.5)  # prevent quick loop
 
     def stop(self):
         """
@@ -160,8 +149,6 @@ class _SerialRedirectionThread(threading.Thread):
         self.redirector_process = None
 
 
-
-
 def parse_arguments(args):
     """
     Parsing arguments:
@@ -173,18 +160,16 @@ def parse_arguments(args):
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('node', type=str, choices=config.NODES,
-            help="Node selection")
+                        help="Node selection")
     arguments = parser.parse_args(args)
 
     return arguments.node
 
-
-
-
-
 # direct import of Event to be able to mock it to test main function
 # without mocking the 'threading.Event' used in the threading class
 from threading import Event
+
+
 def main(args):
     """
     Command line main function
@@ -209,7 +194,6 @@ def main(args):
     print 'Press Ctrl+C to stop the application'
     unlock_main_thread.wait()
 
-
     redirect.stop()
     print >> sys.stderr, 'Stopped.'
     print >> sys.stderr, ''
@@ -218,5 +202,3 @@ def main(args):
     print >> sys.stderr, ''
     print >> sys.stderr, 'Error log:'
     print >> sys.stderr, redirect.err,
-
-
