@@ -6,7 +6,8 @@ Interface with control_node_serial_interface program
 Manage sending commands and receiving answers
 """
 
-from subprocess import Popen, PIPE
+import subprocess
+from subprocess import PIPE
 import Queue
 import threading
 
@@ -49,7 +50,8 @@ class ControlNodeSerial(object):
 
         args = [config.CONTROL_NODE_SERIAL_INTERFACE,
                 config.NODES_CFG['gwt']['tty']]
-        self.cn_interface_process = Popen(args, stderr=PIPE, stdin=PIPE)
+        self.cn_interface_process = subprocess.Popen(
+            args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
@@ -58,8 +60,8 @@ class ControlNodeSerial(object):
         """ Stop control node interface """
         if self.cn_interface_process is not None:
             self.cn_interface_process.terminate()
-            self.cn_interface_process = None
             self.reader_thread.join()
+            self.cn_interface_process = None
 
     def handle_answer(self, line):
         """
@@ -69,7 +71,7 @@ class ControlNodeSerial(object):
         """
         answer = line.split(' ')
         if answer[0] == 'error':  # control node error
-            LOGGER.error('Control node error: %d', answer[1])
+            LOGGER.error('Control node error: %r', answer[1])
         else:  # control node answer to a command
             try:
                 self.cn_msg_queue.put_nowait(answer)
