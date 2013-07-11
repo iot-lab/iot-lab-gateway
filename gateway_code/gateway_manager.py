@@ -8,7 +8,7 @@ manager script
 
 import gateway_code.profile
 from gateway_code import config
-from gateway_code import flash_firmware, reset
+from gateway_code import openocd_cmd
 from gateway_code.serial_redirection import SerialRedirection
 
 from gateway_code import control_node_interface, protocol_cn
@@ -273,7 +273,7 @@ class GatewayManager(object):
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.debug('Node %s reset', node)
 
-        ret, _out, _err = reset.reset(node)
+        ret, _out = openocd_cmd.reset(node)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Node %s reset failed: %d', node, ret)
@@ -289,7 +289,7 @@ class GatewayManager(object):
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.debug('Flash firmware on %s: %s', node, firmware_path)
 
-        ret, _out, _err = flash_firmware.flash(node, firmware_path)
+        ret, _out = openocd_cmd.flash(node, firmware_path)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
