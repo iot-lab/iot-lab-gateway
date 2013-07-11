@@ -23,6 +23,7 @@ class GatewayRest(object):
     """
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
+        self.board_type = GatewayManager.get_board_type()
 
     def exp_start(self, expid, username):
         """
@@ -44,8 +45,8 @@ class GatewayRest(object):
                 # create profile object from json
                 _prof        = request.files['profile']
                 profile      = profile_from_dict(json.load(_prof.file), \
-                        GatewayManager.get_board_type())
-            if 'firmware' in request.files:
+                        self.board_type)
+            if self.board_type == 'M3' and 'firmware' in request.files:
                 # save http file to disk
                 _firm         = request.files['firmware']
                 firmware_file = NamedTemporaryFile(suffix = '--'+_firm.filename)
@@ -168,17 +169,21 @@ def parse_arguments(args):
 
     return arguments.host, arguments.port, arguments.log_folder
 
-def app_routing(app):
+def app_routing(app, board_type):
     """
     routing configuration
     :param app: default application
+    :param board_type: board_type 'M3' or 'A8'
     """
     route('/exp/start/:expid/:username', 'POST')(app.exp_start)
     route('/exp/stop', 'DELETE')(app.exp_stop)
-    route('/open/flash', 'POST')(app.open_flash)
-    route('/open/reset', 'PUT')(app.open_soft_reset)
     route('/open/start', 'PUT')(app.open_start)
     route('/open/stop', 'PUT')(app.open_stop)
+
+    # node specific commands
+    if board_type == 'M3':
+        route('/open/flash', 'POST')(app.open_flash)
+        route('/open/reset', 'PUT')(app.open_soft_reset)
 
 
 def main(args):
@@ -189,5 +194,5 @@ def main(args):
     host, port, log_folder = parse_arguments(args[1:])
 
     app = GatewayRest(GatewayManager(log_folder))
-    app_routing(app)
+    app_routing(app, app.board_type)
     run(host=host, port=port, server='paste')
