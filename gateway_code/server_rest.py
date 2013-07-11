@@ -181,6 +181,8 @@ def app_routing(app, board_type):
     if board_type == 'M3':
         route('/open/flash', 'POST')(app.open_flash)
         route('/open/reset', 'PUT')(app.open_soft_reset)
+    else:
+        pass  # pragma: no cover
 
 
 def main(args):
