@@ -7,18 +7,20 @@ and methods to convert it to config commands
 
 """
 
-import recordtype
+from recordtype import recordtype
 
 # Disable: I0011 - 'locally disabling warning'
 # Disable: C0103 - Invalid name 'CamelCase' -> represents a class
 #pylint:disable=I0011,C0103
 
-Consumption = recordtype.recordtype('consumption',
-        ['source', 'period', 'average',
-            ('power', False), ('voltage', False), ('current', False), ])
+Consumption = recordtype('consumption',
+                         ['source', 'period', 'average',
+                          ('power', False), ('voltage', False),
+                          ('current', False),
+                          ])
 
-Profile     = recordtype.recordtype('profile',
-        ['profilename', 'power', ('consumption', None)]) #, ('radio', None)]
+Profile = recordtype('profile', ['profilename', 'power',
+                                 ('consumption', None), ])  # ('radio', None)]
 
 #  class Radio:
 #      """
@@ -29,10 +31,10 @@ Profile     = recordtype.recordtype('profile',
 #          self.frequency = frequency
 
 CONSUMPTION_SOURCE = {
-        ('M3', 'dc'):'3.3V',
-        ('A8', 'dc'):'5V',
-        ('M3', 'battery'):'BATT',
-        ('A8', 'battery'):'BATT',
+    ('M3', 'dc'): '3.3V',
+    ('A8', 'dc'): '5V',
+    ('M3', 'battery'): 'BATT',
+    ('A8', 'battery'): 'BATT',
 }
 
 
@@ -43,7 +45,7 @@ def profile_from_dict(json_dict, board_type):
     profile_args = {}
 
     string_args = ('profilename', 'power')
-    class_args  = (('consumption', Consumption),) # ('radio', Radio)
+    class_args = (('consumption', Consumption),)  # ('radio', Radio)
 
     # Extract 'string arguments' from dictionary 'as is'
     #     dict comprehensions not allowed before Python 2.7
@@ -56,11 +58,9 @@ def profile_from_dict(json_dict, board_type):
     # Add the power source
     if 'consumption' in json_dict:
         json_dict['consumption']['source'] = \
-                CONSUMPTION_SOURCE[(board_type, json_dict['power'])]
-
+            CONSUMPTION_SOURCE[(board_type, json_dict['power'])]
 
     profile_args.update(string_args_list)
-
 
     # Extract existing arguments and initialize their class
     for name, obj_class in class_args:
@@ -70,9 +70,6 @@ def profile_from_dict(json_dict, board_type):
             except TypeError as ex:
                 raise ValueError("Invalid arguments in %r field" % name)
 
-
     # then create the final Profile object
     profile = Profile(**profile_args)
-
     return profile
-

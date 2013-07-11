@@ -4,6 +4,7 @@
 Protocol between python code and the control_node_serial_interface C code
 """
 
+
 class Protocol(object):
     """
     Implements commands that can sent to the control node interface
@@ -23,7 +24,6 @@ class Protocol(object):
         print >> sys.stderr, 'Rec pkt:  %r' % answer
 
         answer_valid = ([command, 'ACK'] == answer)
-
         return (0 if answer_valid else 1)   # 0 on success
 
     def start_stop(self, command, alim):
@@ -36,7 +36,6 @@ class Protocol(object):
         # <start|stop> <dc|battery>
         cmd = [command, alim]
         return self._send_cmd(cmd)
-
 
     def reset_time(self):
         """
@@ -59,8 +58,9 @@ class Protocol(object):
         #         -p <periods_see_c_code> -a <average_see_c_code>
 
         cmd = ['config_consumption_measure']
-        if consumption is None or not (consumption.power or \
-                consumption.voltage or consumption.current): #pragma: no cover
+        if consumption is None or \
+                not (consumption.power or consumption.voltage or
+                     consumption.current):  # pragma: no cover
             cmd.append('stop')
         else:
             cmd.append('start')

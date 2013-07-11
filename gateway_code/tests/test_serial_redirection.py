@@ -10,7 +10,8 @@ import threading
 from gateway_code.serial_redirection import SerialRedirection
 from gateway_code import serial_redirection
 
-_SerialRedirection_str = 'gateway_code.serial_redirection._SerialRedirectionThread'
+_SerialRedirection_str = 'gateway_code.serial_redirection.' + \
+        '_SerialRedirectionThread'
 
 
 captured_err = StringIO()
@@ -83,7 +84,7 @@ class TestMainFunction(unittest.TestCase):
             self.communicate_called.wait()
             self.redirection.stop()
 
-            mock_logger.assert_called_with('Open node serial redirection exited: %d', 42)
+            mock_logger.assert_called_with('Open node serial redirection exit: %d', 42)
 
 
     def test_simple_case(self):
