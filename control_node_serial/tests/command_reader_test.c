@@ -8,6 +8,14 @@
 char print_buff[2048];
 #define fprintf(stream, ...)  snprintf(print_buff, sizeof(print_buff), __VA_ARGS__)
 
+/*
+ * Mock exit, mocking directly cause
+ *     warning: 'noreturn' function does return [enabled by default]
+ */
+#define exit(status)  mock_exit(status)
+void mock_exit(int status);
+
+
 #include "command_reader.c"
 
 
@@ -17,15 +25,6 @@ char print_buff[2048];
 // Don't want to mock these
 #include "utils.c"
 #include "time_update.c"
-
-static int write_called = 0;
-
-ssize_t write(int fd, const void *buf, size_t count)
-{
-        write_called++;
-        return count;
-}
-
 
 
 /*
@@ -99,6 +98,53 @@ TEST(test_parse_cmd, consumption)
         ASSERT_EQ(0, ret);
         ASSERT_NE(payload_1_2, cmd_buff.u.s.payload[2] << 8 | cmd_buff.u.s.payload[1]);
 }
+
+
+/*
+ * Test read_commands
+ */
+
+static int write_called = 0;
+ssize_t write(int fd, const void *buf, size_t count)
+{
+        write_called++;
+        return count;
+}
+static int mock_exit_called = 0;
+void mock_exit(int status)
+{
+        (void) status;
+        mock_exit_called++;
+}
+
+static int index_line = 0;
+static char *lines[2] = {
+        "start dc\n",
+        "invalid_command lalal\n"
+};
+ssize_t getline(char **lineptr, size_t *n, FILE *stream)
+{
+        if (index_line == 2)
+                return -1;
+        int len = strlen(strcpy(*lineptr, lines[index_line]));
+        index_line++;
+        return len;
+
+}
+
+
+TEST(test_read_commands, test_with_exit)
+{
+        mock_exit_called = 0;
+        write_called = 0;
+
+        read_commands(&reader_state);
+        ASSERT_EQ(1, mock_exit_called);
+        ASSERT_EQ(1, write_called);
+}
+
+
+
 
 
 /*
