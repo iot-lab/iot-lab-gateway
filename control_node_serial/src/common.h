@@ -9,9 +9,8 @@
 #define LOG       (stdout)
 
 #define PRINT_MSG(args ...)   fprintf(MSG_OUT, args)
-#define PRINT_ERROR(args ...)  do {\
-        PRINT_MSG("cn_serial_error :"); \
-        PRINT_MSG(args);\
+#define PRINT_ERROR(fmt, ...)  do {\
+        PRINT_MSG("cn_serial_error : " fmt, __VA_ARGS__);\
 } while (0)
 
 
