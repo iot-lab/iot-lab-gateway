@@ -94,16 +94,17 @@ static void *read_commands(void *attr);
 
 static struct state {
         int       serial_fd;
+        pthread_t reader_thread;
 } reader_state;
 
 
 int command_reader_start(int serial_fd)
 {
         int ret;
-        pthread_t reader_thread;
 
         reader_state.serial_fd = serial_fd;
-        ret = pthread_create(&reader_thread, NULL, read_commands, &reader_state);
+        ret = pthread_create(&reader_state.reader_thread, NULL, read_commands,
+                        &reader_state);
         return ret;
 }
 
@@ -235,8 +236,6 @@ int write_answer(unsigned char *data, size_t len)
         if (len != 2)
                 return -1;
 
-
-        // errors
         uint8_t type = data[0];
         int got_error;
         char *cmd = NULL;
@@ -292,10 +291,7 @@ static void *read_commands(void *attr)
                         DEBUG_PRINT("Error parsing\n");
                 } else {
                         DEBUG_PRINT("    ");
-                        for (int i=0; i < 2 + cmd_buff.u.s.len; i++) {
-                                DEBUG_PRINT(" %02X", cmd_buff.u.pkt[i]);
-                        }
-
+                        DEBUG_PRINT_PACKET(cmd_buff.u.pkt, cmd_buff.u.s.len);
                         ret = write(reader_state->serial_fd, cmd_buff.u.pkt, cmd_buff.u.s.len + 2);
                         DEBUG_PRINT("    write ret: %i\n", ret);
                 }
