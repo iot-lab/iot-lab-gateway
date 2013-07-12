@@ -1,11 +1,11 @@
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
 
 
 // TODO remove me when not printing measures anymore
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
-#include <stdio.h>
 // TODO remove me when not printing measures anymore
 
 
@@ -88,11 +88,11 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
 
         switch (ack_type) {
                 case RESET_TIME:
-                        fprintf(LOG, "reset_time ACK frame\n");
+                        PRINT_MSG("config_ack reset_time\n");
                         memcpy(&mh_state.time_ref, &new_time_ref, sizeof(struct timeval));
                         break;
                 case CONFIG_POWER_POLL:
-                        fprintf(LOG, "config_consumption_measure ACK frame\n");
+                        PRINT_MSG("config_ack config_consumption_measure\n");
                         // cleanup for new configuration
                         memset(&mh_state.power, 0, sizeof(mh_state.power));
 
@@ -115,7 +115,7 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
                         }
                         break;
                 default:
-                        fprintf(LOG, "EE Unkown ACK frame\n");
+                        PRINT_ERROR("Unkown ACK frame 0x%02x\n", ack_type);
                         break;
         }
 }

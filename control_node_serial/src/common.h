@@ -8,6 +8,13 @@
 #define MSG_OUT   (stderr)
 #define LOG       (stdout)
 
+#define PRINT_MSG(args ...)   fprintf(MSG_OUT, args)
+#define PRINT_ERROR(args ...)  do {\
+        PRINT_MSG("cn_serial_error :"); \
+        PRINT_MSG(args);\
+} while (0)
+
+
 #if DEBUG
 #include <stdio.h>
 #define DEBUG_PRINT(args ...) fprintf(LOG, args)
