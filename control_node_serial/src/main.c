@@ -18,7 +18,7 @@ int main(int argc, char *argv[])
                 tty_path = argv[1];
 
         if ((serial_fd = configure_tty(tty_path)) <= 0) {
-                fprintf(LOG, "ERROR: Could not open and configure TTY %s\n", tty_path);
+                PRINT_ERROR("Could not open and configure TTY %s\n", tty_path);
                 close(serial_fd);
                 return -1;
         }

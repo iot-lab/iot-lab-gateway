@@ -39,15 +39,17 @@ int configure_tty(char *tty_path)
 
         serial_fd = open(tty_path, O_RDWR | O_NOCTTY | O_SYNC);
         if (serial_fd == -1) {
-                fprintf(LOG, "ERROR: Could not open %s\n", tty_path);
+                PRINT_ERROR("Could not open %s\n", tty_path);
                 return -1;
         }
         if (tcflush(serial_fd, TCIOFLUSH) == -1) {
-                perror("Error in tcflush");
+                PRINT_ERROR("Error in tcflush: %s\n",
+                                strerror(errno));
                 return -1;
         }
         if (tcgetattr(serial_fd, &tty)) {
-                perror("Error in tcgetattr");
+                PRINT_ERROR("Error in tcgetattr: %s\n",
+                                strerror(errno));
                 return -1;
         }
 
@@ -63,13 +65,15 @@ int configure_tty(char *tty_path)
         tty.c_cflag &= ~HUPCL;   // No "hanging up" when closing
         tty.c_cflag |=  CLOCAL;  // ignore modem status line
         if (cfsetspeed(&tty, B500000)) {
-                perror("Error while setting terminal speed");
+                PRINT_ERROR("Error while setting terminal speed: %s\n",
+                                strerror(errno));
                 return -1;
         }
 
         // Apply and discard characters that may have arrived
         if (tcsetattr(serial_fd, TCSAFLUSH, &tty) == -1) {
-                perror("Could not set attribute to tty");
+                PRINT_ERROR("Error could not set attribute to tty: %s\n",
+                                strerror(errno));
                 return -1;
         }
         return serial_fd;
@@ -88,7 +92,7 @@ void start_listening(int fd, void (*handle_pkt)(struct pkt*))
 
                         DEBUG_PRINT("n_chars %d\n", n_chars);
                         if (n_chars == -1)
-                                fprintf(LOG, "Error %d: %s\n", errno,
+                                PRINT_ERROR("Error serial read%s\n",
                                                 strerror(errno));
                 } while (n_chars <= 0);
 

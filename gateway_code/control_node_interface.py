@@ -70,8 +70,12 @@ class ControlNodeSerial(object):
             For command answers, send it to command sender
         """
         answer = line.split(' ')
-        if answer[0] == 'error':  # control node error
+        if answer[0] == 'config_ack':  # ack reset_time/measures
+            LOGGER.debug('config_ack %s', answer[1])
+        elif answer[0] == 'error':  # control node error
             LOGGER.error('Control node error: %r', answer[1])
+        elif answer[0] == 'cn_serial_error':  # control node serial error
+            LOGGER.error(line)
         else:  # control node answer to a command
             try:
                 self.cn_msg_queue.put_nowait(answer)
