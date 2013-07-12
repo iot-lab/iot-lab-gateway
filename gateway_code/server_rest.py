@@ -182,7 +182,7 @@ def app_routing(app, board_type):
         route('/open/flash', 'POST')(app.open_flash)
         route('/open/reset', 'PUT')(app.open_soft_reset)
     else:
-        pass  # pragma: no cover
+        pass  # handle A8 nodes here
 
 
 def main(args):

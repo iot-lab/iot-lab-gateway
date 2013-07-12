@@ -18,11 +18,7 @@ class Protocol(object):
         Send a command to the control node and wait for it's answer.
         """
         command = command_list[0]
-        import sys
-        print >> sys.stderr, 'Sent pkt: %s' % command_list
         answer = self.sender(command_list)
-        print >> sys.stderr, 'Rec pkt:  %r' % answer
-
         answer_valid = ([command, 'ACK'] == answer)
         return (0 if answer_valid else 1)   # 0 on success
 
@@ -60,7 +56,7 @@ class Protocol(object):
         cmd = ['config_consumption_measure']
         if consumption is None or \
                 not (consumption.power or consumption.voltage or
-                     consumption.current):  # pragma: no cover
+                     consumption.current):
             cmd.append('stop')
         else:
             cmd.append('start')
