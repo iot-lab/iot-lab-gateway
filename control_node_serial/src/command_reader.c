@@ -177,19 +177,19 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "p");
                         arg = strtok(NULL, " ");
-                        if (atoi(arg))
+                        if (atoi(arg)) // != 0 (== 1 actually)
                                 cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_POWER;
                         // Voltage
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "v");
                         arg = strtok(NULL, " ");
-                        if (atoi(arg))
+                        if (atoi(arg)) // != 0 (== 1 actually)
                                 cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_VOLTAGE;
                         // Current
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "c");
                         arg = strtok(NULL, " ");
-                        if (atoi(arg))
+                        if (atoi(arg)) // != 0 (== 1 actually)
                                 cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_CURRENT;
 
                         cmd_buff->u.s.len++;

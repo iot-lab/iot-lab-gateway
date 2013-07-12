@@ -28,6 +28,9 @@ ssize_t write(int fd, const void *buf, size_t count)
 
 
 
+/*
+ *  Test parse_cmd
+ */
 TEST(test_parse_cmd, simple_commands)
 {
         int ret;
@@ -77,27 +80,30 @@ TEST(test_parse_cmd, consumption)
                         (cmd_buff.u.s.payload[2] | CONSUMPTION_START));
         unsigned payload_1_2 = cmd_buff.u.s.payload[2] << 8 | cmd_buff.u.s.payload[1];
 
-
         char config_2_cmd[] = "config_consumption_measure start BATT p 1 v 1 c 1 -p 140us -a 1";
         ret = parse_cmd(config_2_cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_NE(payload_1_2, cmd_buff.u.s.payload[2] << 8 | cmd_buff.u.s.payload[1]);
 
-
         char config_3_cmd[] = "config_consumption_measure start 3.3V p 0 v 1 c 0 -p 140us -a 1";
         ret = parse_cmd(config_3_cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_NE(payload_1_2, cmd_buff.u.s.payload[2] << 8 | cmd_buff.u.s.payload[1]);
-
-        char config_4_cmd[] = "config_consumption_measure start 3.3V p 1 v 1 c 1 -p 8244us -a 1024";
+        char config_4_cmd[] = "config_consumption_measure start 3.3V p 1 v 0 c 1 -p 140us -a 1";
         ret = parse_cmd(config_4_cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_NE(payload_1_2, cmd_buff.u.s.payload[2] << 8 | cmd_buff.u.s.payload[1]);
+
+        char config_5_cmd[] = "config_consumption_measure start 3.3V p 1 v 1 c 1 -p 8244us -a 1024";
+        ret = parse_cmd(config_5_cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_NE(payload_1_2, cmd_buff.u.s.payload[2] << 8 | cmd_buff.u.s.payload[1]);
 }
 
 
-
-
+/*
+ *  Test write_answer
+ */
 TEST(test_write_answer, valid_answers)
 {
         unsigned char data[2];
@@ -120,10 +126,7 @@ TEST(test_write_answer, valid_answers)
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("config_consumption_measure NACK\n", print_buff);
-
 }
-
-
 
 TEST(test_write_answer, invalid_answers)
 {
@@ -137,17 +140,16 @@ TEST(test_write_answer, invalid_answers)
         ret = write_answer(data, 2);
         ASSERT_EQ(-2, ret);
 
-
-
         data[0] = CONFIG_POWER_POLL;
         data[1] = 42;
         ret = write_answer(data, 2);
         ASSERT_EQ(-3, ret);
-
 }
 
 
-
+/*
+ *  Test parse_cmd
+ */
 TEST(test_parse_cmd, invalid_commands)
 {
         int ret;
@@ -166,8 +168,9 @@ TEST(test_parse_cmd, invalid_commands)
         ASSERT_EQ(1, ret);
 }
 
-
-// For coverage
+/*
+ * Test thread (for coverage)
+ */
 TEST(test_thread, start_thread)
 {
         int ret;
