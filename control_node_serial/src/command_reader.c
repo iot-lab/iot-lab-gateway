@@ -245,11 +245,8 @@ int write_answer(unsigned char *data, size_t len)
                 DEBUG_PRINT("error frame\n");
                 int error_code;
                 // handle error frame
-                got_error |= get_key(type, alim_d, &cmd);
+                got_error |= get_key(type, answers_d, &cmd);
                 error_code = (int) ((char) data[1]); // sign extend
-                if (got_error) {
-                        return -3;
-                }
                 PRINT_MSG("%s %d\n", cmd, error_code);
         } else if ((type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
                 DEBUG_PRINT("ERROR measure frame\n");
@@ -257,7 +254,7 @@ int write_answer(unsigned char *data, size_t len)
         } else {
                 DEBUG_PRINT("Commands ACKS\n");
                 char *arg;
-                got_error |= get_key(data[0], answers_d, &cmd);
+                got_error |= get_key(type, answers_d, &cmd);
                 got_error |= get_key(data[1], ack_d, &arg);
                 // CMDs acks
                 if (got_error) {

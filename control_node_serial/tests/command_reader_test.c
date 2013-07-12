@@ -1,16 +1,22 @@
 #include <gtest/gtest.h>
+#include <unistd.h> // sleep, size_t
+
+/*
+ * Mock log_print
+ */
+
+char print_buff[2048];
+#define fprintf(stream, ...)  snprintf(print_buff, sizeof(print_buff), __VA_ARGS__)
+
 #include "command_reader.c"
 
-// Don't want to mock these
-#include "utils.c"
-#include "time_update.c"
-
-
-#include <unistd.h> // sleep, size_t
 
 /* Mock EXTERNAL dependency functions
  * with function definition
- * */
+ */
+// Don't want to mock these
+#include "utils.c"
+#include "time_update.c"
 
 static int write_called = 0;
 
@@ -48,6 +54,10 @@ TEST(test_parse_cmd, simple_commands)
 
 TEST(test_parse_cmd, consumption)
 {
+        /*
+         * Sending multiple config_consumption_measure commands
+         * and checking that the configuration is different each time
+         */
         int ret;
         struct command_buffer cmd_buff;
 
@@ -87,6 +97,57 @@ TEST(test_parse_cmd, consumption)
 
 
 
+
+TEST(test_write_answer, valid_answers)
+{
+        unsigned char data[2];
+        int ret;
+
+        data[0] = ERROR_FRAME;
+        data[1] = 42;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("error 42\n", print_buff);
+
+        data[0] = RESET_TIME;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("reset_time ACK\n", print_buff);
+
+        data[0] = CONFIG_POWER_POLL;
+        data[1] = NACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("config_consumption_measure NACK\n", print_buff);
+
+}
+
+
+
+TEST(test_write_answer, invalid_answers)
+{
+        unsigned char data[2];
+        int ret;
+
+        ret = write_answer(data, 1);
+        ASSERT_EQ(-1, ret);
+
+        data[0] = MEASURES_FRAME_MASK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(-2, ret);
+
+
+
+        data[0] = CONFIG_POWER_POLL;
+        data[1] = 42;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(-3, ret);
+
+}
+
+
+
 TEST(test_parse_cmd, invalid_commands)
 {
         int ret;
@@ -104,11 +165,6 @@ TEST(test_parse_cmd, invalid_commands)
         ret = parse_cmd(consumption, &cmd_buff);
         ASSERT_EQ(1, ret);
 }
-
-
-
-
-
 
 
 // For coverage
