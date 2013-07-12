@@ -181,7 +181,7 @@ def app_routing(app, board_type):
     if board_type == 'M3':
         route('/open/flash', 'POST')(app.open_flash)
         route('/open/reset', 'PUT')(app.open_soft_reset)
-    else:
+    else:  # pragma: no cover
         pass  # handle A8 nodes here
 
 
