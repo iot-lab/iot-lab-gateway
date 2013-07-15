@@ -30,17 +30,18 @@ int start_socat()
         perror("");
 }
 
-char data[1024];
+
+
 
 int number_packets = 16;
 void *write_data_thread(void *attr)
 {
         int fd = *((int * )attr);
-        int i;
+        char data[1024];
 
         data[0] = 0x80;
         data[1] = 0xFF;
-        for (i = 0; i < 256; i++) {
+        for (int i = 0; i < 256; i++) {
                 data[i+2] = i;
         }
 
@@ -48,7 +49,6 @@ void *write_data_thread(void *attr)
                 write(fd, data, 256+2);
         }
 }
-
 static volatile int received_packets = 0;
 void handle_pkt(struct pkt *packet)
 {
