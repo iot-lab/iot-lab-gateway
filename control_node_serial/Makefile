@@ -5,6 +5,7 @@ CC         = gcc
 # VERB = 1
 quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
 
+WARNINGS  += -Werror
 WARNINGS  += -Wall -Wextra
 WARNINGS  += -Wpointer-arith -Wbad-function-cast
 WARNINGS  += -Wcast-align -Waggregate-return -Wmissing-prototypes

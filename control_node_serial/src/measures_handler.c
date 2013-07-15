@@ -1,3 +1,7 @@
+// timerclear
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif//_BSD_SOURCE
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>
@@ -27,16 +31,21 @@ struct power_vals {
 static struct _measure_handler_state {
         struct timeval time_ref;
         struct {
+                int is_valid;
                 int p;
                 int v;
                 int c;
                 int power_source;
-                unsigned char conf;
                 size_t raw_values_len;
         } power;
 
 } mh_state;
 
+extern void init_measures_handler()
+{
+        timerclear(&mh_state.time_ref);
+        mh_state.power.is_valid = 0;
+}
 
 static void handle_pw_pkt(unsigned char *data, size_t len)
 {
@@ -48,13 +57,22 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
         unsigned char *current_data_ptr;
         struct power_vals pw_vals;
 
-        size_t values_len = mh_state.power.raw_values_len;
+        size_t values_len;
 
+        if (!mh_state.power.is_valid) {
+                // Should have got a 'CONFIG_POWER_POLL' ACK before
+                PRINT_ERROR("Got PW measure without being configured\n%s", "");
+                return;
+        }
+
+        values_len       = mh_state.power.raw_values_len;
         num_measures     = data[1];
         current_data_ptr = &data[2];
 
-        if ((values_len * num_measures + 2) != len) {
-                DEBUG_PRINT("Invalid measure pkt len\n");
+        size_t expected_len = 2 + values_len * num_measures;
+        if (expected_len != len) {
+                PRINT_ERROR("Invalid measure pkt len: %zu != expected %zu\n",
+                                len, expected_len);
                 return;
         }
 
@@ -81,10 +99,14 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
 
 static void handle_ack_pkt(unsigned char *data, size_t len)
 {
-        (void) len;
-        // sync | type | config_type | config
+        // ACK_FRAME | config_type | config
+        if (len != 3) {
+                PRINT_ERROR("Invalid len for ACK %zu\n", len);
+                return;
+        }
         uint8_t ack_type = data[1];
         uint8_t config   = data[2];
+
 
         switch (ack_type) {
                 case RESET_TIME:
@@ -96,7 +118,7 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
                         // cleanup for new configuration
                         memset(&mh_state.power, 0, sizeof(mh_state.power));
 
-                        mh_state.power.conf = config;
+                        mh_state.power.is_valid = 1;
                         mh_state.power.power_source = config &
                                 (SOURCE_3_3V | SOURCE_5V | SOURCE_BATT);
 
@@ -125,8 +147,6 @@ int handle_measure_pkt(unsigned char *data, size_t len)
 {
 
         uint8_t pkt_type = data[0];
-        (void) pkt_type;
-        (void) len;
 
         switch (pkt_type) {
                 case PW_POLL_FRAME:
@@ -134,12 +154,14 @@ int handle_measure_pkt(unsigned char *data, size_t len)
                         break;
                 case RADIO_POLL_FRAME:
                         DEBUG_PRINT("NOT IMPLEMENTED RADIO POLL FRAME\n");
+                        return -1;
                         break;
                 case ACK_FRAME:
                         handle_ack_pkt(data, len);
                         break;
                 default:
                         return -1;
+                        break;
         }
 
 

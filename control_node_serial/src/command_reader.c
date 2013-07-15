@@ -271,7 +271,6 @@ int write_answer(unsigned char *data, size_t len)
 static void *read_commands(void *attr)
 {
         struct state *reader_state = (struct state *) attr;
-        (void) reader_state;
 
         struct command_buffer cmd_buff;
         size_t buff_size = 2048;
