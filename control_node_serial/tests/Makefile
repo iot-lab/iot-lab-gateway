@@ -19,6 +19,7 @@ RESULTDIR    = results
 DIRS         = $(OBJDIR) $(BINDIR) $(RESULTDIR)
 
 
+SRCS         = $(wildcard $(SRCDIR)/*.c)
 SRCTESTS     = $(sort $(wildcard *.c) empty_test.c)
 TESTS        = $(SRCTESTS:%.c=$(BINDIR)/%)
 TEST_RESULTS = $(SRCTESTS:%.c=$(RESULTDIR)/%.xml)
@@ -28,7 +29,7 @@ all: $(DIRS) empty_test.c $(TESTS)
 
 # empty_test contains all C files but does nothing
 # file is here only to see coverage of all source files
-empty_test.c: $(wildcard $(SRCDIR)/*.c)
+empty_test.c: $(wildcard $(SRCDIR)/*.c) $(SRCS)
 	@echo "Generating $@ file"
 	@echo '#include <gtest/gtest.h>' > $@
 	@find ../src/ -name '*.c' -exec basename '{}' \; | grep -v main.c | \
@@ -39,7 +40,7 @@ empty_test.c: $(wildcard $(SRCDIR)/*.c)
 run: all $(TEST_RESULTS) $(RESULTDIR)/c_code_coverage.xml
 
 
-$(RESULTDIR)/c_code_coverage.xml: all
+$(RESULTDIR)/c_code_coverage.xml: $(TEST_RESULTS)
 	$(call quiet-cmd, gcovr -r '../../../../' -e '.*/tests' -x >$@, \
 		"  GCOV  $@")
 	$(call quiet-cmd, gcovr -r '../../../../' -e '.*/tests' \
@@ -54,10 +55,13 @@ $(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a
 		"  CXX   $@")
 
 
-$(OBJDIR)/%_test.o: %_test.c
+$(OBJDIR)/%_test.o: %_test.c $(SRCS)
 	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
-$(OBJDIR)/%.o: $(SRCDIR)/%.c
+$(OBJDIR)/%.o: $(SRCDIR)/%.c 
 	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
+
+$(SRCTESTS): %: $(SRCS)
+
 
 
 $(DIRS):%:

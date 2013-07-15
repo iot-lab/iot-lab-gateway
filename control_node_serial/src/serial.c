@@ -106,7 +106,6 @@ enum state_t {
         STATE_IDLE = 0,
         STATE_WAIT_LEN = 1,
         STATE_GET_PAYLOAD = 2,
-        STATE_FULL = 3
 };
 
 static void parse_rx_data(unsigned char *rx_buff, unsigned len,
@@ -124,7 +123,7 @@ static void parse_rx_data(unsigned char *rx_buff, unsigned len,
         unsigned char *sync_byte_addr;
         unsigned int n_bytes;
 
-        while (len > cur_idx || state == STATE_FULL) {
+        while (len > cur_idx) {
                 switch (state) {
                         case STATE_IDLE:
                                 /*
@@ -164,16 +163,12 @@ static void parse_rx_data(unsigned char *rx_buff, unsigned len,
                                 cur_idx     += n_bytes;
 
                                 // Packet full
-                                if (pkt.p.len == pkt.cur_idx)
-                                        state = STATE_FULL;
-                                break;
-                        case STATE_FULL:
-                                /*
-                                 * Handle packet and get back to idle
-                                 */
-                                DEBUG_PRINT("Got pkt: len = %d\n", pkt.p.len);
-                                handle_pkt(&pkt.p);
-                                state = STATE_IDLE;
+                                if (pkt.p.len == pkt.cur_idx) {
+                                        /* Handle packet and get back to idle */
+                                        DEBUG_PRINT("Got pkt: %d\n", pkt.p.len);
+                                        handle_pkt(&pkt.p);
+                                        state = STATE_IDLE;
+                                }
                                 break;
                         default:
                                 break;
