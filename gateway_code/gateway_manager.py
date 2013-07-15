@@ -36,6 +36,7 @@ class GatewayManager(object):
     Manages experiments, open node and control node
     """
     board_type = None
+    robot      = None
 
     def __init__(self, log_folder='.'):
 
@@ -49,6 +50,7 @@ class GatewayManager(object):
         atexit.register(self.exp_stop)
         gateway_code.gateway_logging.init_logger(log_folder)
         self.board_type = GatewayManager.get_board_type()
+        self.robot = GatewayManager.get_robot_type()
 
         # Setup control node
         ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
@@ -139,6 +141,12 @@ class GatewayManager(object):
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
 
+        if self.robot == 'roomba':
+            LOGGER.info("I'm a roomba")
+            LOGGER.info("Running Start Roomba")
+
+
+
         return ret_val
 
     def exp_stop(self):
@@ -177,6 +185,11 @@ class GatewayManager(object):
         ret_val += ret
         ret = self.open_power_start(power='dc')
         ret_val += ret
+
+        if self.robot == 'roomba':
+            LOGGER.info("I'm a roomba")
+            LOGGER.info("Running stop Roomba")
+
 
         # # # # # # # # # # #
         # Cleanup open node #
@@ -314,9 +327,21 @@ class GatewayManager(object):
         """
         if cls.board_type is None:
             try:
-                board = open(config.GATEWAY_CONFIG_PATH + 'board_type')
-                cls.board_type = board.read().strip()
-                board.close()
+                with open(config.GATEWAY_CONFIG_PATH + 'board_type') as _f:
+                    cls.board_type = _f.read().strip()
             except IOError as err:  # pragma: no cover
                 raise StandardError("Could not find board type:\n  '%s'" % err)
         return cls.board_type
+
+    @classmethod
+    def get_robot_type(cls):
+        """
+        Return robot type False, 'roomba', 'trajectory', 'smart'
+        """
+        if cls.robot is None:
+            try:
+                with open(config.GATEWAY_CONFIG_PATH + 'robot') as _f:
+                    cls.robot = _f.read().strip()
+            except IOError:  # pragma: no cover
+                cls.robot = False
+        return cls.robot
