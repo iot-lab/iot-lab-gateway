@@ -36,9 +36,14 @@ TEST(test_parse_cmd, simple_commands)
         struct command_buffer cmd_buff;
 
         char reset_cmd[] = "reset_time";
+        new_time_ref.tv_sec  = 0;
+        new_time_ref.tv_usec = 0;
         ret = parse_cmd(reset_cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_EQ(1, cmd_buff.u.s.len);
+        ASSERT_NE(0, new_time_ref.tv_sec);
+        ASSERT_NE(0, new_time_ref.tv_usec);
+
         ASSERT_EQ(RESET_TIME, cmd_buff.u.s.payload[0]);
 
         char start_cmd[] = "start dc";

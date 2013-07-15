@@ -5,6 +5,7 @@
 #include "serial.h"
 #include "command_reader.h"
 #include "decode.h"
+#include "measures_handler.h"
 
 
 int main(int argc, char *argv[])
@@ -23,6 +24,7 @@ int main(int argc, char *argv[])
                 return -1;
         }
 
+        init_measures_handler();
         command_reader_start(serial_fd);
         start_listening(serial_fd, decode_pkt);
 
