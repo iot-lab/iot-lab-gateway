@@ -8,6 +8,7 @@ struct pkt {
 
 extern int configure_tty(char *tty_path);
 
-extern void start_listening(int fd, void (*handle_pkt)(struct pkt*));
+extern void receive_data(int fd, unsigned char *rx_buff, size_t len,
+                void (*handle_pkt)(struct pkt*));
 
 #endif // SERIAL_H
