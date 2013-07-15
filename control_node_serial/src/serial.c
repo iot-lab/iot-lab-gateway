@@ -48,12 +48,12 @@ int configure_tty(char *tty_path)
         if (tcflush(serial_fd, TCIOFLUSH) == -1) {
                 PRINT_ERROR("Error in tcflush: %s\n",
                                 strerror(errno));
-                return -1;
+                return -2;
         }
         if (tcgetattr(serial_fd, &tty)) {
                 PRINT_ERROR("Error in tcgetattr: %s\n",
                                 strerror(errno));
-                return -1;
+                return -3;
         }
 
         /*
@@ -70,14 +70,14 @@ int configure_tty(char *tty_path)
         if (cfsetspeed(&tty, B500000)) {
                 PRINT_ERROR("Error while setting terminal speed: %s\n",
                                 strerror(errno));
-                return -1;
+                return -4;
         }
 
         // Apply and discard characters that may have arrived
         if (tcsetattr(serial_fd, TCSAFLUSH, &tty) == -1) {
                 PRINT_ERROR("Error could not set attribute to tty: %s\n",
                                 strerror(errno));
-                return -1;
+                return -5;
         }
         return serial_fd;
 }
@@ -107,7 +107,7 @@ enum state_t {
         STATE_WAIT_LEN = 1,
         STATE_GET_PAYLOAD = 2,
 };
-
+static enum state_t state = STATE_IDLE;
 static void parse_rx_data(unsigned char *rx_buff, unsigned len,
                 void (*handle_pkt)(struct pkt*))
 {
@@ -117,8 +117,7 @@ static void parse_rx_data(unsigned char *rx_buff, unsigned len,
                 unsigned int cur_idx;
         } pkt;
         // Current parser state
-        static enum state_t state = STATE_IDLE;
-        unsigned int cur_idx   = 0;
+        unsigned int cur_idx      = 0;
         // tmp variables
         unsigned char *sync_byte_addr;
         unsigned int n_bytes;
@@ -171,6 +170,8 @@ static void parse_rx_data(unsigned char *rx_buff, unsigned len,
                                 }
                                 break;
                         default:
+                                // Get out of here
+                                state = STATE_IDLE;
                                 break;
                 }
         }

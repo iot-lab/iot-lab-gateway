@@ -57,7 +57,7 @@ $(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a
 
 $(OBJDIR)/%_test.o: %_test.c $(SRCS)
 	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
-$(OBJDIR)/%.o: $(SRCDIR)/%.c 
+$(OBJDIR)/%.o: $(SRCDIR)/%.c
 	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
 
 $(SRCTESTS): %: $(SRCS)
