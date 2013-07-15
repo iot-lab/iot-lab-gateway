@@ -23,8 +23,8 @@
 
 
 #if DEBUG
-#define DEBUG_PRINT_PACKET(len, data)  do{ \
-                for (char i=0; i < ((char) (len)); i++) {\
+#define DEBUG_PRINT_PACKET(data, len)  do{ \
+                for (unsigned char i=0; i < (len); i++) {\
                         DEBUG_PRINT(" %02X", (data)[i]);\
                 }\
                 DEBUG_PRINT("\n");\

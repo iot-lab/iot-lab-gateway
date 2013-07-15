@@ -11,7 +11,7 @@ void decode_pkt(struct pkt *current_pkt)
 {
         uint8_t pkt_type = current_pkt->data[0];
 
-        DEBUG_PRINT_PACKET(current_pkt->len, current_pkt->data);
+        DEBUG_PRINT_PACKET(current_pkt->data, current_pkt->len);
 
         if ((pkt_type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
                 // send to measures packets handler

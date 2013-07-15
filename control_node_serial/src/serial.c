@@ -80,25 +80,21 @@ int configure_tty(char *tty_path)
 }
 
 
-
-void start_listening(int fd, void (*handle_pkt)(struct pkt*))
+void receive_data(int fd, unsigned char *rx_buff, size_t len,
+                void (*handle_pkt)(struct pkt*))
 {
-        unsigned char rx_buff[2048];
         int n_chars = 0;
+        do {
+                n_chars = read(fd, rx_buff, len);
 
-        while (1) {
-                do {
-                        n_chars = read(fd, rx_buff, sizeof(rx_buff));
+                DEBUG_PRINT("n_chars %d\n", n_chars);
+                if (n_chars == -1)
+                        PRINT_ERROR("Error serial read: %s\n",
+                                        strerror(errno));
+        } while (n_chars <= 0);
 
-                        DEBUG_PRINT("n_chars %d\n", n_chars);
-                        if (n_chars == -1)
-                                PRINT_ERROR("Error serial read%s\n",
-                                                strerror(errno));
-                } while (n_chars <= 0);
-
-                DEBUG_PRINT_PACKET(n_chars, rx_buff);
-                parse_rx_data(rx_buff, n_chars, handle_pkt);
-        }
+        DEBUG_PRINT_PACKET(rx_buff, n_chars);
+        parse_rx_data(rx_buff, n_chars, handle_pkt);
 
 
 }

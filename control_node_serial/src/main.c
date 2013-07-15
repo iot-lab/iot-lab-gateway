@@ -11,6 +11,7 @@
 int main(int argc, char *argv[])
 {
         int serial_fd  = 0;
+        unsigned char rx_buff[2048];
         char *tty_path = "/dev/ttyFITECO_GWT";
 
 
@@ -26,7 +27,9 @@ int main(int argc, char *argv[])
 
         init_measures_handler();
         command_reader_start(serial_fd);
-        start_listening(serial_fd, decode_pkt);
+        while (1) {
+                receive_data(serial_fd, rx_buff, sizeof(rx_buff), decode_pkt);
+        }
 
         return 0;
 }
