@@ -180,9 +180,6 @@ TEST(handle_ack_pkt, power_poll_ack)
 TEST(handle_ack_pkt, invalid_msgs)
 {
         unsigned char data[8];
-        handle_ack_pkt(data, 2); // invalid len
-        ASSERT_STREQ("cn_serial_error : Invalid len for ACK 2\n", print_buff);
-
         data[1] = 0x00; // not a real ack type
         handle_ack_pkt(data, 3);
         ASSERT_STREQ("cn_serial_error : Unkown ACK frame 0x00\n", print_buff);

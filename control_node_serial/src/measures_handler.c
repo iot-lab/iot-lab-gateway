@@ -99,11 +99,12 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
 
 static void handle_ack_pkt(unsigned char *data, size_t len)
 {
-        // ACK_FRAME | config_type | config
-        if (len != 3) {
-                PRINT_ERROR("Invalid len for ACK %zu\n", len);
-                return;
-        }
+        // ACK_FRAME | config_type | [config]
+        // if (len != 3) {
+        //         PRINT_ERROR("Invalid len for ACK %zu\n", len);
+        //         return;
+        // }
+        (void) len;
         uint8_t ack_type = data[1];
         uint8_t config   = data[2];
 

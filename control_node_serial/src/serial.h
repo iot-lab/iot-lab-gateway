@@ -8,7 +8,7 @@ struct pkt {
 
 extern int configure_tty(char *tty_path);
 
-extern void receive_data(int fd, unsigned char *rx_buff, size_t len,
+extern int receive_data(int fd, unsigned char *rx_buff, size_t len,
                 void (*handle_pkt)(struct pkt*));
 
 #endif // SERIAL_H

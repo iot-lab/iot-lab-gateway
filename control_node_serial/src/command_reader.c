@@ -1,3 +1,6 @@
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif // _BSD_SOURCE
 // getline (for glibc > 2.10)
 #define _POSIX_C_SOURCE  200809L
 
