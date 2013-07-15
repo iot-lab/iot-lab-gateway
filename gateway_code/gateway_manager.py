@@ -36,7 +36,7 @@ class GatewayManager(object):
     Manages experiments, open node and control node
     """
     board_type = None
-    robot      = None
+    robot = None
 
     def __init__(self, log_folder='.'):
 
@@ -145,8 +145,6 @@ class GatewayManager(object):
             LOGGER.info("I'm a roomba")
             LOGGER.info("Running Start Roomba")
 
-
-
         return ret_val
 
     def exp_stop(self):
@@ -189,7 +187,6 @@ class GatewayManager(object):
         if self.robot == 'roomba':
             LOGGER.info("I'm a roomba")
             LOGGER.info("Running stop Roomba")
-
 
         # # # # # # # # # # #
         # Cleanup open node #
@@ -327,8 +324,8 @@ class GatewayManager(object):
         """
         if cls.board_type is None:
             try:
-                with open(config.GATEWAY_CONFIG_PATH + 'board_type') as _f:
-                    cls.board_type = _f.read().strip()
+                with open(config.GATEWAY_CONFIG_PATH + 'board_type') as _file:
+                    cls.board_type = _file.read().strip()
             except IOError as err:  # pragma: no cover
                 raise StandardError("Could not find board type:\n  '%s'" % err)
         return cls.board_type
@@ -340,8 +337,8 @@ class GatewayManager(object):
         """
         if cls.robot is None:
             try:
-                with open(config.GATEWAY_CONFIG_PATH + 'robot') as _f:
-                    cls.robot = _f.read().strip()
+                with open(config.GATEWAY_CONFIG_PATH + 'robot') as _file:
+                    cls.robot = _file.read().strip()
             except IOError:  # pragma: no cover
                 cls.robot = False
         return cls.robot
