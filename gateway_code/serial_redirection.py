@@ -56,6 +56,7 @@ class SerialRedirection():
         self.err = ""
         self.out = ""
         self.is_running = True
+        self.redirector_thread.daemon = True
         self.redirector_thread.start()
 
         return 0
