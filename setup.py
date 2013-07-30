@@ -5,7 +5,7 @@ from setuptools import setup, Command
 from setuptools.command.install import install
 
 import os
-from subprocess import Popen
+from subprocess import Popen, check_call, CalledProcessError
 
 from gateway_code import config
 
@@ -18,22 +18,44 @@ DATA              = [(STATIC_FILES_PATH, STATIC_FILES), INIT_SCRIPT]
 SCRIPTS           = ['control_node_serial/control_node_serial_interface']
 SCRIPTS          += ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
 
+INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
+TESTS_REQUIRES    = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
+
 # unload 'gateway_code.config'
 # either it's not included in the coverage report...
 import sys; del sys.modules['gateway_code.config']
-#
+
+
+class _Tee(object):
+    def __init__(self, name, mode):
+        self.file = open(name, mode)
+        self.stdout = sys.stdout
+        sys.stdout = self
+
+    def __del__(self):
+        sys.stdout = self.stdout
+        self.file.close()
+
+    def write(self, data):
+        self.file.write(data)
+        self.stdout.write(data)
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self, _type, _value, _traceback):
+        pass
+
 
 
 def build_c_executable():
     saved_path = os.getcwd()
     os.chdir('control_node_serial')
-    process = Popen(['make', 'realclean', 'all'])
-    process.wait()
-
+    try:
+        check_call(['make', 'realclean', 'all'])
+    except CalledProcessError:
+        exit(1)
     os.chdir(saved_path)
-    if process.returncode != 0:
-        exit(0)
-
 
 def setup_permissions():
 
@@ -45,9 +67,7 @@ def setup_permissions():
     print "changing mode of %s to %d" % (init_script_path, mode)
 
     usermod_args = ['usermod', '-G', 'dialout', 'www-data']
-    usermod = Popen(usermod_args)
-    usermod.wait()
-    print "%s: %d" % (' '.join(usermod_args), usermod.returncode)
+    check_call(usermod_args)
 
 
 
@@ -72,55 +92,133 @@ class Lint(Command):
     user_options = [
             ('report', 'r', "print errors and report"),
             ('outfile=', 'o', "duplicate output to file")]
+
     def initialize_options(self):
         self.report = False
-        self.outfile = None
+        self.outfile = '/dev/null'
 
     def finalize_options(self):
-        if self.report:
-            self.report_option = ['--reports=y']
-        else:
-            self.report_option = ['--reports=n']
+        self.report_opt = ['--reports=y'] if self.report else ['--report=n']
 
     def run(self):
-
         from pylint import lint
-        lint_args = ['--rcfile=pylint.rc', '-f', 'parseable', 'gateway_code/']
-        lint_args = self.report_option + lint_args
+        lint_args = self.report_opt
+        lint_args += ['--rcfile=pylint.rc', '-f', 'parseable', 'gateway_code/']
 
-        # catch stdout to allow redirect to file
-        if self.outfile is not None:
-            from cStringIO import StringIO
-            import sys
-            sys.stdout = StringIO()
+        with _Tee(self.outfile, 'w'):
+            lint.Run(lint_args, exit=False)
 
-        lint.Run(lint_args, exit=False)
-
-        # write pylint output
-        if self.outfile is not None:
-            my_output = sys.stdout.getvalue()
-            # recover stdout
-            sys.stdout = sys.__stdout__
-
-            print my_output
-            # duplicate output to file
-            print 'Writing pylint output to file: %r' % self.outfile
-            with open(self.outfile, 'w') as out:
-                out.write(my_output)
 
 class Pep8(Command):
-    user_options = []
+    user_options = [('outfile=', 'o', "duplicate output to file")]
+
     def initialize_options(self):
         self.exclude = None
+        self.outfile = '/dev/null'
+
     def finalize_options(self):
         pass
+
     def run(self):
         import pep8
         sys.argv = ['./pep8.py', 'gateway_code/']
-        pep8._main()
+        with _Tee(self.outfile, 'w'):
+            pep8._main()
 
-INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
-TESTS_REQUIRES    = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
+
+class Tests(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        import subprocess, sys
+        args = ['python', 'setup.py']
+
+        try:
+            ret = subprocess.check_call(args + ['nosetests', '--cover-html'])
+            ret = subprocess.check_call(args + ['lint'])
+            ret = subprocess.check_call(args + ['pep8'])
+        except CalledProcessError:
+            exit(1)
+
+
+
+class IntegrationTests(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+
+    @staticmethod
+    def cleanup_workspace():
+        import stat
+        # remove outfiles
+        for file in ('coverage.xml', 'nosetests.xml', 'pylint.out', 'pep8.out'):
+            if os.path.exists(file):
+                os.remove(file)
+
+        # chmod o+x script_dir
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        mode = os.stat(script_dir).st_mode | stat.S_IWOTH
+        os.chmod(script_dir, mode)
+
+
+    @staticmethod
+    def popen_as_user(user):
+        import pwd
+        import grp
+
+        pw_record = pwd.getpwnam(user)
+
+        user_gid = pw_record.pw_gid
+        user_uid = pw_record.pw_uid
+        user_name = pw_record.pw_name
+        user_home_dir = pw_record.pw_dir
+
+        env = os.environ.copy()
+        env[ 'HOME'     ]  = user_home_dir
+        env[ 'LOGNAME'  ]  = user_name
+        env[ 'USER'     ]  = user_name
+
+        def preexec_set_uid_gid():
+            groups = [group.gr_gid for group in grp.getgrall()
+                      if user in group.gr_mem]
+            os.setgroups(groups) # add all groups of user (for 'dialout')
+            os.setgid(user_gid)
+            os.setuid(user_uid) #setuid after setgid to have permissions
+
+        return preexec_set_uid_gid, env
+
+
+    def run(self):
+        import subprocess, sys
+        args = ['python', 'setup.py']
+
+        self.cleanup_workspace()
+
+
+        try:
+            ret = subprocess.check_call(args + ['build_cn_serial'])
+
+            preexec_fn, env = self.popen_as_user('www-data')
+            env['PATH'] = './control_node_serial/:%s' % env['PATH']
+
+            ret = subprocess.check_call(args +
+                                        ['nosetests', '-i=*integration/*'],
+                                        preexec_fn=preexec_fn, env=env)
+            ret = subprocess.check_call(args + ['lint', '--report',
+                                                '-o', 'pylint.out'])
+            ret = subprocess.check_call(args + ['pep8', '-o', 'pep8.out'])
+        except CalledProcessError:
+            exit(1)
+
+
 
 setup(name='gateway_code',
         version='0.3',
@@ -133,7 +231,9 @@ setup(name='gateway_code',
         data_files = DATA,
 
         cmdclass = {'lint': Lint, 'install': Install, \
-                'build_cn_serial': BuildSerial, 'pep8': Pep8},
+                'build_cn_serial': BuildSerial, 'pep8': Pep8,
+                'tests': Tests,
+                'integration': IntegrationTests},
         install_requires = INSTALL_REQUIRES,
         setup_requires = TESTS_REQUIRES + INSTALL_REQUIRES,
         )
