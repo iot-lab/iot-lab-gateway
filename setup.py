@@ -119,7 +119,7 @@ class Pep8(Command):
         sys.argv = ['./pep8.py', 'gateway_code/']
         pep8._main()
 
-INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'recordtype']
+INSTALL_REQUIRES  = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
 TESTS_REQUIRES    = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
 
 setup(name='gateway_code',
