@@ -30,9 +30,9 @@ SENSORS = chr(142)  # + 1 byte : packet
 FORCESEEKINGDOCK = chr(143)  # Dock automatique mode
 #PWMMOTORS =chr(144) # + 3 bytes : main brush, side brush, vaccuum   not used in turtlebot
 DRIVEDIRECT = chr(145) # + 4 bytes : right-vel-high/low,left-vel-high/low
-PWMDRIVE  =chr(146) # + 4 bytes :right-pwm-high/low,left-pwm-hight/low
+PWMDRIVE = chr(146) # + 4 bytes :right-pwm-high/low,left-pwm-hight/low
 STREAM = chr(148)   # periodic stream of sensors
-QUERYLIST= chr(149)    
+QUERYLIST = chr(149)
 DOSTREAM = chr(150)
 BUTTONS  = chr(165) # +1 byte: buttons, virtual press of Roomba buttons
 
@@ -122,7 +122,7 @@ class Roomba500:
     """ the Roomba class is an abstraction of the iRobot Roomba500's
         ROI interface, including communication and a bit
         of processing of the strings passed back and forth
-        
+
         when you create an object of type Roomba, the code
         will try to open a connection to it - so, it will fail
         if it's not attached!
@@ -187,7 +187,7 @@ class Roomba500:
         if topBit == 1:
             doubleBytes = doubleBytes - 1
             return doubleBytes - 0xFFFF
-            
+
         else:
             return doubleBytes & 0x7FFF
 
@@ -385,7 +385,7 @@ class Roomba500:
                           clean
                           max
                           dock
-        """  
+        """
 
 
         if mode == 'safe':
@@ -424,7 +424,7 @@ class Roomba500:
 
         rvHighByte, rvLowByte = self.intInSignedBytes(rightVelocity)
         lvHighByte, lvLowByte = self.intInSignedBytes(leftVelocity)
-        
+
         self.ser.write( DRIVEDIRECT )
         self.ser.write( chr(rvHighByte) )
         self.ser.write( chr(rvLowByte) )
@@ -439,7 +439,7 @@ class Roomba500:
 
         vHighByte, vLowByte = self.intInSignedBytes(velocity)
         rHighByte, rLowByte = self.intInSignedBytes(radius)
-        
+
         self.ser.write( DRIVE )
         self.ser.write( chr(vHighByte) )
         self.ser.write( chr(vLowByte) )
@@ -529,10 +529,10 @@ class Roomba500:
 
         initRight = sens[RIGHT_ENCODER]
         initLeft = sens[LEFT_ENCODER]
-        
+
         codeurRight = 0
         codeurLeft = 0
-    
+
         prev_raw_right_encoder = initRight
         prev_raw_left_encoder = initLeft
 
@@ -555,77 +555,77 @@ class Roomba500:
                 try:
                     valu = send['wakeup']
                     self.wakeup()
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['start']
                     self.start()
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['close']
                     self.close()
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['changeMode']
                     self.changeMode(valu)
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['driveDirect']
                     self.driveDirect(valu[0], valu[1])
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['drive']
                     self.wakeup(valu[0], vale[1])
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['song']
                     self.song(valu[0], valu[1])
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['play']
                     self.play(valu)
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['led']
                     self.led(valu[0], valu[1], valu[2], valu[3], valu[4], valu[5])
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['buttons']
                     self.buttons(valu[0], valu[1], valu[2], valu[3], valu[4], valu[5], valu[6], valu[7])
-                    
+
                 except KeyError:
                     pass
 
                 try:
                     valu = send['resetPosition']
                     self.resetPosition()
-                    
+
                 except KeyError:
                     pass
 
@@ -660,12 +660,12 @@ class Roomba500:
             # distance in mm
 
             angle = (((codeurRight - codeurLeft) / 1024.0) * 79.97155157 * 360) / 258
-            
+
             # 258 is the distance between wheels in mm, 79.97155157 is the diameter of the wheels with a corection in mm
             # angle in degrees
 
             th = math.radians(angle)
-        
+
             self.x = self.x + (distance - prev_distance)*math.cos(th)
             self.y = self.y + (distance - prev_distance)*math.sin(th)
             self.z = self.z + (angle - prev_angle)

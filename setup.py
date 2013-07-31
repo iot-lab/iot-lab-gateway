@@ -98,12 +98,12 @@ class Lint(Command):
         self.outfile = '/dev/null'
 
     def finalize_options(self):
-        self.report_opt = ['--reports=y'] if self.report else ['--report=n']
+        self.report_opt = ['--reports=y'] if self.report else []
 
     def run(self):
         from pylint import lint
         lint_args = self.report_opt
-        lint_args += ['--rcfile=pylint.rc', '-f', 'parseable', 'gateway_code/']
+        lint_args += ['--rcfile=pylint.rc', 'gateway_code/']
 
         with _Tee(self.outfile, 'w'):
             lint.Run(lint_args, exit=False)
@@ -226,7 +226,7 @@ setup(name='gateway_code',
         author='SensLAB Team',
         author_email='admin@senslab.info',
         url='http://www.senslab.info',
-        packages = ['gateway_code'],
+        packages = ['gateway_code', 'roomba'],
         scripts = SCRIPTS,
         data_files = DATA,
 
