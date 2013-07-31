@@ -34,8 +34,9 @@ def board_type():
     """
     if 'board_type' not in _BOARD_CONFIG:
         try:
-            with open(GATEWAY_CONFIG_PATH + 'board_type') as _file:
-                _BOARD_CONFIG['board_type'] = _file.read().strip()
+            _file = open(GATEWAY_CONFIG_PATH + 'board_type')
+            _BOARD_CONFIG['board_type'] = _file.read().strip()
+            _file.close()
         except IOError as err:
             raise StandardError("Could not find board type:\n  '%s'" % err)
 
@@ -48,8 +49,9 @@ def robot_type():
     """
     if 'robot' not in _BOARD_CONFIG:
         try:
-            with open(GATEWAY_CONFIG_PATH + 'robot') as _file:
-                _BOARD_CONFIG['robot'] = _file.read().strip()
+            _file = open(GATEWAY_CONFIG_PATH + 'robot')
+            _BOARD_CONFIG['robot'] = _file.read().strip()
+            _file.close()
         except IOError:
             _BOARD_CONFIG['robot'] = None
 
