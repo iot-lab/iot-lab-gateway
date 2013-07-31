@@ -140,8 +140,8 @@ class Tests(Command):
 
         try:
             subprocess.check_call(args + ['nosetests', '--cover-html'])
-            subprocess.call(args + ['lint'])
-            subprocess.call(args + ['pep8'])
+            subprocess.call(args + ['lint', '-o', 'pylint.out'])
+            subprocess.call(args + ['pep8', '-o', 'pep8.out'])
         except CalledProcessError:
             exit(1)
 
