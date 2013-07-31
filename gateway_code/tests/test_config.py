@@ -18,9 +18,7 @@ class TestsBoardAndRobotType(unittest.TestCase):
         self.open_mock_patcher = mock.patch('gateway_code.config.open', create=True)
 
         self.open_mock = self.open_mock_patcher.start()
-        self.open_mock.return_value = mock.Mock()
-        self.open_mock.return_value.__enter__ = mock.Mock(return_value=self.string_io)
-        self.open_mock.return_value.__exit__ = mock.Mock(return_value=None)
+        self.open_mock.return_value = self.string_io
 
     def tearDown(self):
         self.open_mock_patcher.stop()
