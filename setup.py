@@ -139,9 +139,9 @@ class Tests(Command):
         args = ['python', 'setup.py']
 
         try:
-            ret = subprocess.check_call(args + ['nosetests', '--cover-html'])
-            ret = subprocess.check_call(args + ['lint'])
-            ret = subprocess.check_call(args + ['pep8'])
+            subprocess.check_call(args + ['nosetests', '--cover-html'])
+            subprocess.call(args + ['lint'])
+            subprocess.call(args + ['pep8'])
         except CalledProcessError:
             exit(1)
 
@@ -204,17 +204,15 @@ class IntegrationTests(Command):
 
 
         try:
-            ret = subprocess.check_call(args + ['build_cn_serial'])
+            subprocess.check_call(args + ['build_cn_serial'])
 
             preexec_fn, env = self.popen_as_user('www-data')
             env['PATH'] = './control_node_serial/:%s' % env['PATH']
 
-            ret = subprocess.check_call(args +
-                                        ['nosetests', '-i=*integration/*'],
-                                        preexec_fn=preexec_fn, env=env)
-            ret = subprocess.check_call(args + ['lint', '--report',
-                                                '-o', 'pylint.out'])
-            ret = subprocess.check_call(args + ['pep8', '-o', 'pep8.out'])
+            subprocess.check_call(args + ['nosetests', '-i=*integration/*'],
+                                  preexec_fn=preexec_fn, env=env)
+            subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
+            subprocess.call(args + ['pep8', '-o', 'pep8.out'])
         except CalledProcessError:
             exit(1)
 
