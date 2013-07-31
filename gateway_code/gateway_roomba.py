@@ -6,13 +6,13 @@ Interface with roomba robot directly controled by the gateway
 Manage the robot start/stop experiment, robot behavior and status
 """
 
-import roomba
+from roomba import roomba
 import logging
 import time
 import threading
 
 # Robot status enumeration
-STATUS = {'error': -1, 'closed': 0 , 'init': 1 , 'docked': 2 , 
+STATUS = {'error': -1, 'closed': 0 , 'init': 1 , 'docked': 2 ,
           'moving': 3 , 'paused': 4 , 'searching_dock': 4 }
 ENERGY = {'charged': 0, 'discharged': 1}
 # Parameters
@@ -44,7 +44,7 @@ class GatewayRoomba(object):
         """
         Init the Roomba communication
         """
-        
+
         st_return = 0
         self.status = 'init'
         LOGGER.debug('Init Roomba communication')
@@ -56,9 +56,9 @@ class GatewayRoomba(object):
             LOGGER.error('Roomba connection failed')
         else:
             # create two thread : to manage communication and to watch sensors & safety
-            self.watch_thread = threading.Thread(target=self._watch_roomba) 
+            self.watch_thread = threading.Thread(target=self._watch_roomba)
             self.robot.serial_run = True
-            self.serial_thread = threading.Thread(target = self.robot.interfaceSerial) 
+            self.serial_thread = threading.Thread(target = self.robot.interfaceSerial)
             self.serial_thread.start()
             # wait to establish communication
             time.sleep(1)
@@ -78,16 +78,16 @@ class GatewayRoomba(object):
         self.watch_thread.join()
         time.sleep(1)
         self.robot.serial_run = False
-        self.serial_thread.join()   
+        self.serial_thread.join()
         # close serial port and shutdown the Roomba
-        self.robot.close()   
+        self.robot.close()
         return 0
 
     def start(self):
         """
-        Start experiment with Roomba 
+        Start experiment with Roomba
         """
-       
+
         st_return = 0
         if STATUS[self.status] < 1 :
             st_return = 1
@@ -101,11 +101,11 @@ class GatewayRoomba(object):
 
     def stop(self):
         """
-        Stop experiment with Roomba 
+        Stop experiment with Roomba
         """
 
-        st_return = 0 
-        
+        st_return = 0
+
         if STATUS[self.status] < 1 :
             st_return = 1
             LOGGER.error('Stop experiment failed')
@@ -121,7 +121,7 @@ class GatewayRoomba(object):
 
     def get_status(self):
         """
-        Get the status of  Roomba 
+        Get the status of  Roomba
         """
 
         return self.status
@@ -134,12 +134,12 @@ class GatewayRoomba(object):
         if STATUS[self.status] < 1 :
             LOGGER.error('Get battery failed')
             self.battery = -1
-            
+
         return self.battery
 
     def get_position(self):
         """
-        Get the x,y,theta position of Roomba 
+        Get the x,y,theta position of Roomba
         """
 
         if STATUS[self.status] < 1 :
@@ -161,7 +161,7 @@ class GatewayRoomba(object):
         if self.status == 'moving':
             st_return = 1
             LOGGER.debug('Motion pause')
-            self.robot.qsend.put({'changeMode': 'safe'})           
+            self.robot.qsend.put({'changeMode': 'safe'})
             self.status = 'paused'
         else :
             st_return = 1
@@ -178,7 +178,7 @@ class GatewayRoomba(object):
         if self.status == 'paused':
             st_return = 1
             LOGGER.debug('Motion continue')
-            self.robot.qsend.put({'changeMode': 'clean'})           
+            self.robot.qsend.put({'changeMode': 'clean'})
             self.status = 'moving'
         else :
             st_return = 1
@@ -209,19 +209,19 @@ class GatewayRoomba(object):
         """
 
         while self.watch_run == True :
-            self.sensor_list = self.robot.q.get() 
+            self.sensor_list = self.robot.q.get()
 
             # Stop directly Roomba if there is an error
-            if self.status == 'error' : 
-                self.robot.qsend.put({'changeMode': 'safe'})  
-                LOGGER.error('Roomba Emergency Stop')    
+            if self.status == 'error' :
+                self.robot.qsend.put({'changeMode': 'safe'})
+                LOGGER.error('Roomba Emergency Stop')
 
-            if STATUS[self.status] > 1 : 
+            if STATUS[self.status] > 1 :
                 # Robot docking detection
                 if (self.sensor_list[roomba.HOME_BASE] == 1) and (self.status != 'docked') and (self.status != 'moving'):
                     self.status = 'docked'
                     self.robot.resetPosition()
-                    LOGGER.debug('Docked') 
+                    LOGGER.debug('Docked')
                 # Motors overcurrent detection
                 if (self.sensor_list[roomba.LEFT_WHEEL_OVERCURRENT]) or (self.sensor_list[roomba.RIGHT_WHEEL_OVERCURRENT]):
                     LOGGER.error("MOTORS OVERCURRENT")
@@ -241,23 +241,23 @@ class GatewayRoomba(object):
                     LOGGER.debug('ROOMBA POS %f %f %f', posx, posy, theta)
 
 
-                time.sleep(1) 
-        
-        
+                time.sleep(1)
+
+
         return 0
 
-    
+
 def test1():
     """
     Roomba start and stop
     """
 
     print "Begin Roomba TEST 1"
-    robot = GatewayRoomba() 
+    robot = GatewayRoomba()
     print "Roomba Start, status=", robot.get_status()
-    time.sleep(2) 
+    time.sleep(2)
     robot.start()
-    time.sleep(10) 
+    time.sleep(10)
     print "Roomba Pause, status=", robot.get_status()
     robot.motion_pause()
     time.sleep(3)
@@ -277,7 +277,7 @@ def test1():
 
 if __name__ == "__main__":
 
-    import gateway_logging
+    from gateway_code import gateway_logging
     gateway_logging.init_logger(".")
 
     test1()
