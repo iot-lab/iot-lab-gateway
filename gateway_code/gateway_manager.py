@@ -49,8 +49,8 @@ class GatewayManager(object):
         # Init cleanup, logger and board type
         atexit.register(self.exp_stop)
         gateway_code.gateway_logging.init_logger(log_folder)
-        self.board_type = GatewayManager.get_board_type()
-        self.robot = GatewayManager.get_robot_type()
+        self.board_type = config.board_type()
+        self.robot = config.robot_type()
 
         # Setup control node
         ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
@@ -314,31 +314,5 @@ class GatewayManager(object):
         with open(config.STATIC_FILES_PATH + 'default_profile.json') as _prof:
             profile_dict = json.load(_prof)
             def_profile = gateway_code.profile.profile_from_dict(
-                profile_dict, GatewayManager.get_board_type())
+                profile_dict, config.board_type())
         return def_profile
-
-    @classmethod
-    def get_board_type(cls):
-        """
-        Return the board type 'M3' or 'A8'
-        """
-        if cls.board_type is None:
-            try:
-                with open(config.GATEWAY_CONFIG_PATH + 'board_type') as _file:
-                    cls.board_type = _file.read().strip()
-            except IOError as err:  # pragma: no cover
-                raise StandardError("Could not find board type:\n  '%s'" % err)
-        return cls.board_type
-
-    @classmethod
-    def get_robot_type(cls):
-        """
-        Return robot type False, 'roomba', 'trajectory', 'smart'
-        """
-        if cls.robot is None:
-            try:
-                with open(config.GATEWAY_CONFIG_PATH + 'robot') as _file:
-                    cls.robot = _file.read().strip()
-            except IOError:  # pragma: no cover
-                cls.robot = False
-        return cls.robot

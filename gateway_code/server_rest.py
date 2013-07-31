@@ -11,6 +11,7 @@ import json
 
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code.profile import profile_from_dict
+from gateway_code import config
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -24,7 +25,7 @@ class GatewayRest(object):
     """
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
-        self.board_type = GatewayManager.get_board_type()
+        self.board_type = config.board_type()
 
     def exp_start(self, expid, username):
         """

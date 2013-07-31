@@ -24,3 +24,33 @@ NODES_CFG = {
 NODES = NODES_CFG.keys()
 
 CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
+
+_BOARD_CONFIG = {}
+
+
+def board_type():
+    """
+    Return the board type 'M3' or 'A8'
+    """
+    if 'board_type' not in _BOARD_CONFIG:
+        try:
+            with open(GATEWAY_CONFIG_PATH + 'board_type') as _file:
+                _BOARD_CONFIG['board_type'] = _file.read().strip()
+        except IOError as err:  # pragma: no cover
+            raise StandardError("Could not find board type:\n  '%s'" % err)
+
+    return _BOARD_CONFIG['board_type']
+
+
+def robot_type():
+    """
+    Return robot type None, 'roomba'
+    """
+    if 'robot' not in _BOARD_CONFIG:
+        try:
+            with open(GATEWAY_CONFIG_PATH + 'robot') as _file:
+                _BOARD_CONFIG['robot'] = _file.read().strip()
+        except IOError:  # pragma: no cover
+            _BOARD_CONFIG['robot'] = None
+
+    return _BOARD_CONFIG['robot']
