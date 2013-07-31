@@ -36,7 +36,7 @@ def board_type():
         try:
             with open(GATEWAY_CONFIG_PATH + 'board_type') as _file:
                 _BOARD_CONFIG['board_type'] = _file.read().strip()
-        except IOError as err:  # pragma: no cover
+        except IOError as err:
             raise StandardError("Could not find board type:\n  '%s'" % err)
 
     return _BOARD_CONFIG['board_type']
@@ -50,7 +50,7 @@ def robot_type():
         try:
             with open(GATEWAY_CONFIG_PATH + 'robot') as _file:
                 _BOARD_CONFIG['robot'] = _file.read().strip()
-        except IOError:  # pragma: no cover
+        except IOError:
             _BOARD_CONFIG['robot'] = None
 
     return _BOARD_CONFIG['robot']
