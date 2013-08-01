@@ -1,10 +1,10 @@
 #! /bin/bash -x
 
-WORKSPACE="$1"
+WORKSPACE=$(pwd)
 
 pip install --quiet pylint
 
-BRAIN=$(readlink -e "${WORKSPACE}/pylint-brain")
+BRAIN=$(readlink -e "${WORKSPACE}")/pylint-brain
 if [ ! -d "$BRAIN" ]; then
     hg clone https://bitbucket.org/logilab/pylint-brain "$BRAIN"
 fi
