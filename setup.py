@@ -53,7 +53,7 @@ def build_c_executable():
     saved_path = os.getcwd()
     os.chdir('control_node_serial')
     try:
-        check_call(['make', 'realclean', 'all'])
+        subprocess.check_call(['make', 'realclean', 'all'])
     except subprocess.CalledProcessError:
         exit(1)
     os.chdir(saved_path)
@@ -68,7 +68,7 @@ def setup_permissions():
     print "changing mode of %s to %d" % (init_script_path, mode)
 
     usermod_args = ['usermod', '-G', 'dialout', 'www-data']
-    check_call(usermod_args)
+    subprocess.check_call(usermod_args)
 
 
 
