@@ -5,7 +5,8 @@ from setuptools import setup, Command
 from setuptools.command.install import install
 
 import os
-from subprocess import Popen, check_call, CalledProcessError
+import re
+import subprocess
 
 from gateway_code import config
 
@@ -53,7 +54,7 @@ def build_c_executable():
     os.chdir('control_node_serial')
     try:
         check_call(['make', 'realclean', 'all'])
-    except CalledProcessError:
+    except subprocess.CalledProcessError:
         exit(1)
     os.chdir(saved_path)
 
@@ -125,6 +126,18 @@ class Pep8(Command):
         with _Tee(self.outfile, 'w'):
             pep8._main()
 
+def _add_path_to_coverage_xml():
+    current_folder = os.path.abspath('.')
+    base_folder = os.path.abspath('../..') + '/'
+
+    add_path = re.sub(base_folder, '', current_folder)
+    match_path = os.path.basename(add_path)
+
+    args = ['sed', '-i']
+    args += ['/%s/ !s#filename="#&%s/#' % (match_path, add_path)]
+    args += ['coverage.xml']
+
+    subprocess.check_call(args)
 
 class Tests(Command):
     user_options = []
@@ -135,15 +148,25 @@ class Tests(Command):
         pass
 
     def run(self):
-        import subprocess, sys
         args = ['python', 'setup.py']
 
         try:
             subprocess.check_call(args + ['nosetests', '--cover-html'])
+            _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
         except CalledProcessError:
             exit(1)
+
+
+
+def add_path_to_coverage_xml():
+    from os import path
+    os.path.abspath()
+
+    os.getcwd()
+
+
 
 
 
@@ -197,7 +220,6 @@ class IntegrationTests(Command):
 
 
     def run(self):
-        import subprocess, sys
         args = ['python', 'setup.py']
 
         self.cleanup_workspace()
@@ -211,9 +233,10 @@ class IntegrationTests(Command):
 
             subprocess.check_call(args + ['nosetests', '-i=*integration/*'],
                                   preexec_fn=preexec_fn, env=env)
+            _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
-        except CalledProcessError:
+        except subprocess.CalledProcessError:
             exit(1)
 
 
