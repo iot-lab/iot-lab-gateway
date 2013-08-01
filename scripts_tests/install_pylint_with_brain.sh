@@ -1,5 +1,7 @@
 #! /bin/bash -x
 
+set -ex
+
 WORKSPACE=$(pwd)
 
 pip install --quiet pylint
