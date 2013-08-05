@@ -177,6 +177,12 @@ class TestComplexExperimentRunning(unittest.TestCase):
             ret = self.app.exp_stop()
             self.assertEquals(ret, {'ret':0})
 
+            # flash firmware should fail
+            self._rewind_files()
+            self.request.files = {'firmware': self.files['echo']}
+            ret = self.app.open_flash()
+            self.assertNotEquals(ret, {'ret':0})
+
 
     def tests_invalid_calls(self):
         """
