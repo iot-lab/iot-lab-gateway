@@ -164,7 +164,6 @@ class GatewayManager(object):
             d) Shutdown open node (DC)
         3) Cleanup control node interraction
             a) Stop control node serial communication
-            b) Reset control node (just in case)
         4) Cleanup Manager state
         5) Experiment Stopped
 
@@ -208,8 +207,6 @@ class GatewayManager(object):
         # # # # # # # # # # # # # # # # # # #
 
         self.cn_serial.stop()
-        ret = self.node_soft_reset('gwt')
-        ret_val += ret
 
         # Reset configuration
         self.user = None
