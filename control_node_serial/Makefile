@@ -36,6 +36,8 @@ run: all
 	./$(TARGET)
 test: all
 	make -C tests --no-print-directory run
+coverage: all
+	make -C tests --no-print-directory coverage
 
 $(TARGET): $(OBJS)
 	$(call quiet-cmd, $(CC) -o $@ $(LDFLAGS) $^,   "  LD      $@")
