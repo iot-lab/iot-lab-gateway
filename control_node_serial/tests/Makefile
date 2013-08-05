@@ -37,7 +37,8 @@ empty_test.c: $(wildcard $(SRCDIR)/*.c) $(SRCS)
 		>> $@
 
 
-run: all $(TEST_RESULTS) $(RESULTDIR)/c_code_coverage.xml
+run: all $(TEST_RESULTS)
+coverage: run  $(RESULTDIR)/c_code_coverage.xml
 
 
 $(RESULTDIR)/c_code_coverage.xml: $(TEST_RESULTS)
