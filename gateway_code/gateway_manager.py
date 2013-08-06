@@ -45,6 +45,7 @@ class GatewayManager(object):
         self.user = None
         self.experiment_is_running = False
         self.profile = None
+        self.open_node_state = "stop"
 
         # Init cleanup, logger and board type
         atexit.register(self.exp_stop)
@@ -225,7 +226,8 @@ class GatewayManager(object):
         LOGGER.debug('Update profile')
 
         ret = 0
-        ret += self.open_power_start(power=self.profile.power)
+        ret += self.protocol.start_stop(self.open_node_state,
+                                        self.profile.power)
         ret += self.protocol.config_consumption(self.profile.consumption)
         # Radio
 
@@ -256,6 +258,8 @@ class GatewayManager(object):
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power start failed')
+        else:
+            self.open_node_state = "start"
         return ret
 
     def open_power_stop(self, power=None):
@@ -269,6 +273,8 @@ class GatewayManager(object):
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power stop failed')
+        else:
+            self.open_node_state = "stop"
         return ret
 
     @staticmethod
