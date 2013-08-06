@@ -3,7 +3,6 @@
     "power": "dc",
 
     "consumption": {
-        "source" : "3.3V",
 
         "current": true,
         "voltage": true,

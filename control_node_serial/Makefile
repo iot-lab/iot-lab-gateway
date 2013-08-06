@@ -5,6 +5,7 @@ CC         = gcc
 # VERB = 1
 quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
 
+WARNINGS  += -Werror
 WARNINGS  += -Wall -Wextra
 WARNINGS  += -Wpointer-arith -Wbad-function-cast
 WARNINGS  += -Wcast-align -Waggregate-return -Wmissing-prototypes
@@ -35,6 +36,8 @@ run: all
 	./$(TARGET)
 test: all
 	make -C tests --no-print-directory run
+coverage: all
+	make -C tests --no-print-directory coverage
 
 $(TARGET): $(OBJS)
 	$(call quiet-cmd, $(CC) -o $@ $(LDFLAGS) $^,   "  LD      $@")
@@ -48,10 +51,11 @@ $(OBJDIR):
 
 
 clean:
-	rm -rf $(OBJS) $(DEPS)
+	rm -rf $(OBJDIR)/*
 	make -C tests --no-print-directory clean
 realclean: clean
 	rm -rf $(TARGET)
+	rm -rf $(OBJDIR)
 	make -C tests --no-print-directory realclean
 -include $(DEPS)
 

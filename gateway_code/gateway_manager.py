@@ -6,10 +6,10 @@
 manager script
 """
 
-import gateway_code.profile
 from gateway_code import config
-from gateway_code import flash_firmware, reset
+from gateway_code import openocd_cmd
 from gateway_code.serial_redirection import SerialRedirection
+from gateway_code.profile import Profile
 
 from gateway_code import control_node_interface, protocol_cn
 
@@ -23,53 +23,49 @@ import atexit
 LOGGER = logging.getLogger('gateway_code')
 
 CONTROL_NODE_FIRMWARE = config.STATIC_FILES_PATH + 'control_node.elf'
-IDLE_FIRMWARE         = config.STATIC_FILES_PATH + 'idle.elf'
+IDLE_FIRMWARE = config.STATIC_FILES_PATH + 'idle.elf'
+
 
 # Disable: I0011 - 'locally disabling warning'
 # too many instance attributes
-# pylint:disable=I0011,R0902
+# pylint:disable =I0011,R0902
 class GatewayManager(object):
     """
     Gateway Manager class,
 
     Manages experiments, open node and control node
     """
+    board_type = None
+    robot = None
 
     def __init__(self, log_folder='.'):
 
         # current experiment infos
-        self.exp_id                = None
-        self.user                  = None
+        self.exp_id = None
+        self.user = None
         self.experiment_is_running = False
+        self.profile = None
+        self.open_node_state = "stop"
 
-        self.profile       = None
-        self.time_reference        = None
+        # Init cleanup, logger and board type
+        atexit.register(self.exp_stop)
+        gateway_code.gateway_logging.init_logger(log_folder)
+        self.board_type = config.board_type()
+        self.robot = config.robot_type()
 
-        self.open_node_started     = False
-
+        # Setup control node
         ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
-        if ret != 0: # pragma: no cover
-            raise StandardError("Control node flash failed: {ret:%d, '%s')" % \
-                    (ret, CONTROL_NODE_FIRMWARE))
+        if ret != 0:  # pragma: no cover
+            raise StandardError("Control node flash failed: {ret:%d, '%s')",
+                                ret, CONTROL_NODE_FIRMWARE)
+        self.cn_serial = control_node_interface.ControlNodeSerial()
+        self.protocol = protocol_cn.Protocol(self.cn_serial.send_command)
 
         # open node interraction
-        self.serial_redirection = SerialRedirection('m3', \
-                error_handler = self.cb_serial_redirection_error,
-                handler_arg = self)
+        self.serial_redirection = SerialRedirection('m3')
 
-        # setup control node communication
-        self.cn_serial = control_node_interface.ControlNodeSerial()
-        self.protocol  = protocol_cn.Protocol(self.cn_serial.send_command)
-
-        # configure logger
-        gateway_code.gateway_logging.init_logger(log_folder)
-
-        atexit.register(self.exp_stop)
-
-
-
-    def exp_start(self, exp_id, user, \
-            firmware_path=None, profile=None):
+    def exp_start(self, exp_id, user,
+                  firmware_path=None, profile=None):
         """
         Start an experiment
 
@@ -87,141 +83,125 @@ class GatewayManager(object):
             a) Reset control node
             b) Start control node serial communication
             c) Start measures handler (OML thread)
-        2) Prepare Open node
+        2) Prepare Control node
             a) Start Open Node DC (stopped before)
-            b) Flash open node (flash when started DC)
-        3) Prepare Control node
-            a) Reset time control node, and update time reference
-            b) Configure profile
-        4) Finish Open node
-            a) Start open node serial redirection
-            d) Start GDB server
-            c) Final reset of open node
-        5) Experiment Started
+            b) Reset time control node, and update time reference
+            c) Configure profile
+        3) Prepare Open node
+            a) Flash open node
+            b) Start open node serial redirection
+            c) Start GDB server
+        4) Experiment Started
 
         """
 
         if self.experiment_is_running:
             LOGGER.warning('Experiment already running')
             return 1
-
         self.experiment_is_running = True
 
-        self.exp_id                = exp_id
-        self.user                  = user
-
-        # default values
-        firmware_path              = firmware_path or IDLE_FIRMWARE
-        self.profile               = profile \
-                if profile is not None else self.default_profile()
-
+        self.exp_id = exp_id
+        self.user = user
+        self.profile = profile or self.default_profile()
+        firmware_path = firmware_path or IDLE_FIRMWARE
 
         ret_val = 0
-
         # start steps described in docstring
 
         # # # # # # # # # #
         # Prepare Gateway #
         # # # # # # # # # #
 
-        ret      = self.node_soft_reset('gwt')
+        ret = self.node_soft_reset('gwt')
         ret_val += ret
-        self.cn_serial.start() # ret ?
-
-        time.sleep(1) # wait control node Ready, reajust time later
-
-        # # # # # # # # # # #
-        # Prepare Open Node #
-        # # # # # # # # # # #
-
-        ret      = self.open_power_start(power='dc')
-        ret_val += ret
-        ret      = self.node_flash('m3', firmware_path)
-        ret_val += ret
+        self.cn_serial.start()  # ret ?
+        time.sleep(1)  # wait control node Ready, reajust time later
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #
         # # # # # # # # # # # # #
 
-        ret      = self.reset_time()
+        ret = self.open_power_start(power='dc')
         ret_val += ret
-        ret      = self.exp_update_profile()
+        ret = self.reset_time()
+        ret_val += ret
+        ret = self.exp_update_profile()
         ret_val += ret
 
         # # # # # # # # # # #
-        # Finish Open Node  #
+        # Prepare Open Node #
         # # # # # # # # # # #
 
-        ret      = self.serial_redirection.start()
-        ret_val += ret
-        # start the gdb server
-        ret      = self.node_soft_reset('m3')
-        ret_val += ret
+        if self.board_type == 'M3':
+            ret = self.node_flash('m3', firmware_path)
+            ret_val += ret
+            ret = self.serial_redirection.start()
+            ret_val += ret
+            # ret = self.gdb_server.start()
+            # ret_val += ret
+        else:  # pragma: no cover
+            raise NotImplementedError('Board type not managed')
 
+        if self.robot == 'roomba':
+            LOGGER.info("I'm a roomba")
+            LOGGER.info("Running Start Roomba")
 
         return ret_val
-
 
     def exp_stop(self):
         """
         Stop the current running experiment
 
-
-
         Experiment stop steps
-        ======================
+        =====================
 
-        1) Remove open node access
-            a) Stop GDB server
-            b) Stop open node serial redirection
-
-        2) Cleanup Control node config and open node
+        1) Cleanup Control node config
             a) Stop measures Control Node, Configure profile == None
             b) Start Open Node DC (may be running on battery)
-            b) Flash Idle open node (when DC)
-            c) Shutdown open node (DC)
-
+        2) Cleanup open node
+            a) Stop GDB server
+            b) Stop open node serial redirection
+            c) Flash Idle open node (when DC)
+            d) Shutdown open node (DC)
         3) Cleanup control node interraction
             a) Stop control node serial communication
-            b) Stop measures handler (OML thread)
-            c) Reset control node (just in case)
-
-        4) Cleanup experiment informations
-            a) remove current user
-            b) remove expid
-            c) Remove current profile
-            d) Remove time reference
-            e) 'Experiment running' = False
+        4) Cleanup Manager state
+        5) Experiment Stopped
 
         """
         if not self.experiment_is_running:
             ret = 1
             LOGGER.warning('No experiment running')
             return ret
-
         ret_val = 0
 
-        # # # # # # # # # # # # # #
-        # Remove open node access #
-        # # # # # # # # # # # # # #
+        # # # # # # # # # # # # # # # #
+        # Cleanup Control node config #
+        # # # # # # # # # # # # # # # #
 
-        # stop gdb server
-        ret      = self.serial_redirection.stop()
+        ret = self.exp_update_profile(self.default_profile())
         ret_val += ret
-
-        # # # # # # # # # # # # # # # # # # # # # # #
-        # Cleanup Control node config and open node #
-        # # # # # # # # # # # # # # # # # # # # # # #
-
-        ret      = self.exp_update_profile(self.default_profile())
-        ret_val += ret
-        ret      = self.open_power_start(power='dc')
-        ret_val += ret
-        ret      = self.node_flash('m3', IDLE_FIRMWARE)
-        ret_val += ret
-        ret      = self.open_power_stop(power='dc')
+        ret = self.open_power_start(power='dc')
         ret_val += ret
 
+        if self.robot == 'roomba':
+            LOGGER.info("I'm a roomba")
+            LOGGER.info("Running stop Roomba")
+
+        # # # # # # # # # # #
+        # Cleanup open node #
+        # # # # # # # # # # #
+        if self.board_type == 'M3':
+            # ret = self.gdb_server.stop()
+            # ret_val += ret
+            ret = self.serial_redirection.stop()
+            ret_val += ret
+            ret = self.node_flash('m3', IDLE_FIRMWARE)
+            ret_val += ret
+            ret = self.open_power_stop(power='dc')
+            ret_val += ret
+        else:  # pragma: no cover
+            raise NotImplementedError('Board type not managed')
 
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
@@ -229,47 +209,31 @@ class GatewayManager(object):
 
         self.cn_serial.stop()
 
-        ret      = self.node_soft_reset('gwt')
-        ret_val += ret
-
-        self.user                  = None
-        self.exp_id                = None
-        self.profile               = None
-        self.time_reference        = None
-
+        # Reset configuration
+        self.user = None
+        self.exp_id = None
+        self.profile = None
         self.experiment_is_running = False
 
         return ret_val
-
-
-    @staticmethod
-    def cb_serial_redirection_error(handler_arg, error_code): # pragma: no cover
-        """ Callback for SerialRedirection error handler """
-        LOGGER.error('Serial Redirection process failed "socat: ret == %d"', \
-                error_code)
-        time.sleep(0.5) # prevent quick loop
 
     def exp_update_profile(self, profile=None):
         """
         Update the control node profile
         """
-
-        LOGGER.debug('Update profile')
-        ret = 0
-
         if profile is not None:
             self.profile = profile
+        LOGGER.debug('Update profile')
 
-        ret += self.open_power_start(power=self.profile.power)
-
-        ret += self.protocol.config_consumption(
-                self.profile.consumption)
+        ret = 0
+        ret += self.protocol.start_stop(self.open_node_state,
+                                        self.profile.power)
+        ret += self.protocol.config_consumption(self.profile.consumption)
         # Radio
 
-        if ret != 0: # pragma: no cover
+        if ret != 0:  # pragma: no cover
             LOGGER.error('Profile update failed')
         return ret
-
 
     def reset_time(self):
         """
@@ -279,10 +243,9 @@ class GatewayManager(object):
         """
         LOGGER.debug('Reset control node time')
         ret = self.protocol.reset_time()
-        if ret != 0:
+        if ret != 0:  # pragma: no cover
             LOGGER.error('Reset time failed')
         return ret
-
 
     def open_power_start(self, power=None):
         """ Power on the open node """
@@ -293,32 +256,26 @@ class GatewayManager(object):
 
         ret = self.protocol.start_stop('start', power)
 
-        if ret == 0:
-            self.open_node_started = True
-        else: # pragma: no cover
+        if ret != 0:  # pragma: no cover
             LOGGER.error('Open power start failed')
+        else:
+            self.open_node_state = "start"
         return ret
-
-
 
     def open_power_stop(self, power=None):
         """ Power off the open node """
         LOGGER.debug('Open power stop')
-        ret = 0
-
         if power is None:
             assert self.profile is not None
             power = self.profile.power
 
         ret = self.protocol.start_stop('stop', power)
 
-        if ret == 0:
-            self.open_node_started = False
-        else: # pragma: no cover
+        if ret != 0:  # pragma: no cover
             LOGGER.error('Open power stop failed')
+        else:
+            self.open_node_state = "stop"
         return ret
-
-
 
     @staticmethod
     def node_soft_reset(node):
@@ -329,13 +286,12 @@ class GatewayManager(object):
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.debug('Node %s reset', node)
 
-        ret, _out, _err = reset.reset(node)
+        ret, _out = openocd_cmd.reset(node)
 
-        if ret != 0: # pragma: no cover
+        if ret != 0:  # pragma: no cover
             LOGGER.error('Node %s reset failed: %d', node, ret)
 
         return ret
-
 
     @staticmethod
     def node_flash(node, firmware_path):
@@ -346,9 +302,9 @@ class GatewayManager(object):
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.debug('Flash firmware on %s: %s', node, firmware_path)
 
-        ret, _out, _err = flash_firmware.flash(node, firmware_path)
+        ret, _out = openocd_cmd.flash(node, firmware_path)
 
-        if ret != 0: # pragma: no cover
+        if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
 
@@ -360,6 +316,5 @@ class GatewayManager(object):
         import json
         with open(config.STATIC_FILES_PATH + 'default_profile.json') as _prof:
             profile_dict = json.load(_prof)
-            def_profile = gateway_code.profile.profile_from_dict(profile_dict)
+            def_profile = Profile(profile_dict, config.board_type())
         return def_profile
-

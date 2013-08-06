@@ -1,3 +1,6 @@
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif // _BSD_SOURCE
 // getline (for glibc > 2.10)
 #define _POSIX_C_SOURCE  200809L
 
@@ -13,7 +16,6 @@
 
 #include "command_reader.h"
 #include "constants.h"
-#include "time_update.h"
 #include "utils.h"
 
 
@@ -94,16 +96,17 @@ static void *read_commands(void *attr);
 
 static struct state {
         int       serial_fd;
+        pthread_t reader_thread;
 } reader_state;
 
 
 int command_reader_start(int serial_fd)
 {
         int ret;
-        pthread_t reader_thread;
 
         reader_state.serial_fd = serial_fd;
-        ret = pthread_create(&reader_thread, NULL, read_commands, &reader_state);
+        ret = pthread_create(&reader_state.reader_thread, NULL, read_commands,
+                        &reader_state);
         return ret;
 }
 
@@ -132,7 +135,6 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         if (strcmp(command, "reset_time") == 0) {
                 frame_type = RESET_TIME;
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
-                gettimeofday(&new_time_ref, NULL); // update time reference
 
         } else if (strcmp(command, "start") == 0) {
                 frame_type = OPEN_NODE_START;
@@ -176,19 +178,19 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "p");
                         arg = strtok(NULL, " ");
-                        if (atoi(arg))
+                        if (atoi(arg)) // != 0 (== 1 actually)
                                 cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_POWER;
                         // Voltage
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "v");
                         arg = strtok(NULL, " ");
-                        if (atoi(arg))
+                        if (atoi(arg)) // != 0 (== 1 actually)
                                 cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_VOLTAGE;
                         // Current
                         arg = strtok(NULL, " ");
                         got_error |= strcmp(arg, "c");
                         arg = strtok(NULL, " ");
-                        if (atoi(arg))
+                        if (atoi(arg)) // != 0 (== 1 actually)
                                 cmd_buff->u.s.payload[cmd_buff->u.s.len] |= MEASURE_CURRENT;
 
                         cmd_buff->u.s.len++;
@@ -235,8 +237,6 @@ int write_answer(unsigned char *data, size_t len)
         if (len != 2)
                 return -1;
 
-
-        // errors
         uint8_t type = data[0];
         int got_error;
         char *cmd = NULL;
@@ -246,25 +246,22 @@ int write_answer(unsigned char *data, size_t len)
                 DEBUG_PRINT("error frame\n");
                 int error_code;
                 // handle error frame
-                got_error |= get_key(type, alim_d, &cmd);
+                got_error |= get_key(type, answers_d, &cmd);
                 error_code = (int) ((char) data[1]); // sign extend
-                if (got_error) {
-                        return -3;
-                }
-                fprintf(MSG_OUT, "%s %d\n", cmd, error_code);
+                PRINT_MSG("%s %d\n", cmd, error_code);
         } else if ((type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
                 DEBUG_PRINT("ERROR measure frame\n");
                 return -2; // Measure packet should not be here
         } else {
                 DEBUG_PRINT("Commands ACKS\n");
                 char *arg;
-                got_error |= get_key(data[0], answers_d, &cmd);
+                got_error |= get_key(type, answers_d, &cmd);
                 got_error |= get_key(data[1], ack_d, &arg);
                 // CMDs acks
                 if (got_error) {
                         return -3;
                 }
-                fprintf(MSG_OUT, "%s %s\n", cmd, arg);
+                PRINT_MSG("%s %s\n", cmd, arg);
         }
 
 
@@ -275,11 +272,10 @@ int write_answer(unsigned char *data, size_t len)
 static void *read_commands(void *attr)
 {
         struct state *reader_state = (struct state *) attr;
-        (void) reader_state;
 
         struct command_buffer cmd_buff;
         size_t buff_size = 2048;
-        char *line_buff  = malloc(buff_size);
+        char *line_buff  = (char *)malloc(buff_size);
         int ret;
 
         int n;
@@ -292,10 +288,7 @@ static void *read_commands(void *attr)
                         DEBUG_PRINT("Error parsing\n");
                 } else {
                         DEBUG_PRINT("    ");
-                        for (int i=0; i < 2 + cmd_buff.u.s.len; i++) {
-                                DEBUG_PRINT(" %02X", cmd_buff.u.pkt[i]);
-                        }
-
+                        DEBUG_PRINT_PACKET(cmd_buff.u.pkt, cmd_buff.u.s.len);
                         ret = write(reader_state->serial_fd, cmd_buff.u.pkt, cmd_buff.u.s.len + 2);
                         DEBUG_PRINT("    write ret: %i\n", ret);
                 }

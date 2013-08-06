@@ -2,7 +2,7 @@
 #include "utils.c"
 
 
-/* Mock EXTERNAL dependency functions 
+/* Mock EXTERNAL dependency functions
  * with function definition
  * */
 

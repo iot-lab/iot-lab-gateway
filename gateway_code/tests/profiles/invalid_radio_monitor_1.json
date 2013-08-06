@@ -1,0 +1,10 @@
+{
+    "profilename": "radio_monitor_1",
+    "power": "dc",
+
+    "radio": {
+        "channel" : 11,
+        "mode" : "measure",
+        "freq" : 2
+    }
+}
