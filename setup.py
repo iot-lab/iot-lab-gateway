@@ -155,7 +155,7 @@ class Tests(Command):
             _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
-        except CalledProcessError:
+        except subprocess.CalledProcessError:
             exit(1)
 
 

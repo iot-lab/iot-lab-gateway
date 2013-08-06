@@ -28,7 +28,8 @@ class TestProtocol(unittest.TestCase):
         self.sender.return_value = ['config_consumption_measure', 'ACK']
 
         # with full consumption
-        consumption = profile.Consumption(source='3.3V',
+        consumption = profile.Consumption(power_source='dc',
+                                          board_type='M3',
                                           period='140us',
                                           average='1',
                                           power=True,
@@ -42,7 +43,8 @@ class TestProtocol(unittest.TestCase):
 
 
         # consumption without all elements
-        consumption = profile.Consumption(source='BATT',
+        consumption = profile.Consumption(power_source='battery',
+                                          board_type='M3',
                                           period='8244us',
                                           average='1024',
                                           power=True)
@@ -62,7 +64,8 @@ class TestProtocol(unittest.TestCase):
         self.sender.assert_called_with(['config_consumption_measure', 'stop'])
         self.assertEquals(0, ret)
         # power, voltage, current == False
-        consumption = profile.Consumption(source='3.3V',
+        consumption = profile.Consumption(power_source='dc',
+                                          board_type='M3',
                                           period='140us',
                                           average='1')
         ret = self.protocol.config_consumption(consumption)

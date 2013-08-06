@@ -3,6 +3,7 @@
 output-format = parseable
 
 reports = no
+include-ids = yes
 
 
 [MESSAGES CONTROL]
@@ -10,3 +11,4 @@ reports = no
 # W0221 'Argument number differs from overriden method'
 
 disable = W0142,W0221
+

@@ -64,7 +64,7 @@ class Protocol(object):
             cmd.extend(['p', str(int(consumption.power))])
             cmd.extend(['v', str(int(consumption.voltage))])
             cmd.extend(['c', str(int(consumption.current))])
-            cmd.extend(['-p', consumption.period])
-            cmd.extend(['-a', consumption.average])
+            cmd.extend(['-p', str(consumption.period)])
+            cmd.extend(['-a', str(int(consumption.average))])
         ret = self._send_cmd(cmd)
         return ret

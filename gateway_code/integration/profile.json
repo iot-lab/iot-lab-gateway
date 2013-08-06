@@ -6,7 +6,7 @@
         "source" : "3.3V",
 
         "period" : "1100us",
-        "average": "256",
+        "average": 256,
 
         "current": true,
         "voltage": true,
