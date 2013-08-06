@@ -36,6 +36,11 @@ Code development
 
 ### Running tests or deploying ###
 
+Install all the `gateway code`
+
+        python setup.py install
+
+
 Run unit tests, pylint and pep8:
 
         python setup.py tests
@@ -46,10 +51,9 @@ Run full integration tests (should be run on a gateway):
         python setup.py integration
 
 
-Install all the `gateway code`
+Run the roomba specific integration tests
 
-        python setup.py install
-
+        python setup.py test_roomba
 
 
 Server REST (testing)
