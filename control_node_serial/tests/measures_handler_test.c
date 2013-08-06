@@ -4,7 +4,6 @@ char print_buff[2048];
 #define fprintf(stream, ...)  snprintf(print_buff, sizeof(print_buff), __VA_ARGS__)
 
 
-#include "time_update.c"
 #include "measures_handler.c"
 
 
@@ -134,12 +133,14 @@ TEST(handle_ack_pkt, reset_time)
         unsigned char data[8];
         data[1] = RESET_TIME;
         data[2] = 0; // unused
-        new_time_ref.tv_sec  = 0xDEAD;
-        new_time_ref.tv_usec = 0xBEEF;
+
+        ASSERT_EQ(mh_state.time_ref.tv_sec, 0);
+        ASSERT_EQ(mh_state.time_ref.tv_usec, 0);
+
         handle_ack_pkt(data, 3);
 
-        ASSERT_EQ(mh_state.time_ref.tv_sec, 0xDEAD);
-        ASSERT_EQ(mh_state.time_ref.tv_usec, 0xBEEF);
+        ASSERT_NE(mh_state.time_ref.tv_sec, 0);
+        ASSERT_NE(mh_state.time_ref.tv_usec, 0);
 }
 
 

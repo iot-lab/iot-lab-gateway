@@ -20,7 +20,6 @@
 
 #include "constants.h"
 #include "measures_handler.h"
-#include "time_update.h"
 
 
 struct power_vals {
@@ -112,7 +111,7 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
         switch (ack_type) {
                 case RESET_TIME:
                         PRINT_MSG("config_ack reset_time\n");
-                        memcpy(&mh_state.time_ref, &new_time_ref, sizeof(struct timeval));
+                        gettimeofday(&mh_state.time_ref, NULL); // update time reference
                         break;
                 case CONFIG_POWER_POLL:
                         PRINT_MSG("config_ack config_consumption_measure\n");
