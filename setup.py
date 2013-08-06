@@ -158,6 +158,22 @@ class Tests(Command):
         except subprocess.CalledProcessError:
             exit(1)
 
+class TestsRoomba(Command):
+    user_options = []
+
+    def initialize_options(self):
+        pass
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        args = ['python', 'setup.py']
+
+        try:
+            subprocess.check_call(args + ['nosetests', '-i=*robot/*'])
+            _add_path_to_coverage_xml()
+        except subprocess.CalledProcessError:
+            exit(1)
 
 
 def add_path_to_coverage_xml():
@@ -254,7 +270,8 @@ setup(name='gateway_code',
         cmdclass = {'lint': Lint, 'install': Install, \
                 'build_cn_serial': BuildSerial, 'pep8': Pep8,
                 'tests': Tests,
-                'integration': IntegrationTests},
+                'integration': IntegrationTests,
+                'test_roomba':TestsRoomba},
         install_requires = INSTALL_REQUIRES,
         setup_requires = TESTS_REQUIRES + INSTALL_REQUIRES,
         )
