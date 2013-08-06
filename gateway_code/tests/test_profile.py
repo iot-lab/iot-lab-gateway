@@ -89,3 +89,16 @@ class TestsRadioProfile(unittest.TestCase):
                                   profile_dict, 'M3')
 
 
+class TestsMixedProfile(unittest.TestCase):
+
+    def test_mixed_profiles(self):
+
+        files = [ PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR) \
+                if re.match("mixed", _json)]
+
+        for profile_file in files:
+            with open(profile_file) as _file:
+                profile_dict = json.load(_file)
+                ret = gateway_code.profile.Profile(profile_dict, 'M3')
+                self.assertTrue(ret.radio is not None, str(ret))
+                self.assertTrue(ret.consumption is not None, str(ret))
