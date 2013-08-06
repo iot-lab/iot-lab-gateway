@@ -6,10 +6,10 @@
 manager script
 """
 
-import gateway_code.profile
 from gateway_code import config
 from gateway_code import openocd_cmd
 from gateway_code.serial_redirection import SerialRedirection
+from gateway_code.profile import Profile
 
 from gateway_code import control_node_interface, protocol_cn
 
@@ -310,6 +310,5 @@ class GatewayManager(object):
         import json
         with open(config.STATIC_FILES_PATH + 'default_profile.json') as _prof:
             profile_dict = json.load(_prof)
-            def_profile = gateway_code.profile.profile_from_dict(
-                profile_dict, config.board_type())
+            def_profile = Profile(profile_dict, config.board_type())
         return def_profile

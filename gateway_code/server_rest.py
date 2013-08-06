@@ -10,7 +10,7 @@ from tempfile import NamedTemporaryFile
 import json
 
 from gateway_code.gateway_manager import GatewayManager
-from gateway_code.profile import profile_from_dict
+from gateway_code.profile import Profile
 from gateway_code import config
 
 import logging
@@ -46,8 +46,7 @@ class GatewayRest(object):
             if 'profile' in request.files:
                 # create profile object from json
                 _prof = request.files['profile']
-                profile = profile_from_dict(json.load(_prof.file),
-                                            self.board_type)
+                profile = Profile(json.load(_prof.file), self.board_type)
             if self.board_type == 'M3' and 'firmware' in request.files:
                 # save http file to disk
                 _firm = request.files['firmware']

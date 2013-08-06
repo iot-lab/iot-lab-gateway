@@ -1,0 +1,11 @@
+{
+    "profilename": "radio_monitor_2",
+    "power": "dc",
+
+    "radio": {
+        "power" : "3dBm",
+        "channel" : 26,
+        "mode" : "measure",
+        "freq" : 2
+    }
+}

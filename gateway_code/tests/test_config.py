@@ -15,7 +15,8 @@ class TestsBoardAndRobotType(unittest.TestCase):
         config._BOARD_CONFIG = {}
         self.string_io = StringIO()
 
-        self.open_mock_patcher = mock.patch('gateway_code.config.open', create=True)
+        self.open_mock_patcher = mock.patch('gateway_code.config.open',
+                                            create=True)
 
         self.open_mock = self.open_mock_patcher.start()
         self.open_mock.return_value = self.string_io

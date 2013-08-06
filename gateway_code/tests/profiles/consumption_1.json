@@ -5,7 +5,7 @@
     "consumption": {
 
         "period" : "1100us",
-        "average": "256",
+        "average": 256,
 
         "current": true,
         "voltage": true,

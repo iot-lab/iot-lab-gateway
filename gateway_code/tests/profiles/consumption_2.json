@@ -4,7 +4,7 @@
 
     "consumption": {
 
-        "average": "1",
+        "average": 1,
 
         "power"  : true,
         "current": false,

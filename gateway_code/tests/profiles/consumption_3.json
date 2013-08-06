@@ -5,7 +5,7 @@
     "consumption": {
         "power"  : false,
 
-        "average": "1024",
+        "average": 1024,
 
         "period" : "140us"
     }
