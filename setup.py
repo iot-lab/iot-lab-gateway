@@ -104,7 +104,7 @@ class Lint(Command):
     def run(self):
         from pylint import lint
         lint_args = self.report_opt
-        lint_args += ['--rcfile=pylint.rc', 'gateway_code/']
+        lint_args += ['--rcfile=pylint.rc', 'gateway_code/', 'roomba/']
 
         with _Tee(self.outfile, 'w'):
             lint.Run(lint_args, exit=False)
