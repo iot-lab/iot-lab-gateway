@@ -51,10 +51,11 @@ $(OBJDIR):
 
 
 clean:
-	rm -rf $(OBJS) $(DEPS)
+	rm -rf $(OBJDIR)/*
 	make -C tests --no-print-directory clean
 realclean: clean
 	rm -rf $(TARGET)
+	rm -rf $(OBJDIR)
 	make -C tests --no-print-directory realclean
 -include $(DEPS)
 
