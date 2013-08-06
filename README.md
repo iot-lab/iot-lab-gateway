@@ -25,7 +25,13 @@ Code development
         |
         +---bin: CLI scripts and init.d script
         |
-        +---curl_scripts: curl test examples
+        |
+        |
+        +---scripts_tests: scripts usefull for tests
+                |
+                +---curl_scripts: curl test examples
+                +---install_pylint_with_brain.sh: install pylint and
+                                                  pylint-brain extensions
 
 
 ### Running tests or deploying ###
