@@ -354,7 +354,7 @@ static void *read_commands(void *attr)
                         DEBUG_PRINT("Error parsing\n");
                 } else {
                         DEBUG_PRINT("    ");
-                        DEBUG_PRINT_PACKET(cmd_buff.u.pkt, cmd_buff.u.s.len);
+                        DEBUG_PRINT_PACKET(cmd_buff.u.pkt, 2 + cmd_buff.u.s.len);
                         ret = write(reader_state->serial_fd, cmd_buff.u.pkt, cmd_buff.u.s.len + 2);
                         DEBUG_PRINT("    write ret: %i\n", ret);
                 }
