@@ -122,7 +122,7 @@ class Pep8(Command):
 
     def run(self):
         import pep8
-        sys.argv = ['./pep8.py', 'gateway_code/']
+        sys.argv = ['./pep8.py', 'gateway_code/', 'roomba/']
         with _Tee(self.outfile, 'w'):
             pep8._main()
 
