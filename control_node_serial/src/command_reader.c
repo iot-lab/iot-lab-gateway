@@ -68,6 +68,28 @@ struct dict_entry power_source_d[] = {
 };
 
 
+/* Radio dicts */
+struct dict_entry radio_power_d[] = {
+        {"3dBm",   POWER_3dBm},
+        {"2.8dBm", POWER_2_8dBm},
+        {"2.3dBm", POWER_2_3dBm},
+        {"1.8dBm", POWER_1_8dBm},
+        {"1.3dBm", POWER_1_3dBm},
+        {"0.7dBm", POWER_0_7dBm},
+        {"0dBm",   POWER_0dBm},
+        {"-1dBm",  POWER_m1dBm},
+        {"-2dBm",  POWER_m2dBm},
+        {"-3dBm",  POWER_m3dBm},
+        {"-4dBm",  POWER_m4dBm},
+        {"-5dBm",  POWER_m5dBm},
+        {"-7dBm",  POWER_m7dBm},
+        {"-9dBm",  POWER_m9dBm},
+        {"-12dBm", POWER_m12dBm},
+        {"-17dBm", POWER_m17dBm},
+        {NULL, 0},
+};
+
+
 /* dict used for answers, to translate code to string */
 
 struct dict_entry answers_d[] = {
@@ -76,7 +98,7 @@ struct dict_entry answers_d[] = {
         {"stop", OPEN_NODE_STOP},
         {"reset_time", RESET_TIME},
 
-        {"config_radio", CONFIG_RADIO},
+        {"config_radio_signal", CONFIG_RADIO},
         {"config_radio_measure", CONFIG_RADIO_POLL},
         {"config_radio_noise", CONFIG_RADIO_NOISE},
         {"config_radio_sniffer", CONFIG_SNIFFER},
@@ -214,6 +236,50 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         cmd_buff->u.s.payload[cmd_buff->u.s.len] |= val;
 
                         cmd_buff->u.s.len++;
+
+                } else {
+                        got_error |= 1;
+                }
+        } else if (strcmp(command, "config_radio_signal") == 0) {
+                frame_type = CONFIG_RADIO;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
+
+                // radio power
+                arg = strtok(NULL, " ");
+                got_error |= get_val(arg, radio_power_d, &val);
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
+
+                // radio channel
+                arg = strtok(NULL, " ");
+                val = (uint8_t) atoi(arg);
+                // channel in [[11, 26]]
+                if (val < 11 || val > 26)
+                        got_error |=1;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
+
+        } else if (strcmp(command, "config_radio_measure") == 0) {
+                frame_type = CONFIG_RADIO_POLL;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
+
+                // start stop
+                arg = strtok(NULL, " ");
+                if (strcmp(arg, "stop") == 0) {
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = RADIO_STOP;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = 0; // empty
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = 0; // empty
+                } else if (strcmp(arg, "start") == 0) {
+                        uint32_t freq;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = RADIO_START;
+
+                        // measure freq
+                        arg = strtok(NULL, " ");
+                        freq = (uint32_t) atoi(arg);
+                        if (freq < 2 || freq > ((1 << 16) -1))
+                                got_error |=1;
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = (\
+                                        freq & 0xFF);  // LSB
+                        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = (\
+                                        (freq >> 8) & 0xFF);  // MSB
 
                 } else {
                         got_error |= 1;

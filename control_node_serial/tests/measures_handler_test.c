@@ -12,6 +12,7 @@ char print_buff[2048];
  *     warning: 'noreturn' function does return [enabled by default]
  */
 
+// handle_measure_pkt
 TEST(handle_measure_pkt, test_different_packets)
 {
         unsigned char data[64];
@@ -26,7 +27,7 @@ TEST(handle_measure_pkt, test_different_packets)
 
         data[0] = RADIO_POLL_FRAME;
         ret = handle_measure_pkt(data, 0);
-        ASSERT_NE(ret, 0); // NOT IMPLEMENTED
+        ASSERT_EQ(ret, 0);
 
         // Invalid packet type
         data[0] = 0x00;
@@ -35,8 +36,7 @@ TEST(handle_measure_pkt, test_different_packets)
 }
 
 
-
-
+// handle_pw_pkt
 TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
 {
         unsigned char data[256];
@@ -99,11 +99,6 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         handle_pw_pkt(data, 2 + data[1] * data_size);
         ASSERT_STREQ("0.0:0.0: 0.000000 1.000000 0.000000\n", print_buff);
 
-
-
-
-
-
 }
 
 TEST(handle_pw_pkt, invalid_calls)
@@ -128,6 +123,44 @@ TEST(handle_pw_pkt, invalid_calls)
                         print_buff);
 }
 
+
+// handle_radio_measure_pkt
+TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
+{
+        unsigned char data[256];
+        data[0] = ((char)RADIO_POLL_FRAME);
+        data[1] = 1;  // measure_count
+        struct radio_measure_vals radio;
+        size_t data_size = 6;
+
+        init_measures_handler();
+        memset(print_buff, '\0', sizeof(print_buff));
+
+        // first value
+        radio.time = (unsigned int) 0;
+        radio.rssi = -42;
+        radio.lqi  = 66;
+        memcpy(&data[2], &radio, data_size);
+
+        // second value
+        radio.time = (unsigned int) TIME_FACTOR;
+        radio.rssi = 42;
+        radio.lqi  = 0;
+        memcpy(&data[2 + data_size], &radio, data_size);
+
+        // num == 1
+        data[1] = 1;
+        handle_radio_measure_pkt(data, 2 + data[1] * data_size);
+        ASSERT_STREQ("0.0:0.0: -42 66\n", print_buff);
+        // num == 2
+        data[1] = 2;
+        handle_radio_measure_pkt(data, 2 + data[1] * data_size);
+        ASSERT_STREQ("0.0:1.0: 42 0\n", print_buff);
+
+}
+
+
+// handle_ack_pkt
 TEST(handle_ack_pkt, reset_time)
 {
         unsigned char data[8];
@@ -142,7 +175,6 @@ TEST(handle_ack_pkt, reset_time)
         ASSERT_NE(mh_state.time_ref.tv_sec, 0);
         ASSERT_NE(mh_state.time_ref.tv_usec, 0);
 }
-
 
 TEST(handle_ack_pkt, power_poll_ack)
 {
@@ -175,8 +207,24 @@ TEST(handle_ack_pkt, power_poll_ack)
 
 }
 
+TEST(handle_ack_pkt, radio_acks)
+{
+        unsigned char data[8];
+        data[1] = CONFIG_RADIO;
+        data[2] = 42;  // tx pow
+        data[3] = 16;  // channel
+
+        handle_ack_pkt(data, 3);
+        ASSERT_STREQ("config_ack config_radio_signal\n", print_buff);
 
 
+        data[1] = CONFIG_RADIO_POLL;
+        data[2] = 1;  // state
+
+        handle_ack_pkt(data, 2);
+        ASSERT_STREQ("config_ack config_radio_measure\n", print_buff);
+
+}
 
 TEST(handle_ack_pkt, invalid_msgs)
 {
@@ -187,6 +235,7 @@ TEST(handle_ack_pkt, invalid_msgs)
 }
 
 
+// init_measures_handler
 TEST(init_measures_handler, test)
 {
         mh_state.time_ref.tv_sec = 0xDEAD;

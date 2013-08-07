@@ -46,6 +46,11 @@ enum alimentation {
         DC      = 0x1,
 };
 
+enum radio_config {
+        RADIO_STOP = 0x0,
+        RADIO_START = 0x1,
+};
+
 enum cn_error_t {
 	OK                         = 0,
         NETWORK_QUEUE_OVERFLOW     = -1,
@@ -111,24 +116,6 @@ enum radio_tx_power {
         POWER_m9dBm  = 21,
         POWER_m12dBm = 18,
         POWER_m17dBm = 13,
-};
-enum radio_channel {
-        CHANNEL_11 = 11,
-        CHANNEL_12 = 12,
-        CHANNEL_13 = 13,
-        CHANNEL_14 = 14,
-        CHANNEL_15 = 15,
-        CHANNEL_16 = 16,
-        CHANNEL_17 = 17,
-        CHANNEL_18 = 18,
-        CHANNEL_19 = 19,
-        CHANNEL_20 = 20,
-        CHANNEL_21 = 21,
-        CHANNEL_22 = 22,
-        CHANNEL_23 = 23,
-        CHANNEL_24 = 24,
-        CHANNEL_25 = 25,
-        CHANNEL_26 = 26,
 };
 
 #endif // CONSTANTS_H
