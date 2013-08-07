@@ -19,7 +19,7 @@ SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s,b%d,echo=0,raw '''
 LOGGER = logging.getLogger('gateway_code')
 
 
-class SerialRedirection():
+class SerialRedirection(object):
     """
     Class providing node serial redirection to a tcp socket
     """
