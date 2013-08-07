@@ -104,7 +104,7 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
 static void handle_radio_measure_pkt(unsigned char *data, size_t len)
 {
         int num_measures;
-        char rssi;
+        signed char rssi; // 'signed' required for embedded code
         unsigned char lqi;
 
         uint64_t t_s;
@@ -136,16 +136,11 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
                 lqi  = radio_vals.lqi;
 
                 // Handle absolute time with  reference time
-                fprintf(LOG, "%lu.%lu:%"PRIu64".%u: %d %u\n",
+                fprintf(LOG, "%lu.%lu:%"PRIu64".%u: %i %u\n",
                         mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
                         t_s, t_us,
                         rssi, lqi);
-
-
-
         }
-
-
 }
 
 static void handle_ack_pkt(unsigned char *data, size_t len)
