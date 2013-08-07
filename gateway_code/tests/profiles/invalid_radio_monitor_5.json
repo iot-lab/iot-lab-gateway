@@ -1,0 +1,10 @@
+{
+    "profilename": "radio_monitor_5",
+    "power": "dc",
+
+    "radio": {
+        "power" : "-17dBm",
+        "channel" : 11,
+        "mode" : "invalid_mode"
+    }
+}

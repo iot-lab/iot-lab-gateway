@@ -45,6 +45,7 @@ class GatewayManager(object):
         self.user = None
         self.experiment_is_running = False
         self.profile = None
+
         self.open_node_state = "stop"
 
         # Init cleanup, logger and board type
@@ -224,10 +225,15 @@ class GatewayManager(object):
         LOGGER.debug('Update profile')
 
         ret = 0
-        ret += self.protocol.start_stop(self.open_node_state,
-                                        self.profile.power)
+        # power_mode (keep open node started/stoped state)
+        ret += self.protocol.start_stop(
+            self.open_node_state, self.profile.power)
+
+        # Consumption
         ret += self.protocol.config_consumption(self.profile.consumption)
+
         # Radio
+        ret += self.protocol.config_radio(self.profile.radio)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Profile update failed')
