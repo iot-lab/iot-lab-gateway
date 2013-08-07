@@ -99,6 +99,84 @@ TEST(test_parse_cmd, consumption)
         ASSERT_NE(payload_1_2, cmd_buff.u.s.payload[2] << 8 | cmd_buff.u.s.payload[1]);
 }
 
+TEST(test_parse_cmd, radio_signal)
+{
+        /*
+         * Sending multiple config_consumption_measure commands
+         * and checking that the configuration is different each time
+         */
+        int ret;
+        struct command_buffer cmd_buff;
+
+        char config_0_cmd[] = "config_radio_signal 3dBm 26";
+        ret = parse_cmd(config_0_cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(3, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_RADIO, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(POWER_3dBm, cmd_buff.u.s.payload[1]);
+        ASSERT_EQ(26, cmd_buff.u.s.payload[2]);
+
+        char config_1_cmd[] = "config_radio_signal -723dBm 26";
+        ret = parse_cmd(config_1_cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+        char config_2_cmd[] = "config_radio_signal -17dBm 28";
+        ret = parse_cmd(config_2_cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+        char config_3_cmd[] = "config_radio_signal -17dBm 3";
+        ret = parse_cmd(config_3_cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+}
+
+TEST(test_parse_cmd, radio_measure)
+{
+        /*
+         * Sending multiple config_consumption_measure commands
+         * and checking that the configuration is different each time
+         */
+        int ret;
+        struct command_buffer cmd_buff;
+
+        char config_0_cmd[] = "config_radio_measure start 42";
+        ret = parse_cmd(config_0_cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(4, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_RADIO_POLL, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(RADIO_START, cmd_buff.u.s.payload[1]);
+        ASSERT_EQ(42, cmd_buff.u.s.payload[2]);
+        ASSERT_EQ(0, cmd_buff.u.s.payload[3]);
+
+        char config_1_cmd[] = "config_radio_measure start 256";
+        ret = parse_cmd(config_1_cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(4, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_RADIO_POLL, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(RADIO_START, cmd_buff.u.s.payload[1]);
+        ASSERT_EQ(0, cmd_buff.u.s.payload[2]);
+        ASSERT_EQ(1, cmd_buff.u.s.payload[3]);
+
+
+        char config_2_cmd[] = "config_radio_measure stop";
+        ret = parse_cmd(config_2_cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(4, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_RADIO_POLL, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(RADIO_STOP, cmd_buff.u.s.payload[1]);
+        ASSERT_EQ(0, cmd_buff.u.s.payload[2]);
+        ASSERT_EQ(0, cmd_buff.u.s.payload[3]);
+
+
+
+        char config_3_cmd[] = "config_radio_measure not_valid";
+        ret = parse_cmd(config_3_cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+
+        char config_4_cmd[] = "config_radio_measure start 1";
+        ret = parse_cmd(config_4_cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+        char config_5_cmd[] = "config_radio_measure start 65536";
+        ret = parse_cmd(config_5_cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+}
 
 /*
  * Test read_commands
@@ -172,6 +250,18 @@ TEST(test_write_answer, valid_answers)
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("config_consumption_measure NACK\n", print_buff);
+
+        data[0] = CONFIG_RADIO;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("config_radio_signal ACK\n", print_buff);
+
+        data[0] = CONFIG_RADIO_POLL;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("config_radio_measure ACK\n", print_buff);
 }
 
 TEST(test_write_answer, invalid_answers)

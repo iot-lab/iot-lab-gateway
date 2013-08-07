@@ -27,6 +27,12 @@ struct power_vals {
         float val[3];
 };
 
+struct radio_measure_vals {
+        unsigned int time;
+        char rssi;
+        unsigned char lqi;
+};
+
 static struct _measure_handler_state {
         struct timeval time_ref;
         struct {
@@ -37,7 +43,6 @@ static struct _measure_handler_state {
                 int power_source;
                 size_t raw_values_len;
         } power;
-
 } mh_state;
 
 extern void init_measures_handler()
@@ -96,6 +101,53 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
         }
 }
 
+static void handle_radio_measure_pkt(unsigned char *data, size_t len)
+{
+        int num_measures;
+        char rssi;
+        unsigned char lqi;
+
+        uint64_t t_s;
+        uint32_t t_us;
+
+        unsigned char *current_data_ptr;
+        struct radio_measure_vals radio_vals;
+
+        size_t values_len = 6;
+
+        num_measures     = data[1];
+        current_data_ptr = &data[2];
+
+        size_t expected_len = 2 + values_len * num_measures;
+        if (expected_len != len) {
+                PRINT_ERROR("Invalid measure pkt len: %zu != expected %zu\n",
+                                len, expected_len);
+                return;
+        }
+
+        for (int j = 0; j < num_measures; j++) {
+                memcpy(&radio_vals, current_data_ptr, values_len);
+                current_data_ptr += values_len;
+
+                t_s  = radio_vals.time / TIME_FACTOR;
+                t_us = (1000000 * (radio_vals.time % TIME_FACTOR)) / TIME_FACTOR;
+
+                rssi = radio_vals.rssi;
+                lqi  = radio_vals.lqi;
+
+                // Handle absolute time with  reference time
+                fprintf(LOG, "%lu.%lu:%"PRIu64".%u: %d %u\n",
+                        mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
+                        t_s, t_us,
+                        rssi, lqi);
+
+
+
+        }
+
+
+}
+
 static void handle_ack_pkt(unsigned char *data, size_t len)
 {
         // ACK_FRAME | config_type | [config]
@@ -136,12 +188,17 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
                                 mh_state.power.raw_values_len += sizeof(float);
                         }
                         break;
+                case CONFIG_RADIO:
+                        PRINT_MSG("config_ack config_radio_signal\n");
+                        break;
+                case CONFIG_RADIO_POLL:
+                        PRINT_MSG("config_ack config_radio_measure\n");
+                        break;
                 default:
                         PRINT_ERROR("Unkown ACK frame 0x%02x\n", ack_type);
                         break;
         }
 }
-
 
 int handle_measure_pkt(unsigned char *data, size_t len)
 {
@@ -153,8 +210,7 @@ int handle_measure_pkt(unsigned char *data, size_t len)
                         handle_pw_pkt(data, len);
                         break;
                 case RADIO_POLL_FRAME:
-                        DEBUG_PRINT("NOT IMPLEMENTED RADIO POLL FRAME\n");
-                        return -1;
+                        handle_radio_measure_pkt(data, len);
                         break;
                 case ACK_FRAME:
                         handle_ack_pkt(data, len);
@@ -163,12 +219,6 @@ int handle_measure_pkt(unsigned char *data, size_t len)
                         return -1;
                         break;
         }
-
-
         return 0;
-
-
-
-
 }
 
