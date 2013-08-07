@@ -98,7 +98,7 @@ class TestMainFunction(unittest.TestCase):
             event = mock_event.return_value
             event.wait.side_effect = wait_mock
 
-            serial_redirection.main(['serial_redirection.py', 'm3'])
+            serial_redirection._main(['serial_redirection.py', 'm3'])
             self.assertEquals(event.wait.call_count, 1)
 
 
@@ -108,7 +108,7 @@ class TestMainFunction(unittest.TestCase):
         # start SerialRedirection fail
         (mock_serial_class.return_value).start.return_value = 1
         self.assertRaises(SystemExit, \
-                serial_redirection.main, ['serial_redirection.py', 'm3'])
+                serial_redirection._main, ['serial_redirection.py', 'm3'])
 
 
 from gateway_code.serial_redirection import _SerialRedirectionThread
@@ -223,8 +223,8 @@ class TestParseArguments(unittest.TestCase):
         from gateway_code import config
         # valid
         for node in config.NODES:
-            self.assertEquals(serial_redirection.parse_arguments([node]), node)
+            self.assertEquals(serial_redirection._parse_arguments([node]), node)
         # invalid calls
         args = ['INEXISTANT_NODE']
-        self.assertRaises(SystemExit, serial_redirection.parse_arguments, args)
+        self.assertRaises(SystemExit, serial_redirection._parse_arguments, args)
 

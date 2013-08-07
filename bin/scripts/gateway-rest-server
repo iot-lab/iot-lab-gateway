@@ -3,4 +3,4 @@
 from gateway_code import server_rest
 import sys
 
-server_rest.main(sys.argv)
+server_rest._main(sys.argv)

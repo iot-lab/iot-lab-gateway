@@ -36,7 +36,8 @@ class Protocol(object):
     def reset_time(self):
         """
         Reset time on control node
-            Updates our time reference in the C code
+
+        Also updates our time reference in the C code
         """
         # reset_time
         cmd = ['reset_time']
@@ -45,8 +46,9 @@ class Protocol(object):
     def config_consumption(self, consumption=None):
         """
         Configure consumption measures on control node
-        :param consumption: consumption configuration
-        :type consumption:  class Consumption
+
+        :param consumption: consumption measures configuration
+        :type consumption:  class profile._Consumption
         """
         # config_consumption_measure
         #     <stop>

@@ -20,7 +20,7 @@ _PROFILE_TYPE = recordtype('profile', ['profilename', 'power',
 
 class Profile(_PROFILE_TYPE):
     """
-    Monitoring Profile
+    Experiment monitoring Profile
     """
 
     def __init__(self, profile_dict, board_type):

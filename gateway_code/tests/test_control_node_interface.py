@@ -107,7 +107,7 @@ class TestControlNodeSerial(unittest.TestCase):
     def test_stop_with_poll_not_none(self):
 
         self.lock_error = threading.Event()
-        self.cn.handle_answer = mock.Mock()
+        self.cn._handle_answer = mock.Mock()
         self.popen.stderr.readline.return_value = 'non empty line'
 
         with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
@@ -140,19 +140,19 @@ class TestHandleAnswer(unittest.TestCase):
     def test_config_ack(self):
         with mock.patch('gateway_code.control_node_interface.LOGGER.debug') \
                 as mock_logger:
-            self.cn.handle_answer('config_ack reset_time')
+            self.cn._handle_answer('config_ack reset_time')
             mock_logger.assert_called_with('config_ack %s', 'reset_time')
 
     def test_error(self):
         with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
                 as mock_logger:
-            self.cn.handle_answer('error 42')
+            self.cn._handle_answer('error 42')
             mock_logger.assert_called_with('Control node error: %r', '42')
 
     def test_cn_serial_error(self):
         with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
                 as mock_logger:
-            self.cn.handle_answer('cn_serial_error any error msg')
+            self.cn._handle_answer('cn_serial_error any error msg')
             mock_logger.assert_called_with('cn_serial_error any error msg')
 
 

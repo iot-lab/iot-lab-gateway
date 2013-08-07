@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 """
-serial_redirection script
+Module managing the open node serial redirection
 """
 
 import sys
@@ -22,9 +22,6 @@ LOGGER = logging.getLogger('gateway_code')
 class SerialRedirection():
     """
     Class providing node serial redirection to a tcp socket
-
-    Using non-blocking start, stop
-
     """
 
     def __init__(self, node):
@@ -45,7 +42,9 @@ class SerialRedirection():
 
     def start(self):
         """
-        Start a new SerialRedirection
+        Start the serial redirection program
+
+        A thread is also run to monitor and reload the program
         """
         if self.is_running:
             return 1
@@ -63,7 +62,7 @@ class SerialRedirection():
 
     def stop(self):
         """
-        Stop the current Serial Redirection
+        Stop the current serial redirection program
         """
         if not self.is_running:
             return 1
@@ -150,7 +149,7 @@ class _SerialRedirectionThread(threading.Thread):
         self.redirector_process = None
 
 
-def parse_arguments(args):
+def _parse_arguments(args):
     """
     Parsing arguments:
 
@@ -171,13 +170,13 @@ def parse_arguments(args):
 from threading import Event
 
 
-def main(args):
+def _main(args):
     """
     Command line main function
     """
     import signal
 
-    node = parse_arguments(args[1:])
+    node = _parse_arguments(args[1:])
     unlock_main_thread = Event()
 
     # Create the redirector

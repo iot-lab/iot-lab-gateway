@@ -140,7 +140,7 @@ class TestsCommandLineCallsFlash(unittest.TestCase):
     def test_normal_run(self, mock_fct):
         """ Running command line with m3 """
         mock_fct.return_value = (0, 'OUTMessage')
-        ret = openocd_cmd.main(['openocd_cmd.py', 'flash', 'm3', '/dev/null'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'flash', 'm3', '/dev/null'])
 
         self.assertEquals(ret, 0)
         self.assertTrue(mock_fct.called)
@@ -150,7 +150,7 @@ class TestsCommandLineCallsFlash(unittest.TestCase):
         """ Running command line with error during run """
 
         mock_fct.return_value = (42, 'OUT')
-        ret = openocd_cmd.main(['openocd_cmd.py', 'flash', 'm3', '/dev/null'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'flash', 'm3', '/dev/null'])
 
         self.assertEquals(ret, 42)
         self.assertTrue(mock_fct.called)
@@ -170,7 +170,7 @@ class TestsCommandLineCallsReset(unittest.TestCase):
         Running command line with m3
         """
         mock_fct.return_value = (0, 'OUTMessage')
-        ret = openocd_cmd.main(['openocd_cmd.py', 'reset', 'm3'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'reset', 'm3'])
 
         self.assertEquals(ret, 0)
         self.assertTrue(mock_fct.called)
@@ -181,7 +181,7 @@ class TestsCommandLineCallsReset(unittest.TestCase):
         Running command line with error during run
         """
         mock_fct.return_value = (42, 'OUT')
-        ret = openocd_cmd.main(['openocd_cmd.py', 'reset', 'm3'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'reset', 'm3'])
 
         self.assertEquals(ret, 42)
         self.assertTrue(mock_fct.called)

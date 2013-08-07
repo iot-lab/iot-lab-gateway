@@ -1,11 +1,12 @@
 #-*- coding: utf-8 -*-
 
 """
-Rest server listening to the experiment handler
+REST server listening to the experiment handler
 
 """
 
-from bottle import run, request, route
+import bottle
+from bottle import request
 from tempfile import NamedTemporaryFile
 import json
 
@@ -21,11 +22,28 @@ class GatewayRest(object):
     """
     Gateway Rest class
 
-    It calls the gateway manager to treat commands
+    It calls the `gateway_ manager` to handle commands
     """
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
         self.board_type = config.board_type()
+        self._app_routing()
+
+    def _app_routing(self):
+        """
+        Declare the REST supported methods depending on board config
+        """
+        bottle.route('/exp/start/:expid/:username', 'POST')(self.exp_start)
+        bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
+        bottle.route('/open/start', 'PUT')(self.open_start)
+        bottle.route('/open/stop', 'PUT')(self.open_stop)
+
+        # node specific commands
+        if self.board_type == 'M3':
+            bottle.route('/open/flash', 'POST')(self.open_flash)
+            bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
+        else:  # pragma: no cover
+            pass  # handle A8 nodes here
 
     def exp_start(self, expid, username):
         """
@@ -144,7 +162,10 @@ class GatewayRest(object):
         return self._flash('gwt')
 
 
-def parse_arguments(args):
+#
+# Command line functions
+#
+def _parse_arguments(args):
     """
     Parse arguments:
         [host, port]
@@ -166,32 +187,12 @@ def parse_arguments(args):
     return arguments.host, arguments.port, arguments.log_folder
 
 
-def app_routing(app, board_type):
-    """
-    routing configuration
-    :param app: default application
-    :param board_type: board_type 'M3' or 'A8'
-    """
-    route('/exp/start/:expid/:username', 'POST')(app.exp_start)
-    route('/exp/stop', 'DELETE')(app.exp_stop)
-    route('/open/start', 'PUT')(app.open_start)
-    route('/open/stop', 'PUT')(app.open_stop)
-
-    # node specific commands
-    if board_type == 'M3':
-        route('/open/flash', 'POST')(app.open_flash)
-        route('/open/reset', 'PUT')(app.open_soft_reset)
-    else:  # pragma: no cover
-        pass  # handle A8 nodes here
-
-
-def main(args):
+def _main(args):
     """
     Command line main function
     """
 
-    host, port, log_folder = parse_arguments(args[1:])
+    host, port, log_folder = _parse_arguments(args[1:])
 
-    app = GatewayRest(GatewayManager(log_folder))
-    app_routing(app, app.board_type)
-    run(host=host, port=port, server='paste')
+    _ = GatewayRest(GatewayManager(log_folder))
+    bottle.run(host=host, port=port, server='paste')
