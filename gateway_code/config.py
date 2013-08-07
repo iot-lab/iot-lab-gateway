@@ -2,7 +2,13 @@
 
 
 """
-Common configuration for openocd scripts
+Common static configuration for the application and `OpenOCD`
+
+:STATIC_FILES_PATH: Static files path (default firmware, profile, openocd conf)
+:GATEWAY_CONFIG_PATH: Board specific configuraion files path
+:CONTROL_NODE_SERIAL_INTERFACE: Control node serial programe name
+:NODES: Nodes name
+:NODES_CFG: Per node OpenOCD and serial configuration
 """
 
 

@@ -85,7 +85,7 @@ def _run_openocd_command(node, command_str):
 #
 # Command line functions
 #
-def parse_arguments(args):
+def _parse_arguments(args):
     """
     Parse arguments:
         flash node firmware_path
@@ -113,13 +113,13 @@ def parse_arguments(args):
     return arguments
 
 
-def main(argv):
+def _main(argv):
     """
     Command line main function
     """
 
     import sys
-    namespace = parse_arguments(argv[1:])
+    namespace = _parse_arguments(argv[1:])
 
     if namespace.cmd == 'reset':
         ret, out = reset(namespace.node)

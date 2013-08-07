@@ -29,13 +29,13 @@ class TestServerRest(unittest.TestCase):
     """
 
     @patch('subprocess.Popen')
-    @patch('gateway_code.server_rest.run')
+    @patch('bottle.run')
     def test_main_function(self, run_mock, mock_popen):
         popen = mock_popen.return_value
         popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
         popen.returncode = mock_ret = 0
 
         args = ['server_rest.py', 'localhost', '8080']
-        gateway_code.server_rest.main(args)
+        gateway_code.server_rest._main(args)
 
 

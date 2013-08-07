@@ -1,9 +1,8 @@
 # -*- coding:utf-8 -*-
 
-"""
-Interface with control_node_serial_interface program
+""" Interface with the `control node serial program`.
 
-Manage sending commands and receiving answers
+Manage sending commands and receiving messages
 """
 
 import subprocess
@@ -43,9 +42,9 @@ class ControlNodeSerial(object):
         atexit.register(self.stop)
 
     def start(self):
-        """
-        Start control node interface
-            Start the control_node_serial_interface and listen for answers
+        """Start control node interface.
+
+        Run `control node serial program` and handle its answers.
         """
 
         args = [config.CONTROL_NODE_SERIAL_INTERFACE,
@@ -57,17 +56,20 @@ class ControlNodeSerial(object):
         self.reader_thread.start()
 
     def stop(self):
-        """ Stop control node interface """
+        """ Stop control node interface.
+
+        Stop `control node serial program` and answers handler.
+        """
         if self.cn_interface_process is not None:
             self.cn_interface_process.terminate()
             self.reader_thread.join()
             self.cn_interface_process = None
 
-    def handle_answer(self, line):
-        """
-        Handle control node answers
-            For errors, print the message
-            For command answers, send it to command sender
+    def _handle_answer(self, line):
+        """Handle control node answers
+
+          * For errors, print the message
+          * For command answers, send it to command sender
         """
         answer = line.split(' ')
         if answer[0] == 'config_ack':  # ack reset_time/measures
@@ -83,23 +85,26 @@ class ControlNodeSerial(object):
                 LOGGER.error('Control node answer queue full')
 
     def _reader(self):
-        """
-        Reader thread worker.
-            Reads answers from the control node
+        """ Reader thread worker.
+
+        Reads and handle control node answers
         """
         while self.cn_interface_process.poll() is None:
             line = self.cn_interface_process.stderr.readline().strip()
             if line == '':
                 break
-            self.handle_answer(line)
+            self._handle_answer(line)
         else:
             LOGGER.error('Control node serial reader thread ended prematurely')
 
-    def send_command(self, command_list):
+    def send_command(self, command_args):
+        """ Send given command to control node and wait for an answer
+
+        :param command_args: command arguments
+        :type command_args: list of string
+        :return: received answers or `None` if timeout caught
         """
-        Send a command to control node and wait for an answer
-        """
-        command_str = ' '.join(command_list) + '\n'
+        command_str = ' '.join(command_args) + '\n'
         with self.protect_send:
             # remove existing items (old not treated answers)
             _empty_queue(self.cn_msg_queue)

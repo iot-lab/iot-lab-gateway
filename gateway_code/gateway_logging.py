@@ -2,10 +2,9 @@
 
 
 """
-Logger for gateway code
-
-Set 'logfile' path with 'add_rotating_handler'.
+Logger configuration for gateway code
 """
+
 
 import logging
 from logging.handlers import RotatingFileHandler
@@ -16,10 +15,9 @@ FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
 
 def init_logger(log_folder):
-    """
-    Create global logger and handlers
+    """ Create global logger and handlers
 
-    :param log_folder: destination folder for the logs
+    :param log_folder: log destination folder
     """
 
     log_folder += '/'

@@ -3,4 +3,4 @@
 from gateway_code import serial_redirection
 import sys
 
-serial_redirection.main(sys.argv)
+serial_redirection._main(sys.argv)

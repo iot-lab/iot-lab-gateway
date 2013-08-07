@@ -77,7 +77,6 @@ class GatewayManager(object):
 
 
         Experiment start steps
-        ======================
 
         1) Prepare Gateway
             a) Reset control node
@@ -153,7 +152,6 @@ class GatewayManager(object):
         Stop the current running experiment
 
         Experiment stop steps
-        =====================
 
         1) Cleanup Control node config
             a) Stop measures Control Node, Configure profile == None
@@ -281,6 +279,7 @@ class GatewayManager(object):
     def node_soft_reset(node):
         """
         Reset the given node using reset pin
+
         :param node: Node name in {'gwt', 'm3'}
         """
         assert node in ['gwt', 'm3'], "Invalid node name"
@@ -297,7 +296,9 @@ class GatewayManager(object):
     def node_flash(node, firmware_path):
         """
         Flash the given firmware on the given node
+
         :param node: Node name in {'gwt', 'm3'}
+        :param firmware_path: Path to the firmware to be flashed on `node`.
         """
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.debug('Flash firmware on %s: %s', node, firmware_path)
