@@ -122,5 +122,8 @@ class Radio(_RADIO_TYPE):
         """
         raise ValueError if self is not a 'valid' configuration
         """
+        if self.mode not in ["measure"]:
+            raise ValueError
+
         if self.mode == "measure" and self.freq is None:
             raise ValueError
