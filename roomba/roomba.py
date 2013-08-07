@@ -1,11 +1,11 @@
-#
-# roomba500 turtlebot
-#
-# Python interface for the iRobot Roomba 5xx
-#
-# inspired of create..py Zach Dodds   dodds@cs.hmc.edu
-# updated for Roomba500 by INRIA 2/07/12
-#
+# -*- coding:utf-8 -*-
+""" Roomba500 turtlebot
+Python interface for the iRobot Roomba 5xx
+
+inspired of create..py Zach Dodds   dodds@cs.hmc.edu
+updated for Roomba500 by INRIA 07/08/13
+Manage sending commands and receiving messages
+"""
 
 import serial
 import math
@@ -117,9 +117,36 @@ POS_Y = 77
 POS_Z = 78
 
 
-#
-# the robot class
-#
+# Fonctions to transform bytes/int
+def two_bytes_signed_int(h_byte, l_byte):
+    """ Return the value of the two bytes signed in one integer """
+
+    double_bytes = (h_byte << 8) + l_byte
+    top_bit = (double_bytes >> 15) & 0x0001
+    if top_bit == 1:
+        double_bytes = double_bytes - 1
+        return double_bytes - 0xFFFF
+    else:
+        return double_bytes & 0x7FFF
+
+
+def two_bytes_unsigned_int(h_byte, l_byte):
+    """ Return the value of the two bytes unsigned in one integer """
+
+    return (h_byte << 8) + l_byte
+
+
+def int_in_signed_bytes(integer):
+    """ Return the value of the integer in two bytes,
+    high byte first, signed
+    """
+
+    if integer < 0:
+        integer = 0xFFFF + integer + 1
+
+    return((integer >> 8) & 0xFF, integer & 0xFF)
+
+
 class Roomba500:
     """ the Roomba class is an abstraction of the iRobot Roomba500's
         ROI interface, including communication and a bit
@@ -130,28 +157,28 @@ class Roomba500:
         if it's not attached!
     """
 
-    def __init__(self, PORT):
+    def __init__(self, portcom):
         """ the constructor which tries to open the
-            connection to the robot at port PORT
+            connection to the robot at port portcom
         """
         # to do: find the shortest safe serial timeout value...
         # to do: use the timeout to do more error checking than
         #        is currently done...
         # multiprocessing for position and sensor
-        self.q = multiprocessing.Queue()
+        self.qsens = multiprocessing.Queue()
         # multiprocessing for position and sensor
         self.qsend = multiprocessing.Queue()
         self.serial_run = False
 
         # test if the system is Windows or Mac/Linux
-        if isinstance(PORT, str) is True:
+        if isinstance(portcom, str) is True:
             # system : Mac/Linux
             print 'In Mac/Linux mode...'
-            self.ser = serial.Serial(PORT, baudrate=115200, timeout=0.5)
+            self.ser = serial.Serial(portcom, baudrate=115200, timeout=0.5)
         # otherwise, system : Windows
         else:
             print 'In Windows mode...'
-            self.ser = serial.Serial(PORT - 1, baudrate=115200, timeout=3)
+            self.ser = serial.Serial(portcom - 1, baudrate=115200, timeout=3)
             # the -1 here is because windows starts counting from 1
             # in the hardware control panel, but not in pyserial, it seems
 
@@ -171,81 +198,52 @@ class Roomba500:
         # our sensor list, currently empty
         self.sensorl = []
 
-        # position of the Roomba
-        self.x = 0.0   # mm
-        self.y = 0.0   # mm
-        self.z = 0.0   # degrees
+        # pose of the Roomba : x (mm), y (mm), th (degrees)
+        self.pose = [0.0, 0.0, 0.0]
 
         time.sleep(0.3)
         self.wakeup()   # wakeup the Roomba
         self.start()   # go to passive mode
         time.sleep(0.3)
 
-    def twoBytesSignedInInt(self, hByte, lByte):
-        """ Return the value of the two bytes signed in one integer """
-
-        doubleBytes = (hByte << 8) + lByte
-        topBit = (doubleBytes >> 15) & 0x0001
-        if topBit == 1:
-            doubleBytes = doubleBytes - 1
-            return doubleBytes - 0xFFFF
-
-        else:
-            return doubleBytes & 0x7FFF
-
-    def twoBytesUnsignedInInt(self, hByte, lByte):
-        """ Return the value of the two bytes unsigned in one integer """
-
-        return (hByte << 8) + lByte
-
-    def intInSignedBytes(self, integer):
-        """ Return the value of the integer in two bytes,
-            high byte first, signed
-        """
-
-        if integer < 0:
-            integer = 0xFFFF + integer + 1
-
-        return((integer >> 8) & 0xFF, integer & 0xFF)
-
-    def getSensor(self, packetGroup=100):
+    def get_sensor(self, packet_group=100):
         """ Gets back a list of sensor data """
 
         self.ser.write(SENSORS)
-        self.ser.write(chr(packetGroup))
+        self.ser.write(chr(packet_group))
 
-        if packetGroup == 0:
-            r = self.ser.read(size=26) + 54 * chr(0)
+        if packet_group == 0:
+            rep = self.ser.read(size=26) + 54 * chr(0)
 
-        if packetGroup == 1:
-            r = self.ser.read(size=10) + 70 * chr(0)
+        if packet_group == 1:
+            rep = self.ser.read(size=10) + 70 * chr(0)
 
-        if packetGroup == 2:
-            r = 10 * chr(0) + self.ser.read(size=6) + 64 * chr(0)
+        if packet_group == 2:
+            rep = 10 * chr(0) + self.ser.read(size=6) + 64 * chr(0)
 
-        if packetGroup == 3:
-            r = 16 * chr(0) + self.ser.read(size=10) + 54 * chr(0)
+        if packet_group == 3:
+            rep = 16 * chr(0) + self.ser.read(size=10) + 54 * chr(0)
 
-        if packetGroup == 4:
-            r = 26 * chr(0) + self.ser.read(size=14) + 40 * chr(0)
+        if packet_group == 4:
+            rep = 26 * chr(0) + self.ser.read(size=14) + 40 * chr(0)
 
-        if packetGroup == 5:
-            r = 40 * chr(0) + self.ser.read(size=12) + 28 * chr(0)
+        if packet_group == 5:
+            rep = 40 * chr(0) + self.ser.read(size=12) + 28 * chr(0)
 
-        if packetGroup == 6:
-            r = self.ser.read(size=52) + 28 * chr(0)
+        if packet_group == 6:
+            rep = self.ser.read(size=52) + 28 * chr(0)
 
-        if packetGroup == 100:
-            r = self.ser.read(size=80)
+        if packet_group == 100:
+            rep = self.ser.read(size=80)
 
-        if packetGroup == 101:
-            r = 52 * chr(0) + self.ser.read(size=28)
+        if packet_group == 101:
+            rep = 52 * chr(0) + self.ser.read(size=28)
 
-        if packetGroup == 106:
-            r = 57 * chr(0) + self.ser.read(size=12) + 11 * chr(0)
+        if packet_group == 106:
+            rep = 57 * chr(0) + self.ser.read(size=12) + 11 * chr(0)
 
-        if packetGroup == 107:
-            r = 71 * chr(0) + self.ser.read(size=9)
+        if packet_group == 107:
+            rep = 71 * chr(0) + self.ser.read(size=9)
 
         # need error checking or sanity checking or something!
 
@@ -263,143 +261,143 @@ class Roomba500:
                         #6
                         None,
                         #BUMPS_WHEELDROPS = 7
-                        ord(r[0]),
+                        ord(rep[0]),
                         #WALL = 8
-                        ord(r[1]) & 0x01,
+                        ord(rep[1]) & 0x01,
                         #CLIFF_LEFT = 9
-                        ord(r[2]) & 0x01,
+                        ord(rep[2]) & 0x01,
                         #CLIFF_FRONT_LEFT = 10
-                        ord(r[3]) & 0x01,
+                        ord(rep[3]) & 0x01,
                         #CLIFF_FRONT_RIGHT = 11
-                        ord(r[4]) & 0x01,
+                        ord(rep[4]) & 0x01,
                         #CLIFF_RIGHT = 12
-                        ord(r[5]) & 0x01,
+                        ord(rep[5]) & 0x01,
                         #VIRTUAL_WALL = 13
-                        ord(r[6]) & 0x01,
+                        ord(rep[6]) & 0x01,
                         #OVERCURRENTS = 14
-                        ord(r[7]),
+                        ord(rep[7]),
                         #15
                         None,
                         #16
                         None,
                         #INFRARED = 17
-                        ord(r[10]),
+                        ord(rep[10]),
                         #BUTTONS = 18
-                        ord(r[11]),
+                        ord(rep[11]),
                         #DISTANCE = 19
-                        self.twoBytesSignedInInt(ord(r[12]), ord(r[13])),
+                        two_bytes_signed_int(ord(rep[12]), ord(rep[13])),
                         #ANGLE = 20
-                        self.twoBytesSignedInInt(ord(r[14]), ord(r[15])),
+                        two_bytes_signed_int(ord(rep[14]), ord(rep[15])),
                         #CHARGING_STATE = 21
-                        ord(r[16]),
+                        ord(rep[16]),
                         #VOLTAGE = 22
-                        self.twoBytesUnsignedInInt(ord(r[17]), ord(r[18])),
+                        two_bytes_unsigned_int(ord(rep[17]), ord(rep[18])),
                         #CURRENT = 23
-                        self.twoBytesSignedInInt(ord(r[19]), ord(r[20])),
+                        two_bytes_signed_int(ord(rep[19]), ord(rep[20])),
                         #BATTERY_TEMP = 24
-                        ord(r[21]),
+                        ord(rep[21]),
                         #BATTERY_CHARGE = 25
-                        self.twoBytesUnsignedInInt(ord(r[22]), ord(r[23])),
+                        two_bytes_unsigned_int(ord(rep[22]), ord(rep[23])),
                         #BATTERY_CAPACITY = 26
-                        self.twoBytesUnsignedInInt(ord(r[24]), ord(r[25])),
+                        two_bytes_unsigned_int(ord(rep[24]), ord(rep[25])),
                         #WALL_SIGNAL = 27
-                        self.twoBytesUnsignedInInt(ord(r[26]), ord(r[27])),
+                        two_bytes_unsigned_int(ord(rep[26]), ord(rep[27])),
                         #CLIFF_LEFT_SIGNAL = 28
-                        self.twoBytesUnsignedInInt(ord(r[28]), ord(r[29])),
+                        two_bytes_unsigned_int(ord(rep[28]), ord(rep[29])),
                         #CLIFF_FRONT_LEFT_SIGNAL = 29
-                        self.twoBytesUnsignedInInt(ord(r[30]), ord(r[31])),
+                        two_bytes_unsigned_int(ord(rep[30]), ord(rep[31])),
                         #CLIFF_FRONT_RIGHT_SIGNAL = 30
-                        self.twoBytesUnsignedInInt(ord(r[32]), ord(r[33])),
+                        two_bytes_unsigned_int(ord(rep[32]), ord(rep[33])),
                         #CLIFF_RIGHT_SIGNAL = 31
-                        self.twoBytesUnsignedInInt(ord(r[34]), ord(r[35])),
+                        two_bytes_unsigned_int(ord(rep[34]), ord(rep[35])),
                         #32
                         None,
                         #33: 2 bytes
                         None,
                         #CHARGING_SOURCES_AVAILABLE = 34
-                        ord(r[39]),
+                        ord(rep[39]),
                         #OI_MODE = 35
-                        ord(r[40]),
+                        ord(rep[40]),
                         #SONG_NUMBER = 36
-                        ord(r[41]),
+                        ord(rep[41]),
                         #SONG_PLAYING = 37
-                        ord(r[42]) & 0x01,
+                        ord(rep[42]) & 0x01,
                         #NUM_STREAM_PACKETS = 38
-                        ord(r[43]),
+                        ord(rep[43]),
                         #REQUESTED_VELOCITY = 39
-                        self.twoBytesSignedInInt(ord(r[44]), ord(r[45])),
+                        two_bytes_signed_int(ord(rep[44]), ord(rep[45])),
                         #REQUESTED_RADIUS = 40
-                        self.twoBytesSignedInInt(ord(r[46]), ord(r[47])),
+                        two_bytes_signed_int(ord(rep[46]), ord(rep[47])),
                         #REQUESTED_RIGHT_VELOCITY = 41
-                        self.twoBytesSignedInInt(ord(r[48]), ord(r[49])),
+                        two_bytes_signed_int(ord(rep[48]), ord(rep[49])),
                         #REQUESTED_LEFT_VELOCITY = 42
-                        self.twoBytesSignedInInt(ord(r[50]), ord(r[51])),
+                        two_bytes_signed_int(ord(rep[50]), ord(rep[51])),
                         #LEFT_ENCODER = 43
-                        self.twoBytesUnsignedInInt(ord(r[52]), ord(r[53])),
+                        two_bytes_unsigned_int(ord(rep[52]), ord(rep[53])),
                         #RIGHT_ENCODER = 44
-                        self.twoBytesUnsignedInInt(ord(r[54]), ord(r[55])),
+                        two_bytes_unsigned_int(ord(rep[54]), ord(rep[55])),
                         #LIGHT_BUMPER = 45
-                        ord(r[56]),
+                        ord(rep[56]),
                         #LIGHT_BUMP_LEFT_SIGNAL = 46
-                        self.twoBytesUnsignedInInt(ord(r[57]), ord(r[58])),
+                        two_bytes_unsigned_int(ord(rep[57]), ord(rep[58])),
                         #LIGHT_BUMP_FRONT_LEFT_SIGNAL = 47
-                        self.twoBytesUnsignedInInt(ord(r[59]), ord(r[60])),
+                        two_bytes_unsigned_int(ord(rep[59]), ord(rep[60])),
                         #LIGHT_BUMP_CENTER_LEFT_SIGNAL = 48
-                        self.twoBytesUnsignedInInt(ord(r[61]), ord(r[62])),
+                        two_bytes_unsigned_int(ord(rep[61]), ord(rep[62])),
                         #LIGHT_BUMP_CENTER_RIGHT_SIGNAL = 49
-                        self.twoBytesUnsignedInInt(ord(r[63]), ord(r[64])),
+                        two_bytes_unsigned_int(ord(rep[63]), ord(rep[64])),
                         #LIGHT_BUMP_FRONT_RIGHT_SIGNAL = 50
-                        self.twoBytesUnsignedInInt(ord(r[65]), ord(r[66])),
+                        two_bytes_unsigned_int(ord(rep[65]), ord(rep[66])),
                         #LIGHT_BUMP_RIGHT_SIGNAL = 51
-                        self.twoBytesUnsignedInInt(ord(r[67]), ord(r[68])),
+                        two_bytes_unsigned_int(ord(rep[67]), ord(rep[68])),
                         #INFRARED_LEFT = 52
-                        ord(r[69]),
+                        ord(rep[69]),
                         #INFRARED_RIGHT = 53
-                        ord(r[70]),
+                        ord(rep[70]),
                         #LEFT_MOTOR_CURRENT = 54
-                        self.twoBytesSignedInInt(ord(r[71]), ord(r[72])),
+                        two_bytes_signed_int(ord(rep[71]), ord(rep[72])),
                         #RIGHT_MOTOT_CURRENT = 55
-                        self.twoBytesSignedInInt(ord(r[73]), ord(r[74])),
+                        two_bytes_signed_int(ord(rep[73]), ord(rep[74])),
                         #MAIN_BRUSH_MOTOR_CURRENT = 56 unused in turtlebot
                         None,
                         #SIDE_BRUSH_MOTOR_CURRENT = 57 unused in turtlebot
                         None,
                         #STASIS = 58
-                        ord(r[79]) & 0x01,
+                        ord(rep[79]) & 0x01,
                         #LEFT_BUMP = 59
-                        (ord(r[0]) >> 1) & 0x01,
+                        (ord(rep[0]) >> 1) & 0x01,
                         #RIGHT_BUMP = 60
-                        (ord(r[0]) >> 0) & 0x01,
+                        (ord(rep[0]) >> 0) & 0x01,
                         #LEFT_WHEEL_DROP = 61
-                        (ord(r[0]) >> 3) & 0x01,
+                        (ord(rep[0]) >> 3) & 0x01,
                         #RIGHT_WHEEL_DROP = 62
-                        (ord(r[0]) >> 2) & 0x01,
+                        (ord(rep[0]) >> 2) & 0x01,
                         #HOME_BASE = 63
-                        (ord(r[39]) >> 1) & 0x01,
+                        (ord(rep[39]) >> 1) & 0x01,
                         #INTERNAL_CHARGER = 64
-                        (ord(r[39]) >> 0) & 0x01,
+                        (ord(rep[39]) >> 0) & 0x01,
                         #LIGHT_BUMP_LEFT = 65
-                        (ord(r[56]) >> 0) & 0x01,
+                        (ord(rep[56]) >> 0) & 0x01,
                         #LIGHT_BUMP_FRONT_LEFT = 66
-                        (ord(r[56]) >> 1) & 0x01,
+                        (ord(rep[56]) >> 1) & 0x01,
                         #LIGHT_BUMP_CENTER_LEFT = 67
-                        (ord(r[56]) >> 2) & 0x01,
+                        (ord(rep[56]) >> 2) & 0x01,
                         #LIGHT_BUMP_CENTER_RIGHT = 68
-                        (ord(r[56]) >> 3) & 0x01,
+                        (ord(rep[56]) >> 3) & 0x01,
                         #LIGHT_BUMP_FRONT_RIGHT = 69
-                        (ord(r[56]) >> 4) & 0x01,
+                        (ord(rep[56]) >> 4) & 0x01,
                         #LIGHT_BUMP_RIGHT = 70
-                        (ord(r[56]) >> 5) & 0x01,
+                        (ord(rep[56]) >> 5) & 0x01,
                         #LEFT_WHEEL_OVERCURRENT = 71
-                        (ord(r[7]) >> 4) & 0x01,
+                        (ord(rep[7]) >> 4) & 0x01,
                         #RIGHT_WHEEL_OVERCURRENT = 72
-                        (ord(r[7]) >> 3) & 0x01,
+                        (ord(rep[7]) >> 3) & 0x01,
                         #DOCK = 73
-                        (ord(r[11]) >> 2) & 0x01,
+                        (ord(rep[11]) >> 2) & 0x01,
                         #SPOT = 74
-                        (ord(r[11]) >> 1) & 0x01,
+                        (ord(rep[11]) >> 1) & 0x01,
                         #CLEAN = 75
-                        (ord(r[11]) >> 0) & 0x01,
+                        (ord(rep[11]) >> 0) & 0x01,
                         #POS_X = 76
                         None,
                         #POS_Y = 77
@@ -441,14 +439,14 @@ class Roomba500:
         time.sleep(0.1)
         self.start()       # send Roomba back to passive mode
         time.sleep(0.1)
-        self.changeMode('power')   # power off the robot
+        self.change_mode('power')   # power off the robot
         time.sleep(0.1)
         self.ser.close()
         print('The Roomba seems to have shutdown normally')
 
         return
 
-    def changeMode(self, mode):
+    def change_mode(self, mode):
         """ Change the current mode :
                           safe
                           full
@@ -491,31 +489,31 @@ class Roomba500:
 
         return
 
-    def driveDirect(self, rightVelocity, leftVelocity):
+    def drive_direct(self, right_velocity, left_velocity):
         """ Control right and left wheels velocity """
 
-        rvHighByte, rvLowByte = self.intInSignedBytes(rightVelocity)
-        lvHighByte, lvLowByte = self.intInSignedBytes(leftVelocity)
+        rv_high_byte, rv_low_byte = int_in_signed_bytes(right_velocity)
+        lv_high_byte, lv_low_byte = int_in_signed_bytes(left_velocity)
 
         self.ser.write(DRIVEDIRECT)
-        self.ser.write(chr(rvHighByte))
-        self.ser.write(chr(rvLowByte))
-        self.ser.write(chr(lvHighByte))
-        self.ser.write(chr(lvLowByte))
+        self.ser.write(chr(rv_high_byte))
+        self.ser.write(chr(rv_low_byte))
+        self.ser.write(chr(lv_high_byte))
+        self.ser.write(chr(lv_low_byte))
 
         return
 
     def drive(self, velocity, radius):
         """ Control wheels velocity with drive function """
 
-        vHighByte, vLowByte = self.intInSignedBytes(velocity)
-        rHighByte, rLowByte = self.intInSignedBytes(radius)
+        v_high_byte, v_low_byte = int_in_signed_bytes(velocity)
+        r_high_byte, r_low_byte = int_in_signed_bytes(radius)
 
         self.ser.write(DRIVE)
-        self.ser.write(chr(vHighByte))
-        self.ser.write(chr(vLowByte))
-        self.ser.write(chr(rHighByte))
-        self.ser.write(chr(rLowByte))
+        self.ser.write(chr(v_high_byte))
+        self.ser.write(chr(v_low_byte))
+        self.ser.write(chr(r_high_byte))
+        self.ser.write(chr(r_low_byte))
 
         return
 
@@ -540,75 +538,87 @@ class Roomba500:
 
         return
 
-    def led(self, checkRobot, dock, spot, debri, ledColor, ledIntensity):
+    def led(self, leds_val):
         """ Control Roomba leds """
+        check_robot = leds_val[0]
+        dock = leds_val[1]
+        spot = leds_val[2]
+        debri = leds_val[3]
+        led_color = leds_val[4]
+        led_intensity = leds_val[5]
 
-        ledsByte = debri + (spot * 2) + (dock * 4) + (checkRobot * 8)
+        leds_byte = debri + (spot * 2) + (dock * 4) + (check_robot * 8)
 
         self.ser.write(LEDS)
-        self.ser.write(chr(ledsByte))
+        self.ser.write(chr(leds_byte))
         # for the clean/power led
-        self.ser.write(chr(ledColor))
+        self.ser.write(chr(led_color))
         # for the clean/power led
-        self.ser.write(chr(ledIntensity))
+        self.ser.write(chr(led_intensity))
 
         return
 
-    def buttons(self, clock, schedule, day, hour, minute, dock, spot, clean):
+    def buttons(self, but_val):
         """ Virtual puch on Roomba buttons """
 
+        clock = but_val[0]
+        schedule = but_val[1]
+        day = but_val[2]
+        hour = but_val[3]
+        minute = but_val[4]
+        dock = but_val[5]
+        spot = but_val[6]
+        clean = but_val[7]
         # this command seems to doesn't work in safe/full mode...
-        buttonByte = clean + (spot * 2) + (dock * 4) + (minute * 8) + \
+        button_byte = clean + (spot * 2) + (dock * 4) + (minute * 8) + \
                     (hour * 16) + (day * 32) + (schedule * 64) + (clock * 128)
         # here there is an error when we write BUTTONS ???
         self.ser.write(chr(165))
-        self.ser.write(chr(buttonByte))
+        self.ser.write(chr(button_byte))
 
         return
 
-    def resetPosition(self):
-        """ Reset the current position to 0, 0, 0 (mm) """
-        self.x = 0.0
-        self.y = 0.0
-        self.z = 0.0
+    def reset_position(self):
+        """ Reset the current position to 0, 0, (mm) 0 (degrees) """
+        self.pose = [0.0, 0.0, 0.0]
 
         return
 
-    def setPosition(self, x, y, z):
-        """ Set the current position to x, y, z """
-        self.x = x
-        self.y = y
-        self.z = z
+    def set_position(self, spx, spy, spz):
+        """ Set the current position to x, y, theta """
+        self.pose[0] = spx
+        self.pose[1] = spy
+        self.pose[2] = spz
 
         return
 
-    def interfaceSerial(self):
+    def interface_serial(self):
         """ Interface for serial connection
             Run this function in backgrown process with multiprocessing
             and use Queue for get the position and sensor and send
             command to Roomba
         """
-        sens = self.getSensor()
-        initRight = sens[RIGHT_ENCODER]
-        initLeft = sens[LEFT_ENCODER]
+        sens = self.get_sensor()
+        init_right = sens[RIGHT_ENCODER]
+        init_left = sens[LEFT_ENCODER]
 
-        codeurRight = 0
-        codeurLeft = 0
+        codeur_right = 0
+        codeur_left = 0
 
-        prev_raw_right_encoder = initRight
-        prev_raw_left_encoder = initLeft
+        prev_raw_right_encoder = init_right
+        prev_raw_left_encoder = init_left
 
-        prev_distance = 0
+        prev_dist = 0
         prev_angle = 0
 
         i = 0
         j = 0
 
-        self.sensorl[POS_X] = self.x
-        self.sensorl[POS_Y] = self.y
-        self.sensorl[POS_Z] = self.z
+        self.sensorl[POS_X] = self.pose[0]
+        self.sensorl[POS_Y] = self.pose[1]
+        self.sensorl[POS_Z] = self.pose[2]
 
-        self.q.put(self.sensorl)
+        self.qsens.put(self.sensorl)
 
         while self.serial_run is True:
             try:
@@ -636,22 +646,22 @@ class Roomba500:
                     pass
 
                 try:
-                    valu = send['changeMode']
-                    self.changeMode(valu)
+                    valu = send['change_mode']
+                    self.change_mode(valu)
 
                 except KeyError:
                     pass
 
                 try:
-                    valu = send['driveDirect']
-                    self.driveDirect(valu[0], valu[1])
+                    valu = send['drive_direct']
+                    self.drive_direct(valu[0], valu[1])
 
                 except KeyError:
                     pass
 
                 try:
                     valu = send['drive']
-                    self.wakeup(valu[0], valu[1])
+                    self.drive(valu[0], valu[1])
 
                 except KeyError:
                     pass
@@ -672,23 +682,21 @@ class Roomba500:
 
                 try:
                     valu = send['led']
-                    self.led(valu[0], valu[1], valu[2],
-                             valu[3], valu[4], valu[5])
+                    self.led(valu)
 
                 except KeyError:
                     pass
 
                 try:
                     valu = send['buttons']
-                    self.buttons(valu[0], valu[1], valu[2], valu[3],
-                                 valu[4], valu[5], valu[6], valu[7])
+                    self.buttons(valu)
 
                 except KeyError:
                     pass
 
                 try:
-                    valu = send['resetPosition']
-                    self.resetPosition()
+                    valu = send['reset_position']
+                    self.reset_position()
 
                 except KeyError:
                     pass
@@ -696,7 +704,7 @@ class Roomba500:
             except:
                 pass
 
-            sens = self.getSensor()
+            sens = self.get_sensor()
             # if number pass to 0 at 65535...
             if (sens[RIGHT_ENCODER] - prev_raw_right_encoder) > 60000:
                 i += -1
@@ -709,38 +717,39 @@ class Roomba500:
             # if number pass to 65535 at 0...
             elif (sens[LEFT_ENCODER] - prev_raw_left_encoder) < -60000:
                 j += 1
-            # the value 60000 depend of time between each getSensor...
-            codeurRight = sens[RIGHT_ENCODER] + i * 65535 - initRight
-            codeurLeft = sens[LEFT_ENCODER] + j * 65535 - initLeft
+            # the value 60000 depend of time between each get_sensor...
+            codeur_right = sens[RIGHT_ENCODER] + i * 65535 - init_right
+            codeur_left = sens[LEFT_ENCODER] + j * 65535 - init_left
 
-            distance = ((codeurRight + codeurLeft) / 1024.0)
+            distance = ((codeur_right + codeur_left) / 1024.0)
             distance = distance * 72.90853488 * math.pi
 
             # 72.90853488 is the diameter of the wheels with a corection in mm,
             # there are 512 points per turn in the encoders distance in mm
-            angle = ((codeurRight - codeurLeft) / 1024.0)
+            angle = ((codeur_right - codeur_left) / 1024.0)
             angle = (angle * 79.97155157 * 360) / 258
 
             # 258 is the distance between wheels in mm, 79.97155157 is the
             # diameter of the wheels with a corection in mm angle in degrees
-            th = math.radians(angle)
+            theta = math.radians(angle)
 
-            self.x = self.x + (distance - prev_distance) * math.cos(th)
-            self.y = self.y + (distance - prev_distance) * math.sin(th)
-            self.z = self.z + (angle - prev_angle)
+            ddist = (distance - prev_dist)
+            self.pose[0] = self.pose[0] + (ddist * math.cos(theta))
+            self.pose[1] = self.pose[1] + (ddist * math.sin(theta))
+            self.pose[2] = self.pose[2] + (angle - prev_angle)
 
-            self.sensorl[POS_X] = self.x
-            self.sensorl[POS_Y] = self.y
-            self.sensorl[POS_Z] = self.z
+            self.sensorl[POS_X] = self.pose[0]
+            self.sensorl[POS_Y] = self.pose[1]
+            self.sensorl[POS_Z] = self.pose[2]
 
             try:
-                if self.q.qsize > 0:
-                    self.q.get_nowait()
+                if self.qsens.qsize > 0:
+                    self.qsens.get_nowait()
             except:
                 pass
             # Put the value of all sensors and position
             # of the Roomba with Queue
-            self.q.put(self.sensorl)
+            self.qsens.put(self.sensorl)
 
             # print position
             # print(self.sensorl[POS_X],\
@@ -749,7 +758,7 @@ class Roomba500:
             prev_raw_right_encoder = sens[RIGHT_ENCODER]
             prev_raw_left_encoder = sens[LEFT_ENCODER]
 
-            prev_distance = distance
+            prev_dist = distance
             prev_angle = angle
 
             time.sleep(0.015)

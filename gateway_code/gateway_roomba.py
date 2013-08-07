@@ -62,7 +62,7 @@ class GatewayRoomba(object):
             self.watch_thread = threading.Thread(target=self._watch_roomba)
             self.robot.serial_run = True
             self.serial_thread = \
-                threading.Thread(target=self.robot.interfaceSerial)
+                threading.Thread(target=self.robot.interface_serial)
             self.serial_thread.start()
             # wait to establish communication
             time.sleep(1)
@@ -98,7 +98,7 @@ class GatewayRoomba(object):
             LOGGER.error('Start experiment failed')
         else:
             LOGGER.info('Start experiment')
-            self.robot.qsend.put({'changeMode': 'clean'})
+            self.robot.qsend.put({'change_mode': 'clean'})
             self.status = 'moving'
 
         return st_return
@@ -115,10 +115,10 @@ class GatewayRoomba(object):
             LOGGER.error('Stop experiment failed')
         else:
             LOGGER.info('Stop experiment')
-            self.robot.qsend.put({'changeMode': 'dock'})
+            self.robot.qsend.put({'change_mode': 'dock'})
             # send roomba commande twice, why ?
             time.sleep(1)
-            self.robot.qsend.put({'changeMode': 'dock'})
+            self.robot.qsend.put({'change_mode': 'dock'})
             self.status = 'searching_dock'
 
         return st_return
@@ -164,7 +164,7 @@ class GatewayRoomba(object):
         if self.status == 'moving':
             st_return = 1
             LOGGER.info('Motion pause')
-            self.robot.qsend.put({'changeMode': 'safe'})
+            self.robot.qsend.put({'change_mode': 'safe'})
             self.status = 'paused'
         else:
             st_return = 1
@@ -181,7 +181,7 @@ class GatewayRoomba(object):
         if self.status == 'paused':
             st_return = 1
             LOGGER.info('Motion continue')
-            self.robot.qsend.put({'changeMode': 'clean'})
+            self.robot.qsend.put({'change_mode': 'clean'})
             self.status = 'moving'
         else:
             st_return = 1
@@ -200,7 +200,7 @@ class GatewayRoomba(object):
             LOGGER.error('Stop experiment failed')
         else:
             LOGGER.info('Stop experiment')
-            self.robot.qsend.put({'changeMode': 'dock'})
+            self.robot.qsend.put({'change_mode': 'dock'})
             self.status = 'searching_dock'
 
         return st_return
@@ -211,11 +211,11 @@ class GatewayRoomba(object):
         """
 
         while self.watch_run is True:
-            self.sensor_list = self.robot.q.get()
+            self.sensor_list = self.robot.qsens.get()
 
             # Stop directly Roomba if there is an error
             if self.status == 'error':
-                self.robot.qsend.put({'changeMode': 'safe'})
+                self.robot.qsend.put({'change_mode': 'safe'})
                 LOGGER.error('Roomba Emergency Stop')
 
             if STATUS[self.status] > 1:
@@ -224,7 +224,7 @@ class GatewayRoomba(object):
                      and self.status != 'docked'
                      and self.status != 'moving'):
                     self.status = 'docked'
-                    self.robot.resetPosition()
+                    self.robot.reset_position()
                     LOGGER.info('Docked')
                 # Motors overcurrent detection
                 if (self.sensor_list[roomba.LEFT_WHEEL_OVERCURRENT]) \
