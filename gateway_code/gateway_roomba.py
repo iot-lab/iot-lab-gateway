@@ -220,19 +220,18 @@ class GatewayRoomba(object):
 
             if STATUS[self.status] > 1:
                 # Robot docking detection
-                if (self.sensor_list[roomba.HOME_BASE] == 1
-                     and self.status != 'docked'
-                     and self.status != 'moving'):
+                if self.sensor_list[roomba.HOME_BASE] == 1 \
+                        and self.status not in ('docked', 'moving'):
                     self.status = 'docked'
                     self.robot.reset_position()
                     LOGGER.info('Docked')
                 # Motors overcurrent detection
-                if (self.sensor_list[roomba.LEFT_WHEEL_OVERCURRENT]) \
-                   or (self.sensor_list[roomba.RIGHT_WHEEL_OVERCURRENT]):
+                if self.sensor_list[roomba.LEFT_WHEEL_OVERCURRENT] \
+                        or self.sensor_list[roomba.RIGHT_WHEEL_OVERCURRENT]:
                     LOGGER.error("MOTORS OVERCURRENT")
                 # Robot DROPPED
-                if (self.sensor_list[roomba.LEFT_WHEEL_DROP]) \
-                    or (self.sensor_list[roomba.RIGHT_WHEEL_DROP]):
+                if self.sensor_list[roomba.LEFT_WHEEL_DROP] \
+                        or self.sensor_list[roomba.RIGHT_WHEEL_DROP]:
                     LOGGER.error("ROBOT DROPPED")
                     self.status = 'init'
                 # Update battery value

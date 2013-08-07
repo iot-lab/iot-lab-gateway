@@ -571,7 +571,7 @@ class Roomba500:
         clean = but_val[7]
         # this command seems to doesn't work in safe/full mode...
         button_byte = clean + (spot * 2) + (dock * 4) + (minute * 8) + \
-                    (hour * 16) + (day * 32) + (schedule * 64) + (clock * 128)
+            (hour * 16) + (day * 32) + (schedule * 64) + (clock * 128)
         # here there is an error when we write BUTTONS ???
         self.ser.write(chr(165))
         self.ser.write(chr(button_byte))
