@@ -29,7 +29,7 @@ def init_logger(log_folder):
     # will be updated to be in user folder later
     user_f = log_folder + 'user.log'
     user = RotatingFileHandler(user_f, 'a', maxBytes=100000, backupCount=1)
-    user.setLevel(logging.ERROR)
+    user.setLevel(logging.INFO)
     user.setFormatter(FORMATTER)
 
     # Server logs
