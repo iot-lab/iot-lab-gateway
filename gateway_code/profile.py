@@ -122,8 +122,18 @@ class Radio(_RADIO_TYPE):
         """
         raise ValueError if self is not a 'valid' configuration
         """
+        if self.channel not in range(11, 27):
+            raise ValueError
+
+        if self.mode == "measure":
+            # measure should have a 'freq' entry
+            if self.freq is None:
+                raise ValueError
+            # freq in valid range
+            elif self.freq not in range(2, 2**16-1):
+                raise ValueError
+
+        # invalid measures types (at the end for coverage issue)
         if self.mode not in ["measure"]:
             raise ValueError
 
-        if self.mode == "measure" and self.freq is None:
-            raise ValueError
