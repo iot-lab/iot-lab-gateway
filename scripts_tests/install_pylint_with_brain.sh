@@ -20,5 +20,5 @@ cd -
 
 ORIG_BRAIN=$(python -c 'import logilab, os; print os.path.dirname(logilab.__file__) + "/astng/brain"')
 rm -rf "$ORIG_BRAIN"
-ln -s "$BRAIN/brain" "$ORIG_BRAIN"
+cp -r "$BRAIN/brain" "$ORIG_BRAIN"
 
