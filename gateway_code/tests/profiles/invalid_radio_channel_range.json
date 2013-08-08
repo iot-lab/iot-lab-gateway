@@ -1,0 +1,11 @@
+{
+    "profilename": "invalid_radio_channel_range.json",
+    "power": "dc",
+
+    "radio": {
+        "power" : "-17dBm",
+        "channel" : 10,
+        "mode" : "measure",
+        "freq" : 1024
+    }
+}
