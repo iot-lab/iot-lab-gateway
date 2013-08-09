@@ -6,6 +6,6 @@
         "power" : "-17dBm",
         "channel" : 15,
         "mode" : "measure",
-        "freq" : 66000
+        "freq" : 500
     }
 }

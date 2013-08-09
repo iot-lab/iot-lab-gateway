@@ -130,7 +130,7 @@ class Radio(_RADIO_TYPE):
             if self.freq is None:
                 raise ValueError
             # freq in valid range
-            elif self.freq not in range(2, 2**16-1):
+            elif self.freq not in range(2, 499):
                 raise ValueError
 
         # invalid measures types (at the end for coverage issue)

@@ -274,7 +274,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         // measure freq
                         arg = strtok(NULL, " ");
                         freq = (uint32_t) atoi(arg);
-                        if (freq < 2 || freq > ((1 << 16) -1))
+                        if (freq < 2 || freq > 499)
                                 got_error |=1;
                         cmd_buff->u.s.payload[cmd_buff->u.s.len++] = (\
                                         freq & 0xFF);  // LSB

@@ -170,10 +170,12 @@ TEST(test_parse_cmd, radio_measure)
         ret = parse_cmd(config_3_cmd, &cmd_buff);
         ASSERT_NE(0, ret);
 
+        // min to 2
         char config_4_cmd[] = "config_radio_measure start 1";
         ret = parse_cmd(config_4_cmd, &cmd_buff);
         ASSERT_NE(0, ret);
-        char config_5_cmd[] = "config_radio_measure start 65536";
+        // max to 499
+        char config_5_cmd[] = "config_radio_measure start 500";
         ret = parse_cmd(config_5_cmd, &cmd_buff);
         ASSERT_NE(0, ret);
 }
