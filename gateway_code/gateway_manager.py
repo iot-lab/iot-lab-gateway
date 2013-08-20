@@ -9,7 +9,6 @@ manager script
 from gateway_code import config
 from gateway_code import openocd_cmd
 from gateway_code.serial_redirection import SerialRedirection
-from gateway_code.profile import Profile
 
 from gateway_code import control_node_interface, protocol_cn
 
@@ -22,21 +21,16 @@ import atexit
 
 LOGGER = logging.getLogger('gateway_code')
 
-CONTROL_NODE_FIRMWARE = config.STATIC_FILES_PATH + 'control_node.elf'
-IDLE_FIRMWARE = config.STATIC_FILES_PATH + 'idle.elf'
-
 
 # Disable: I0011 - 'locally disabling warning'
 # too many instance attributes
-# pylint:disable =I0011,R0902
+# pylint:disable=I0011,R0902
 class GatewayManager(object):
     """
     Gateway Manager class,
 
     Manages experiments, open node and control node
     """
-    board_type = None
-    robot = None
 
     def __init__(self, log_folder='.'):
 
@@ -55,10 +49,10 @@ class GatewayManager(object):
         self.robot = config.robot_type()
 
         # Setup control node
-        ret = self.node_flash('gwt', CONTROL_NODE_FIRMWARE)
+        ret = self.node_flash('gwt', config.FIRMWARES['control_node'])
         if ret != 0:  # pragma: no cover
             raise StandardError("Control node flash failed: {ret:%d, '%s')",
-                                ret, CONTROL_NODE_FIRMWARE)
+                                ret, config.FIRMWARES['control_node'])
         self.cn_serial = control_node_interface.ControlNodeSerial()
         self.protocol = protocol_cn.Protocol(self.cn_serial.send_command)
 
@@ -102,8 +96,8 @@ class GatewayManager(object):
 
         self.exp_id = exp_id
         self.user = user
-        self.profile = profile or self.default_profile()
-        firmware_path = firmware_path or IDLE_FIRMWARE
+        self.profile = profile or config.default_profile()
+        firmware_path = firmware_path or config.FIRMWARES['idle']
 
         ret_val = 0
         # start steps described in docstring
@@ -178,7 +172,7 @@ class GatewayManager(object):
         # Cleanup Control node config #
         # # # # # # # # # # # # # # # #
 
-        ret = self.exp_update_profile(self.default_profile())
+        ret = self.exp_update_profile(config.default_profile())
         ret_val += ret
         ret = self.open_power_start(power='dc')
         ret_val += ret
@@ -195,7 +189,7 @@ class GatewayManager(object):
             # ret_val += ret
             ret = self.serial_redirection.stop()
             ret_val += ret
-            ret = self.node_flash('m3', IDLE_FIRMWARE)
+            ret = self.node_flash('m3', config.FIRMWARES['idle'])
             ret_val += ret
             ret = self.open_power_stop(power='dc')
             ret_val += ret
@@ -314,14 +308,3 @@ class GatewayManager(object):
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
-
-    @staticmethod
-    def default_profile():
-        """
-        Get the default profile
-        """
-        import json
-        with open(config.STATIC_FILES_PATH + 'default_profile.json') as _prof:
-            profile_dict = json.load(_prof)
-            def_profile = Profile(profile_dict, config.board_type())
-        return def_profile
