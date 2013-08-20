@@ -1,6 +1,5 @@
 # -*- coding:utf-8 -*-
 
-
 """
 Common static configuration for the application and `OpenOCD`
 
@@ -10,6 +9,8 @@ Common static configuration for the application and `OpenOCD`
 :NODES: Nodes name
 :NODES_CFG: Per node OpenOCD and serial configuration
 """
+
+from gateway_code.profile import Profile
 
 
 STATIC_FILES_PATH = '/var/lib/gateway_code/'
@@ -33,34 +34,50 @@ ROOMBA_CFG = {'tty': '/dev/ttyROOMBA'}
 
 CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 
+FIRMWARES = {
+    'idle': STATIC_FILES_PATH + 'idle.elf',
+    'control_node': STATIC_FILES_PATH + 'control_node.elf',
+    }
+
 _BOARD_CONFIG = {}
 
 
-def board_type():
-    """
-    Return the board type 'M3' or 'A8'
-    """
-    if 'board_type' not in _BOARD_CONFIG:
-        try:
-            _file = open(GATEWAY_CONFIG_PATH + 'board_type')
-            _BOARD_CONFIG['board_type'] = _file.read().strip()
-            _file.close()
-        except IOError as err:
-            raise StandardError("Could not find board type:\n  '%s'" % err)
+def default_profile():
+    """ Return the default profile """
+    import json
+    _profile_str = _get_conf('default_profile.json', STATIC_FILES_PATH,
+                             raise_error=True)
+    print 'lala'
+    print '%r' % _profile_str
+    return Profile(json.loads(_profile_str), board_type())
 
-    return _BOARD_CONFIG['board_type']
+
+def board_type():
+    """ Return the board type 'M3' or 'A8' """
+    return _get_conf('board_type', GATEWAY_CONFIG_PATH, raise_error=True)
 
 
 def robot_type():
-    """
-    Return robot type None, 'roomba'
-    """
-    if 'robot' not in _BOARD_CONFIG:
-        try:
-            _file = open(GATEWAY_CONFIG_PATH + 'robot')
-            _BOARD_CONFIG['robot'] = _file.read().strip()
-            _file.close()
-        except IOError:
-            _BOARD_CONFIG['robot'] = None
+    """ Return robot type None, 'roomba' """
+    return _get_conf('robot', GATEWAY_CONFIG_PATH)
 
-    return _BOARD_CONFIG['robot']
+
+def _get_conf(key, path, raise_error=False):
+    """
+    Load config from file given as key
+
+    :param key: config file name
+    :param raise_error: select if exceptions are silenced or raised
+    """
+    # Singleton pattern
+    if key not in _BOARD_CONFIG:
+        # load from file
+        try:
+            _file = open(path + key)
+            _BOARD_CONFIG[key] = _file.read().strip()
+            _file.close()
+        except IOError as err:
+            _BOARD_CONFIG[key] = None
+            if raise_error:
+                raise err
+    return _BOARD_CONFIG[key]

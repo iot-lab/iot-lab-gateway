@@ -40,20 +40,21 @@ def _send_command_open_node(host, port, command):
     return ret
 
 
+MOCK_FIRMWARES = {
+    'idle': STATIC_DIR + 'idle.elf',
+    'control_node': STATIC_DIR + 'control_node.elf',
+    }
 
-@patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
-@patch('gateway_code.gateway_manager.IDLE_FIRMWARE', STATIC_DIR + 'idle.elf')
-@patch('gateway_code.gateway_manager.CONTROL_NODE_FIRMWARE', \
-        STATIC_DIR + 'control_node.elf')
+
+@patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
+@patch('gateway_code.gateway_manager.config.FIRMWARES', MOCK_FIRMWARES)
+@patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
 class TestComplexExperimentRunning(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        with patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR):
-            with patch('gateway_code.gateway_manager.CONTROL_NODE_FIRMWARE', \
-                    STATIC_DIR + 'control_node.elf'):
-                cls.app = gateway_code.server_rest.GatewayRest(\
-                        gateway_code.server_rest.GatewayManager('.'))
+        cls.app = gateway_code.server_rest.GatewayRest(\
+                gateway_code.server_rest.GatewayManager('.'))
 
         cls.files = {}
         # default files
@@ -106,10 +107,7 @@ class TestComplexExperimentRunning(unittest.TestCase):
 
     def tearDown(self):
         self.request_patcher.stop()
-        with patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR):
-            with patch('gateway_code.gateway_manager.CONTROL_NODE_FIRMWARE', \
-                    STATIC_DIR + 'control_node.elf'):
-                self.app.exp_stop() # just in case, post error cleanup
+        self.app.exp_stop() # just in case, post error cleanup
 
 
     def tests_multiple_complete_experiment(self):

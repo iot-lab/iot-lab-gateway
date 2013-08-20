@@ -1,7 +1,6 @@
 # -*- coding:utf-8 -*-
 
 """
-
 Profile module, implementing the 'Profile' class
 and methods to convert it to config commands
 
@@ -136,4 +135,3 @@ class Radio(_RADIO_TYPE):
         # invalid measures types (at the end for coverage issue)
         if self.mode not in ["measure"]:
             raise ValueError
-

@@ -5,9 +5,23 @@
 import mock
 import unittest
 
+
 from cStringIO import StringIO
 
+import os
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
+
 from gateway_code import config
+
+
+class TestDefaultProfile(unittest.TestCase):
+
+    def test_default_profile(self):
+        with mock.patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR):
+            with mock.patch('gateway_code.config.board_type', lambda: 'M3'):
+                ret = config.default_profile()
+
 
 class TestsBoardAndRobotType(unittest.TestCase):
 
@@ -36,10 +50,9 @@ class TestsBoardAndRobotType(unittest.TestCase):
         self.open_mock.side_effect = Exception()
         self.assertEquals('M3', config.board_type())
 
-
     def test_board_type_not_found(self):
         self.open_mock.side_effect = IOError()
-        self.assertRaises(StandardError, config.board_type)
+        self.assertRaises(IOError, config.board_type)
 
 
 

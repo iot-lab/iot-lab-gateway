@@ -47,10 +47,12 @@ SCRIPTS += ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
 TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
 
-# unload 'gateway_code.config'
+# unload 'gateway_code..*' modules
 # either it's not included in the coverage report...
 import sys
-del sys.modules['gateway_code.config']
+for mod in sys.modules.keys():
+    if 'gateway_code' in mod:
+        del sys.modules[mod]
 
 
 class _Tee(object):
