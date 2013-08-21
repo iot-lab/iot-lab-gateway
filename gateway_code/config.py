@@ -10,9 +10,6 @@ Common static configuration for the application and `OpenOCD`
 :NODES_CFG: Per node OpenOCD and serial configuration
 """
 
-from gateway_code.profile import Profile
-
-
 STATIC_FILES_PATH = '/var/lib/gateway_code/'
 GATEWAY_CONFIG_PATH = '/var/local/config/'
 
@@ -47,9 +44,7 @@ def default_profile():
     import json
     _profile_str = _get_conf('default_profile.json', STATIC_FILES_PATH,
                              raise_error=True)
-    print 'lala'
-    print '%r' % _profile_str
-    return Profile(json.loads(_profile_str), board_type())
+    return json.loads(_profile_str)
 
 
 def board_type():

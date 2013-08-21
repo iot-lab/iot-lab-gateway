@@ -25,6 +25,7 @@ Pylint and pep8 checker:
 from setuptools import setup, Command
 from setuptools.command.install import install
 
+import sys
 import os
 import re
 import subprocess
@@ -47,12 +48,9 @@ SCRIPTS += ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
 TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
 
-# unload 'gateway_code..*' modules
+# unload 'gateway_code.config' module
 # either it's not included in the coverage report...
-import sys
-for mod in sys.modules.keys():
-    if 'gateway_code' in mod:
-        del sys.modules[mod]
+del sys.modules['gateway_code.config']
 
 
 class _Tee(object):
