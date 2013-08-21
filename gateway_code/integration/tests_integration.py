@@ -78,6 +78,12 @@ class TestComplexExperimentRunning(unittest.TestCase):
         cls.files['profile'] = FileUpload(\
                 file = open(CURRENT_DIR + 'profile.json', 'rb'),
                 name = 'profile', filename = 'profile.json')
+        cls.files['invalid_profile'] = FileUpload(\
+                file = open(CURRENT_DIR + 'invalid_profile.json', 'rb'),
+                name = 'profile', filename = 'invalid_profile.json')
+        cls.files['invalid_profile_2'] = FileUpload(\
+                file = open(CURRENT_DIR + 'invalid_profile_2.json', 'rb'),
+                name = 'profile', filename = 'invalid_profile_2.json')
 
 
     @classmethod
@@ -201,6 +207,19 @@ class TestComplexExperimentRunning(unittest.TestCase):
         ret = self.app.exp_stop() # cannot stop stoped exp
         self.assertNotEquals(ret, {'ret':0})
 
+
+    def tests_invalid_profile_at_start(self):
+
+        self._rewind_files()
+        self.request.files = {'profile': self.files['invalid_profile']}
+        ret = self.app.exp_start(123, 'clochette')
+        self.assertNotEquals(ret, {'ret':0})
+
+        # invalid json
+        self._rewind_files()
+        self.request.files = {'profile': self.files['invalid_profile_2']}
+        ret = self.app.exp_start(123, 'clochette')
+        self.assertNotEquals(ret, {'ret':0})
 
 
 
