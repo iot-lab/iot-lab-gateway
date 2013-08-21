@@ -217,13 +217,15 @@ class Tests(Command):
     def run(self):
         args = ['python', 'setup.py']
 
+        ret = 0
         try:
-            subprocess.check_call(args + ['nosetests', '--cover-html'])
+            ret = subprocess.call(args + ['nosetests', '--cover-html'])
             _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
         except subprocess.CalledProcessError:
             exit(1)
+        return ret
 
 
 class TestsRoomba(Command):
@@ -253,13 +255,15 @@ class IntegrationTests(Command):
     Run unit tests, pylint and pep8, and integration tests.
     Should be run on a gateway
     """
-    user_options = []
+    user_options = [('stop', None, "Stop tests after a failed test")]
 
     def initialize_options(self):
-        pass
+        self.stop = False
 
     def finalize_options(self):
-        pass
+        self.nose_args = []
+        if self.stop:
+            self.nose_args += ['--stop']
 
     @staticmethod
     def cleanup_workspace():
@@ -314,6 +318,7 @@ class IntegrationTests(Command):
         args = ['python', 'setup.py']
 
         self.cleanup_workspace()
+        ret = 0
 
         try:
             subprocess.check_call(args + ['build_cn_serial'])
@@ -321,13 +326,16 @@ class IntegrationTests(Command):
             preexec_fn, env = self.popen_as_user('www-data')
             env['PATH'] = './control_node_serial/:%s' % env['PATH']
 
-            subprocess.check_call(args + ['nosetests', '-i=*integration/*'],
-                                  preexec_fn=preexec_fn, env=env)
+            _nose_args = args + ['nosetests', '-i=*integration/*']
+            _nose_args += self.nose_args
+            ret = subprocess.call(_nose_args, preexec_fn=preexec_fn, env=env)
+
             _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
         except subprocess.CalledProcessError:
             exit(1)
+        return ret
 
 
 setup(name='gateway_code',
