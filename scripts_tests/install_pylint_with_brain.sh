@@ -4,7 +4,9 @@ set -ex
 
 WORKSPACE=$(pwd)
 
-pip install --quiet pylint
+# now pypi is giving pylint 1.0
+# force 0.27 as I didn't made the migration to new version of pylint and brain
+pip install --quiet pylint==0.27
 
 BRAIN=$(readlink -e "${WORKSPACE}")/pylint-brain
 if [ ! -d "$BRAIN" ]; then
