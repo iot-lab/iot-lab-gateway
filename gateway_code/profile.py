@@ -93,7 +93,7 @@ class Consumption(_CONSUMPTION_TYPE):
         try:
             _CONSUMPTION_TYPE.__init__(self, source=_source, *args, **kwargs)
         except TypeError:
-            raise ValueError
+            raise ValueError("Error in consumption arguments")
 
 
 _RADIO_TYPE = recordtype('radio', ['power', 'channel', 'mode',

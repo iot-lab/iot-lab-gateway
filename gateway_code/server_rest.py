@@ -63,7 +63,11 @@ class GatewayRest(object):
             if 'profile' in request.files:
                 # create profile object from json
                 _prof = request.files['profile']
-                profile = json.load(_prof.file)
+                try:
+                    profile = json.load(_prof.file)
+                except ValueError:
+                    LOGGER.error('Invalid json for profile')
+                    return {'ret': 1}
             if self.board_type == 'M3' and 'firmware' in request.files:
                 # save http file to disk
                 _firm = request.files['firmware']

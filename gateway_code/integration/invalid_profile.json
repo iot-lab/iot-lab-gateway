@@ -3,9 +3,6 @@
     "power": "dc",
 
     "consumption": {
-        "period" : "1100us",
-        "average": 256,
-
         "current": true,
         "voltage": true,
         "power"  : false

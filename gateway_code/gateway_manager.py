@@ -46,7 +46,6 @@ class GatewayManager(object):
         # Init cleanup, logger and board type
         atexit.register(self.exp_stop)
         gateway_code.gateway_logging.init_logger(log_folder)
-        self.board_type = config.board_type()
         self.robot = config.robot_type()
 
         # Setup control node
@@ -93,13 +92,18 @@ class GatewayManager(object):
         if self.experiment_is_running:
             LOGGER.warning('Experiment already running')
             return 1
-        self.experiment_is_running = True
 
         self.exp_id = exp_id
         self.user = user
         firmware_path = firmware_path or config.FIRMWARES['idle']
-        _prof = profile or config.default_profile()
-        self.profile = Profile(_prof, self.board_type())
+        try:
+            _prof = profile or config.default_profile()
+            self.profile = Profile(_prof, config.board_type())
+        except ValueError:
+            LOGGER.error('Invalid profile')
+            return 1
+
+        self.experiment_is_running = True
 
         ret_val = 0
         # start steps described in docstring
@@ -128,7 +132,7 @@ class GatewayManager(object):
         # Prepare Open Node #
         # # # # # # # # # # #
 
-        if self.board_type == 'M3':
+        if config.board_type() == 'M3':
             ret = self.node_flash('m3', firmware_path)
             ret_val += ret
             ret = self.serial_redirection.start()
@@ -187,7 +191,7 @@ class GatewayManager(object):
         # # # # # # # # # # #
         # Cleanup open node #
         # # # # # # # # # # #
-        if self.board_type == 'M3':
+        if config.board_type() == 'M3':
             # ret = self.gdb_server.stop()
             # ret_val += ret
             ret = self.serial_redirection.stop()
