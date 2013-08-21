@@ -8,6 +8,7 @@ manager script
 
 from gateway_code import config
 from gateway_code import openocd_cmd
+from gateway_code.profile import Profile
 from gateway_code.serial_redirection import SerialRedirection
 
 from gateway_code import control_node_interface, protocol_cn
@@ -96,8 +97,9 @@ class GatewayManager(object):
 
         self.exp_id = exp_id
         self.user = user
-        self.profile = profile or config.default_profile()
         firmware_path = firmware_path or config.FIRMWARES['idle']
+        _prof = profile or config.default_profile()
+        self.profile = Profile(_prof, self.board_type())
 
         ret_val = 0
         # start steps described in docstring
@@ -172,7 +174,8 @@ class GatewayManager(object):
         # Cleanup Control node config #
         # # # # # # # # # # # # # # # #
 
-        ret = self.exp_update_profile(config.default_profile())
+        self.profile = Profile(config.default_profile(), config.board_type())
+        ret = self.exp_update_profile()
         ret_val += ret
         ret = self.open_power_start(power='dc')
         ret_val += ret
@@ -205,7 +208,6 @@ class GatewayManager(object):
         # Reset configuration
         self.user = None
         self.exp_id = None
-        self.profile = None
         self.experiment_is_running = False
 
         return ret_val
