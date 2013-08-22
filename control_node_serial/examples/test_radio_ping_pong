@@ -1,0 +1,8 @@
+
+config_radio_signal 3dBm 25
+test_radio_ping_pong start
+
+
+
+
+test_radio_ping_pong stop

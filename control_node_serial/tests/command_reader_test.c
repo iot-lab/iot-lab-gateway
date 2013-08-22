@@ -1,12 +1,7 @@
 #include <gtest/gtest.h>
 #include <unistd.h> // sleep, size_t
 
-/*
- * Mock log_print
- */
-
-char print_buff[2048];
-#define fprintf(stream, ...)  snprintf(print_buff, sizeof(print_buff), __VA_ARGS__)
+#include "mock_fprintf.h"  // include before other includes
 
 /*
  * Mock exit, mocking directly cause
@@ -180,6 +175,27 @@ TEST(test_parse_cmd, radio_measure)
         ASSERT_NE(0, ret);
 }
 
+
+TEST(test_parse_cmd, test_commands)
+{
+        int ret;
+        struct command_buffer cmd_buff;
+
+        // ping pong
+        char ping_pong_start[] = "test_radio_ping_pong start";
+        ret = parse_cmd(ping_pong_start, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_RADIO_PING_PONG, cmd_buff.u.s.payload[0]);
+
+        // ping pong
+        char ping_pong_stop[] = "test_radio_ping_pong stop";
+        ret = parse_cmd(ping_pong_stop, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_RADIO_PING_PONG, cmd_buff.u.s.payload[0]);
+}
+
 /*
  * Test read_commands
  */
@@ -264,6 +280,13 @@ TEST(test_write_answer, valid_answers)
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("config_radio_measure ACK\n", print_buff);
+
+
+        data[0] = TEST_RADIO_PING_PONG;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("test_radio_ping_pong ACK\n", print_buff);
 }
 
 TEST(test_write_answer, invalid_answers)
@@ -273,10 +296,6 @@ TEST(test_write_answer, invalid_answers)
 
         ret = write_answer(data, 1);
         ASSERT_EQ(-1, ret);
-
-        data[0] = MEASURES_FRAME_MASK;
-        ret = write_answer(data, 2);
-        ASSERT_EQ(-2, ret);
 
         data[0] = CONFIG_POWER_POLL;
         data[1] = 42;
@@ -295,15 +314,19 @@ TEST(test_parse_cmd, invalid_commands)
 
         char empty[] = "";
         ret = parse_cmd(empty, &cmd_buff);
-        ASSERT_EQ(1, ret);
+        ASSERT_NE(0, ret);
 
         char unkown[] = "unkown_cmd with arg";
         ret = parse_cmd(unkown, &cmd_buff);
-        ASSERT_EQ(1, ret);
+        ASSERT_NE(0, ret);
 
         char consumption[] = "config_consumption_measure blabla";
         ret = parse_cmd(consumption, &cmd_buff);
-        ASSERT_EQ(1, ret);
+        ASSERT_NE(0, ret);
+
+        char radio_ping_pong[] = "test_radio_ping_pong";
+        ret = parse_cmd(radio_ping_pong, &cmd_buff);
+        ASSERT_NE(0, ret);
 }
 
 /*

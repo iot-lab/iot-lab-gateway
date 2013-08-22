@@ -33,13 +33,4 @@
 #define DEBUG_PRINT_PACKET(len, data)
 #endif
 
-#if 0
-void debug_print_packet(unsigned int len, unsigned char *data) {
-        for (uint8_t i=0; i < current_pkt->len; i++) {
-                DEBUG_PRINT(" %02X", current_pkt->data[i]);
-        }
-        DEBUG_PRINT("\n");
-}
-#endif
-
 #endif // COMMON_H
