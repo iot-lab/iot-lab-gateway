@@ -18,12 +18,18 @@ def main(command_file_path):
             line = command_file.readline()
             if len(line) == 0:
                 break
-            line = line.strip()
 
             # non blank lines
-            if len(line) != 0:
-                print line
-                print >> sys.stderr, line
+            stripped_line = line.strip()
+            if len(stripped_line) == 0:
+                continue
+
+            print >> sys.stderr, stripped_line
+            # comments
+            if stripped_line[0] == '#':
+                continue
+
+            print stripped_line
             # sleep after each line, blank lines act as delay
             time.sleep(1)
 
