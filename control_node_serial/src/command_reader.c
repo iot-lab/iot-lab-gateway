@@ -328,6 +328,17 @@ int write_answer(unsigned char *data, size_t len)
 
         got_error = 0;
         if (type == ERROR_FRAME) {
+                /*
+                 * I'm only printing the error number and not what it means
+                 * It's done on purpose as I don't want to add it for the moment
+                 * when the code is not stable.
+                 *
+                 * As errors should 'never' happen, I prefer that it gets
+                 * searched in the source code to find what it means
+                 *
+                 * It also allows adding new temporary errors on control node
+                 * without intervention on this code.
+                 */
                 DEBUG_PRINT("error frame\n");
                 int error_code;
                 // handle error frame
@@ -371,11 +382,13 @@ static void *read_commands(void *attr)
                 DEBUG_PRINT("Command: %s: ", line_buff);
                 ret = parse_cmd(line_buff, &cmd_buff);
                 if (ret) {
-                        PRINT_ERROR("Error parsing command: '%s'\n", command_save);
+                        PRINT_ERROR("Invalid command: '%s'\n", command_save);
                 } else {
                         DEBUG_PRINT("    ");
-                        DEBUG_PRINT_PACKET(cmd_buff.u.pkt, 2 + cmd_buff.u.s.len);
-                        ret = write(reader_state->serial_fd, cmd_buff.u.pkt, cmd_buff.u.s.len + 2);
+                        DEBUG_PRINT_PACKET(cmd_buff.u.pkt,
+                                        2 + cmd_buff.u.s.len);
+                        ret = write(reader_state->serial_fd, cmd_buff.u.pkt,
+                                        cmd_buff.u.s.len + 2);
                         DEBUG_PRINT("    write ret: %i\n", ret);
                 }
         }
