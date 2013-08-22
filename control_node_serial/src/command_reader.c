@@ -88,7 +88,11 @@ struct dict_entry radio_power_d[] = {
         {"-17dBm", POWER_m17dBm},
         {NULL, 0},
 };
-
+struct dict_entry ack_d[] = {
+        {"ACK", ACK},
+        {"NACK", NACK},
+        {NULL, 0},
+};
 
 /* dict used for answers, to translate code to string */
 
@@ -106,11 +110,13 @@ struct dict_entry answers_d[] = {
         {"config_fake_sensor", CONFIG_SENSOR},
 
         {"config_consumption_measure", CONFIG_POWER_POLL},
+
+        {"test_radio_ping_pong", TEST_RADIO_PING_PONG},
         {NULL, 0},
 };
-struct dict_entry ack_d[] = {
-        {"ACK", ACK},
-        {"NACK", NACK},
+struct dict_entry radio_state_d[] = {
+        {"start", RADIO_START},
+        {"stop", RADIO_STOP},
         {NULL, 0},
 };
 
@@ -284,6 +290,14 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 } else {
                         got_error |= 1;
                 }
+        } else if (strcmp(command, "test_radio_ping_pong") == 0) {
+                frame_type = TEST_RADIO_PING_PONG;
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
+
+                // start stop
+                arg = strtok(NULL, " ");
+                got_error |= get_val(arg, radio_state_d, &val);
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
         } else {
                 got_error = 1;
         }
@@ -300,12 +314,17 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 int write_answer(unsigned char *data, size_t len)
 {
         DEBUG_PRINT("write answer, pkt len  %zu\n", len);
-        if (len != 2)
-                return -1;
 
-        uint8_t type = data[0];
+        uint8_t type;
         int got_error;
         char *cmd = NULL;
+
+
+        if (len != 2) {
+                return -1;
+        }
+
+        type = data[0];
 
         got_error = 0;
         if (type == ERROR_FRAME) {
@@ -315,9 +334,6 @@ int write_answer(unsigned char *data, size_t len)
                 got_error |= get_key(type, answers_d, &cmd);
                 error_code = (int) ((char) data[1]); // sign extend
                 PRINT_MSG("%s %d\n", cmd, error_code);
-        } else if ((type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
-                DEBUG_PRINT("ERROR measure frame\n");
-                return -2; // Measure packet should not be here
         } else {
                 DEBUG_PRINT("Commands ACKS\n");
                 char *arg;
@@ -325,6 +341,8 @@ int write_answer(unsigned char *data, size_t len)
                 got_error |= get_key(data[1], ack_d, &arg);
                 // CMDs acks
                 if (got_error) {
+                        PRINT_ERROR("invalid answer: %02X %02X\n",
+                                        data[0], data[1]);
                         return -3;
                 }
                 PRINT_MSG("%s %s\n", cmd, arg);
@@ -342,16 +360,18 @@ static void *read_commands(void *attr)
         struct command_buffer cmd_buff;
         size_t buff_size = 2048;
         char *line_buff  = (char *)malloc(buff_size);
+        char *command_save  = (char *)malloc(2048);
         int ret;
 
         int n;
         while ((n = getline(&line_buff, &buff_size, stdin)) != -1) {
                 DEBUG_PRINT("Command: %s: ", line_buff);
                 line_buff[n - 1] = '\0'; // remove new line
+                strncpy(command_save, line_buff, 2048);
                 DEBUG_PRINT("Command: %s: ", line_buff);
                 ret = parse_cmd(line_buff, &cmd_buff);
                 if (ret) {
-                        DEBUG_PRINT("Error parsing\n");
+                        PRINT_ERROR("Error parsing command: '%s'\n", command_save);
                 } else {
                         DEBUG_PRINT("    ");
                         DEBUG_PRINT_PACKET(cmd_buff.u.pkt, 2 + cmd_buff.u.s.len);

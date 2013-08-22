@@ -3,6 +3,8 @@ start battery
 stop dc
 stop battery
 reset_time
+
+# consumption commands
 config_consumption_measure start 3.3V p 1 v 1 c 1 -p 140us -a 1
 
 config_consumption_measure start 5V   p 1 v 1 c 1 -p 140us -a 1
@@ -18,3 +20,19 @@ config_consumption_measure start 3.3V p 0 v 1 c 0 -p 140us -a 1
 config_consumption_measure start 3.3V p 0 v 0 c 1 -p 140us -a 1
 
 config_consumption_measure stop
+
+# radio commands
+config_radio_signal 3dBm 25
+config_radio_measure start 500
+
+config_radio_measure start 100
+
+config_radio_measure stop
+
+
+#
+test_radio_ping_pong start
+
+test_radio_ping_pong stop
+
+

@@ -1,11 +1,9 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
-/* mock log_print */
-char print_buff[2048];
-#define fprintf(stream, ...)  snprintf(print_buff, sizeof(print_buff), __VA_ARGS__)
+
+#include "mock_fprintf.h"  // include before other includes
 
 #include "serial.c"
-
 
 
 /*

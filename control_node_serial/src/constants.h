@@ -10,30 +10,33 @@ enum defines {
 // type byte
 enum frame_type {
         // Commands
-	OPEN_NODE_START    = 0x70,
-	OPEN_NODE_STOP     = 0x71,
+	OPEN_NODE_START      = 0x70,
+	OPEN_NODE_STOP       = 0x71,
 
-	RESET_TIME         = 0x72,
+	RESET_TIME           = 0x72,
 
         // Measure config
-	CONFIG_RADIO       = 0x74,
-	CONFIG_RADIO_POLL  = 0x75,
-	CONFIG_RADIO_NOISE = 0x76,
-	CONFIG_SNIFFER     = 0x77,
+	CONFIG_RADIO         = 0x74,
+	CONFIG_RADIO_POLL    = 0x75,
+	CONFIG_RADIO_NOISE   = 0x76,
+	CONFIG_SNIFFER       = 0x77,
 
-	CONFIG_SENSOR      = 0x78,
+	CONFIG_SENSOR        = 0x78,
 
-	CONFIG_POWER_POLL  = 0x79,
+	CONFIG_POWER_POLL    = 0x79,
+
+        // Test commands
+	TEST_RADIO_PING_PONG = 0xBB,
 
         // Error
-	ERROR_FRAME        = 0xEE,
+	ERROR_FRAME          = 0xEE,
 
         // Command ack for measures handler
-        ACK_FRAME          = 0xFA,
+        ACK_FRAME            = 0xFA,
 
         // Measures
-	RADIO_POLL_FRAME   = 0xFE,
-	PW_POLL_FRAME      = 0xFF,
+	RADIO_POLL_FRAME     = 0xFE,
+	PW_POLL_FRAME        = 0xFF,
 };
 
 enum ack_nack {
