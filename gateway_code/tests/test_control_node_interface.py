@@ -152,8 +152,18 @@ class TestHandleAnswer(unittest.TestCase):
     def test_cn_serial_error(self):
         with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
                 as mock_logger:
-            self.cn._handle_answer('cn_serial_error any error msg')
-            mock_logger.assert_called_with('cn_serial_error any error msg')
+            self.cn._handle_answer('cn_serial_error: any error msg')
+            mock_logger.assert_called_with('cn_serial_error: any error msg')
+
+    def test_measures_debug(self):
+        with mock.patch('gateway_code.control_node_interface.LOGGER.debug') \
+                as mock_logger:
+            self.cn._handle_answer('measures_debug: consumption_measure ' +
+                                   '1377268768.841070:1.78250 ' +
+                                   '0.000000 3.230000 0.080003')
+            mock_logger.assert_called_with(
+                'measures_debug: consumption_measure ' +
+                '1377268768.841070:1.78250 0.000000 3.230000 0.080003')
 
 
 

@@ -68,11 +68,11 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         // num == 1
         data[1] = 1;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0: 1.000000 2.000000 3.000000\n", print_buff);
+        ASSERT_STREQ("0.0:0.0 1.000000 2.000000 3.000000\n", print_buff);
         // num == 2
         data[1] = 2;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:1.0: 4.000000 5.000000 6.000000\n", print_buff);
+        ASSERT_STREQ("0.0:1.0 4.000000 5.000000 6.000000\n", print_buff);
 
 
 
@@ -84,7 +84,7 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         mh_state.power.raw_values_len = data_size;
         data[1] = 1;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0: 1.000000 0.000000 2.000000\n", print_buff);
+        ASSERT_STREQ("0.0:0.0 1.000000 0.000000 2.000000\n", print_buff);
 
 
         // only V
@@ -95,7 +95,7 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         mh_state.power.raw_values_len = data_size;
         data[1] = 1;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0: 0.000000 1.000000 0.000000\n", print_buff);
+        ASSERT_STREQ("0.0:0.0 0.000000 1.000000 0.000000\n", print_buff);
 
 }
 
@@ -106,7 +106,7 @@ TEST(handle_pw_pkt, invalid_calls)
         // measure packet when not configured
         init_measures_handler();
         handle_pw_pkt(data, 0);
-        ASSERT_STREQ("cn_serial_error : "
+        ASSERT_STREQ("cn_serial_error: "
                         "Got PW measure without being configured\n",
                         print_buff);
 
@@ -116,7 +116,7 @@ TEST(handle_pw_pkt, invalid_calls)
         data[1] = 1; // num_measures
         int len = 10; // 4 + 1*4 + 2
         handle_pw_pkt(data, len);
-        ASSERT_STREQ("cn_serial_error : "
+        ASSERT_STREQ("cn_serial_error: "
                         "Invalid measure pkt len: 10 != expected 18\n",
                         print_buff);
 }
@@ -149,11 +149,11 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
         // num == 1
         data[1] = 1;
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0: -42 66\n", print_buff);
+        ASSERT_STREQ("0.0:0.0 -42 66\n", print_buff);
         // num == 2
         data[1] = 2;
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:1.0: 42 0\n", print_buff);
+        ASSERT_STREQ("0.0:1.0 42 0\n", print_buff);
 
 }
 
@@ -229,7 +229,7 @@ TEST(handle_ack_pkt, invalid_msgs)
         unsigned char data[8];
         data[1] = 0x00; // not a real ack type
         handle_ack_pkt(data, 3);
-        ASSERT_STREQ("cn_serial_error : Unkown ACK frame 0x00\n", print_buff);
+        ASSERT_STREQ("cn_serial_error: Unkown ACK frame 0x00\n", print_buff);
 }
 
 
