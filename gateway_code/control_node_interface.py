@@ -76,8 +76,13 @@ class ControlNodeSerial(object):
             LOGGER.debug('config_ack %s', answer[1])
         elif answer[0] == 'error':  # control node error
             LOGGER.error('Control node error: %r', answer[1])
-        elif answer[0] == 'cn_serial_error':  # control node serial error
+
+        # debug messages
+        elif answer[0] == 'cn_serial_error:':  # control node serial error
             LOGGER.error(line)
+        elif answer[0] == 'measures_debug:':  # measures output
+            LOGGER.debug(line)
+
         else:  # control node answer to a command
             try:
                 self.cn_msg_queue.put_nowait(answer)

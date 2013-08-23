@@ -116,7 +116,8 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.app.exp_stop() # just in case, post error cleanup
 
 
-    def tests_multiple_complete_experiment(self):
+    @patch('gateway_code.control_node_interface.LOGGER.debug')
+    def tests_multiple_complete_experiment(self, mock_logger):
         """
         Test a complete experiment 3 times (loooong test)
         Experiment ==
@@ -186,6 +187,26 @@ class TestComplexExperimentRunning(unittest.TestCase):
             self.request.files = {'firmware': self.files['echo']}
             ret = self.app.open_flash()
             self.assertNotEquals(ret, {'ret':0})
+
+
+            # measures values in correct range
+            _call_list = [calls[0][0].split(' ') for calls in
+                          mock_logger.call_args_list]
+            _measures_debug = [call_args[2:] for call_args in _call_list
+                               if call_args[0:2] == ['measures_debug:',
+                                                     'consumption_measure']]
+            for measure in _measures_debug:
+                # no power,  voltage in 3.3V, current not null
+                self.assertEquals(0.0, float(measure[1]))
+                self.assertTrue(3.0 <= float(measure[2]) <= 3.5)
+                self.assertNotEquals(0.0, float(measure[3]))
+
+            #  # time is sorted
+            #  _time_arg_list = (time_arg[0].split(':') for time_arg  in _measures_debug)
+            #  _time_list = (float(t_ref) + float(t_var) for t_ref, t_var in _time_arg_list)
+            #  self.assertTrue(all(l[i] <= l[i+1] for i _time_list))
+
+
 
 
     def tests_invalid_calls(self):

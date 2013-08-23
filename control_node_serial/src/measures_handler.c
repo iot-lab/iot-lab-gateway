@@ -13,7 +13,6 @@
 // TODO remove me when not printing measures anymore
 
 
-
 #include <sys/time.h>
 
 #include "common.h"
@@ -96,8 +95,11 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                         c = pw_vals.val[i++];
 
                 // Handle absolute time with  reference time
-                fprintf(LOG, "%lu.%lu:%"PRIu64".%u: %f %f %f\n",
-                                mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
+                PRINT_MEASURE("consumption_measure " "%lu.%lu:%"PRIu64".%u %f %f %f\n",
+                          mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
+
+                fprintf(LOG, "%lu.%lu:%"PRIu64".%u %f %f %f\n",
+                        mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
         }
 }
 
@@ -136,7 +138,11 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
                 lqi  = radio_vals.lqi;
 
                 // Handle absolute time with  reference time
-                fprintf(LOG, "%lu.%lu:%"PRIu64".%u: %i %u\n",
+                PRINT_MEASURE("radio_measure " "%lu.%lu:%"PRIu64".%u %i %u\n",
+                        mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
+                        t_s, t_us,
+                        rssi, lqi);
+                fprintf(LOG, "%lu.%lu:%"PRIu64".%u %i %u\n",
                         mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
                         t_s, t_us,
                         rssi, lqi);
