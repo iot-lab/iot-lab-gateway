@@ -81,11 +81,12 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
 
         for (int j = 0; j < num_measures; j++) {
                 int i = 0;
+
                 memcpy(&pw_vals, current_data_ptr, values_len);
                 current_data_ptr += values_len;
 
                 t_s  = pw_vals.time / TIME_FACTOR;
-                t_us = (1000000 * (pw_vals.time % TIME_FACTOR)) / TIME_FACTOR;
+                t_us = (uint32_t) ((1000000 * ((uint64_t) pw_vals.time % TIME_FACTOR)) / TIME_FACTOR);
 
                 if (mh_state.power.p)
                         p = pw_vals.val[i++];
@@ -95,10 +96,10 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                         c = pw_vals.val[i++];
 
                 // Handle absolute time with  reference time
-                PRINT_MEASURE("consumption_measure " "%lu.%lu:%"PRIu64".%u %f %f %f\n",
+                PRINT_MEASURE("consumption_measure " "%lu.%06lu:%"PRIu64".%06u %f %f %f\n",
                           mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
 
-                fprintf(LOG, "%lu.%lu:%"PRIu64".%u %f %f %f\n",
+                fprintf(LOG, "%lu.%06lu:%"PRIu64".%06u %f %f %f\n",
                         mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
         }
 }
@@ -138,11 +139,11 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
                 lqi  = radio_vals.lqi;
 
                 // Handle absolute time with  reference time
-                PRINT_MEASURE("radio_measure " "%lu.%lu:%"PRIu64".%u %i %u\n",
+                PRINT_MEASURE("radio_measure " "%lu.%06lu:%"PRIu64".%06u %i %u\n",
                         mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
                         t_s, t_us,
                         rssi, lqi);
-                fprintf(LOG, "%lu.%lu:%"PRIu64".%u %i %u\n",
+                fprintf(LOG, "%lu.%06lu:%"PRIu64".%06u %i %u\n",
                         mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
                         t_s, t_us,
                         rssi, lqi);
