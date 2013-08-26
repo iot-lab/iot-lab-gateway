@@ -68,11 +68,11 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         // num == 1
         data[1] = 1;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0 1.000000 2.000000 3.000000\n", print_buff);
+        ASSERT_STREQ("0.000000:0.000000 1.000000 2.000000 3.000000\n", print_buff);
         // num == 2
         data[1] = 2;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:1.0 4.000000 5.000000 6.000000\n", print_buff);
+        ASSERT_STREQ("0.000000:1.000000 4.000000 5.000000 6.000000\n", print_buff);
 
 
 
@@ -84,7 +84,7 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         mh_state.power.raw_values_len = data_size;
         data[1] = 1;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0 1.000000 0.000000 2.000000\n", print_buff);
+        ASSERT_STREQ("0.000000:0.000000 1.000000 0.000000 2.000000\n", print_buff);
 
 
         // only V
@@ -95,7 +95,7 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         mh_state.power.raw_values_len = data_size;
         data[1] = 1;
         handle_pw_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0 0.000000 1.000000 0.000000\n", print_buff);
+        ASSERT_STREQ("0.000000:0.000000 0.000000 1.000000 0.000000\n", print_buff);
 
 }
 
@@ -149,12 +149,11 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
         // num == 1
         data[1] = 1;
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:0.0 -42 66\n", print_buff);
+        ASSERT_STREQ("0.000000:0.000000 -42 66\n", print_buff);
         // num == 2
         data[1] = 2;
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
-        ASSERT_STREQ("0.0:1.0 42 0\n", print_buff);
-
+        ASSERT_STREQ("0.000000:1.000000 42 0\n", print_buff);
 }
 
 
