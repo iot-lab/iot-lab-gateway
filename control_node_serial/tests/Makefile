@@ -48,7 +48,7 @@ $(RESULTDIR)/c_code_coverage.xml: $(TEST_RESULTS)
 		-f'.*/gateway_code_python/',"  GCOV  STDOUT")
 
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
-	$(call quiet-cmd, ./$^ --gtest_output=xml:$@ || rm -f $@, "  $^")
+	$(call quiet-cmd, ./$^ --gtest_output=xml:$@, "  $^")
 
 
 $(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a

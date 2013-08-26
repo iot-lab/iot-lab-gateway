@@ -395,5 +395,3 @@ static void *read_commands(void *attr)
         exit(0);
         return NULL;
 }
-
-
