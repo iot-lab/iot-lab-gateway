@@ -33,7 +33,10 @@ import subprocess
 from gateway_code import config
 # Disable: R0904 - Too many public methods
 # Disable: W0201 - Attribute '%s' defined outside __init__
-# pylint: disable=R0904,W0201
+# Disable: C0111 - Missing docstring (for Command methods)
+# Disable: R0201 - Method could be a function (Command.run)
+# Disable: W0232 - Class has no __init__ method
+# pylint: disable=R0904,W0201,C0111,R0201,W0232
 
 
 STATIC_FILES_PATH = config.STATIC_FILES_PATH
