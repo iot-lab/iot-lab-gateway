@@ -3,7 +3,7 @@
     "power": "dc",
 
     "consumption": {
-        "period" : "1100us",
+        "period" : "1100",
         "average": "256",
 
         "current": true,

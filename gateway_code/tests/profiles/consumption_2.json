@@ -8,6 +8,6 @@
 
         "power"  : true,
         "current": false,
-        "period" : "8244us"
+        "period" : 8244
     }
 }

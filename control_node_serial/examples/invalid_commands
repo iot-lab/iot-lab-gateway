@@ -2,5 +2,5 @@ start whatever
 stop lala
 reset_time youhou
 invalid_cmd
-config_consumption_measure start 220V p 0 v 0 c 1 -p 240us -a 2048
-config_consumption_measure stop  3.3V p 0 v 0 c 1 -p 240000us -a 16
+config_consumption_measure start 220V p 0 v 0 c 1 -p 240 -a 2048
+config_consumption_measure stop  3.3V p 0 v 0 c 1 -p 240000 -a 16

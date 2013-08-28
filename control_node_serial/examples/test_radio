@@ -2,7 +2,7 @@
 
 reset_time
 
-config_radio_signal 3dBm 25
+config_radio_signal 3 25
 config_radio_measure start 100
 
 

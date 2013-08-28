@@ -7,6 +7,6 @@
 
         "average": 1024,
 
-        "period" : "140us"
+        "period" : 140
     }
 }

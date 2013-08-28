@@ -39,14 +39,14 @@ struct dict_entry alim_d[] = {
 
 /* Consumption dicts */
 struct dict_entry periods_d[] = {
-        {"140us",  PERIOD_140us},
-        {"204us",  PERIOD_204us},
-        {"332us",  PERIOD_332us},
-        {"588us",  PERIOD_588us},
-        {"1100us", PERIOD_1100us},
-        {"2116us", PERIOD_2116us},
-        {"4156us", PERIOD_4156us},
-        {"8244us", PERIOD_8244us},
+        {"140",  PERIOD_140us},
+        {"204",  PERIOD_204us},
+        {"332",  PERIOD_332us},
+        {"588",  PERIOD_588us},
+        {"1100", PERIOD_1100us},
+        {"2116", PERIOD_2116us},
+        {"4156", PERIOD_4156us},
+        {"8244", PERIOD_8244us},
         {NULL, 0},
 };
 struct dict_entry average_d[] = {
@@ -70,22 +70,22 @@ struct dict_entry power_source_d[] = {
 
 /* Radio dicts */
 struct dict_entry radio_power_d[] = {
-        {"3dBm",   POWER_3dBm},
-        {"2.8dBm", POWER_2_8dBm},
-        {"2.3dBm", POWER_2_3dBm},
-        {"1.8dBm", POWER_1_8dBm},
-        {"1.3dBm", POWER_1_3dBm},
-        {"0.7dBm", POWER_0_7dBm},
-        {"0dBm",   POWER_0dBm},
-        {"-1dBm",  POWER_m1dBm},
-        {"-2dBm",  POWER_m2dBm},
-        {"-3dBm",  POWER_m3dBm},
-        {"-4dBm",  POWER_m4dBm},
-        {"-5dBm",  POWER_m5dBm},
-        {"-7dBm",  POWER_m7dBm},
-        {"-9dBm",  POWER_m9dBm},
-        {"-12dBm", POWER_m12dBm},
-        {"-17dBm", POWER_m17dBm},
+        {"3",   POWER_3dBm},
+        {"2.8", POWER_2_8dBm},
+        {"2.3", POWER_2_3dBm},
+        {"1.8", POWER_1_8dBm},
+        {"1.3", POWER_1_3dBm},
+        {"0.7", POWER_0_7dBm},
+        {"0",   POWER_0dBm},
+        {"-1",  POWER_m1dBm},
+        {"-2",  POWER_m2dBm},
+        {"-3",  POWER_m3dBm},
+        {"-4",  POWER_m4dBm},
+        {"-5",  POWER_m5dBm},
+        {"-7",  POWER_m7dBm},
+        {"-9",  POWER_m9dBm},
+        {"-12", POWER_m12dBm},
+        {"-17", POWER_m17dBm},
         {NULL, 0},
 };
 struct dict_entry ack_d[] = {
