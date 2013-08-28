@@ -6,6 +6,6 @@
         "power" : 17,
         "channel" : 15,
         "mode" : "measure",
-        "freq" : 1
+        "frequency" : 1
     }
 }

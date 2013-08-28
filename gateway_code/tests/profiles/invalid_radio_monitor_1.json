@@ -5,6 +5,6 @@
     "radio": {
         "channel" : 11,
         "mode" : "measure",
-        "freq" : 2
+        "frequency" : 2
     }
 }

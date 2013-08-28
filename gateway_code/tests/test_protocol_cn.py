@@ -128,7 +128,7 @@ class TestProtocolRadio(unittest.TestCase):
         radio = profile.Radio(power='3dBm',
                               channel=17,
                               mode="measure",
-                              freq=42)
+                              frequency=42)
         self.protocol.current_radio_mode = None
 
         self.protocol._config_radio_signal = mock.Mock()
@@ -179,7 +179,7 @@ class TestProtocolRadio(unittest.TestCase):
         radio = profile.Radio(power='3dBm',
                               channel=17,
                               mode="measure",
-                              freq=42)
+                              frequency=42)
 
         self.protocol._config_radio_signal = mock.Mock()
         self.protocol._config_radio_signal.return_value = 666
@@ -203,7 +203,7 @@ class TestProtocolRadio(unittest.TestCase):
         radio = profile.Radio(power='3dBm',
                               channel=17,
                               mode="measure",
-                              freq=42)
+                              frequency=42)
 
         ret = self.protocol._config_radio_signal(radio)
         self.sender.assert_called_with(['config_radio_signal', '3dBm', '17'])
@@ -220,7 +220,7 @@ class TestProtocolRadio(unittest.TestCase):
 
         self.sender.reset_mock()
         self.sender.return_value = ['config_radio_measure', 'ACK']
-        ret = self.protocol._config_radio_measure(command='start', freq=42)
+        ret = self.protocol._config_radio_measure(command='start', frequency=42)
         self.sender.assert_called_with(['config_radio_measure', 'start', '42'])
         self.assertEquals(0, ret)
 
@@ -230,7 +230,7 @@ class TestProtocolRadio(unittest.TestCase):
         radio = profile.Radio(power='3dBm',
                               channel=17,
                               mode="measure",
-                              freq=42)
+                              frequency=42)
         radio.mode = "Not_Implemented_mode"
         self.assertRaises(NotImplementedError,
                           self.protocol._config_radio_mode, radio)
@@ -277,7 +277,7 @@ class TestProtocolRadio(unittest.TestCase):
         radio = profile.Radio(power='3dBm',
                               channel=17,
                               mode="measure",
-                              freq=42)
+                              frequency=42)
 
         self.protocol.current_radio_mode = "measure"
         ret = self.protocol._stop_radio_if_required(radio)

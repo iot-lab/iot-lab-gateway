@@ -97,7 +97,7 @@ class Consumption(_CONSUMPTION_TYPE):
 
 
 _RADIO_TYPE = recordtype('radio', ['power', 'channel', 'mode',
-                                   ('freq', None)])
+                                   ('frequency', None)])
 
 
 class Radio(_RADIO_TYPE):
@@ -109,7 +109,7 @@ class Radio(_RADIO_TYPE):
         self.power = None
         self.channel = None
         self.mode = None
-        self.freq = None
+        self.frequency = None
         try:
             _RADIO_TYPE.__init__(self, *args, **kwargs)
         except TypeError:
@@ -125,11 +125,11 @@ class Radio(_RADIO_TYPE):
             raise ValueError
 
         if self.mode == "measure":
-            # measure should have a 'freq' entry
-            if self.freq is None:
+            # measure should have a 'frequency' entry
+            if self.frequency is None:
                 raise ValueError
-            # freq in valid range
-            elif self.freq not in range(2, 499 + 1):
+            # frequency in valid range
+            elif self.frequency not in range(2, 499 + 1):
                 raise ValueError
 
         # invalid measures types (at the end for coverage issue)
