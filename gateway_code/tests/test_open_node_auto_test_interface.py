@@ -23,8 +23,6 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         self.serial.readline.side_effect = self.readline_mock
         self.serial.readline.return_value = ''
 
-        self.readline_return
-
     def readline_mock(self, *args, **kwargs):
         self.readline_called.set()
         self.on_interface.stop_reader.wait()
@@ -103,5 +101,29 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
 
         self.on_interface.stop()
 
+
+    @mock.patch('Queue.Queue')
+    def test_serial_reader(self, mock_queue_class):
+        mock_queue = mock_queue_class.return_value
+
+        readline_ret_list = ['begin of ', 'complete answer\n']
+        def readline_mock(*args, **kwargs):
+            if len(readline_ret_list) == 0:
+                self.readline_called.set()
+                self.on_interface.stop_reader.wait()
+                ret = ''
+            else:
+                ret = readline_ret_list.pop(0)
+            return ret
+        self.serial.readline.side_effect = readline_mock
+
+        # reinit interface to apply mock
+        self.on_interface = open_node_validation_interface.OpenNodeSerial()
+        self.on_interface.start()
+        self.readline_called.wait(5)
+        self.assertTrue(self.readline_called.is_set())
+        self.on_interface.stop()
+
+        mock_queue.put.assert_called_with('begin of complete answer')
 
 
