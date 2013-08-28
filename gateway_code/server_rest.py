@@ -65,6 +65,7 @@ class GatewayRest(object):
                 _prof = request.files['profile']
                 try:
                     profile = json.load(_prof.file)
+                    LOGGER.debug('Profile json dict: %r', profile)
                 except ValueError:
                     LOGGER.error('Invalid json for profile')
                     return {'ret': 1}
