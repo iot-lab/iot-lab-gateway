@@ -1,13 +1,21 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
-import time
+
+"""
+Open node validation interface
+
+Interface for running autotests with open node auto-test firmware
+"""
+
+
 import threading
 import struct
 import serial
 import Queue
 
 
+from gateway_code import common
 from gateway_code import config
 
 
@@ -62,13 +70,10 @@ RADIO_POW_DICT = {
 }
 
 
-def _empty_queue(queue):
-    """ Remove all items in Queue """
-    while not queue.empty():
-        answer = queue.get_nowait()
-
-
-class CommandSender(object):
+class OpenNodeSerial(object):
+    """
+    OpenNodeSerial class implementing the interface with open node auto-test
+    """
 
     def __init__(self):
         self.serial_fd = None
@@ -78,7 +83,7 @@ class CommandSender(object):
         self.reader_thread = None
 
     def start(self):
-
+        """ Start serial interface """
         # open serial
         tty = config.NODES_CFG['m3']['tty']
         baudrate = config.NODES_CFG['m3']['baudrate']
@@ -90,21 +95,22 @@ class CommandSender(object):
         self.reader_thread.start()
 
     def stop(self):
-
+        """ Start serial interface """
         self.stop_reader.set()
-        # TODE REMOVE ME if not needed time.sleep(1)
+        # TODO REMOVE ME if not needed time.sleep(1)
         self.reader_thread.join()
         self.serial_fd.close()
 
     def send_command(self, command_list):
-        """
-        Send command and wait for answer
-        """
+        """ Send command and wait for answer """
         serial_data = []
 
         # extract command
         command = command_list.pop(0)
-        serial_data.append(chr(COMMAND_DICT[command]))
+        try:
+            serial_data.append(chr(COMMAND_DICT[command]))
+        except KeyError:
+            raise NotImplementedError
 
         # extract parameters
         if command in ['leds_on', 'leds_off', 'leds_blink']:
@@ -127,20 +133,22 @@ class CommandSender(object):
             pass  # no parameter
         elif command in ['test_flash', 'test_i2c', 'test_gpio_pps']:
             pass  # no parameter
-        else:
-            raise NotImplementedError
+        else:  # pragma: no cover
+            pass  # cannot happen, catched by KeyError
 
+        # send command
         ret = self._serial_send_cmd(serial_data)
         return ret
 
     def _serial_send_cmd(self, chars_list):
+        """ Serial level level command send implementation """
 
         # create packet with header
         packet = ''.join([SYNC_BYTE, chr(len(chars_list))] + chars_list)
         self.serial_fd.write(packet)
 
         # wait answer
-        _empty_queue(self.msg_queue)
+        common.empty_queue(self.msg_queue)
         try:
             answer = self.msg_queue.get(timeout=10).split(' ')
         except Queue.Empty:

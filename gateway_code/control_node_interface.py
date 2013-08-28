@@ -12,19 +12,11 @@ import threading
 
 import atexit
 from gateway_code import config
+from gateway_code import common
 
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
-
-
-def _empty_queue(queue):
-    """
-    Remove all items in Queue
-    """
-    while not queue.empty():
-        answer = queue.get_nowait()
-        LOGGER.debug('Dropped old control node answer: %s', answer[0])
 
 
 class ControlNodeSerial(object):
@@ -112,7 +104,7 @@ class ControlNodeSerial(object):
         command_str = ' '.join(command_args) + '\n'
         with self.protect_send:
             # remove existing items (old not treated answers)
-            _empty_queue(self.cn_msg_queue)
+            common.empty_queue(self.cn_msg_queue)
             try:
                 self.cn_interface_process.stdin.write(command_str)
                 # wait for answer 1 second at max

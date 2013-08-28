@@ -16,8 +16,8 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def setUp(self):
         self.popen_patcher = mock.patch('subprocess.Popen')
-        self.popen_class = self.popen_patcher.start()
-        self.popen = self.popen_class.return_value
+        popen_class = self.popen_patcher.start()
+        self.popen = popen_class.return_value
 
         self.popen.terminate.side_effect = self._terminate
         self.popen.poll.side_effect = self._poll
@@ -164,41 +164,3 @@ class TestHandleAnswer(unittest.TestCase):
             mock_logger.assert_called_with(
                 'measures_debug: consumption_measure ' +
                 '1377268768.841070:1.78250 0.000000 3.230000 0.080003')
-
-
-
-class TestEmptyQueue(unittest.TestCase):
-
-    def test_empty_queue_one_element(self):
-
-        queue = Queue.Queue(1)
-        control_node_interface._empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-        queue.put('TEST')
-        control_node_interface._empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-    def test_empty_queue_multiple_elemements(self):
-
-        queue = Queue.Queue(5)
-        control_node_interface._empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-
-        queue.put('1')
-        queue.put('2')
-        control_node_interface._empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-
-        queue.put('1')
-        queue.put('2')
-        queue.put('3')
-        queue.put('4')
-        queue.put('5')
-        control_node_interface._empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-
-
