@@ -12,7 +12,7 @@
     },
 
     "radio": {
-        "power" : 17,
+        "power" : 17.0,
         "channel" : 11,
         "mode" : "measure",
         "frequency" : 2

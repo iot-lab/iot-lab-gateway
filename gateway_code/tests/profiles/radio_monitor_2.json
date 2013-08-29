@@ -3,7 +3,7 @@
     "power": "dc",
 
     "radio": {
-        "power" : 3,
+        "power" : 3.0,
         "channel" : 26,
         "mode" : "measure",
         "frequency" : 499
