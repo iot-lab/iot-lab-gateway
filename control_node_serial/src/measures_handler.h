@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-extern void init_measures_handler(void);
+extern void init_measures_handler(int print_measures);
 extern int handle_measure_pkt(unsigned char *data, size_t len);
 
 

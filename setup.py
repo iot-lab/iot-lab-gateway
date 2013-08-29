@@ -84,16 +84,13 @@ class _Tee(object):
         pass
 
 
-def build_c_executable(debug_measures=0):
+def build_c_executable():
     """
     Build control node serial interface
     """
     saved_path = os.getcwd()
     os.chdir('control_node_serial')
     args = ['make', 'realclean', 'all']
-
-    if debug_measures == 1:
-        args.append("DEBUG_MEASURES=1")
 
     try:
         subprocess.check_call(args)
@@ -121,7 +118,7 @@ class BuildSerial(Command):
     """
     Build control node serial interface command
     """
-    user_options = [('debug-measures', None, "print measures on stdout")]
+    user_options = []
 
     def initialize_options(self):
         self.debug_measures = 0
@@ -130,7 +127,7 @@ class BuildSerial(Command):
         pass
 
     def run(self):
-        build_c_executable(debug_measures=self.debug_measures)
+        build_c_executable()
 
 
 class Install(install):
@@ -329,8 +326,7 @@ class IntegrationTests(Command):
         ret = 0
 
         try:
-            subprocess.check_call(args + ['build_cn_serial',
-                                          '--debug-measures'])
+            _ = subprocess.check_call(args + ['build_cn_serial']),
 
             preexec_fn, env = self.popen_as_user('www-data')
             env['PATH'] = './control_node_serial/:%s' % env['PATH']

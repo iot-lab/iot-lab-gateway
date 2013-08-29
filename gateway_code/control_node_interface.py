@@ -19,6 +19,10 @@ import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
+# use for tests
+CONTROL_NODE_INTERFACE_ARGS = []
+
+
 class ControlNodeSerial(object):
     """
     Class handling the communication with the control node serial program
@@ -39,8 +43,9 @@ class ControlNodeSerial(object):
         Run `control node serial program` and handle its answers.
         """
 
-        args = [config.CONTROL_NODE_SERIAL_INTERFACE,
-                config.NODES_CFG['gwt']['tty']]
+        args = [config.CONTROL_NODE_SERIAL_INTERFACE]
+        args += ['-t', config.NODES_CFG['gwt']['tty']]
+        args += CONTROL_NODE_INTERFACE_ARGS
         self.cn_interface_process = subprocess.Popen(
             args, stderr=PIPE, stdin=PIPE)
 
