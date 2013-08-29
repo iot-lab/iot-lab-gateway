@@ -111,12 +111,12 @@ class ControlNodeSerial(object):
             # remove existing items (old not treated answers)
             common.empty_queue(self.cn_msg_queue)
             try:
-                LOGGER.debug('Send cmd: %s', command_str)
+                LOGGER.debug('control_node_cmd: %r', command_str[:1])
                 self.cn_interface_process.stdin.write(command_str)
                 # wait for answer 1 second at max
                 answer_cn = self.cn_msg_queue.get(block=True, timeout=1.0)
             except Queue.Empty:  # timeout, answer not got
-                LOGGER.warning('Timeout catched. Answer not received')
                 answer_cn = None
+        LOGGER.debug('control_node_answer: %r', answer_cn)
 
         return answer_cn
