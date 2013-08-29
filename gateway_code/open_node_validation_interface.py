@@ -128,13 +128,8 @@ class OpenNodeSerial(object):
             channel = chr(int(command_list.pop(0)))
             serial_data.append(pow_code)
             serial_data.append(channel)
-        elif command in ['get_light', 'get_pressure', 'get_gyro',
-                         'get_accelero', 'get_magneto', 'get_time']:
-            pass  # no parameter
-        elif command in ['test_flash', 'test_i2c', 'test_gpio_pps']:
-            pass  # no parameter
-        else:  # pragma: no cover
-            pass  # cannot happen, catched by KeyError
+        else:  # command without parameter get_<sensor> or test_<feature>
+            pass
 
         # send command
         ret = self._serial_send_cmd(serial_data)
