@@ -43,8 +43,7 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         struct power_vals power;
         size_t data_size;
 
-
-        init_measures_handler();
+        init_measures_handler(0);
         mh_state.power.power_source = (char) SOURCE_3_3V;
         mh_state.power.is_valid = 1;
         mh_state.power.p = 1;
@@ -76,7 +75,10 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
 
 
 
+        init_measures_handler(1); // print_measures == true for coverage
         // P + C
+        mh_state.power.power_source = (char) SOURCE_3_3V;
+        mh_state.power.is_valid = 1;
         mh_state.power.p = 1;
         mh_state.power.v = 0;
         mh_state.power.c = 1;
@@ -104,7 +106,7 @@ TEST(handle_pw_pkt, invalid_calls)
         unsigned char data[64];
 
         // measure packet when not configured
-        init_measures_handler();
+        init_measures_handler(0);
         handle_pw_pkt(data, 0);
         ASSERT_STREQ("cn_serial_error: "
                         "Got PW measure without being configured\n",
@@ -131,7 +133,7 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
         struct radio_measure_vals radio;
         size_t data_size = 6;
 
-        init_measures_handler();
+        init_measures_handler(0);
         memset(print_buff, '\0', sizeof(print_buff));
 
         // first value
@@ -151,6 +153,7 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
         ASSERT_STREQ("0.000000:0.000000 -42 66\n", print_buff);
         // num == 2
+        init_measures_handler(1); // print_measures == true for coverage
         data[1] = 2;
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
         ASSERT_STREQ("0.000000:1.000000 42 0\n", print_buff);
@@ -177,7 +180,7 @@ TEST(handle_ack_pkt, power_poll_ack)
 {
         unsigned char data[8];
         data[1] = CONFIG_POWER_POLL;
-        init_measures_handler();
+        init_measures_handler(0);
 
         // PC
         data[2]  = 0;
@@ -238,7 +241,7 @@ TEST(init_measures_handler, test)
         mh_state.time_ref.tv_sec = 0xDEAD;
         mh_state.time_ref.tv_usec = 0xBEEF;
         mh_state.power.is_valid = 42;
-        init_measures_handler();
+        init_measures_handler(0);
         ASSERT_EQ(0, mh_state.time_ref.tv_sec);
         ASSERT_EQ(0, mh_state.time_ref.tv_usec);
         ASSERT_EQ(0, mh_state.power.is_valid);

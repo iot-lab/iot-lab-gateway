@@ -15,9 +15,6 @@ WARNINGS  += -Wmissing-declarations
 #  PROF       = -pg
 DEP_RULES  = -MMD -MD -MF $(OBJDIR)/$*.d
 
-ifeq (1, $(DEBUG_MEASURES))
-CFLAGS += -DDEBUG_MEASURES=1
-endif
 ifeq (1, $(DEBUG))
 CFLAGS += -DDEBUG=1
 endif

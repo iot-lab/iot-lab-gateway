@@ -33,6 +33,7 @@ struct radio_measure_vals {
 };
 
 static struct _measure_handler_state {
+        int print_measures;
         struct timeval time_ref;
         struct {
                 int is_valid;
@@ -44,10 +45,11 @@ static struct _measure_handler_state {
         } power;
 } mh_state;
 
-extern void init_measures_handler()
+void init_measures_handler(int print_measures)
 {
         timerclear(&mh_state.time_ref);
         mh_state.power.is_valid = 0;
+        mh_state.print_measures = print_measures;
 }
 
 static void handle_pw_pkt(unsigned char *data, size_t len)
@@ -96,8 +98,12 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                         c = pw_vals.val[i++];
 
                 // Handle absolute time with  reference time
-                PRINT_MEASURE("consumption_measure " "%lu.%06lu:%"PRIu64".%06u %f %f %f\n",
-                          mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
+                PRINT_MEASURE(mh_state.print_measures, "consumption_measure " \
+                              "%lu.%06lu:%"PRIu64".%06u %f %f %f\n",
+                              mh_state.time_ref.tv_sec,
+                              mh_state.time_ref.tv_usec,
+                              t_s, t_us,
+                              p, v, c);
 
                 fprintf(LOG, "%lu.%06lu:%"PRIu64".%06u %f %f %f\n",
                         mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
@@ -139,10 +145,12 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
                 lqi  = radio_vals.lqi;
 
                 // Handle absolute time with  reference time
-                PRINT_MEASURE("radio_measure " "%lu.%06lu:%"PRIu64".%06u %i %u\n",
-                        mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
-                        t_s, t_us,
-                        rssi, lqi);
+                PRINT_MEASURE(mh_state.print_measures, "radio_measure "
+                              "%lu.%06lu:%"PRIu64".%06u %i %u\n",
+                              mh_state.time_ref.tv_sec,
+                              mh_state.time_ref.tv_usec,
+                              t_s, t_us,
+                              rssi, lqi);
                 fprintf(LOG, "%lu.%06lu:%"PRIu64".%06u %i %u\n",
                         mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
                         t_s, t_us,

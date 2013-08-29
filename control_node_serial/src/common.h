@@ -1,6 +1,8 @@
 #ifndef COMMON_H
 #define COMMON_H
 
+#include <stdio.h>
+
 #ifndef DEBUG
 #define DEBUG 0
 #endif // DEBUG
@@ -13,7 +15,6 @@
 
 
 #if DEBUG
-#include <stdio.h>
 #define DEBUG_PRINT(args ...) fprintf(LOG, args)
 #else
 #define DEBUG_PRINT(args ...)
@@ -32,11 +33,8 @@
 #endif
 
 
-#if DEBUG_MEASURES
-#define PRINT_MEASURE(fmt, ...) PRINT_MSG("measures_debug: " fmt, __VA_ARGS__)
-#else
-#define PRINT_MEASURE(fmt, ...)
-#endif
+#define PRINT_MEASURE(print, fmt, ...) \
+        if ((print)) PRINT_MSG("measures_debug: " fmt, __VA_ARGS__)
 
 
 #endif // COMMON_H
