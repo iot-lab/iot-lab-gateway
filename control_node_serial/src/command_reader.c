@@ -70,22 +70,22 @@ struct dict_entry power_source_d[] = {
 
 /* Radio dicts */
 struct dict_entry radio_power_d[] = {
-        {"3",   POWER_3dBm},
+        {"3.0",   POWER_3dBm},
         {"2.8", POWER_2_8dBm},
         {"2.3", POWER_2_3dBm},
         {"1.8", POWER_1_8dBm},
         {"1.3", POWER_1_3dBm},
         {"0.7", POWER_0_7dBm},
-        {"0",   POWER_0dBm},
-        {"-1",  POWER_m1dBm},
-        {"-2",  POWER_m2dBm},
-        {"-3",  POWER_m3dBm},
-        {"-4",  POWER_m4dBm},
-        {"-5",  POWER_m5dBm},
-        {"-7",  POWER_m7dBm},
-        {"-9",  POWER_m9dBm},
-        {"-12", POWER_m12dBm},
-        {"-17", POWER_m17dBm},
+        {"0.0",   POWER_0dBm},
+        {"-1.0",  POWER_m1dBm},
+        {"-2.0",  POWER_m2dBm},
+        {"-3.0",  POWER_m3dBm},
+        {"-4.0",  POWER_m4dBm},
+        {"-5.0",  POWER_m5dBm},
+        {"-7.0",  POWER_m7dBm},
+        {"-9.0",  POWER_m9dBm},
+        {"-12.0", POWER_m12dBm},
+        {"-17.0", POWER_m17dBm},
         {NULL, 0},
 };
 struct dict_entry ack_d[] = {
