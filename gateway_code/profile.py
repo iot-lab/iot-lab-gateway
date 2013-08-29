@@ -43,16 +43,18 @@ class Profile(_PROFILE_TYPE):
 
         # add consumption (it needs power_source and board_type)
         try:
-            profile_args['consumption'] = Consumption(
-                power_source=profile_dict['power'],  # add power source
-                board_type=board_type,
-                **profile_dict['consumption'])
+            if profile_dict['consumption'] is not None:
+                profile_args['consumption'] = Consumption(
+                    power_source=profile_dict['power'],  # add power source
+                    board_type=board_type,
+                    **profile_dict['consumption'])
         except KeyError:
             pass  # 'consumption' not in profile
 
         # add radio
         try:
-            profile_args['radio'] = Radio(**profile_dict['radio'])
+            if profile_dict['radio'] is not None:
+                profile_args['radio'] = Radio(**profile_dict['radio'])
         except KeyError:
             pass  # 'radio' not in profile
 
