@@ -10,6 +10,7 @@ from gateway_code import config
 from gateway_code import openocd_cmd
 from gateway_code.profile import Profile
 from gateway_code.serial_redirection import SerialRedirection
+from gateway_code import gateway_validation
 
 from gateway_code import control_node_interface, protocol_cn
 
@@ -18,7 +19,6 @@ import time
 import gateway_code.gateway_logging
 import logging
 
-import atexit
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -43,8 +43,7 @@ class GatewayManager(object):
 
         self.open_node_state = "stop"
 
-        # Init cleanup, logger and board type
-        atexit.register(self.exp_stop)
+        # logger and board type
         gateway_code.gateway_logging.init_logger(log_folder)
         self.robot = config.robot_type()
 
@@ -314,3 +313,10 @@ class GatewayManager(object):
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
+
+    def auto_tests(self):
+        """
+        Run Auto-tests on nodes and gateway
+        """
+
+        return gateway_validation.auto_tests(self)

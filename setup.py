@@ -77,6 +77,10 @@ class _Tee(object):
         self.file.write(data)
         self.stdout.write(data)
 
+    def flush(self):
+        self.file.flush()
+        self.stdout.flush()
+
     def __enter__(self):
         pass
 
