@@ -43,17 +43,24 @@ def _send_command_open_node(host, port, command):
 MOCK_FIRMWARES = {
     'idle': STATIC_DIR + 'idle.elf',
     'control_node': STATIC_DIR + 'control_node.elf',
+    'm3_autotest': STATIC_DIR + 'm3_autotest.elf',
     }
 
 
-@patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
-@patch('gateway_code.gateway_manager.config.FIRMWARES', MOCK_FIRMWARES)
-@patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
-@patch('gateway_code.control_node_interface.CONTROL_NODE_INTERFACE_ARGS', ['-d'])  # print measures
-class TestComplexExperimentRunning(unittest.TestCase):
+class GatewayCodeMock(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+        cls.static_patcher = patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
+        cls.static_patcher.start()
+
+        cls.firmwares_patcher = patch('gateway_code.config.FIRMWARES', MOCK_FIRMWARES)
+        cls.firmwares_patcher.start()
+        cls.config_path_patcher = patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
+        cls.config_path_patcher.start()
+        cls.cn_interface_patcher = patch('gateway_code.control_node_interface.CONTROL_NODE_INTERFACE_ARGS', ['-d'])  # print measures
+        cls.cn_interface_patcher.start()
+
         cls.app = gateway_code.server_rest.GatewayRest(\
                 gateway_code.server_rest.GatewayManager('.'))
 
@@ -91,12 +98,16 @@ class TestComplexExperimentRunning(unittest.TestCase):
     def tearDownClass(cls):
         for file_obj in cls.files.itervalues():
             file_obj.file.close()
+        cls.static_patcher.stop()
+        cls.firmwares_patcher.stop()
+        cls.config_path_patcher.stop()
+        cls.cn_interface_patcher.stop()
 
 
     def setUp(self):
         # get quick access to class attributes
-        self.app   = TestComplexExperimentRunning.app
-        self.files = TestComplexExperimentRunning.files
+        self.app   = type(self).app
+        self.files = type(self).files
 
         self.request_patcher = patch('gateway_code.server_rest.request')
         self.request = self.request_patcher.start()
@@ -116,6 +127,9 @@ class TestComplexExperimentRunning(unittest.TestCase):
         self.request_patcher.stop()
         self.app.exp_stop() # just in case, post error cleanup
 
+
+
+class TestComplexExperimentRunning(GatewayCodeMock):
 
     @patch('gateway_code.control_node_interface.LOGGER.debug')
     def tests_multiple_complete_experiment(self, m_logger):
@@ -219,6 +233,23 @@ class TestComplexExperimentRunning(unittest.TestCase):
         time = float(_times_str[0]) + float(_times_str[1])
         return time
 
+
+class TestAutoTests(GatewayCodeMock):
+
+    def test_complete_auto_tests(self):
+        ret, ret_d = self.app.gateway_manager.auto_tests()
+        self.assertEquals(0, ret)
+        self.assertEquals({"error": []}, ret_d)
+
+    def test_invalid_auto_tests(self):
+        self.app.gateway_manager.experiment_is_running = True
+        ret, ret_d = self.app.gateway_manager.auto_tests()
+        self.assertNotEquals(0, ret)
+        self.assertEquals({"error": ['experiment_is_running']}, ret_d)
+        self.app.gateway_manager.experiment_is_running = False  # to prevent cleanup
+
+
+class TestInvalidCases(GatewayCodeMock):
 
     def tests_invalid_calls(self):
         """

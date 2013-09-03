@@ -37,7 +37,7 @@ class ControlNodeSerial(object):
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self):
+    def start(self, _args=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
@@ -45,7 +45,8 @@ class ControlNodeSerial(object):
 
         args = [config.CONTROL_NODE_SERIAL_INTERFACE]
         args += ['-t', config.NODES_CFG['gwt']['tty']]
-        args += CONTROL_NODE_INTERFACE_ARGS
+        # add arguments, used by tests
+        args += _args or CONTROL_NODE_INTERFACE_ARGS
         self.cn_interface_process = subprocess.Popen(
             args, stderr=PIPE, stdin=PIPE)
 
@@ -116,6 +117,8 @@ class ControlNodeSerial(object):
                 # wait for answer 1 second at max
                 answer_cn = self.cn_msg_queue.get(block=True, timeout=1.0)
             except Queue.Empty:  # timeout, answer not got
+                answer_cn = None
+            except AttributeError:  # write when stdin is None
                 answer_cn = None
         LOGGER.debug('control_node_answer: %r', answer_cn)
 
