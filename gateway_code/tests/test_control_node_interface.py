@@ -124,7 +124,6 @@ class TestControlNodeSerial(unittest.TestCase):
             self.lock_error.wait(5)
             self.assertTrue(self.lock_error.is_set())  # wait return None in 2.6
 
-
             self.cn.stop()
 
     def test_stop_before_start(self):
@@ -156,11 +155,10 @@ class TestHandleAnswer(unittest.TestCase):
             mock_logger.assert_called_with('cn_serial_error: any error msg')
 
     def test_measures_debug(self):
-        with mock.patch('gateway_code.control_node_interface.LOGGER.debug') \
-                as mock_logger:
-            self.cn._handle_answer('measures_debug: consumption_measure ' +
-                                   '1377268768.841070:1.78250 ' +
-                                   '0.000000 3.230000 0.080003')
-            mock_logger.assert_called_with(
-                'measures_debug: consumption_measure ' +
-                '1377268768.841070:1.78250 0.000000 3.230000 0.080003')
+        self.cn.measures_handler = mock.Mock()
+        self.cn._handle_answer('measures_debug: consumption_measure ' +
+                               '1377268768.841070:1.78250 ' +
+                               '0.000000 3.230000 0.080003')
+        self.cn.measures_handler.assert_called_with(
+            'measures_debug: consumption_measure ' +
+            '1377268768.841070:1.78250 0.000000 3.230000 0.080003')

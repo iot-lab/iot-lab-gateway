@@ -314,9 +314,9 @@ class GatewayManager(object):
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
 
-    def auto_tests(self):
+    def auto_tests(self, channel):
         """
         Run Auto-tests on nodes and gateway
         """
-
-        return gateway_validation.auto_tests(self)
+        gw_validation = gateway_validation.GatewayValidation(self)
+        return gw_validation.auto_tests(channel)

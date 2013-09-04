@@ -17,7 +17,7 @@ class Protocol(object):
             'measure': self._config_radio_measure,
         }
 
-    def _send_cmd(self, command_list):
+    def send_cmd(self, command_list):
         """
         Send a command to the control node and wait for it's answer.
         """
@@ -35,7 +35,7 @@ class Protocol(object):
         """
         # <start|stop> <dc|battery>
         cmd = [command, alim]
-        return self._send_cmd(cmd)
+        return self.send_cmd(cmd)
 
     def reset_time(self):
         """
@@ -45,7 +45,7 @@ class Protocol(object):
         """
         # reset_time
         cmd = ['reset_time']
-        return self._send_cmd(cmd)
+        return self.send_cmd(cmd)
 
     def config_consumption(self, consumption=None):
         """
@@ -72,7 +72,7 @@ class Protocol(object):
             cmd.extend(['c', str(int(consumption.current))])
             cmd.extend(['-p', str(consumption.period)])
             cmd.extend(['-a', str(int(consumption.average))])
-        ret = self._send_cmd(cmd)
+        ret = self.send_cmd(cmd)
         return ret
 
     def config_radio(self, radio):
@@ -110,7 +110,7 @@ class Protocol(object):
         cmd = ['config_radio_signal']
         cmd.append(str(radio.power))
         cmd.append(str(radio.channel))
-        ret = self._send_cmd(cmd)
+        ret = self.send_cmd(cmd)
         return ret
 
     def _config_radio_mode(self, radio):
@@ -140,7 +140,7 @@ class Protocol(object):
         if "start" == command:
             cmd.append(str(frequency))
 
-        ret = self._send_cmd(cmd)
+        ret = self.send_cmd(cmd)
         return ret
 
     def _stop_radio_if_required(self, radio):

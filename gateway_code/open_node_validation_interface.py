@@ -97,7 +97,6 @@ class OpenNodeSerial(object):
     def stop(self):
         """ Start serial interface """
         self.stop_reader.set()
-        # TODO REMOVE ME if not needed time.sleep(1)
         self.reader_thread.join()
         self.serial_fd.close()
 
