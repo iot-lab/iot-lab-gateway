@@ -237,16 +237,10 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 class TestAutoTests(GatewayCodeMock):
 
     def test_complete_auto_tests(self):
-        ret, ret_d = self.app.gateway_manager.auto_tests()
-        self.assertEquals(0, ret)
+        channel = 22
+        ret, ret_d = self.app.gateway_manager.auto_tests(channel)
         self.assertEquals({"error": []}, ret_d)
-
-    def test_invalid_auto_tests(self):
-        self.app.gateway_manager.experiment_is_running = True
-        ret, ret_d = self.app.gateway_manager.auto_tests()
-        self.assertNotEquals(0, ret)
-        self.assertEquals({"error": ['experiment_is_running']}, ret_d)
-        self.app.gateway_manager.experiment_is_running = False  # to prevent cleanup
+        self.assertEquals(0, ret)
 
 
 class TestInvalidCases(GatewayCodeMock):

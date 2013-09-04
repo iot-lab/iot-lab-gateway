@@ -33,6 +33,8 @@ class ControlNodeSerial(object):
         self.reader_thread = None
         self.cn_msg_queue = Queue.Queue(1)
         self.protect_send = threading.Semaphore(1)
+        # handler to allow changing it in tests
+        self.measures_handler = LOGGER.debug
 
         # cleanup in case of error
         atexit.register(self.stop)
@@ -79,7 +81,7 @@ class ControlNodeSerial(object):
         elif answer[0] == 'cn_serial_error:':  # control node serial error
             LOGGER.error(line)
         elif answer[0] == 'measures_debug:':  # measures output
-            LOGGER.debug(line)
+            self.measures_handler(line)
 
         else:  # control node answer to a command
             try:
@@ -112,7 +114,7 @@ class ControlNodeSerial(object):
             # remove existing items (old not treated answers)
             common.empty_queue(self.cn_msg_queue)
             try:
-                LOGGER.debug('control_node_cmd: %r', command_str[:1])
+                LOGGER.debug('control_node_cmd: %r', command_args[0])
                 self.cn_interface_process.stdin.write(command_str)
                 # wait for answer 1 second at max
                 answer_cn = self.cn_msg_queue.get(block=True, timeout=1.0)
