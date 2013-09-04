@@ -20,8 +20,14 @@ class GatewayValidation(object):
         self.on_serial = None
         self.cn_serial = gateway_manager.cn_serial
         self.protocol = gateway_manager.protocol
+
         self.errors = None
+
         self.old_measures_handler = self.cn_serial.measures_handler
+        self.last_measure = None
+
+    def measure_handler(self, measure):
+        self.last_measure = measure
 
     def setup(self):
         """ setup auto_tests """
@@ -41,7 +47,9 @@ class GatewayValidation(object):
         time.sleep(1)
         self.on_serial.start()
 
-        if ret_val != 0:
+        self.cn_serial.measures_handler = self.measures_handler
+
+        if ret_val != 0:  # pragma: no cover
             self.errors.append('error_in_setup')
         return ret_val
 
@@ -57,7 +65,8 @@ class GatewayValidation(object):
 
         self.on_serial = None
 
-        if ret_val != 0:
+        self.cn_serial.measures_handler = self.old_measures_handler
+        if ret_val != 0:  # pragma: no cover
             self.errors.append('error_in_teardown')
         return ret_val
 
@@ -95,14 +104,14 @@ class GatewayValidation(object):
     def _validate(self, ret, message, log_message=''):
         """ validate an return and print log if necessary """
         self.errors += [message] if ret else []
-        if ret != 0:
+        if ret != 0:  # pragma: no cover
             LOGGER.error('Autotest: %r: %r', message, log_message)
         else:
             LOGGER.debug('autotest: %r OK', message)
         return ret
 
 #
-#
+# Test implementation
 #
 
     def test_get_time(self):
