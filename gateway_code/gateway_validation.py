@@ -6,10 +6,13 @@ auto tests implementation
 """
 
 import time
+import Queue
+import logging
 
 from gateway_code import config
 from gateway_code import open_node_validation_interface
-import logging
+from gateway_code.profile import Consumption, Radio
+
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -18,16 +21,27 @@ class GatewayValidation(object):
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
         self.on_serial = None
-        self.cn_serial = gateway_manager.cn_serial
-        self.protocol = gateway_manager.protocol
 
         self.errors = None
 
-        self.old_measures_handler = self.cn_serial.measures_handler
-        self.last_measure = None
+        self.old_measures_handler = self.g_m.cn_serial.measures_handler
+        self.last_measure = Queue.Queue(1)
 
-    def measure_handler(self, measure):
-        self.last_measure = measure
+    def measures_handler(self, measure):
+        """ Discard previous measure and add new one """
+        try:
+            self.last_measure.get_nowait()  # discard old measure
+        except Queue.Empty:
+            pass
+        self.last_measure.put(measure)
+
+    def get_measure(self, timeout=None):
+        """ Wait until a new measure is received """
+        try:
+            measure = self.last_measure.get(timeout=timeout)
+        except Queue.Empty:
+            measure = None
+        return measure
 
     def setup(self):
         """ setup auto_tests """
@@ -36,7 +50,7 @@ class GatewayValidation(object):
 
         # configure Control Node
         ret_val += self.g_m.node_soft_reset('gwt')
-        self.cn_serial.start(_args=['-d'])
+        self.g_m.cn_serial.start(_args=['-d'])
         time.sleep(1)
         ret_val += self.g_m.open_power_start(power='dc')
         ret_val += self.g_m.reset_time()
@@ -47,7 +61,7 @@ class GatewayValidation(object):
         time.sleep(1)
         self.on_serial.start()
 
-        self.cn_serial.measures_handler = self.measures_handler
+        self.g_m.cn_serial.measures_handler = self.measures_handler
 
         if ret_val != 0:  # pragma: no cover
             self.errors.append('error_in_setup')
@@ -61,11 +75,11 @@ class GatewayValidation(object):
         self.on_serial.stop()
         ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
         ret_val += self.g_m.open_power_stop(power='dc')
-        self.cn_serial.stop()
+        self.g_m.cn_serial.stop()
 
         self.on_serial = None
 
-        self.cn_serial.measures_handler = self.old_measures_handler
+        self.g_m.cn_serial.measures_handler = self.old_measures_handler
         if ret_val != 0:  # pragma: no cover
             self.errors.append('error_in_teardown')
         return ret_val
@@ -94,8 +108,18 @@ class GatewayValidation(object):
             # radio tests
             ret_val += self.test_radio_ping_pong(channel)
 
+            # ret_val += self.test_radio_with_rssi(channel)
+
             # should be done after some time to get a real offset in time
             ret_val += self.test_battery_switch()
+
+            # test measure_conso
+            ret_val += self.test_consumption_dc()
+            ret_val += self.test_consumption_batt()
+
+            # test leds
+
+            # ret_val += self.test_leds_with_consumption()
 
         ret_val += self.teardown()
 
@@ -175,13 +199,15 @@ class GatewayValidation(object):
         """ test light sensor with leds"""
         # ['ACK', 'LIGHT', '=', '5.2001953E1', 'lux']
 
-        answer = self.on_serial.send_command(['leds_blink', '7', '2000'])
+        _ = self.on_serial.send_command(['leds_blink', '7', '2000'])
 
         values = []
         for _ in range(0, 10):
             answer = self.on_serial.send_command(['get_light'])
             values.append(float(answer[3]))
             time.sleep(1)
+
+        _ = self.on_serial.send_command(['leds_off', '7'])
 
         got_diff_values = int(not(1 != len(set(values))))
         return self._validate(got_diff_values, 'test_light', values)
@@ -234,9 +260,9 @@ class GatewayValidation(object):
 
         # setup control node
         cmd = ['config_radio_signal', '3.0', str(channel)]
-        ret_val += self.protocol.send_cmd(cmd)
+        ret_val += self.g_m.protocol.send_cmd(cmd)
         cmd = ['test_radio_ping_pong', 'start']
-        ret_val += self.protocol.send_cmd(cmd)
+        ret_val += self.g_m.protocol.send_cmd(cmd)
 
         # send 10 packets
         values = []
@@ -250,6 +276,138 @@ class GatewayValidation(object):
         ret_val += self._validate(result, 'radio_ping_pong_got_pkt', values)
 
         # cleanup
-        ret_val += self.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
+        ret_val += self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
         self._validate(ret_val, 'radio_ping_pong', 'error during test')
         return ret_val
+
+
+    def test_radio_with_rssi(self, channel):
+        """ Test radio with rssi"""
+
+        # one measure every ~0.1 seconds
+        ret_val = 0
+        radio = Radio(power=3.0, channel=channel, mode="measure", frequency=100)
+
+        ret_val += self.g_m.protocol.config_radio(radio)
+
+
+        # measures_debug: consumption_measure
+        #     1378387028.906210:21.997924
+        #     0.257343 3.216250 0.080003
+
+        time.sleep(0.5)
+        val = self.get_measure(timeout=1).split(' ')
+
+
+        import sys
+        values = []
+        for i in range(0, 10):
+            val = self.get_measure(timeout=1).split(' ')
+            print >> sys.stderr, val
+
+
+        ret_val += self.g_m.protocol.config_radio(None)
+
+        return ret_val
+
+#
+# Consumption tests
+#
+
+    def test_consumption_dc(self):
+        """ Try consumption for DC """
+
+        # one measure every ~0.1 seconds
+        ret_val = 0
+        conso = Consumption(power_source='dc', board_type='M3',
+                            period='1100', average='64',
+                            power=True, voltage=True, current=True)
+        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.protocol.config_consumption(conso)
+
+        values = []
+
+        # measures_debug: consumption_measure
+        #     1378387028.906210:21.997924
+        #     0.257343 3.216250 0.080003
+        for _ in range(0, 10):
+            val = self.get_measure(timeout=1).split(' ')
+            values += tuple([float(meas) for meas in val[3:6]])
+        got_diff_values = 0 if (1 != len(set(values))) else 1
+        ret_val += self._validate(got_diff_values, 'consumption_dc', values)
+        ret_val += self.g_m.protocol.config_consumption(None)
+
+        return ret_val
+
+    def test_consumption_batt(self):
+        """ Try consumption for Battery """
+
+        # one measure every ~0.1 seconds
+        ret_val = 0
+        conso = Consumption(power_source='battery', board_type='M3',
+                            period='1100', average='64',
+                            power=True, voltage=True, current=True)
+        ret_val += self.g_m.open_power_start(power='battery')
+        ret_val += self.g_m.protocol.config_consumption(conso)
+
+        values = []
+
+        # measures_debug: consumption_measure
+        #     1378387028.906210:21.997924
+        #     0.257343 3.216250 0.080003
+        for _ in range(0, 10):
+            val = self.get_measure(timeout=1).split(' ')
+            values += tuple([float(meas) for meas in val[3:6]])
+        got_diff_values = 0 if (1 != len(set(values))) else 1
+        ret_val += self._validate(got_diff_values, 'consumption_batt', values)
+        ret_val += self.g_m.protocol.config_consumption(None)
+
+        ret_val += self.g_m.open_power_start(power='dc')
+
+        return ret_val
+
+    def test_leds_with_consumption(self):
+        """ Test Leds with consumption """
+
+        _ = self.on_serial.send_command(['leds_off', '7'])
+
+        # one measure every ~0.1 seconds
+        ret_val = 0
+        conso = Consumption(power_source='dc', board_type='M3',
+                            period='1100', average='64',
+                            power=True, voltage=True, current=True)
+        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.protocol.config_consumption(conso)
+
+        values = []
+
+        # measures_debug: consumption_measure
+        #     1378387028.906210:21.997924
+        #     0.257343 3.216250 0.080003
+
+        import sys
+        # keep only power
+        print >> sys.stderr, "conso and leds off"
+        time.sleep(5)
+        time.sleep(0.5)
+        val = self.get_measure(timeout=1).split(' ')
+        value_0 = float(val[3])
+
+
+        for i in ['1', '2', '4']:
+            _ = self.on_serial.send_command(['leds_on', i])
+            print >> sys.stderr, "set_leds_on: %r" % i
+            time.sleep(1.0)
+            val = self.get_measure(timeout=1).split(' ')
+            print >> sys.stderr, "got measure"
+            values.append(float(val[3]))
+            _ = self.on_serial.send_command(['leds_off', '7'])
+
+        LOGGER.debug('test_leds: %r : %r', value_0, values)
+
+        leds_working = int(not(all([value_0 < val for val in values])))
+        ret_val += self._validate(leds_working, 'test_leds_with_conso', values)
+        ret_val += self.g_m.protocol.config_consumption(None)
+
+        return ret_val
+

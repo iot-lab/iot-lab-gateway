@@ -22,6 +22,7 @@ def main(command_file_path):
             # non blank lines
             stripped_line = line.strip()
             if len(stripped_line) == 0:
+                time.sleep(1)
                 continue
 
             print >> sys.stderr, stripped_line
