@@ -397,8 +397,7 @@ class GatewayValidation(object):
         val = self.get_measure(timeout=1).split(' ')
         value_0 = float(val[3])
 
-        for i in ['1', '2', '4']:
-        #for i in ['7', '7', '7']:
+        for i in ['1', '2', '4', '7']:
             _ = self.on_serial.send_command(['leds_on', i])
             time.sleep(0.5)
             val = self.get_measure(timeout=1).split(' ')
