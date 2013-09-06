@@ -25,6 +25,9 @@ def init_logger(log_folder):
     logger = logging.getLogger('gateway_code')
     logger.setLevel(LOGLEVEL)
 
+    if logger.handlers != []:
+        return
+
     # user logs
     # will be updated to be in user folder later
     user_f = log_folder + 'user.log'

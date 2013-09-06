@@ -143,6 +143,7 @@ class TestProtocolRadio(unittest.TestCase):
         self.assertEquals(0, self.stop_cmd_mock.call_count)
         self.assertEquals(1, self.protocol._config_radio_signal.call_count)
         self.assertEquals(1, self.protocol._config_radio_measure.call_count)
+        self.assertEquals("measure", self.protocol.current_radio_mode)
 
     def test_config_radio_none(self):
         self.protocol.current_radio_mode = None
@@ -155,6 +156,7 @@ class TestProtocolRadio(unittest.TestCase):
         ret = self.protocol.config_radio(None)
         self.assertEquals(0, self.protocol._config_radio_signal.call_count)
         self.assertEquals(0, self.protocol._config_radio_measure.call_count)
+        self.assertEquals(None, self.protocol.current_radio_mode)
 
 
     def test_config_radio_error_on_stop(self):
@@ -172,6 +174,7 @@ class TestProtocolRadio(unittest.TestCase):
         self.assertEquals(1, self.stop_cmd_mock.call_count)
         self.assertEquals(0, self.protocol._config_radio_signal.call_count)
         self.assertEquals(0, self.protocol._config_radio_measure.call_count)
+        self.assertEquals("measure", self.protocol.current_radio_mode)
 
     def test_config_radio_error_cases(self):
 
@@ -192,6 +195,7 @@ class TestProtocolRadio(unittest.TestCase):
         self.assertEquals(0, self.stop_cmd_mock.call_count)
         self.assertEquals(1, self.protocol._config_radio_signal.call_count)
         self.assertEquals(1, self.protocol._config_radio_measure.call_count)
+        self.assertEquals(None, self.protocol.current_radio_mode)
 
 
 
