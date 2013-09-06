@@ -130,7 +130,7 @@ class GatewayValidation(object):
         if ret != 0:  # pragma: no cover
             LOGGER.error('Autotest: %r: %r', message, log_message)
         else:
-            LOGGER.debug('autotest: %r OK', message)
+            LOGGER.debug('autotest: %r OK: %r', message, log_message)
         return ret
 
 #
@@ -307,12 +307,11 @@ class GatewayValidation(object):
         while not self.last_measure.empty():
             val = self.last_measure.get().split(' ')
             values.append(tuple([int(meas) for meas in val[3:5]]))
-        LOGGER.debug('radio measures values: %r', values)
 
         # check that values other than (0,0) were measured
         values.append((0, 0))
         got_diff_values = 0 if (1 != len(set(values))) else 1
-        ret_val += self._validate(got_diff_values, 'consumption_dc', values)
+        ret_val += self._validate(got_diff_values, 'rssi_measures', values)
 
         return ret_val
 
@@ -409,8 +408,8 @@ class GatewayValidation(object):
 
         ret_val += self.g_m.protocol.config_consumption(None)
 
-        LOGGER.debug('test_leds: %r : %r', value_0, values)
         leds_working = int(not(all([value_0 < val for val in values])))
-        ret_val += self._validate(leds_working, 'test_leds_with_conso', values)
+        ret_val += self._validate(leds_working, 'test_leds_with_conso',
+                                  (value_0, values))
 
         return ret_val
