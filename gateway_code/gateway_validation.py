@@ -341,6 +341,8 @@ class GatewayValidation(object):
             values += tuple([float(meas) for meas in val[3:6]])
         ret_val += self.g_m.protocol.config_consumption(None)
 
+        # TODO Validate value ranges (maybe with idle firmware)
+
         got_diff_values = 0 if (1 != len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'consumption_dc', values)
 
@@ -367,8 +369,9 @@ class GatewayValidation(object):
             values += tuple([float(meas) for meas in val[3:6]])
         got_diff_values = 0 if (1 != len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'consumption_batt', values)
-        ret_val += self.g_m.protocol.config_consumption(None)
 
+        # TODO Validate value ranges (maybe with idle firmware)
+        ret_val += self.g_m.protocol.config_consumption(None)
         ret_val += self.g_m.open_power_start(power='dc')
 
         return ret_val
