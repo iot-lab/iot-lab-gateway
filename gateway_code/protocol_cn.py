@@ -124,7 +124,7 @@ class Protocol(object):
             raise NotImplementedError("Uknown radio mode: %s", radio.mode)
 
         # update radio mode
-        if 0 != ret:
+        if 0 == ret:
             self.current_radio_mode = radio.mode
         return ret
 

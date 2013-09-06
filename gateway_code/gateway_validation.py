@@ -25,14 +25,16 @@ class GatewayValidation(object):
         self.errors = None
 
         self.old_measures_handler = self.g_m.cn_serial.measures_handler
-        self.last_measure = Queue.Queue(1)
+        self.keep_all_measures = False
+        self.last_measure = Queue.Queue(0)
 
     def measures_handler(self, measure):
         """ Discard previous measure and add new one """
-        try:
-            self.last_measure.get_nowait()  # discard old measure
-        except Queue.Empty:
-            pass
+        if not self.keep_all_measures:
+            try:
+                self.last_measure.get_nowait()  # discard old measure
+            except Queue.Empty:
+                pass
         self.last_measure.put(measure)
 
     def get_measure(self, timeout=None):
@@ -44,7 +46,7 @@ class GatewayValidation(object):
         return measure
 
     def setup(self):
-        """ setup auto_tests """
+        """ setup connection with m3 """
         self.errors = []
         ret_val = 0
 
@@ -68,7 +70,7 @@ class GatewayValidation(object):
         return ret_val
 
     def teardown(self):
-        """ cleanup auto_tests """
+        """ cleanup """
         ret_val = 0
 
         # restore
@@ -95,31 +97,28 @@ class GatewayValidation(object):
             # can communicate and get_time working
             ret_val += self.test_get_time()
 
-            # test sensors and flash
-            ret_val += self.test_light()
-            ret_val += self.test_pressure()
-            ret_val += self.test_flash()
-
             # test IMU
             ret_val += self.test_gyro()
             ret_val += self.test_magneto()
             ret_val += self.test_accelero()
+            # test pressure and flash
+            ret_val += self.test_pressure()
+            ret_val += self.test_flash()
 
             # radio tests
             ret_val += self.test_radio_ping_pong(channel)
+            ret_val += self.test_radio_with_rssi(channel)
 
-            # ret_val += self.test_radio_with_rssi(channel)
-
-            # should be done after some time to get a real offset in time
+            # test battery switch (done after some time to get a big uptime)
             ret_val += self.test_battery_switch()
 
             # test measure_conso
             ret_val += self.test_consumption_dc()
             ret_val += self.test_consumption_batt()
-
-            # test leds
-
-            # ret_val += self.test_leds_with_consumption()
+            # test leds (requires conso)
+            ret_val += self.test_leds_with_consumption()
+            # test light sensor (requires test leds)
+            ret_val += self.test_light()
 
         ret_val += self.teardown()
 
@@ -158,13 +157,15 @@ class GatewayValidation(object):
 
         # switch to battery and get_time
         ret = self.g_m.open_power_start(power='battery')
-        ret_val += self._validate(ret, 'open_power_start', ret)
+        ret_val += self._validate(ret, 'open_battery_start', ret)
+        time.sleep(0.5)
         answer = self.on_serial.send_command(['get_time'])
         time_2 = int(answer[3]) if answer[0] == 'ACK' else 0
 
         # switch back to dc and get_time
         ret = self.g_m.open_power_start(power='dc')
         ret_val += self._validate(ret, 'open_power_start', ret)
+        time.sleep(0.5)
         answer = self.on_serial.send_command(['get_time'])
         time_3 = int(answer[3]) if answer[0] == 'ACK' else 0
 
@@ -207,6 +208,7 @@ class GatewayValidation(object):
             values.append(float(answer[3]))
             time.sleep(1)
 
+        _ = self.on_serial.send_command(['leds_blink', '7', '0'])
         _ = self.on_serial.send_command(['leds_off', '7'])
 
         got_diff_values = int(not(1 != len(set(values))))
@@ -280,33 +282,37 @@ class GatewayValidation(object):
         self._validate(ret_val, 'radio_ping_pong', 'error during test')
         return ret_val
 
-
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        radio = Radio(power=3.0, channel=channel, mode="measure", frequency=100)
-
+        radio = Radio(power=3.0, channel=channel, mode="measure",
+                      frequency=100)
         ret_val += self.g_m.protocol.config_radio(radio)
 
-
-        # measures_debug: consumption_measure
-        #     1378387028.906210:21.997924
-        #     0.257343 3.216250 0.080003
-
-        time.sleep(0.5)
-        val = self.get_measure(timeout=1).split(' ')
-
-
-        import sys
-        values = []
-        for i in range(0, 10):
-            val = self.get_measure(timeout=1).split(' ')
-            print >> sys.stderr, val
-
-
+        # send 10 radio packets and keep all radio measures
+        self.keep_all_measures = True
+        for _ in range(0, 10):
+            cmd_on = ['radio_pkt', '3dBm', str(channel)]
+            _ = self.on_serial.send_command(cmd_on)
+            time.sleep(0.5)
         ret_val += self.g_m.protocol.config_radio(None)
+        self.keep_all_measures = False
+
+        # extract rssi measures
+        # ['measures_debug:', 'radio_measure',
+        #  '1378466517.186216:21.018127', '0', '0']
+        values = []
+        while not self.last_measure.empty():
+            val = self.last_measure.get().split(' ')
+            values.append(tuple([int(meas) for meas in val[3:5]]))
+        LOGGER.debug('radio measures values: %r', values)
+
+        # check that values other than (0,0) were measured
+        values.append((0, 0))
+        got_diff_values = 0 if (1 != len(set(values))) else 1
+        ret_val += self._validate(got_diff_values, 'consumption_dc', values)
 
         return ret_val
 
@@ -333,9 +339,10 @@ class GatewayValidation(object):
         for _ in range(0, 10):
             val = self.get_measure(timeout=1).split(' ')
             values += tuple([float(meas) for meas in val[3:6]])
+        ret_val += self.g_m.protocol.config_consumption(None)
+
         got_diff_values = 0 if (1 != len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'consumption_dc', values)
-        ret_val += self.g_m.protocol.config_consumption(None)
 
         return ret_val
 
@@ -385,29 +392,23 @@ class GatewayValidation(object):
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
 
-        import sys
         # keep only power
-        print >> sys.stderr, "conso and leds off"
-        time.sleep(5)
         time.sleep(0.5)
         val = self.get_measure(timeout=1).split(' ')
         value_0 = float(val[3])
 
-
         for i in ['1', '2', '4']:
+        #for i in ['7', '7', '7']:
             _ = self.on_serial.send_command(['leds_on', i])
-            print >> sys.stderr, "set_leds_on: %r" % i
-            time.sleep(1.0)
+            time.sleep(0.5)
             val = self.get_measure(timeout=1).split(' ')
-            print >> sys.stderr, "got measure"
             values.append(float(val[3]))
             _ = self.on_serial.send_command(['leds_off', '7'])
 
-        LOGGER.debug('test_leds: %r : %r', value_0, values)
-
-        leds_working = int(not(all([value_0 < val for val in values])))
-        ret_val += self._validate(leds_working, 'test_leds_with_conso', values)
         ret_val += self.g_m.protocol.config_consumption(None)
 
-        return ret_val
+        LOGGER.debug('test_leds: %r : %r', value_0, values)
+        leds_working = int(not(all([value_0 < val for val in values])))
+        ret_val += self._validate(leds_working, 'test_leds_with_conso', values)
 
+        return ret_val
