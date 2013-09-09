@@ -22,13 +22,13 @@ class GatewayValidation(object):
         self.g_m = gateway_manager
         self.on_serial = None
 
-        self.errors = None
+        self.logs = {'passed': None, 'errors': None}
 
         self.old_measures_handler = self.g_m.cn_serial.measures_handler
         self.keep_all_measures = False
         self.last_measure = Queue.Queue(0)
 
-    def measures_handler(self, measure):
+    def _measures_handler(self, measure):
         """ Discard previous measure and add new one """
         if not self.keep_all_measures:
             try:
@@ -37,7 +37,7 @@ class GatewayValidation(object):
                 pass
         self.last_measure.put(measure)
 
-    def get_measure(self, timeout=None):
+    def _get_measure(self, timeout=None):
         """ Wait until a new measure is received """
         try:
             measure = self.last_measure.get(timeout=timeout)
@@ -47,7 +47,8 @@ class GatewayValidation(object):
 
     def setup(self):
         """ setup connection with m3 """
-        self.errors = []
+        self.logs['passed'] = []
+        self.logs['errors'] = []
         ret_val = 0
 
         # configure Control Node
@@ -63,30 +64,28 @@ class GatewayValidation(object):
         time.sleep(1)
         self.on_serial.start()
 
-        self.g_m.cn_serial.measures_handler = self.measures_handler
+        self.g_m.cn_serial.measures_handler = self._measures_handler
 
-        if ret_val != 0:  # pragma: no cover
-            self.errors.append('error_in_setup')
-        return ret_val
+        return self._validate(ret_val, 'setup', ret_val)
 
-    def teardown(self):
+    def teardown(self, blink):
         """ cleanup """
         ret_val = 0
 
         # restore
         self.on_serial.stop()
-        ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
-        ret_val += self.g_m.open_power_stop(power='dc')
-        self.g_m.cn_serial.stop()
-
         self.on_serial = None
+        ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
+        # keep blinking after tests
+        if not blink:
+            ret_val += self.g_m.open_power_stop(power='dc')
 
+        self.g_m.cn_serial.stop()
         self.g_m.cn_serial.measures_handler = self.old_measures_handler
-        if ret_val != 0:  # pragma: no cover
-            self.errors.append('error_in_teardown')
-        return ret_val
 
-    def auto_tests(self, channel):
+        return self._validate(ret_val, 'teardown', ret_val)
+
+    def auto_tests(self, channel=None, blink=False):
         """
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
@@ -106,8 +105,9 @@ class GatewayValidation(object):
             ret_val += self.test_flash()
 
             # radio tests
-            ret_val += self.test_radio_ping_pong(channel)
-            ret_val += self.test_radio_with_rssi(channel)
+            if channel is not None:
+                ret_val += self.test_radio_ping_pong(channel)
+                ret_val += self.test_radio_with_rssi(channel)
 
             # test battery switch (done after some time to get a big uptime)
             ret_val += self.test_battery_switch()
@@ -120,17 +120,23 @@ class GatewayValidation(object):
             # test light sensor (requires test leds)
             ret_val += self.test_light()
 
-        ret_val += self.teardown()
+            # set_leds
+            _ = self.on_serial.send_command(['leds_off', '7', '500'])
+            if ret_val == 0:
+                _ = self.on_serial.send_command(['leds_blink', '7', '500'])
 
-        return ret_val, {"error": self.errors}
+        ret_val += self.teardown(blink)
+
+        return ret_val, self.logs['passed'], self.logs['errors']
 
     def _validate(self, ret, message, log_message=''):
         """ validate an return and print log if necessary """
-        self.errors += [message] if ret else []
-        if ret != 0:  # pragma: no cover
-            LOGGER.error('Autotest: %r: %r', message, log_message)
-        else:
+        if ret == 0:
+            self.logs['passed'].append(message)
             LOGGER.debug('autotest: %r OK: %r', message, log_message)
+        else:
+            self.logs['errors'].append(message)
+            LOGGER.error('Autotest: %r: %r', message, log_message)
         return ret
 
 #
@@ -171,7 +177,7 @@ class GatewayValidation(object):
 
         # check time increasing => no reboot
         time_increasing = 0 if time_3 > time_2 > time_1 else 1
-        ret_val += self._validate(time_increasing, 'reboot_when_alim_switch',
+        ret_val += self._validate(time_increasing, 'no_reboot_on_alim_switch',
                                   '%d < %d < %d' % (time_1, time_2, time_3))
         return ret_val
 
@@ -212,7 +218,7 @@ class GatewayValidation(object):
         _ = self.on_serial.send_command(['leds_off', '7'])
 
         got_diff_values = int(not(1 != len(set(values))))
-        return self._validate(got_diff_values, 'test_light', values)
+        return self._validate(got_diff_values, 'get_light', values)
 
 #
 # Inertial Measurement Unit
@@ -227,7 +233,7 @@ class GatewayValidation(object):
             measures = tuple([float(val) for val in answer[3:6]])
             values.append(measures)
         got_diff_values = 0 if (1 != len(set(values))) else 1
-        return self._validate(got_diff_values, 'test_magneto', values)
+        return self._validate(got_diff_values, 'get_magneto', values)
 
     def test_gyro(self):
         """ test gyro sensor """
@@ -250,7 +256,7 @@ class GatewayValidation(object):
             measures = tuple([float(val) for val in answer[3:6]])
             values.append(measures)
         got_diff_values = 0 if (1 != len(set(values))) else 1
-        return self._validate(got_diff_values, 'test_accelero', values)
+        return self._validate(got_diff_values, 'get_accelero', values)
 
 #
 # Radio tests
@@ -275,11 +281,11 @@ class GatewayValidation(object):
 
         # got at least one answer from control_node
         result = int(not(0 in values))  # at least one success
-        ret_val += self._validate(result, 'radio_ping_pong_got_pkt', values)
+        ret_val += self._validate(result, 'radio_ping_pong_pkts', values)
 
         # cleanup
         ret_val += self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
-        self._validate(ret_val, 'radio_ping_pong', 'error during test')
+        self._validate(ret_val, 'radio_ping_pong_test', 'Cleanup error')
         return ret_val
 
     def test_radio_with_rssi(self, channel):
@@ -336,7 +342,7 @@ class GatewayValidation(object):
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
         for _ in range(0, 10):
-            val = self.get_measure(timeout=1).split(' ')
+            val = self._get_measure(timeout=1).split(' ')
             values += tuple([float(meas) for meas in val[3:6]])
         ret_val += self.g_m.protocol.config_consumption(None)
 
@@ -364,7 +370,7 @@ class GatewayValidation(object):
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
         for _ in range(0, 10):
-            val = self.get_measure(timeout=1).split(' ')
+            val = self._get_measure(timeout=1).split(' ')
             values += tuple([float(meas) for meas in val[3:6]])
         got_diff_values = 0 if (1 != len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'consumption_batt', values)
@@ -396,20 +402,20 @@ class GatewayValidation(object):
 
         # keep only power
         time.sleep(0.5)
-        val = self.get_measure(timeout=1).split(' ')
+        val = self._get_measure(timeout=1).split(' ')
         value_0 = float(val[3])
 
         for i in ['1', '2', '4', '7']:
             _ = self.on_serial.send_command(['leds_on', i])
             time.sleep(0.5)
-            val = self.get_measure(timeout=1).split(' ')
+            val = self._get_measure(timeout=1).split(' ')
             values.append(float(val[3]))
             _ = self.on_serial.send_command(['leds_off', '7'])
 
         ret_val += self.g_m.protocol.config_consumption(None)
 
         leds_working = int(not(all([value_0 < val for val in values])))
-        ret_val += self._validate(leds_working, 'test_leds_with_conso',
+        ret_val += self._validate(leds_working, 'test_leds_using_conso',
                                   (value_0, values))
 
         return ret_val

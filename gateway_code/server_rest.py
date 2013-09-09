@@ -1,8 +1,8 @@
+#! /usr/bin/env python
 #-*- coding: utf-8 -*-
 
 """
 REST server listening to the experiment handler
-
 """
 
 import bottle
@@ -32,10 +32,15 @@ class GatewayRest(object):
         """
         Declare the REST supported methods depending on board config
         """
-        bottle.route('/exp/start/:expid/:username', 'POST')(self.exp_start)
+        bottle.route('/exp/start/<expid:int>/<username>',
+                     'POST')(self.exp_start)
         bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
         bottle.route('/open/start', 'PUT')(self.open_start)
         bottle.route('/open/stop', 'PUT')(self.open_stop)
+
+        # query_string: channel=int[11:26]
+        bottle.route('/status', 'PUT')(self.auto_tests)
+        bottle.route('/status/<mode>', 'PUT')(self.auto_tests)
 
         # node specific commands
         if self.board_type == 'M3':
@@ -75,8 +80,10 @@ class GatewayRest(object):
                 firmware_file = NamedTemporaryFile(suffix='--'+_firm.filename)
                 firmware_path = firmware_file.name
                 firmware_file.write(_firm.file.read())
-        except ValueError:  # pragma: no cover
-            pass  # Detect no files in multipart request
+            else:  # pragma: no cover
+                pass
+        except ValueError:
+            pass  # no files in multipart request
 
         ret = self.gateway_manager.exp_start(
             expid, username, firmware_path, profile)
@@ -164,6 +171,34 @@ class GatewayRest(object):
     def admin_control_flash(self):
         """ Flash control node """
         return self._flash('gwt')
+
+    def auto_tests(self, mode=None):
+        """ Run auto-tests
+
+        :param mode: 'blink'
+         Query string: 'channel' int 11-26
+
+        Mode:
+         * 'blink': leds keep blinking
+        """
+
+        # get mode
+        if mode not in ['blink', None]:
+            return {'ret': 1, 'passed': [], 'errors': ['invalid_mode']}
+        blink = (mode == 'blink')
+
+        # query optionnal channel
+        # if defined it should be int(11:26)
+        channel_str = request.query.channel
+        if channel_str == '':
+            channel = None
+        elif channel_str.isdigit() and (11 <= int(channel_str) <= 26):
+            channel = int(channel_str)
+        else:
+            return {'ret': 1, 'passed': [], 'errors': ['invalid_channel']}
+
+        ret, passed, errors = self.gateway_manager.auto_tests(channel, blink)
+        return {'ret': ret, 'passed': passed, 'errors': errors}
 
 
 #

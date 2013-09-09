@@ -5,6 +5,7 @@ import time
 import os
 import recordtype # mutable namedtuple (for small classes)
 
+import mock
 from mock import patch
 import unittest
 
@@ -237,10 +238,53 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 class TestAutoTests(GatewayCodeMock):
 
     def test_complete_auto_tests(self):
-        channel = 22
-        ret, ret_d = self.app.gateway_manager.auto_tests(channel)
-        self.assertEquals({"error": []}, ret_d)
+        # replace stop
+        g_m = self.app.gateway_manager
+        real_stop = g_m.open_power_stop
+        mock_stop = mock.Mock(side_effect=real_stop)
+
+        g_m.open_power_stop = mock_stop
+
+        self.request.query = mock.Mock()
+        self.request.query.channel = '22'
+
+        # call using rest
+        ret_dict = self.app.auto_tests(mode='blink')
+        ret = ret_dict['ret']
+        passed = ret_dict['passed']
+        errors = ret_dict['errors']
+
+        import sys
+        print >> sys.stderr, "ret: %r" % ret
+        print >> sys.stderr, "passed: %r" % passed
+        print >> sys.stderr, "errors: %r" % errors
+        self.assertEquals([], errors)
         self.assertEquals(0, ret)
+
+        self.assertEquals(0, g_m.open_power_stop.call_count)
+
+        # test that ON still on => should be blinking and answering
+        open_serial = gateway_code.open_node_validation_interface.\
+            OpenNodeSerial()
+        open_serial.start()
+        answer = open_serial.send_command(['get_time'])
+        self.assertNotEquals(None, answer)
+        open_serial.stop()
+
+
+    def test_mode_no_blink_no_radio(self):
+
+        g_v = gateway_code.gateway_validation.GatewayValidation(
+                self.app.gateway_manager)
+        # radio functions
+        g_v.test_radio_ping_pong = mock.Mock()
+        g_v.test_radio_with_rssi = mock.Mock()
+
+        ret, passed, errors = g_v.auto_tests(channel=None, blink=False)
+        self.assertEquals([], errors)
+        self.assertEquals(0, ret)
+        self.assertEquals(0, g_v.test_radio_ping_pong.call_count)
+        self.assertEquals(0, g_v.test_radio_with_rssi.call_count)
 
 
 class TestInvalidCases(GatewayCodeMock):
