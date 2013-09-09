@@ -84,6 +84,10 @@ class TestControlNodeSerial(unittest.TestCase):
         self.cn.stop()
         self.assertEquals(None, ret)
 
+    def test_send_command_cn_interface_stoped(self):
+        ret = self.cn.send_command(['lala'])
+        self.assertEquals(None, ret)
+
 
 
     def test_answer_and_answer_with_queue_full(self):
