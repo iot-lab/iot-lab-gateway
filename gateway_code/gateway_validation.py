@@ -124,6 +124,10 @@ class GatewayValidation(object):
             _ = self.on_serial.send_command(['leds_off', '7', '500'])
             if ret_val == 0:
                 _ = self.on_serial.send_command(['leds_blink', '7', '500'])
+            else:  # pragma: no cover
+                pass
+        else:  # pragma: no cover
+            pass
 
         ret_val += self.teardown(blink)
 
