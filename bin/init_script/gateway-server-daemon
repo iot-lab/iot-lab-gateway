@@ -3,7 +3,6 @@
 # Init script for Gateway Server using bottle
 # http://bottlepy.org
 #
-set -x
 DESC="Gateway Server"
 NAME=gateway-server
 PIDDIR=/var/run/${NAME}
