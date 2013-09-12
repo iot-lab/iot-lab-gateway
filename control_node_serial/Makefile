@@ -3,6 +3,7 @@ CC         = gcc
 
 
 # VERB = 1
+# VERB = 1
 quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
 
 WARNINGS  += -Werror
@@ -21,7 +22,9 @@ endif
 
 CFLAGS    += -std=c99 -g -O3 -fstrict-aliasing
 CFLAGS    += $(WARNINGS) $(COV) $(PROF) $(DEP_RULES) $(LIBS) -pthread
-LDFLAGS   += $(CFLAGS) -lpthread
+
+OMLFLAGS  = -Wl,-rpath,/usr/local/lib -loml2
+LDFLAGS   += $(CFLAGS) -lpthread $(OMLFLAGS)
 
 SRCS       = $(wildcard $(SRCDIR)/*.c)
 OBJS       = $(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.o)
@@ -43,7 +46,7 @@ coverage: all
 	make -C tests --no-print-directory coverage
 
 $(TARGET): $(OBJS)
-	$(call quiet-cmd, $(CC) -o $@ $(LDFLAGS) $^,   "  LD      $@")
+	$(call quiet-cmd, $(CC) -o $@ $^ $(LDFLAGS),   "  LD      $@")
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c Makefile
 	$(call quiet-cmd, $(CC) -c $(CFLAGS) $< -o $@, "  CC      $@")

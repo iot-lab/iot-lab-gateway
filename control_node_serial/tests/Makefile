@@ -3,13 +3,14 @@ quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
 
 
 COV          = -fprofile-arcs -ftest-coverage
+OMLFLAGS     = -Wl,-rpath,/usr/local/lib -loml2
 
 GTEST_DIR    = utils/gtest
 CFLAGS      += -I$(GTEST_DIR)/include -I$(SRCDIR) $(COV)
 CFLAGS      += $(CFLAGSOPT)
 CFLAGS      += -Wno-aggregate-return -Wno-write-strings
 CPPFLAGS    += $(CFLAGS)
-CXXFLAGS    += -g -Wall -Wextra -pthread
+CXXFLAGS    += -g -Wall -Wextra -pthread $(LDFLAGS)
 
 
 SRCDIR       = ../src
@@ -52,8 +53,9 @@ $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
 
 
 $(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a
-	$(call quiet-cmd, $(CXX) -lgcov $(CPPFLAGS) $(CXXFLAGS) $^ -o $@, \
+	$(call quiet-cmd, $(CXX) -lgcov $(CPPFLAGS) $^ $(CXXFLAGS) $(OMLFLAGS) -o $@, \
 		"  CXX   $@")
+
 
 
 $(OBJDIR)/%_test.o: %_test.c $(SRCS)
