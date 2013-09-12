@@ -1,32 +1,13 @@
 #include <stdio.h>
 #include <oml2/omlc.h>
+#define OML_FROM_MAIN
+#include "control_node_measures_oml.h"
 
 #include "oml_measures.h"
 #include "common.h"
 
-OmlMPDef measure_point_consumption [] = {
-        { "timestamp_s",  OML_UINT64_VALUE},
-        { "timestamp_us", OML_UINT32_VALUE},
-        { "current",      OML_DOUBLE_VALUE},
-        { "voltage",      OML_DOUBLE_VALUE},
-        { "power",        OML_DOUBLE_VALUE},
-        { NULL, (OmlValueT)0 }
-};
 
-
-OmlMPDef measure_point_radio [] = {
-        { "timestamp_s",  OML_UINT64_VALUE},
-        { "timestamp_us", OML_UINT32_VALUE},
-        { "rssi",         OML_INT32_VALUE},
-        { "lqi",          OML_INT32_VALUE},
-        { NULL, (OmlValueT)0 }
-};
-
-static OmlMP *mp_consumption = NULL;
-static OmlMP *mp_radio = NULL;
-
-
-int oml_measures_init(char *oml_config_file_path)
+int oml_measures_start(char *oml_config_file_path)
 {
         //const char *argv[256] = {NULL};
         int result;
@@ -43,8 +24,7 @@ int oml_measures_init(char *oml_config_file_path)
                 return result;
         }
 
-        mp_consumption = omlc_add_mp("consumption", measure_point_consumption);
-        mp_radio = omlc_add_mp("radio", measure_point_radio);
+        oml_register_mps();
 
         result = omlc_start();
         if (result == -1) {
@@ -55,14 +35,16 @@ int oml_measures_init(char *oml_config_file_path)
 }
 
 
-void oml_measures_consumption()
+void oml_measures_consumption(uint64_t timestamp_s, uint32_t timestamp_us, double current, double voltage, double power)
 {
-        return;
+        oml_inject_consumption(g_oml_mps_control_node_measures->consumption,
+                               timestamp_s, timestamp_us, current, voltage, power);
 }
 
-void oml_measures_radio()
+void oml_measures_radio(uint64_t timestamp_s, uint32_t timestamp_us, int32_t rssi, int32_t lqi)
 {
-        return;
+        oml_inject_radio(g_oml_mps_control_node_measures->radio,
+                         timestamp_s, timestamp_us, rssi, lqi);
 }
 
 
