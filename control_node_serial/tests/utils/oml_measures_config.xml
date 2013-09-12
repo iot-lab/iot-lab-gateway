@@ -1,0 +1,8 @@
+<omlc id='nodeM3-123' exp_id='42'>
+  <collect url='file:/tmp/consumption.oml' encoding='text'>
+    <stream name="consumption" mp="consumption" samples='1' />
+  </collect>
+  <collect url='file:/tmp/radio.oml' encoding='text'>
+    <stream name="radio" mp="radio" samples='1' />
+  </collect>
+</omlc>
