@@ -93,8 +93,18 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
         oml_measures_consumption(43, 69, 12.34, 3.3, 40.72);
         oml_measures_radio(43, 70, -20, 0);
 
-        ret_stop = oml_measures_stop();
+        /* write many values to ensure that oml writes them to disk
+         * before calling close
+         *
+         * On gateways, after close the file are still not written to disk
+         * that's why I write a tousand of them
+         */
+        for (int i = 0; i < 1000; i++) {
+                oml_measures_consumption(0, 0, 0.0, 0.0, 0.0);
+                oml_measures_radio(0, 0, 0, 0);
+        }
 
+        ret_stop = oml_measures_stop();
 
         ASSERT_EQ(0, ret_init);
         ASSERT_EQ(0, ret_stop);
@@ -104,6 +114,7 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
 
         unlink(CONSUMPTION_FILE);
         unlink(RADIO_FILE);
+
 
 }
 
