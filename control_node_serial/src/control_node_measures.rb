@@ -12,9 +12,9 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
   app.defMeasurement("consumption") do |mp|
     mp.defMetric('timestamp_s', :uint64)
     mp.defMetric('timestamp_us', :uint32)
-    mp.defMetric('current', :double)
-    mp.defMetric('voltage', :double)
     mp.defMetric('power', :double)
+    mp.defMetric('voltage', :double)
+    mp.defMetric('current', :double)
   end
 
   app.defMeasurement("radio") do |mp|

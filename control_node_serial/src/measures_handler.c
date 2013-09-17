@@ -6,18 +6,12 @@
 #include <string.h>
 #include <stdio.h>
 
-
-// TODO remove me when not printing measures anymore
-#define __STDC_FORMAT_MACROS
-#include <inttypes.h>
-// TODO remove me when not printing measures anymore
-
-
 #include <sys/time.h>
+#include <math.h>
 
 #include "common.h"
-
 #include "constants.h"
+#include "oml_measures.h"
 #include "measures_handler.h"
 
 
@@ -45,20 +39,49 @@ static struct _measure_handler_state {
         } power;
 } mh_state;
 
-void init_measures_handler(int print_measures)
+static void calculate_time(struct timeval *total_time, const struct timeval *time_ref,
+                           unsigned int cn_time)
+{
+        total_time->tv_sec  = time_ref->tv_sec;
+        total_time->tv_usec = time_ref->tv_usec;
+
+        total_time->tv_sec  += cn_time / TIME_FACTOR;
+        total_time->tv_usec += (suseconds_t) (
+                        (1000000 * ((uint64_t) cn_time % TIME_FACTOR))
+                        / TIME_FACTOR);
+
+        if (1000000 <= total_time->tv_usec) {
+                total_time->tv_usec -= 1000000;
+                total_time->tv_sec  += 1;
+        }
+}
+
+
+void measures_handler_start(int print_measures, char *oml_config_file_path)
 {
         timerclear(&mh_state.time_ref);
         mh_state.power.is_valid = 0;
         mh_state.print_measures = print_measures;
+        if (NULL != oml_config_file_path) {
+                /* only start oml when a config file is given
+                 * calls to oml_inject_* will be ignored
+                 * and oml_measures_close will return -1 but ignored
+                 */
+                oml_measures_start(oml_config_file_path);
+        }
+}
+
+void measures_handler_stop()
+{
+        oml_measures_stop();
 }
 
 static void handle_pw_pkt(unsigned char *data, size_t len)
 {
         int num_measures;
-        float p = 0.0, v = 0.0, c = 0.0;
+        float p = NAN, v = NAN, c = NAN;
 
-        uint64_t t_s;
-        uint32_t t_us;
+        struct timeval timestamp;
         unsigned char *current_data_ptr;
         struct power_vals pw_vals;
 
@@ -75,6 +98,7 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
         current_data_ptr = &data[2];
 
         size_t expected_len = 2 + values_len * num_measures;
+
         if (expected_len != len) {
                 PRINT_ERROR("Invalid measure pkt len: %zu != expected %zu\n",
                                 len, expected_len);
@@ -86,9 +110,7 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
 
                 memcpy(&pw_vals, current_data_ptr, values_len);
                 current_data_ptr += values_len;
-
-                t_s  = pw_vals.time / TIME_FACTOR;
-                t_us = (uint32_t) ((1000000 * ((uint64_t) pw_vals.time % TIME_FACTOR)) / TIME_FACTOR);
+                calculate_time(&timestamp, &mh_state.time_ref, pw_vals.time);
 
                 if (mh_state.power.p)
                         p = pw_vals.val[i++];
@@ -97,27 +119,20 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                 if (mh_state.power.c)
                         c = pw_vals.val[i++];
 
-                // Handle absolute time with  reference time
-                PRINT_MEASURE(mh_state.print_measures, "consumption_measure " \
-                              "%lu.%06lu:%"PRIu64".%06u %f %f %f\n",
-                              mh_state.time_ref.tv_sec,
-                              mh_state.time_ref.tv_usec,
-                              t_s, t_us,
+                oml_measures_consumption(timestamp.tv_sec, timestamp.tv_usec,
+                                         p, v, c);
+                PRINT_MEASURE(mh_state.print_measures,
+                              "%s %lu.%06lu %f %f %f\n", "consumption_measure",
+                              timestamp.tv_sec, timestamp.tv_usec,
                               p, v, c);
-
-                fprintf(LOG, "%lu.%06lu:%"PRIu64".%06u %f %f %f\n",
-                        mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec, t_s, t_us, p, v, c);
         }
 }
 
 static void handle_radio_measure_pkt(unsigned char *data, size_t len)
 {
         int num_measures;
-        signed char rssi; // 'signed' required for embedded code
-        unsigned char lqi;
 
-        uint64_t t_s;
-        uint32_t t_us;
+        struct timeval timestamp;
 
         unsigned char *current_data_ptr;
         struct radio_measure_vals radio_vals;
@@ -138,23 +153,15 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
                 memcpy(&radio_vals, current_data_ptr, values_len);
                 current_data_ptr += values_len;
 
-                t_s  = radio_vals.time / TIME_FACTOR;
-                t_us = (1000000 * (radio_vals.time % TIME_FACTOR)) / TIME_FACTOR;
+                calculate_time(&timestamp, &mh_state.time_ref, radio_vals.time);
 
-                rssi = radio_vals.rssi;
-                lqi  = radio_vals.lqi;
+                oml_measures_radio(timestamp.tv_sec, timestamp.tv_usec,
+                                   radio_vals.rssi, radio_vals.lqi);
 
-                // Handle absolute time with  reference time
-                PRINT_MEASURE(mh_state.print_measures, "radio_measure "
-                              "%lu.%06lu:%"PRIu64".%06u %i %u\n",
-                              mh_state.time_ref.tv_sec,
-                              mh_state.time_ref.tv_usec,
-                              t_s, t_us,
-                              rssi, lqi);
-                fprintf(LOG, "%lu.%06lu:%"PRIu64".%06u %i %u\n",
-                        mh_state.time_ref.tv_sec, mh_state.time_ref.tv_usec,
-                        t_s, t_us,
-                        rssi, lqi);
+                PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %i %u\n",
+                              "radio_measure",
+                              timestamp.tv_sec, timestamp.tv_usec,
+                              radio_vals.rssi, radio_vals.lqi);
         }
 }
 
@@ -231,4 +238,3 @@ int handle_measure_pkt(unsigned char *data, size_t len)
         }
         return 0;
 }
-

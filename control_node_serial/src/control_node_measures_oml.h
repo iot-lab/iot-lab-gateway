@@ -32,9 +32,9 @@ typedef struct {
 static OmlMPDef oml_consumption_def[] = {
   {"timestamp_s", OML_UINT64_VALUE},
   {"timestamp_us", OML_UINT32_VALUE},
-  {"current", OML_DOUBLE_VALUE},
-  {"voltage", OML_DOUBLE_VALUE},
   {"power", OML_DOUBLE_VALUE},
+  {"voltage", OML_DOUBLE_VALUE},
+  {"current", OML_DOUBLE_VALUE},
   {NULL, (OmlValueT)0}
 };
 
@@ -68,7 +68,7 @@ extern oml_mps_t* g_oml_mps_control_node_measures;
 #endif /* OML_FROM_MAIN */
 
 static inline void
-oml_inject_consumption(OmlMP* mp, uint64_t timestamp_s, uint32_t timestamp_us, double current, double voltage, double power)
+oml_inject_consumption(OmlMP* mp, uint64_t timestamp_s, uint32_t timestamp_us, double power, double voltage, double current)
 {
   OmlValueU v[5];
 
@@ -76,9 +76,9 @@ oml_inject_consumption(OmlMP* mp, uint64_t timestamp_s, uint32_t timestamp_us, d
 
   omlc_set_uint64(v[0], timestamp_s);
   omlc_set_uint32(v[1], timestamp_us);
-  omlc_set_double(v[2], current);
+  omlc_set_double(v[2], power);
   omlc_set_double(v[3], voltage);
-  omlc_set_double(v[4], power);
+  omlc_set_double(v[4], current);
 
   omlc_inject(mp, v);
 
