@@ -51,7 +51,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
 
     def test_normal_stop(self):
-        self.cn.start()
+        self.cn.start(user='harter', exp_id=123)
         self.read_line_called.wait(5)  # wait return None in 2.6
         self.assertTrue(self.read_line_called.is_set())
         self.cn.stop()
@@ -64,7 +64,7 @@ class TestControlNodeSerial(unittest.TestCase):
             (lambda *x: self.lock_readline.set())
 
 
-        self.cn.start()
+        self.cn.start(user='harter', exp_id=123)
         self.read_line_called.wait()
 
         ret = self.cn.send_command(['start', 'DC'])
@@ -77,7 +77,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
 
     def test_send_command_no_answer(self):
-        self.cn.start()
+        self.cn.start(user='harter', exp_id=123)
         self.read_line_called.wait()
         ret = self.cn.send_command(['start', 'DC'])
 
@@ -101,7 +101,7 @@ class TestControlNodeSerial(unittest.TestCase):
                 as mock_logger:
             mock_logger.side_effect = (lambda *x: self.lock_error.set())
 
-            self.cn.start()
+            self.cn.start(user='harter', exp_id=123)
             self.lock_error.wait(5)
             self.assertTrue(self.lock_error.is_set())  # wait return None in 2.6
             self.cn.stop()
@@ -118,7 +118,7 @@ class TestControlNodeSerial(unittest.TestCase):
                 as mock_logger:
             mock_logger.side_effect = (lambda *x: self.lock_error.set())
 
-            self.cn.start()
+            self.cn.start(user='harter', exp_id=123)
             self.read_line_called.wait()
             # started and waiting for data
 

@@ -80,6 +80,7 @@ class GatewayRest(object):
                 firmware_file = NamedTemporaryFile(suffix='--'+_firm.filename)
                 firmware_path = firmware_file.name
                 firmware_file.write(_firm.file.read())
+                firmware_file.flush()
             else:  # pragma: no cover
                 pass
         except ValueError:
