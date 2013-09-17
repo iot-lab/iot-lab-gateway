@@ -22,7 +22,7 @@ struct power_vals {
 
 struct radio_measure_vals {
         unsigned int time;
-        char rssi;
+        signed char rssi;
         unsigned char lqi;
 };
 
