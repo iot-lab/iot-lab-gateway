@@ -69,7 +69,6 @@ class GatewayManager(object):
         :param profile: profile to configure the experiment
         :type profile: class Profile
 
-
         Experiment start steps
 
         1) Prepare Gateway
@@ -110,16 +109,14 @@ class GatewayManager(object):
         # # # # # # # # # #
         # Prepare Gateway #
         # # # # # # # # # #
-
         ret = self.node_soft_reset('gwt')
         ret_val += ret
-        self.cn_serial.start()  # ret ?
+        self.cn_serial.start(user=self.user, exp_id=self.exp_id)  # ret ?
         time.sleep(1)  # wait control node Ready, reajust time later
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #
         # # # # # # # # # # # # #
-
         ret = self.open_power_start(power='dc')
         ret_val += ret
         ret = self.reset_time()
@@ -130,7 +127,6 @@ class GatewayManager(object):
         # # # # # # # # # # #
         # Prepare Open Node #
         # # # # # # # # # # #
-
         if config.board_type() == 'M3':
             ret = self.node_flash('m3', firmware_path)
             ret_val += ret
@@ -205,7 +201,6 @@ class GatewayManager(object):
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
         # # # # # # # # # # # # # # # # # # #
-
         self.cn_serial.stop()
 
         # Reset configuration
@@ -227,10 +222,8 @@ class GatewayManager(object):
         # power_mode (keep open node started/stoped state)
         ret += self.protocol.start_stop(
             self.open_node_state, self.profile.power)
-
         # Consumption
         ret += self.protocol.config_consumption(self.profile.consumption)
-
         # Radio
         ret += self.protocol.config_radio(self.profile.radio)
 

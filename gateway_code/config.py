@@ -39,6 +39,15 @@ FIRMWARES = {
 
 _BOARD_CONFIG = {}
 
+MEASURES_PATH = \
+    '/iotlab/users/${user}/.senslab/${exp_id}/${type}/${node_id}.oml'
+
+
+def hostname():
+    """ Return the board hostname """
+    import socket
+    return socket.gethostname()
+
 
 def default_profile():
     """ Return the default profile """

@@ -4,6 +4,8 @@ import gateway_code
 import time
 import os
 import recordtype # mutable namedtuple (for small classes)
+from string import Template
+import shutil
 
 import mock
 from mock import patch
@@ -132,6 +134,37 @@ class GatewayCodeMock(unittest.TestCase):
 
 class TestComplexExperimentRunning(GatewayCodeMock):
 
+    def setUp(self):
+        super(TestComplexExperimentRunning, self).setUp()
+        self.exp_conf = {
+            'user': 'harter',
+            'exp_id': 123,
+            'node_id': gateway_code.config.hostname()
+            }
+        self.request.files = {'firmware': self.files['control_node']}
+        ret = self.app.admin_control_flash()
+        self.assertEquals(ret, {'ret':0})
+
+        ret = self.app.admin_control_soft_reset()
+        self.assertEquals(ret, {'ret':0})
+
+        measure_path = Template(gateway_code.config.MEASURES_PATH)
+        self.radio_path = measure_path.substitute(self.exp_conf, type='radio')
+        self.conso_path = measure_path.substitute(self.exp_conf, type='consumption')
+        for folder in (self.conso_path, self.radio_path):
+            try:
+                folder_path = os.path.dirname(folder)
+                os.makedirs(folder_path)
+            except os.error as err:
+                pass
+
+    def tearDown(self):
+        super(TestComplexExperimentRunning, self).tearDown()
+        # remove exp folder
+        # ...../exp_id/consumption/node_name.oml
+        shutil.rmtree(os.path.dirname(os.path.dirname(self.conso_path)))
+
+
     @patch('gateway_code.control_node_interface.LOGGER.debug')
     def tests_multiple_complete_experiment(self, m_logger):
         """
@@ -145,47 +178,36 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         msg = 'HELLO WORLD\n'
 
-        self.request.files = {'firmware': self.files['control_node']}
-        ret = self.app.admin_control_flash()
-        self.assertEquals(ret, {'ret':0})
-
-        ret = self.app.admin_control_soft_reset()
-        self.assertEquals(ret, {'ret':0})
-
-
         for i in range(0, 3):
             m_logger.reset_mock()
-
             self._rewind_files()
 
-            # start
-            self.request.files = {'firmware': self.files['idle'], \
-                    'profile':self.files['profile']}
-            ret = self.app.exp_start(123, 'clochette')
-            self.assertEquals(ret, {'ret':0})
 
+            # start
+            self.request.files = {
+                'firmware': self.files['idle'],
+                'profile':self.files['profile']
+                }
+            ret = self.app.exp_start(self.exp_conf['exp_id'], self.exp_conf['user'])
+            self.assertEquals(ret, {'ret':0})
             time.sleep(1)
 
             # idle firmware, should be no reply
             ret = _send_command_open_node('localhost', 20000, msg)
             self.assertEquals(ret, None)
 
-
-
-            # flash
+            # flash echo firmware
             self.request.files = {'firmware': self.files['echo']}
             ret = self.app.open_flash()
             self.assertEquals(ret, {'ret':0})
-
-            self.app.reset_time()
-
-            # wait node started
             time.sleep(1)
+
+            # test reset_time
+            self.app.reset_time()
 
             # echo firmware, should reply what was sent
             ret = _send_command_open_node('localhost', 20000, msg)
             self.assertEquals(ret, msg)
-
 
             ret = self.app.open_soft_reset()
             self.assertEquals(ret, {'ret':0})
@@ -205,7 +227,6 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             ret = self.app.open_flash()
             self.assertNotEquals(ret, {'ret':0})
 
-
             #
             # Validate measures consumption
             #
@@ -221,18 +242,12 @@ class TestComplexExperimentRunning(GatewayCodeMock):
                 self.assertNotEquals(0.0, float(measure[3]))
 
             # timestamps are in correct order
-            timestamps = [self._time_from_args(args) for args in measures]
-            sorted = [timestamps[i] <= timestamps[i+1] for (i, _) in
+            timestamps = [float(args) for args in measures]
+            is_sorted = [timestamps[i] <= timestamps[i+1] for (i, _) in
                       enumerate(timestamps[:-1])]
-            self.assertTrue(all(sorted))
+            self.assertTrue(all(is_sorted))
 
 
-    @staticmethod
-    def _time_from_args(args):
-        # args == ['1377265551.811187:5.33661', ...]
-        _times_str = args[0].split(':')
-        time = float(_times_str[0]) + float(_times_str[1])
-        return time
 
 
 class TestAutoTests(GatewayCodeMock):
@@ -296,9 +311,9 @@ class TestInvalidCases(GatewayCodeMock):
             * stop when stopped
         """
 
-        ret = self.app.exp_start(123, 'clochette')
+        ret = self.app.exp_start(123, 'harter')
         self.assertEquals(ret, {'ret':0})
-        ret = self.app.exp_start(123, 'clochette') # cannot start started exp
+        ret = self.app.exp_start(123, 'harter') # cannot start started exp
         self.assertNotEquals(ret, {'ret':0})
 
         # stop exp
@@ -313,13 +328,13 @@ class TestInvalidCases(GatewayCodeMock):
 
         self._rewind_files()
         self.request.files = {'profile': self.files['invalid_profile']}
-        ret = self.app.exp_start(123, 'clochette')
+        ret = self.app.exp_start(123, 'harter')
         self.assertNotEquals(ret, {'ret':0})
 
         # invalid json
         self._rewind_files()
         self.request.files = {'profile': self.files['invalid_profile_2']}
-        ret = self.app.exp_start(123, 'clochette')
+        ret = self.app.exp_start(123, 'harter')
         self.assertNotEquals(ret, {'ret':0})
 
 
