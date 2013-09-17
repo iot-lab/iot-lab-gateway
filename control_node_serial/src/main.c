@@ -14,6 +14,15 @@
 #define TTY_PATH "/dev/ttyFITECO_GWT"
 
 
+static void usage(char *program_name)
+{
+        PRINT_ERROR("Usage: %s [-d] [-t tty_path] [-c oml_config_file]\n",
+                        program_name);
+        PRINT_ERROR("  %c: debug mode, print measures\n", 'd');
+        PRINT_ERROR("  %c: Set tty path. Default %s\n", 't', TTY_PATH);
+        PRINT_ERROR("  %c: OML config file path.\n", 'c');
+}
+
 int main(int argc, char *argv[])
 {
         int serial_fd  = 0;
@@ -23,19 +32,23 @@ int main(int argc, char *argv[])
 
         int print_measures = 0;
         char *tty_path = TTY_PATH;
+        char *oml_config_file_path = NULL;
         char c;
         opterr = 0;
 
-        while ((c = getopt(argc, argv, "dt:")) != (char)-1) {
+        while ((c = getopt(argc, argv, "dt:c:")) != (char)-1) {
                 switch (c) {
-                        case 't':
-                                tty_path = optarg;
-                                break;
                         case 'd':
                                 print_measures = 1;
                                 break;
+                        case 't':
+                                tty_path = optarg;
+                                break;
+                        case 'c':
+                                oml_config_file_path = optarg;
+                                break;
                         case '?':
-                                if (optopt == 't')
+                                if (optopt == 't' || optopt == 'c')
                                         PRINT_ERROR("Option -%c requires an " \
                                                     "argument.\n", optopt);
                                 else if (isprint(optopt))
@@ -44,24 +57,28 @@ int main(int argc, char *argv[])
                                 else
                                         PRINT_ERROR("Unknown option character" \
                                                     "`\\x%x`.\n", optopt);
-                                PRINT_ERROR("Usage: %s [-d] [-t tty_path]\n", argv[0]);
-                                PRINT_ERROR("  %c: debug mode, print measures\n", 'd');
-                                PRINT_ERROR("  %c: Set tty path. Default %s\n", 't', TTY_PATH);
+                                usage(argv[0]);
                                 return EINVAL;
                         default:
-                                abort();
+                                usage(argv[0]);
+                                return EINVAL;
                 }
         }
 
-
-        if ((serial_fd = configure_tty(tty_path)) <= 0) {
+        if (0 >= (serial_fd = configure_tty(tty_path))) {
                 PRINT_ERROR("Could not open and configure TTY %s\n", tty_path);
                 close(serial_fd);
                 return -1;
         }
 
-        init_measures_handler(print_measures);
+        // measures and OML
+        measures_handler_start(print_measures, oml_config_file_path);
+        atexit(measures_handler_stop);
+
+        // stdin parsing
         command_reader_start(serial_fd);
+
+        // serial reader
         do {
                 ret = receive_data(serial_fd, rx_buff, sizeof(rx_buff),
                                 decode_pkt);

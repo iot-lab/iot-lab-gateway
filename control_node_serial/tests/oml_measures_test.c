@@ -4,6 +4,7 @@
 
 #include <unistd.h>
 #include <sys/stat.h>
+#include <math.h>
 
 #include <oml2/omlc.h>
 
@@ -100,7 +101,7 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
          * that's why I write a tousand of them
          */
         for (int i = 0; i < 1000; i++) {
-                oml_measures_consumption(0, 0, 0.0, 0.0, 0.0);
+                oml_measures_consumption(0, 0, 0.0, NAN, 0.0);
                 oml_measures_radio(0, 0, 0, 0);
         }
 
@@ -114,8 +115,6 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
 
         unlink(CONSUMPTION_FILE);
         unlink(RADIO_FILE);
-
-
 }
 
 TEST(test_oml_measures, init_and_stop_error_cases)

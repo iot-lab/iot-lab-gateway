@@ -14,6 +14,7 @@ int oml_measures_start(char *oml_config_file_path)
         const char *argv[] = {
                 "argv0",
                 "--oml-log-level", "-2",  // log only errors
+                "--oml-log-file", "/tmp/oml.log",
                 "--oml-config", oml_config_file_path
         };
         int argc = (sizeof(argv) / sizeof(char *));
@@ -36,11 +37,11 @@ int oml_measures_start(char *oml_config_file_path)
 
 
 void oml_measures_consumption(uint64_t timestamp_s, uint32_t timestamp_us,
-                              double current, double voltage, double power)
+                              double power, double voltage, double current)
 {
         oml_inject_consumption(g_oml_mps_control_node_measures->consumption,
                                timestamp_s, timestamp_us,
-                               current, voltage, power);
+                               power, voltage, current);
 }
 
 void oml_measures_radio(uint64_t timestamp_s, uint32_t timestamp_us,
@@ -53,10 +54,5 @@ void oml_measures_radio(uint64_t timestamp_s, uint32_t timestamp_us,
 
 int oml_measures_stop(void)
 {
-        omlc_close();
-        return 0;
+        return omlc_close();
 }
-
-
-
-
