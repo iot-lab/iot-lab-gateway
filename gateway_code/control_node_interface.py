@@ -153,8 +153,7 @@ class ControlNodeSerial(object):
             try:
                 self.cn_msg_queue.put_nowait(answer)
             except Queue.Full:
-                LOGGER.debug('dropped_control_node_answer %r', answer)
-                LOGGER.error('Control node answer queue full')
+                LOGGER.error('Control node answer queue full: %r', answer)
 
     def _reader(self):
         """ Reader thread worker.

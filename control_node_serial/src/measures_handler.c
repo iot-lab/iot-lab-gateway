@@ -39,6 +39,8 @@ static struct _measure_handler_state {
         } power;
 } mh_state;
 
+static int has_oml = 0;
+
 static void calculate_time(struct timeval *total_time, const struct timeval *time_ref,
                            unsigned int cn_time)
 {
@@ -62,18 +64,15 @@ void measures_handler_start(int print_measures, char *oml_config_file_path)
         timerclear(&mh_state.time_ref);
         mh_state.power.is_valid = 0;
         mh_state.print_measures = print_measures;
-        if (NULL != oml_config_file_path) {
-                /* only start oml when a config file is given
-                 * calls to oml_inject_* will be ignored
-                 * and oml_measures_close will return -1 but ignored
-                 */
+        has_oml = (NULL != oml_config_file_path);
+        if (has_oml)
                 oml_measures_start(oml_config_file_path);
-        }
 }
 
 void measures_handler_stop()
 {
-        oml_measures_stop();
+        if (has_oml)
+                oml_measures_stop();
 }
 
 static void handle_pw_pkt(unsigned char *data, size_t len)
@@ -119,8 +118,12 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                 if (mh_state.power.c)
                         c = pw_vals.val[i++];
 
-                oml_measures_consumption(timestamp.tv_sec, timestamp.tv_usec,
-                                         p, v, c);
+                if (has_oml) {
+                        oml_measures_consumption(
+                                timestamp.tv_sec, timestamp.tv_usec,
+                                p, v, c);
+                }
+
                 PRINT_MEASURE(mh_state.print_measures,
                               "%s %lu.%06lu %f %f %f\n", "consumption_measure",
                               timestamp.tv_sec, timestamp.tv_usec,
@@ -155,8 +158,11 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
 
                 calculate_time(&timestamp, &mh_state.time_ref, radio_vals.time);
 
-                oml_measures_radio(timestamp.tv_sec, timestamp.tv_usec,
-                                   radio_vals.rssi, radio_vals.lqi);
+                if (has_oml) {
+                        oml_measures_radio(
+                                timestamp.tv_sec, timestamp.tv_usec,
+                                radio_vals.rssi, radio_vals.lqi);
+                }
 
                 PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %i %u\n",
                               "radio_measure",

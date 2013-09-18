@@ -6,7 +6,6 @@
 #include "oml_measures.h"
 #include "common.h"
 
-
 int oml_measures_start(char *oml_config_file_path)
 {
         //const char *argv[256] = {NULL};
