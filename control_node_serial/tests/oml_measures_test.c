@@ -100,7 +100,7 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
          * On gateways, after close the file are still not written to disk
          * that's why I write a tousand of them
          */
-        for (int i = 0; i < 1000; i++) {
+        for (int i = 0; i < 10000; i++) {
                 oml_measures_consumption(0, 0, 0.0, NAN, 0.0);
                 oml_measures_radio(0, 0, 0, 0);
         }
