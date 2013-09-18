@@ -3,7 +3,7 @@
 import unittest
 import mock
 
-
+import os
 import threading
 import Queue
 from gateway_code import control_node_interface
@@ -133,6 +133,49 @@ class TestControlNodeSerial(unittest.TestCase):
     def test_stop_before_start(self):
         self.cn.stop()
 
+    def test_stop_with_cn_interface_allready_stopped(self):
+
+        def terminate(*args, **kwargs):
+            self.lock_readline.set()
+            raise OSError()
+        self.popen.terminate.side_effect = terminate
+
+        self.cn.start()
+        self.popen.stdin.write.side_effect = IOError()
+        ret = self.cn.send_command(['test', 'cmd'])
+        self.assertEquals(None, ret)
+
+        self.read_line_called.wait()
+        self.lock_readline.set()
+        self.cn.stop()
+
+        self.popen.terminate.assert_called()
+
+    def test_stop_and_oml_files_empty(self):
+
+        self.cn.start(user='harter', exp_id=123)
+        self.read_line_called.wait()
+        # mock file path
+        self.cn.oml_files['consumption'] = '/tmp/consumption.oml'
+        self.cn.oml_files['radio'] = '/tmp/radio.oml'
+        open(self.cn.oml_files['consumption'], 'a').close()
+        with open(self.cn.oml_files['radio'], 'a') as _f:
+            _f.write('lalala')
+
+        for measure_file in self.cn.oml_files.itervalues():
+            open(measure_file, 'a').close()
+
+        self.cn.stop()
+
+        # radio exists, consumption is removed
+        os.remove(self.cn.oml_files['radio'])
+        self.assertRaises(OSError, os.remove, self.cn.oml_files['consumption'])
+
+
+    def test_config_oml(self):
+        # No user or expid
+        ret = self.cn._config_oml(None, None)
+        self.assertEquals([], ret)
 
 
 class TestHandleAnswer(unittest.TestCase):

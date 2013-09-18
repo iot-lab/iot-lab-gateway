@@ -151,9 +151,9 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         measure_path = Template(gateway_code.config.MEASURES_PATH)
         self.radio_path = measure_path.substitute(self.exp_conf, type='radio')
         self.conso_path = measure_path.substitute(self.exp_conf, type='consumption')
-        for folder in (self.conso_path, self.radio_path):
+        for measure_file in (self.conso_path, self.radio_path):
             try:
-                folder_path = os.path.dirname(folder)
+                folder_path = os.path.dirname(measure_file)
                 os.makedirs(folder_path)
             except os.error as err:
                 pass
