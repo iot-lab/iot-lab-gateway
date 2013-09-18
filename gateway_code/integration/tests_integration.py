@@ -6,6 +6,7 @@ import os
 import recordtype # mutable namedtuple (for small classes)
 from string import Template
 import shutil
+import math
 
 import mock
 from mock import patch
@@ -165,8 +166,8 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         shutil.rmtree(os.path.dirname(os.path.dirname(self.conso_path)))
 
 
-    @patch('gateway_code.control_node_interface.LOGGER.debug')
-    def tests_multiple_complete_experiment(self, m_logger):
+    @patch('gateway_code.control_node_interface.LOGGER.error')
+    def tests_multiple_complete_experiment(self, m_error):
         """
         Test a complete experiment 3 times (loooong test)
         Experiment ==
@@ -175,11 +176,20 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             reset
             stop
         """
+        self.error_is_fail = True
+        def error(msg, *args, **kwargs):
+            if self.error_is_fail:
+                self.fail("LOGGER.error(%r,%r,%r))" % (msg, args, kwargs))
+
+        m_error.side_effect = error
 
         msg = 'HELLO WORLD\n'
+        measure_mock = mock.Mock()
+        measure_mock.side_effect = gateway_code.control_node_interface.LOGGER.debug
+        self.app.gateway_manager.cn_serial.measures_handler = measure_mock
 
         for i in range(0, 3):
-            m_logger.reset_mock()
+            measure_mock.reset_mock()
             self._rewind_files()
 
 
@@ -221,31 +231,49 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             ret = self.app.exp_stop()
             self.assertEquals(ret, {'ret':0})
 
+
             # flash firmware should fail
+            self.error_is_fail = False  # disable logger.error mock
             self._rewind_files()
             self.request.files = {'firmware': self.files['echo']}
             ret = self.app.open_flash()
             self.assertNotEquals(ret, {'ret':0})
+            self.error_is_fail = True  # reenable mock
 
             #
             # Validate measures consumption
             #
 
-            # measures values in correct range
-            calls = [call[0][0].split(' ') for call in m_logger.call_args_list]
+            # filter calls that are consumption meausures
+            calls = [call[0][0].split(' ') for call in measure_mock.call_args_list]
             measures = [args[2:] for args in calls if
-                        args[0:2] == ['measures_debug:', 'consumption_measure']]
+                        ['measures_debug:', 'consumption_measure'] == args[0:2]]
+
             for measure in measures:
                 # no power,  voltage in 3.3V, current not null
-                self.assertEquals(0.0, float(measure[1]))
+                self.assertTrue(math.isnan(float(measure[1])))
                 self.assertTrue(3.0 <= float(measure[2]) <= 3.5)
                 self.assertNotEquals(0.0, float(measure[3]))
 
             # timestamps are in correct order
-            timestamps = [float(args) for args in measures]
+            timestamps = [float(args[0]) for args in measures]
             is_sorted = [timestamps[i] <= timestamps[i+1] for (i, _) in
                       enumerate(timestamps[:-1])]
             self.assertTrue(all(is_sorted))
+
+            # radio file is already removed
+            try:
+                with open(self.radio_path): pass
+            except IOError:
+                pass
+            else:
+                self.fail('%r file should be not exist' % self.radio_path)
+            # conso file exists
+            try:
+                with open(self.conso_path): pass
+                os.remove(self.conso_path)
+            except IOError:
+                self.fail('File should exist %r' % self.radio_path)
 
 
 

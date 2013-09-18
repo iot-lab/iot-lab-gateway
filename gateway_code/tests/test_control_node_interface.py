@@ -106,7 +106,7 @@ class TestControlNodeSerial(unittest.TestCase):
             self.assertTrue(self.lock_error.is_set())  # wait return None in 2.6
             self.cn.stop()
 
-            mock_logger.assert_called_with('Control node answer queue full')
+            mock_logger.assert_called_with('Control node answer queue full: %r', ['start', 'ACK'])
 
     def test_stop_with_poll_not_none(self):
 

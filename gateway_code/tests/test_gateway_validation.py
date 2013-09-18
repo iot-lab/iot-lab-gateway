@@ -59,3 +59,30 @@ class TestProtocol(unittest.TestCase):
 
         self.assertEquals(0, ret_zero)
         self.assertEquals(1, ret_one)
+
+class TestAutoTestsErrorCases(unittest.TestCase):
+
+    def setUp(self):
+        gateway_manager = mock.Mock()
+        self.g_v = gateway_validation.GatewayValidation(gateway_manager)
+
+    def test_fail_on_setup(self):
+        def setup(*args, **kwargs):
+            self.g_v.logs['passed'] = []
+            self.g_v.logs['errors'] = []
+            self.g_v.logs['errors'].append('setup')
+            return 999
+        def teardown(*args, **kwargs):
+            self.g_v.logs['errors'].append('teardown')
+            return 1
+
+        self.g_v.setup = mock.Mock(side_effect=setup)
+
+        self.g_v.teardown = mock.Mock(side_effect=teardown)
+
+        ret_val, passed, errors = self.g_v.auto_tests()
+
+        self.assertEquals(1000, ret_val)
+        self.assertEquals([], passed)
+        self.assertEquals(['setup', 'teardown'], errors)
+
