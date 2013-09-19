@@ -51,7 +51,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
 
     def test_normal_stop(self):
-        self.cn.start(user='harter', exp_id=123)
+        self.cn.start()
         self.read_line_called.wait(5)  # wait return None in 2.6
         self.assertTrue(self.read_line_called.is_set())
         self.cn.stop()
@@ -64,7 +64,7 @@ class TestControlNodeSerial(unittest.TestCase):
             (lambda *x: self.lock_readline.set())
 
 
-        self.cn.start(user='harter', exp_id=123)
+        self.cn.start()
         self.read_line_called.wait()
 
         ret = self.cn.send_command(['start', 'DC'])
@@ -77,7 +77,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
 
     def test_send_command_no_answer(self):
-        self.cn.start(user='harter', exp_id=123)
+        self.cn.start()
         self.read_line_called.wait()
         ret = self.cn.send_command(['start', 'DC'])
 
@@ -101,7 +101,7 @@ class TestControlNodeSerial(unittest.TestCase):
                 as mock_logger:
             mock_logger.side_effect = (lambda *x: self.lock_error.set())
 
-            self.cn.start(user='harter', exp_id=123)
+            self.cn.start()
             self.lock_error.wait(5)
             self.assertTrue(self.lock_error.is_set())  # wait return None in 2.6
             self.cn.stop()
@@ -118,7 +118,7 @@ class TestControlNodeSerial(unittest.TestCase):
                 as mock_logger:
             mock_logger.side_effect = (lambda *x: self.lock_error.set())
 
-            self.cn.start(user='harter', exp_id=123)
+            self.cn.start()
             self.read_line_called.wait()
             # started and waiting for data
 
@@ -153,23 +153,34 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def test_stop_and_oml_files_empty(self):
 
-        self.cn.start(user='harter', exp_id=123)
-        self.read_line_called.wait()
-        # mock file path
-        self.cn.oml_files['consumption'] = '/tmp/consumption.oml'
-        self.cn.oml_files['radio'] = '/tmp/radio.oml'
-        open(self.cn.oml_files['consumption'], 'a').close()
-        with open(self.cn.oml_files['radio'], 'a') as _f:
-            _f.write('lalala')
+        # create measures_dir
+        for measure_type in ('consumption', 'radio'):
+            try:
+                os.mkdir('/tmp/%s/' % measure_type)
+            except OSError as err:
+                pass
 
-        for measure_file in self.cn.oml_files.itervalues():
-            open(measure_file, 'a').close()
+        with mock.patch('gateway_code.config.MEASURES_PATH',
+                        '/tmp/${type}/${node_id}.oml'):
+            self.cn.start(user='harter', exp_id=123)
+            self.read_line_called.wait()
 
-        self.cn.stop()
+            # append data to radio
+            with open(self.cn.oml_files['radio'], 'a') as _f:
+                 _f.write('lalala')
+
+            self.cn.stop()
 
         # radio exists, consumption is removed
         os.remove(self.cn.oml_files['radio'])
         self.assertRaises(OSError, os.remove, self.cn.oml_files['consumption'])
+
+        # remove measures_dir
+        for measure_type in ('consumption', 'radio'):
+            try:
+                os.rmdir('/tmp/%s/' % measure_type)
+            except OSError as err:
+                self.fail()
 
 
     def test_config_oml(self):
