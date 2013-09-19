@@ -114,7 +114,7 @@ def setup_permissions():
     os.chmod(init_script_path, mode)
     print "changing mode of %s to %d" % (init_script_path, mode)
 
-    usermod_args = ['usermod', '-G', 'dialout', 'www-data']
+    usermod_args = ['usermod', '-a', '-G', 'dialout', 'www-data']
     subprocess.check_call(usermod_args)
 
 
