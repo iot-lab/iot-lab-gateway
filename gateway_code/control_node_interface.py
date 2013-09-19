@@ -10,6 +10,7 @@ from subprocess import PIPE
 import Queue
 import threading
 import os
+import stat
 
 from string import Template  # pylint: disable=W0402
 from tempfile import NamedTemporaryFile
@@ -94,6 +95,13 @@ class ControlNodeSerial(object):
             config.MEASURES_PATH).substitute(subst_args, type='consumption')
         self.oml_files['radio'] = Template(
             config.MEASURES_PATH).substitute(subst_args, type='radio')
+
+        # create empty measures files with 660 permissions (truncate if exists)
+        for measure_file_path in self.oml_files.itervalues():
+            open(measure_file_path, "w").close()
+            os.chmod(measure_file_path,
+                     stat.S_IRUSR | stat.S_IWUSR
+                     | stat.S_IRGRP | stat.S_IWGRP)
 
         # create a config file with OML_XML config
         oml_xml_str = _OML_XML.substitute(
