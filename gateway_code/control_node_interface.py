@@ -97,10 +97,9 @@ class ControlNodeSerial(object):
         self.oml_files['radio'] = Template(
             config.MEASURES_PATH).substitute(subst_args, type='radio')
 
-
-        dir_ok = (os.access(dirname(self.oml_files['consumption']), os.W_OK)
-                  and os.access(dirname(self.oml_files['radio']), os.W_OK))
-        if not dir_ok:
+        # check that the directory exists
+        if not (os.access(dirname(self.oml_files['consumption']), os.W_OK) and
+                os.access(dirname(self.oml_files['radio']), os.W_OK)):
             LOGGER.error('Cannot write in measures folder: %r',
                          os.path.dirname(self.oml_files['consumption']))
             # following line will raise an exception
