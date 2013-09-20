@@ -339,17 +339,33 @@ class TestInvalidCases(GatewayCodeMock):
             * stop when stopped
         """
 
-        ret = self.app.exp_start(123, 'harter')
-        self.assertEquals(ret, {'ret':0})
-        ret = self.app.exp_start(123, 'harter') # cannot start started exp
-        self.assertNotEquals(ret, {'ret':0})
+        # create measures_dir
+        for measure_type in ('consumption', 'radio'):
+            try:
+                os.mkdir('/tmp/%s/' % measure_type)
+            except OSError as err:
+                pass
 
-        # stop exp
-        ret = self.app.exp_stop()
-        self.assertEquals(ret, {'ret':0})
+        with mock.patch('gateway_code.config.MEASURES_PATH',
+                        '/tmp/${type}/${node_id}.oml'):
+            ret = self.app.exp_start(123, 'harter')
+            self.assertEquals(ret, {'ret':0})
+            ret = self.app.exp_start(123, 'harter') # cannot start started exp
+            self.assertNotEquals(ret, {'ret':0})
 
-        ret = self.app.exp_stop() # cannot stop stoped exp
-        self.assertNotEquals(ret, {'ret':0})
+            # stop exp
+            ret = self.app.exp_stop()
+            self.assertEquals(ret, {'ret':0})
+
+            ret = self.app.exp_stop() # cannot stop stoped exp
+            self.assertNotEquals(ret, {'ret':0})
+
+        # remove measures_dir
+        for measure_type in ('consumption', 'radio'):
+            try:
+                os.rmdir('/tmp/%s/' % measure_type)
+            except OSError as err:
+                self.fail()
 
 
     def tests_invalid_profile_at_start(self):
