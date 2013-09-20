@@ -10,6 +10,7 @@ from subprocess import PIPE
 import Queue
 import threading
 import os
+from os.path import dirname
 import stat
 
 from string import Template  # pylint: disable=W0402
@@ -96,12 +97,21 @@ class ControlNodeSerial(object):
         self.oml_files['radio'] = Template(
             config.MEASURES_PATH).substitute(subst_args, type='radio')
 
-        # create empty measures files with 660 permissions (truncate if exists)
+
+        dir_ok = (os.access(dirname(self.oml_files['consumption']), os.W_OK)
+                  and os.access(dirname(self.oml_files['radio']), os.W_OK))
+        if not dir_ok:
+            LOGGER.error('Cannot write in measures folder: %r',
+                         os.path.dirname(self.oml_files['consumption']))
+            # following line will raise an exception
+
+        # create empty measures files with 666 permissions (truncate if exists)
         for measure_file_path in self.oml_files.itervalues():
             open(measure_file_path, "w").close()
             os.chmod(measure_file_path,
                      stat.S_IRUSR | stat.S_IWUSR
-                     | stat.S_IRGRP | stat.S_IWGRP)
+                     | stat.S_IRGRP | stat.S_IWGRP
+                     | stat.S_IROTH | stat.S_IWOTH)
 
         # create a config file with OML_XML config
         oml_xml_str = _OML_XML.substitute(

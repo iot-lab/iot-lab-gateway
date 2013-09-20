@@ -188,6 +188,12 @@ class TestControlNodeSerial(unittest.TestCase):
         ret = self.cn._config_oml(None, None)
         self.assertEquals([], ret)
 
+    def test_oml_folder_no_measure_folder(self):
+        with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
+                as mock_logger:
+            self.assertRaises(IOError, self.cn._config_oml, 'nothing_that_exists', 1)
+        mock_logger.assert_called()
+
 
 class TestHandleAnswer(unittest.TestCase):
 
