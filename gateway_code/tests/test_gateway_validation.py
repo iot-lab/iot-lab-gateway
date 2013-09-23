@@ -17,9 +17,7 @@ class TestProtocol(unittest.TestCase):
     @mock.patch('gateway_code.gateway_validation.LOGGER')
     def test_validate(self, mock_logger):
 
-        # init logs list
-        self.g_v.logs['passed'] = []
-        self.g_v.logs['errors'] = []
+        self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}
 
         # test validate
         ret_1 = self.g_v._validate(0, 'message_1', ['1', '2'])
@@ -28,8 +26,8 @@ class TestProtocol(unittest.TestCase):
         self.assertEquals(0, ret_1)
         self.assertEquals(1, ret_2)
 
-        self.assertTrue('message_1' in self.g_v.logs['passed'])
-        self.assertTrue('message_2' in self.g_v.logs['errors'])
+        self.assertTrue('message_1' in self.g_v.ret_dict['success'])
+        self.assertTrue('message_2' in self.g_v.ret_dict['error'])
 
     def test_measures_handler_functions(self):
         """ test measures handler functions """
@@ -68,21 +66,21 @@ class TestAutoTestsErrorCases(unittest.TestCase):
 
     def test_fail_on_setup(self):
         def setup(*args, **kwargs):
-            self.g_v.logs['passed'] = []
-            self.g_v.logs['errors'] = []
-            self.g_v.logs['errors'].append('setup')
+            self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}
+            self.g_v.ret_dict['error'].append('setup')
             return 999
+
         def teardown(*args, **kwargs):
-            self.g_v.logs['errors'].append('teardown')
+            self.g_v.ret_dict['error'].append('teardown')
             return 1
 
         self.g_v.setup = mock.Mock(side_effect=setup)
 
         self.g_v.teardown = mock.Mock(side_effect=teardown)
 
-        ret_val, passed, errors = self.g_v.auto_tests()
+        ret_dict = self.g_v.auto_tests()
 
-        self.assertEquals(1000, ret_val)
-        self.assertEquals([], passed)
-        self.assertEquals(['setup', 'teardown'], errors)
+        self.assertEquals(1000, ret_dict['ret'])
+        self.assertEquals([], ret_dict['success'])
+        self.assertEquals(['setup', 'teardown'], ret_dict['error'])
 

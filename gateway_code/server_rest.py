@@ -185,7 +185,7 @@ class GatewayRest(object):
 
         # get mode
         if mode not in ['blink', None]:
-            return {'ret': 1, 'passed': [], 'errors': ['invalid_mode']}
+            return {'ret': 1, 'success': [], 'errors': ['invalid_mode']}
         blink = (mode == 'blink')
 
         # query optionnal channel
@@ -196,10 +196,10 @@ class GatewayRest(object):
         elif channel_str.isdigit() and (11 <= int(channel_str) <= 26):
             channel = int(channel_str)
         else:
-            return {'ret': 1, 'passed': [], 'errors': ['invalid_channel']}
+            return {'ret': 1, 'success': [], 'errors': ['invalid_channel']}
 
-        ret, passed, errors = self.gateway_manager.auto_tests(channel, blink)
-        return {'ret': ret, 'passed': passed, 'errors': errors}
+        ret_dict = self.gateway_manager.auto_tests(channel, blink)
+        return ret_dict
 
 
 #

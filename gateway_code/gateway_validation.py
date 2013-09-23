@@ -9,11 +9,17 @@ import time
 import Queue
 import logging
 
+from subprocess import Popen, PIPE, STDOUT
+
 from gateway_code import config
 from gateway_code import open_node_validation_interface
+from gateway_code import open_a8_interface
 from gateway_code.profile import Consumption, Radio
 
 LOGGER = logging.getLogger('gateway_code')
+
+MAC_CMD = "ip link show dev eth0 " + \
+    r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'"
 
 
 class GatewayValidation(object):
@@ -22,9 +28,10 @@ class GatewayValidation(object):
         self.g_m = gateway_manager
         self.on_serial = None
 
-        self.logs = {'passed': None, 'errors': None}
+        self.ret_dict = None
 
-        self.old_measures_handler = self.g_m.cn_serial.measures_handler
+        self.a8_connection = None
+
         self.keep_all_measures = False
         self.last_measure = Queue.Queue(0)
 
@@ -45,26 +52,57 @@ class GatewayValidation(object):
             measure = None
         return measure
 
+    @staticmethod
+    def get_local_mac_addr():
+        """ Get eth0 mac address """
+        process = Popen(MAC_CMD, stdout=PIPE, stderr=STDOUT, shell=True)
+        mac_addr = process.communicate()[0].strip()
+        return mac_addr
+
     def setup(self):
         """ setup connection with m3 """
-        self.logs['passed'] = []
-        self.logs['errors'] = []
+        self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         ret_val = 0
 
         # configure Control Node
         ret_val += self.g_m.node_soft_reset('gwt')
-        self.g_m.cn_serial.start(_args=['-d'])
+        self.g_m.cn_serial.start(_args=['-d'],
+                                 _measures_handler=self._measures_handler)
         time.sleep(1)
+        board_type = config.board_type()
+
         ret_val += self.g_m.open_power_start(power='dc')
         ret_val += self.g_m.reset_time()
 
-        # setup open node
-        ret_val += self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
-        self.on_serial = open_node_validation_interface.OpenNodeSerial()
-        time.sleep(1)
-        self.on_serial.start()
+        gwt_mac_addr = self.get_local_mac_addr()
+        self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
-        self.g_m.cn_serial.measures_handler = self._measures_handler
+        if board_type == 'M3':
+            # setup open node
+            ret_val += self.g_m.node_flash('m3',
+                                           config.FIRMWARES['m3_autotest'])
+            self.on_serial = open_node_validation_interface.OpenNodeSerial()
+            time.sleep(1)
+            self.on_serial.start()
+
+        elif board_type == 'A8':
+            # time.sleep(60)  # wait open node started
+            time.sleep(1)  # wait open node started
+            self.a8_connection = open_a8_interface.OpenA8Connection()
+            self.a8_connection.start()
+            open_a8_mac_addr = self.a8_connection.get_mac_addr()
+            self.ret_dict['mac']['A8'] = open_a8_mac_addr
+
+            # open A8 flash
+            self.a8_connection.ssh_run(
+                'source /etc/profile; ' +
+                '/home/root/bin/flash_a8.sh ' +
+                '/var/lib/gateway_code/a8_autotest.elf')
+            time.sleep(5)
+
+            self.on_serial = open_node_validation_interface.OpenNodeSerial()
+            time.sleep(1)
+            self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
 
         return self._validate(ret_val, 'setup', ret_val)
 
@@ -75,13 +113,17 @@ class GatewayValidation(object):
         # restore
         self.on_serial.stop()
         self.on_serial = None
-        ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
-        # keep blinking after tests
-        if not blink:
+        if self.a8_connection is None:
+            ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
+        # TODO actually shut down the A8 node but not now
+        if not blink and self.a8_connection is None:
+            # keep blinking after tests
             ret_val += self.g_m.open_power_stop(power='dc')
 
         self.g_m.cn_serial.stop()
-        self.g_m.cn_serial.measures_handler = self.old_measures_handler
+
+        if self.a8_connection is not None:
+            self.a8_connection.stop()
 
         return self._validate(ret_val, 'teardown', ret_val)
 
@@ -100,25 +142,32 @@ class GatewayValidation(object):
             ret_val += self.test_gyro()
             ret_val += self.test_magneto()
             ret_val += self.test_accelero()
-            # test pressure and flash
-            ret_val += self.test_pressure()
-            ret_val += self.test_flash()
+            if 'M3' == config.board_type():
+                # test pressure and flash
+                ret_val += self.test_pressure()
+                ret_val += self.test_flash()
 
             # radio tests
             if channel is not None:
                 ret_val += self.test_radio_ping_pong(channel)
                 ret_val += self.test_radio_with_rssi(channel)
 
-            # test battery switch (done after some time to get a big uptime)
-            ret_val += self.test_battery_switch()
+            if 'M3' == config.board_type():
+                # test battery switch
+                # (done after some time to get a big uptime)
+                ret_val += self.test_battery_switch()
 
             # test measure_conso
             ret_val += self.test_consumption_dc()
-            ret_val += self.test_consumption_batt()
-            # test leds (requires conso)
-            ret_val += self.test_leds_with_consumption()
-            # test light sensor (requires test leds)
-            ret_val += self.test_light()
+            if 'M3' == config.board_type():
+                # TODO A8 Maybe later too lazy to check that not shut down
+                ret_val += self.test_consumption_batt()
+
+            if 'M3' == config.board_type():
+                # test leds (requires conso)
+                ret_val += self.test_leds_with_consumption()
+                # test light sensor (requires test leds and light sensor)
+                ret_val += self.test_light()
 
             # set_leds
             _ = self.on_serial.send_command(['leds_off', '7', '500'])
@@ -130,16 +179,17 @@ class GatewayValidation(object):
             pass
 
         ret_val += self.teardown(blink)
+        self.ret_dict['ret'] = ret_val
 
-        return ret_val, self.logs['passed'], self.logs['errors']
+        return self.ret_dict
 
     def _validate(self, ret, message, log_message=''):
         """ validate an return and print log if necessary """
         if ret == 0:
-            self.logs['passed'].append(message)
+            self.ret_dict['success'].append(message)
             LOGGER.debug('autotest: %r OK: %r', message, log_message)
         else:
-            self.logs['errors'].append(message)
+            self.ret_dict['error'].append(message)
             LOGGER.error('Autotest: %r: %r', message, log_message)
         return ret
 
@@ -222,9 +272,10 @@ class GatewayValidation(object):
         _ = self.on_serial.send_command(['leds_off', '7'])
 
         if (len(set(values)) == 1 and values[0] == '0.12207031'):
+            # hack to prevent multiple false tests but with a warning
             LOGGER.warning("Got the same value which is '0.12207031'")
+            self.ret_dict['warning'] = {'get_light_value': 0.12207031}
             got_diff_values = 0
-            # TODO # hack to prevent multiple false tests
         else:
             got_diff_values = int(not(1 != len(set(values))))
         return self._validate(got_diff_values, 'get_light', values)
@@ -339,7 +390,7 @@ class GatewayValidation(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption(power_source='dc', board_type='M3',
+        conso = Consumption(power_source='dc', board_type=config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')
@@ -351,13 +402,16 @@ class GatewayValidation(object):
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
         for _ in range(0, 10):
-            val = self._get_measure(timeout=1).split(' ')
-            values += tuple([float(meas) for meas in val[3:6]])
+            try:
+                val = self._get_measure(timeout=1).split(' ')
+            except AttributeError:
+                continue
+            values.append(tuple([float(meas) for meas in val[3:6]]))
         ret_val += self.g_m.protocol.config_consumption(None)
 
         # TODO Validate value ranges (maybe with idle firmware)
 
-        got_diff_values = 0 if (1 != len(set(values))) else 1
+        got_diff_values = 0 if (1 < len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'consumption_dc', values)
 
         return ret_val
@@ -367,7 +421,8 @@ class GatewayValidation(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption(power_source='battery', board_type='M3',
+        conso = Consumption(power_source='battery',
+                            board_type=config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='battery')
@@ -380,8 +435,8 @@ class GatewayValidation(object):
         #     0.257343 3.216250 0.080003
         for _ in range(0, 10):
             val = self._get_measure(timeout=1).split(' ')
-            values += tuple([float(meas) for meas in val[3:6]])
-        got_diff_values = 0 if (1 != len(set(values))) else 1
+            values.append(tuple([float(meas) for meas in val[3:6]]))
+        got_diff_values = 0 if (1 < len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'consumption_batt', values)
 
         # TODO Validate value ranges (maybe with idle firmware)
@@ -397,7 +452,7 @@ class GatewayValidation(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption(power_source='dc', board_type='M3',
+        conso = Consumption(power_source='dc', board_type=config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')
