@@ -1,0 +1,18 @@
+config_consumption_measure stop
+start dc
+
+config_consumption_measure start 5V p 1 v 1 c 1 -p 1100 -a 512
+
+
+
+
+
+
+
+
+
+
+
+
+config_consumption_measure stop
+
