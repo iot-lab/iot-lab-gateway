@@ -52,7 +52,7 @@ class ControlNodeSerial(object):
         self.cn_msg_queue = Queue.Queue(1)
         self.protect_send = threading.Semaphore(1)
         # handler to allow changing it in tests
-        self.measures_handler = LOGGER.debug
+        self.measures_handler = None
 
         self.oml_files = {}
         self.oml_config_file = None
@@ -60,11 +60,13 @@ class ControlNodeSerial(object):
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, user=None, exp_id=None, _args=None):
+    def start(self, user=None, exp_id=None, _args=None, _measures_handler=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
         """
+
+        self.measures_handler = _measures_handler or LOGGER.error
 
         args = [config.CONTROL_NODE_SERIAL_INTERFACE]
         args += ['-t', config.NODES_CFG['gwt']['tty']]

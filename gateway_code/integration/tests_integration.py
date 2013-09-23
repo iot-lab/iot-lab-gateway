@@ -60,8 +60,6 @@ class GatewayCodeMock(unittest.TestCase):
 
         cls.firmwares_patcher = patch('gateway_code.config.FIRMWARES', MOCK_FIRMWARES)
         cls.firmwares_patcher.start()
-        cls.config_path_patcher = patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
-        cls.config_path_patcher.start()
         cls.cn_interface_patcher = patch('gateway_code.control_node_interface.CONTROL_NODE_INTERFACE_ARGS', ['-d'])  # print measures
         cls.cn_interface_patcher.start()
 
@@ -104,7 +102,6 @@ class GatewayCodeMock(unittest.TestCase):
             file_obj.file.close()
         cls.static_patcher.stop()
         cls.firmwares_patcher.stop()
-        cls.config_path_patcher.stop()
         cls.cn_interface_patcher.stop()
 
 
@@ -307,12 +304,13 @@ class TestAutoTests(GatewayCodeMock):
         self.assertEquals(0, g_m.open_power_stop.call_count)
 
         # test that ON still on => should be blinking and answering
-        open_serial = gateway_code.open_node_validation_interface.\
-            OpenNodeSerial()
-        open_serial.start()
-        answer = open_serial.send_command(['get_time'])
-        self.assertNotEquals(None, answer)
-        open_serial.stop()
+        if gateway_code.config.board_type() == 'M3':
+            open_serial = gateway_code.open_node_validation_interface.\
+                OpenNodeSerial()
+            open_serial.start()
+            answer = open_serial.send_command(['get_time'])
+            self.assertNotEquals(None, answer)
+            open_serial.stop()
 
 
     def test_mode_no_blink_no_radio(self):
