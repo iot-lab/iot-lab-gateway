@@ -82,10 +82,10 @@ class OpenNodeSerial(object):
 
         self.reader_thread = None
 
-    def start(self):
+    def start(self, tty=None):
         """ Start serial interface """
         # open serial
-        tty = config.NODES_CFG['m3']['tty']
+        tty = tty or config.NODES_CFG['m3']['tty']
         baudrate = config.NODES_CFG['m3']['baudrate']
         self.serial_fd = serial.Serial(tty, baudrate, timeout=0.5)
         self.serial_fd.flushInput()

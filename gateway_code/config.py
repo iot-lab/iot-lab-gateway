@@ -25,6 +25,11 @@ NODES_CFG = {
            'baudrate': 500000},
     }
 
+OPEN_A8_CFG = {
+    'tty': '/dev/ttyFITECO_A8_DBG',
+    'baudrate': 115200
+    }
+
 NODES = NODES_CFG.keys()
 
 ROOMBA_CFG = {'tty': '/dev/ttyROOMBA'}
