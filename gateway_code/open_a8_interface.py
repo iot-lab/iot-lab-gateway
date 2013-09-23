@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 
 """
-Open A8 connection
+Open A8 interface
 """
 import serial
 import re
@@ -17,10 +17,8 @@ from string import Template  # pylint: disable=W0402
 A8_TTY_PATH = '/tmp/tty_open_a8_m3'
 
 SSH_KEY = '/var/local/config/id_rsa'
-#
 # Config: have /var/local/config/id_rsa == key for open_a8
 #         owned by www-data
-#
 
 
 _SSH_OPTS = ('-i ${ssh_key} -l root ' +
@@ -44,7 +42,7 @@ MAC_CMD = "ip link show dev eth0 " + \
     r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'"
 
 
-class OpenA8NodeSerialConnection(object):
+class OpenA8Connection(object):
     def __init__(self):
         self.ip_addr = self._get_ip_address()
         self.local_tty = None
@@ -59,14 +57,11 @@ class OpenA8NodeSerialConnection(object):
         socat_cmd = SOCAT_CMD.substitute(port=port,
                                          tty=config_a8['tty'],
                                          baudrate=config_a8['baudrate'])
-
         remote_tty_cmd = 'pkill socat; ' + socat_cmd
         cmd = SSH_CMD.substitute(ssh_key=SSH_KEY, ip_addr=self.ip_addr,
                                  cmd=remote_tty_cmd)
         self.remote_tty = Popen(shlex.split(cmd))
         time.sleep(10)
-        import sys
-        print >> sys.stderr, 'remote_tty %r ' % self.remote_tty.poll()
 
         # local_tty
         local_tty = LOCAL_TTY.substitute(ip_addr=self.ip_addr, port=port,
@@ -74,8 +69,6 @@ class OpenA8NodeSerialConnection(object):
                                          baudrate=config_a8['baudrate'])
         self.local_tty = Popen(shlex.split(local_tty))
         time.sleep(2)
-        import sys
-        print >> sys.stderr, 'local_tty %r ' % self.local_tty.poll()
 
         if (self.local_tty.poll() is not None or
                 self.remote_tty.poll() is not None):
@@ -87,10 +80,7 @@ class OpenA8NodeSerialConnection(object):
         """ Stop redirection of open_A8 M3 node serial """
         self.ssh_run('pkill socat')
         time.sleep(1)
-        #self.remote_tty.terminate()
-        time.sleep(1)
         self.remote_tty.wait()
-        #self.remote_tty.terminate()
         self.local_tty.wait()
 
     @staticmethod
@@ -100,7 +90,7 @@ class OpenA8NodeSerialConnection(object):
         a8_serial = serial.Serial(config.OPEN_A8_CFG['tty'],
                                   config.OPEN_A8_CFG['baudrate'],
                                   timeout=0.5)
-        # connect and wait for prompt (no newlines printed
+        # connect and wait for prompt == no newlines printed
         a8_serial.write("root\n")
         for _ in range(0, 10):
             if '' == a8_serial.readline():
@@ -128,6 +118,7 @@ class OpenA8NodeSerialConnection(object):
         return mac_addr
 
     def ssh_run(self, command):
+        """ Run SSH command on A8 node """
         cmd = SSH_CMD.substitute(ssh_key=SSH_KEY, ip_addr=self.ip_addr,
                                  cmd=command)
 
@@ -138,6 +129,8 @@ class OpenA8NodeSerialConnection(object):
     def scp(self, src, dest):
         cmd = SCP_CMD.substitute(ssh_key=SSH_KEY, ip_addr=self.ip_addr,
                                  path=src, remote_path=dest)
+        import sys
+        print >> sys.stderr, cmd
 
         process = Popen(shlex.split(cmd), stdout=PIPE, stderr=STDOUT)
         output = process.communicate()[0]

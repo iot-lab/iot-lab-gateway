@@ -48,6 +48,7 @@ MOCK_FIRMWARES = {
     'idle': STATIC_DIR + 'idle.elf',
     'control_node': STATIC_DIR + 'control_node.elf',
     'm3_autotest': STATIC_DIR + 'm3_autotest.elf',
+    'a8_autotest': STATIC_DIR + 'a8_autotest.elf'
     }
 
 
@@ -183,6 +184,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         msg = 'HELLO WORLD\n'
         measure_mock = mock.Mock()
         measure_mock.side_effect = gateway_code.control_node_interface.LOGGER.debug
+
         self.app.gateway_manager.cn_serial.measures_handler = measure_mock
 
         for i in range(0, 3):
@@ -196,8 +198,10 @@ class TestComplexExperimentRunning(GatewayCodeMock):
                 'profile':self.files['profile']
                 }
             ret = self.app.exp_start(self.exp_conf['exp_id'], self.exp_conf['user'])
+
             self.assertEquals(ret, {'ret':0})
             time.sleep(1)
+
 
             # idle firmware, should be no reply
             ret = _send_command_open_node('localhost', 20000, msg)
@@ -291,14 +295,14 @@ class TestAutoTests(GatewayCodeMock):
         # call using rest
         ret_dict = self.app.auto_tests(mode='blink')
         ret = ret_dict['ret']
-        passed = ret_dict['passed']
-        errors = ret_dict['errors']
+        success = ret_dict['success']
+        errors = ret_dict['error']
+        mac_addresses = ret_dict['mac']
 
         import sys
-        print >> sys.stderr, "ret: %r" % ret
-        print >> sys.stderr, "passed: %r" % passed
-        print >> sys.stderr, "errors: %r" % errors
+        print >> sys.stderr, ret_dict
         self.assertEquals([], errors)
+        self.assertTrue('GWT' in mac_addresses)
         self.assertEquals(0, ret)
 
         self.assertEquals(0, g_m.open_power_stop.call_count)
@@ -321,9 +325,9 @@ class TestAutoTests(GatewayCodeMock):
         g_v.test_radio_ping_pong = mock.Mock()
         g_v.test_radio_with_rssi = mock.Mock()
 
-        ret, passed, errors = g_v.auto_tests(channel=None, blink=False)
-        self.assertEquals([], errors)
-        self.assertEquals(0, ret)
+        ret_dict = g_v.auto_tests(channel=None, blink=False)
+        self.assertEquals([], ret_dict['error'])
+        self.assertEquals(0, ret_dict['ret'])
         self.assertEquals(0, g_v.test_radio_ping_pong.call_count)
         self.assertEquals(0, g_v.test_radio_with_rssi.call_count)
 

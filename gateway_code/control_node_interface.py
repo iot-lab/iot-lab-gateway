@@ -60,13 +60,16 @@ class ControlNodeSerial(object):
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, user=None, exp_id=None, _args=None, _measures_handler=None):
+    def start(self, user=None, exp_id=None, _args=None,
+              _measures_handler=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
         """
 
-        self.measures_handler = _measures_handler or LOGGER.error
+        # argument, or current value (for tests) or LOGGER.error
+        self.measures_handler = _measures_handler or \
+            self.measures_handler or LOGGER.error
 
         args = [config.CONTROL_NODE_SERIAL_INTERFACE]
         args += ['-t', config.NODES_CFG['gwt']['tty']]

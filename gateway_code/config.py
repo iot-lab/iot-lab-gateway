@@ -39,7 +39,8 @@ CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 FIRMWARES = {
     'idle': STATIC_FILES_PATH + 'idle.elf',
     'control_node': STATIC_FILES_PATH + 'control_node.elf',
-    'm3_autotest': STATIC_FILES_PATH + 'm3_autotest',
+    'm3_autotest': STATIC_FILES_PATH + 'm3_autotest.elf',
+    'a8_autotest': STATIC_FILES_PATH + 'a8_autotest.elf'
     }
 
 _BOARD_CONFIG = {}

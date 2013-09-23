@@ -191,7 +191,10 @@ class TestRestMethods(unittest.TestCase):
     def auto_tests(self):
         g_m = mock.Mock()
         s_r = server_rest.GatewayRest(g_m)
-        g_m.auto_tests.return_value = (0, [], ['test_ok'])
+        g_m.auto_tests.return_value = {'ret':0,
+                                       'error':[], 'success':['test_ok'],
+                                       'mac':{'A8':'12:34:56:78:9A:BC'}
+                                      }
 
         self.request.query = mock.Mock(channel='')
         ret_dict = s_r.auto_tests(mode=None)
