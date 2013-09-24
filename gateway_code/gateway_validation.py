@@ -271,7 +271,7 @@ class GatewayValidation(object):
         _ = self.on_serial.send_command(['leds_blink', '7', '0'])
         _ = self.on_serial.send_command(['leds_off', '7'])
 
-        if (len(set(values)) == 1 and values[0] == '0.12207031'):
+        if (len(set(values)) == 1 and values[0] == 0.12207031):
             # hack to prevent multiple false tests but with a warning
             LOGGER.warning("Got the same value which is '0.12207031'")
             self.ret_dict['warning'] = {'get_light_value': 0.12207031}
