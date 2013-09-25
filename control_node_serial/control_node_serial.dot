@@ -1,0 +1,105 @@
+digraph g {
+
+    graph [
+        rankdir = "LR"
+        splines = "polyline"
+    ];
+    node [
+        fontsize = "16"
+        shape = "record"
+    ];
+
+    "command_reader" [
+        label = "<f0> command_reader | <f1> ---- encode ---\> | <f2> | <f3> \<--- decode ----"
+    ];
+    "serial" [
+        label = "<f0> serial | <f1>"
+    ];
+
+
+    "measures_handler" [
+        label = "<f0> measures_handler | <f1> config_ack_pkt:\nreset_time \nconfig_pw \nconfig_radio | <f2> power_pkt \| radio_pkt"
+    ];
+
+
+    "decode" [
+        label = "<f0> decode | <f1> \<--answer | <f2> measure"
+    ];
+
+    "oml" [
+        label = "OML"
+    ];
+
+    /* external components */
+    "gateway_manager" [
+        shape = "Mrecord"
+        label = "<f0> gateway_manager | <f1> STDIN---\> | <f2> STDOUT\<--- "
+    ];
+    "control_node" [
+        shape = "Mrecord"
+        label = "<f0> control_node | <f1>"
+    ];
+    "user_home_directory" [
+        shape = "Mrecord"
+        label = "User homedir"
+    ];
+
+    "empty" [ style=invis ]
+
+
+    /* edges */
+    "main" -> "command_reader" [style=dotted, label="start", constraint=False, minlen=2]
+    "main" -> "serial" [style=dotted, label="start", headport="n"]
+    "main" -> "decode" [style=invis]
+
+
+    // packets routes
+    "command_reader":f1 -> "serial":f0 [label = "send_command", weight=0]
+    "decode":f0 -> "serial":f1 [label = "rx_packet", weight = 10, dir=back]
+    "command_reader":f3 -> "decode":f1 [label = "command_answer", weight = 5, dir=back]
+
+    // measures handler
+     "decode" -> "measures_handler" [label = "measure_pkt", constraint=False, headport="n", tailport="s", minlen=2, labelfloat=True]
+    "measures_handler" -> "oml" [constraint=False]
+
+    subgraph cluster_control_node_serial {
+        label = control_node_serial;
+        command_reader;
+        serial;
+        decode;
+        oml;
+        main;
+        measures_handler;
+        empty;
+        style = dotted;
+    }
+
+
+    /* external edges */
+    "gateway_manager":f1 -> "command_reader":f1 [minlen=2]
+    "gateway_manager":f2 -> "command_reader":f3 [dir=back, label="text protocol"]
+
+
+    "serial":f0 -> "control_node":f0 [label = "/dev/tty"] //, minlen = 2]
+    "control_node":f1 -> "serial":f1 [label = "encoded protocol"]
+
+    // "oml" -> "user_home_directory" [label = "measure file", minlen=2]
+    // BUG: without dir=back arrow is in reverse side
+    "oml" -> "user_home_directory" [label = "measure file", minlen=2, dir=back]
+
+
+    // placement hacks. "user_home_directory" under "oml"
+    "command_reader" -> "user_home_directory" [style=invis]
+    "empty" -> "command_reader" [style=invis, constraint=False, minlen=10]
+    "empty" -> "oml" [style=invis]
+    "empty" -> "measures_handler" [style=invis]
+    "empty" -> "user_home_directory" [style=invis]
+    "user_home_directory" -> "serial" [style=invis]
+    "measures_handler" -> "serial" [style=invis]
+    "command_reader" -> "measures_handler" [style=invis]
+
+
+
+
+
+}
