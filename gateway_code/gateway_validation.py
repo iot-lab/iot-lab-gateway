@@ -86,8 +86,9 @@ class GatewayValidation(object):
             self.on_serial.start()
 
         elif board_type == 'A8':
-            # time.sleep(60)  # wait open node started
-            time.sleep(1)  # wait open node started
+            LOGGER.debug("Wait 60sec that open A8 node start...")
+            time.sleep(60)  # wait open node started
+            # time.sleep(1)  # wait open node started
             self.a8_connection = open_a8_interface.OpenA8Connection()
             self.a8_connection.start()
             open_a8_mac_addr = self.a8_connection.get_mac_addr()
@@ -113,12 +114,15 @@ class GatewayValidation(object):
         # restore
         self.on_serial.stop()
         self.on_serial = None
-        if self.a8_connection is None:
-            ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
+
+        # keep test firmware
+
         # TODO actually shut down the A8 node but not now
         if not blink and self.a8_connection is None:
-            # keep blinking after tests
+            LOGGER.debug("Stop open node, no blinking")
             ret_val += self.g_m.open_power_stop(power='dc')
+        else:
+            LOGGER.debug("LEDs keep blinking")
 
         self.g_m.cn_serial.stop()
 
