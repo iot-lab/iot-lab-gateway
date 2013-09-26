@@ -13,6 +13,7 @@ digraph g {
     graph [
         rankdir = "LR"
         splines = "polyline"
+        ratio = 0.70
     ];
     node [
         fontsize = "16"
