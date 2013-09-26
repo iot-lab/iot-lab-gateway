@@ -16,12 +16,10 @@ from string import Template  # pylint: disable=W0402
 
 A8_TTY_PATH = '/tmp/tty_open_a8_m3'
 
-SSH_KEY = '/var/local/config/id_rsa'
-# Config: have /var/local/config/id_rsa == key for open_a8
-#         owned by www-data
+# Config: have id_rsa key for open_a8 stored in /var/www/.ssh/
 
 
-_SSH_OPTS = ('-i ${ssh_key} -l root ' +
+_SSH_OPTS = ('-l root ' +
              '-o StrictHostKeyChecking=no ' +
              '-o UserKnownHostsFile=/tmp/known_hosts')
 
@@ -58,7 +56,7 @@ class OpenA8Connection(object):
                                          tty=config_a8['tty'],
                                          baudrate=config_a8['baudrate'])
         remote_tty_cmd = 'pkill socat; ' + socat_cmd
-        cmd = SSH_CMD.substitute(ssh_key=SSH_KEY, ip_addr=self.ip_addr,
+        cmd = SSH_CMD.substitute(ip_addr=self.ip_addr,
                                  cmd=remote_tty_cmd)
         self.remote_tty = Popen(shlex.split(cmd))
         time.sleep(10)
@@ -119,18 +117,8 @@ class OpenA8Connection(object):
 
     def ssh_run(self, command):
         """ Run SSH command on A8 node """
-        cmd = SSH_CMD.substitute(ssh_key=SSH_KEY, ip_addr=self.ip_addr,
+        cmd = SSH_CMD.substitute(ip_addr=self.ip_addr,
                                  cmd=command)
-
-        process = Popen(shlex.split(cmd), stdout=PIPE, stderr=STDOUT)
-        output = process.communicate()[0]
-        return output
-
-    def scp(self, src, dest):
-        cmd = SCP_CMD.substitute(ssh_key=SSH_KEY, ip_addr=self.ip_addr,
-                                 path=src, remote_path=dest)
-        import sys
-        print >> sys.stderr, cmd
 
         process = Popen(shlex.split(cmd), stdout=PIPE, stderr=STDOUT)
         output = process.communicate()[0]
