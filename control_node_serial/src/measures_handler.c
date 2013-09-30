@@ -37,9 +37,9 @@ static struct _measure_handler_state {
                 int power_source;
                 size_t raw_values_len;
         } power;
+        int has_oml;
 } mh_state;
 
-static int has_oml = 0;
 
 static void calculate_time(struct timeval *total_time, const struct timeval *time_ref,
                            unsigned int cn_time)
@@ -64,14 +64,14 @@ void measures_handler_start(int print_measures, char *oml_config_file_path)
         timerclear(&mh_state.time_ref);
         mh_state.power.is_valid = 0;
         mh_state.print_measures = print_measures;
-        has_oml = (NULL != oml_config_file_path);
-        if (has_oml)
+        mh_state.has_oml = (NULL != oml_config_file_path);
+        if (mh_state.has_oml)
                 oml_measures_start(oml_config_file_path);
 }
 
 void measures_handler_stop()
 {
-        if (has_oml)
+        if (mh_state.has_oml)
                 oml_measures_stop();
 }
 
@@ -118,7 +118,7 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
                 if (mh_state.power.c)
                         c = pw_vals.val[i++];
 
-                if (has_oml) {
+                if (mh_state.has_oml) {
                         oml_measures_consumption(
                                 timestamp.tv_sec, timestamp.tv_usec,
                                 p, v, c);
@@ -158,7 +158,7 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
 
                 calculate_time(&timestamp, &mh_state.time_ref, radio_vals.time);
 
-                if (has_oml) {
+                if (mh_state.has_oml) {
                         oml_measures_radio(
                                 timestamp.tv_sec, timestamp.tv_usec,
                                 radio_vals.rssi, radio_vals.lqi);
