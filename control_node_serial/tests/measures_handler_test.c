@@ -178,6 +178,23 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
 
         measures_handler_stop();
         ASSERT_EQ(2, consumption_mock_called);
+
+        // No OML
+        consumption_mock_called = 0;
+        measures_handler_start(0, NULL);
+        // P + C
+        mh_state.power.power_source = (char) SOURCE_3_3V;
+        mh_state.power.is_valid = 1;
+        mh_state.power.p = 1;
+        mh_state.power.v = 0;
+        mh_state.power.c = 1;
+        data_size = sizeof(unsigned int) + 2*sizeof(float);
+        mh_state.power.raw_values_len = data_size;
+        data[1] = 1;
+        handle_pw_pkt(data, 2 + data[1] * data_size);
+        measures_handler_stop();
+
+        ASSERT_EQ(0, consumption_mock_called);
 }
 
 TEST(handle_pw_pkt, invalid_calls)
@@ -229,6 +246,7 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
         memcpy(&data[2 + data_size], &radio, data_size);
 
         // num == 1
+        radio_mock_called = 0;
         data[1] = 1;
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
         ASSERT_EQ(0, radio_call_args.timestamp_s);
@@ -236,7 +254,9 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
         ASSERT_EQ(-42, radio_call_args.rssi);
         ASSERT_EQ(66, radio_call_args.lqi);
         measures_handler_stop();
+        ASSERT_EQ(1, radio_mock_called);
         // num == 2
+        radio_mock_called = 0;
         measures_handler_start(1, OML_CONFIG_PATH); // print_measures == true for coverage
         data[1] = 2;
         handle_radio_measure_pkt(data, 2 + data[1] * data_size);
@@ -245,6 +265,15 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
         ASSERT_EQ(42, radio_call_args.rssi);
         ASSERT_EQ(0, radio_call_args.lqi);
         measures_handler_stop();
+        ASSERT_EQ(2, radio_mock_called);
+
+        // NO OML
+        radio_mock_called = 0;
+        measures_handler_start(0, NULL);
+        handle_radio_measure_pkt(data, 2 + data[1] * data_size);
+        measures_handler_stop();
+        ASSERT_EQ(0, radio_mock_called);
+
 }
 
 
