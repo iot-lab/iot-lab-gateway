@@ -41,6 +41,7 @@ MAC_CMD = "ip link show dev eth0 " + \
 
 
 class OpenA8Connection(object):
+    """ Connection to the Open A8, redirect A8-M3 node serial link """
     def __init__(self):
         self.ip_addr = self._get_ip_address()
         self.local_tty = None

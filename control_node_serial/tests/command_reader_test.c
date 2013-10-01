@@ -181,19 +181,46 @@ TEST(test_parse_cmd, test_commands)
         int ret;
         struct command_buffer cmd_buff;
 
-        // ping pong
+        /* ping pong */
         char ping_pong_start[] = "test_radio_ping_pong start";
         ret = parse_cmd(ping_pong_start, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_EQ(2, cmd_buff.u.s.len);
         ASSERT_EQ(TEST_RADIO_PING_PONG, cmd_buff.u.s.payload[0]);
 
-        // ping pong
         char ping_pong_stop[] = "test_radio_ping_pong stop";
         ret = parse_cmd(ping_pong_stop, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_EQ(2, cmd_buff.u.s.len);
         ASSERT_EQ(TEST_RADIO_PING_PONG, cmd_buff.u.s.payload[0]);
+
+
+        /* gpio */
+        char gpio_start[] = "test_gpio start";
+        ret = parse_cmd(gpio_start, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_GPIO, cmd_buff.u.s.payload[0]);
+
+        char gpio_stop[] = "test_gpio stop";
+        ret = parse_cmd(gpio_stop, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_GPIO, cmd_buff.u.s.payload[0]);
+
+
+        /* i2c */
+        char i2c_start[] = "test_i2c start";
+        ret = parse_cmd(i2c_start, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_I2C, cmd_buff.u.s.payload[0]);
+
+        char i2c_stop[] = "test_i2c stop";
+        ret = parse_cmd(i2c_stop, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_I2C, cmd_buff.u.s.payload[0]);
 }
 
 /*
@@ -282,11 +309,24 @@ TEST(test_write_answer, valid_answers)
         ASSERT_STREQ("config_radio_measure ACK\n", print_buff);
 
 
+        /* test commands */
         data[0] = TEST_RADIO_PING_PONG;
         data[1] = ACK;
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("test_radio_ping_pong ACK\n", print_buff);
+
+        data[0] = TEST_GPIO;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("test_gpio ACK\n", print_buff);
+
+        data[0] = TEST_I2C;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("test_i2c ACK\n", print_buff);
 }
 
 TEST(test_write_answer, invalid_answers)
