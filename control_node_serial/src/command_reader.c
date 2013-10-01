@@ -94,9 +94,7 @@ struct dict_entry ack_d[] = {
         {NULL, 0},
 };
 
-/* dict used for answers, to translate code to string */
-
-struct dict_entry answers_d[] = {
+struct dict_entry commands_d[] = {
         {"error", ERROR_FRAME},
         {"start", OPEN_NODE_START},
         {"stop", OPEN_NODE_STOP},
@@ -112,6 +110,8 @@ struct dict_entry answers_d[] = {
         {"config_consumption_measure", CONFIG_POWER_POLL},
 
         {"test_radio_ping_pong", TEST_RADIO_PING_PONG},
+        {"test_gpio", TEST_GPIO},
+        {"test_i2c", TEST_I2C},
         {NULL, 0},
 };
 struct dict_entry radio_state_d[] = {
@@ -164,17 +164,9 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 frame_type = RESET_TIME;
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
-        } else if (strcmp(command, "start") == 0) {
-                frame_type = OPEN_NODE_START;
-                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
-
-                // DC BATT
-                arg = strtok(NULL, " ");
-                got_error |= get_val(arg, alim_d, &val);
-                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
-
-        } else if (strcmp(command, "stop") == 0) {
-                frame_type = OPEN_NODE_STOP;
+        } else if ((strcmp(command, "start") == 0) || \
+                   (strcmp(command, "stop") == 0)) {
+                got_error |= get_val(command, commands_d, &frame_type);
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
                 // DC BATT
@@ -290,8 +282,11 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 } else {
                         got_error |= 1;
                 }
-        } else if (strcmp(command, "test_radio_ping_pong") == 0) {
-                frame_type = TEST_RADIO_PING_PONG;
+        /* Tests commands */
+        } else if ((strcmp(command, "test_radio_ping_pong") == 0) || \
+                   (strcmp(command, "test_gpio") == 0) || \
+                   (strcmp(command, "test_i2c") == 0)) {
+                got_error |= get_val(command, commands_d, &frame_type);
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 
                 // start stop
@@ -342,13 +337,13 @@ int write_answer(unsigned char *data, size_t len)
                 DEBUG_PRINT("error frame\n");
                 int error_code;
                 // handle error frame
-                got_error |= get_key(type, answers_d, &cmd);
+                got_error |= get_key(type, commands_d, &cmd);
                 error_code = (int) ((char) data[1]); // sign extend
                 PRINT_MSG("%s %d\n", cmd, error_code);
         } else {
                 DEBUG_PRINT("Commands ACKS\n");
                 char *arg;
-                got_error |= get_key(type, answers_d, &cmd);
+                got_error |= get_key(type, commands_d, &cmd);
                 got_error |= get_key(data[1], ack_d, &arg);
                 // CMDs acks
                 if (got_error) {

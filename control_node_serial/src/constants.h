@@ -25,9 +25,6 @@ enum frame_type {
 
 	CONFIG_POWER_POLL    = 0x79,
 
-        // Test commands
-	TEST_RADIO_PING_PONG = 0xBB,
-
         // Error
 	ERROR_FRAME          = 0xEE,
 
@@ -37,6 +34,11 @@ enum frame_type {
         // Measures
 	RADIO_POLL_FRAME     = 0xFE,
 	PW_POLL_FRAME        = 0xFF,
+
+        // Test commands
+	TEST_RADIO_PING_PONG = 0xBB,
+	TEST_GPIO = 0xBE,
+	TEST_I2C = 0xB9,
 };
 
 enum ack_nack {

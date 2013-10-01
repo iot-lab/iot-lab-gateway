@@ -151,6 +151,10 @@ class GatewayValidation(object):
                 ret_val += self.test_pressure()
                 ret_val += self.test_flash()
 
+            # test M3-ON communication
+            ret_val += self.test_gpio()
+            ret_val += self.test_i2c()
+
             # radio tests
             if channel is not None:
                 ret_val += self.test_radio_ping_pong(channel)
@@ -285,9 +289,49 @@ class GatewayValidation(object):
         return self._validate(got_diff_values, 'get_light', values)
 
 #
+# Control Node <--> Open Node Interraction
+#
+    def test_gpio(self):
+        """ test GPIO connections """
+        ret_val = 0
+
+        # setup control node
+        cmd = ['test_gpio', 'start']
+        ret_val += self.g_m.protocol.send_cmd(cmd)
+
+        answer = self.on_serial.send_command(['test_gpio'])
+        ret = (answer[:2] == ['ACK', 'GPIO'])
+        ret_val += self._validate(int(not ret), 'test_gpio', answer)
+
+        # cleanup
+        cmd = ['test_gpio', 'stop']
+        ret_val += self.g_m.protocol.send_cmd(cmd)
+
+        return ret_val
+
+    def test_i2c(self):
+        """ test i2c communication """
+        ret_val = 0
+
+        # setup control node
+        cmd = ['test_i2c', 'start']
+        ret_val += self.g_m.protocol.send_cmd(cmd)
+        ret_val = 0  # TODO REMOVE ME WHEN CN FIRMWARE FIXED
+
+        answer = self.on_serial.send_command(['test_i2c'])
+        ret = (answer[:2] == ['ACK', 'I2C2_CN'])
+        ret_val += self._validate(int(not ret), 'test_i2c', answer)
+
+        # cleanup
+        cmd = ['test_i2c', 'stop']
+        ret_val += self.g_m.protocol.send_cmd(cmd)
+        ret_val = 0  # TODO REMOVE ME WHEN CN FIRMWARE FIXED
+
+        return ret_val
+
+#
 # Inertial Measurement Unit
 #
-
     def test_magneto(self):
         """ test magneto sensor """
         # ['ack', 'MAGNETO', '=', '4.328358E-2', '6.716418E-2', '-3.880597E-1']

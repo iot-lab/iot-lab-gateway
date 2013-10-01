@@ -14,8 +14,6 @@ from gateway_code import gateway_validation
 
 from gateway_code import control_node_interface, protocol_cn
 
-from gateway_code import gateway_roomba
-
 import time
 
 import gateway_code.gateway_logging
