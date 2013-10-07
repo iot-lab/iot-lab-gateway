@@ -11,8 +11,11 @@ import shlex
 import time
 
 from gateway_code import config
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from string import Template  # pylint: disable=W0402
+
+import logging
+LOGGER = logging.getLogger('gateway_code')
 
 A8_TTY_PATH = '/tmp/tty_open_a8_m3'
 
@@ -20,8 +23,9 @@ A8_TTY_PATH = '/tmp/tty_open_a8_m3'
 
 
 _SSH_OPTS = ('-l root ' +
-             '-o StrictHostKeyChecking=no ' +
-             '-o UserKnownHostsFile=/tmp/known_hosts')
+             '-o ConnectTimeout=5 ' +
+             '-o StrictHostKeyChecking=no ')  # +
+             #'-o UserKnownHostsFile=/tmp/known_hosts')
 
 
 SSH_CMD = Template('ssh %s ${ip_addr} "${cmd}"' % _SSH_OPTS)
@@ -77,10 +81,15 @@ class OpenA8Connection(object):
 
     def stop(self):
         """ Stop redirection of open_A8 M3 node serial """
-        self.ssh_run('pkill socat')
-        time.sleep(1)
-        self.remote_tty.wait()
-        self.local_tty.wait()
+        try:
+            self.ssh_run('pkill socat')
+            time.sleep(1)
+            self.remote_tty.wait()
+            self.local_tty.wait()
+        except CalledProcessError:
+            # Open node A8 unreachable
+            self.remote_tty.terminate()
+            self.local_tty.terminate()
 
     @staticmethod
     def _get_ip_address():
@@ -123,4 +132,7 @@ class OpenA8Connection(object):
 
         process = Popen(shlex.split(cmd), stdout=PIPE, stderr=STDOUT)
         output = process.communicate()[0]
+        if 0 != process.returncode:
+            raise CalledProcessError(returncode=process.returncode,
+                                     cmd=shlex.split(cmd))
         return output

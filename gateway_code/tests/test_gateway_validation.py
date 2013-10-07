@@ -64,11 +64,12 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         gateway_manager = mock.Mock()
         self.g_v = gateway_validation.GatewayValidation(gateway_manager)
 
+    @mock.patch('gateway_code.config.board_type', lambda: 'M3')
     def test_fail_on_setup(self):
         def setup(*args, **kwargs):
             self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}
             self.g_v.ret_dict['error'].append('setup')
-            return 999
+            raise gateway_validation.FatalError('Setup failed')
 
         def teardown(*args, **kwargs):
             self.g_v.ret_dict['error'].append('teardown')
@@ -80,7 +81,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
 
         ret_dict = self.g_v.auto_tests()
 
-        self.assertEquals(1000, ret_dict['ret'])
+        self.assertTrue(2 <= ret_dict['ret'])
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['setup', 'teardown'], ret_dict['error'])
 
