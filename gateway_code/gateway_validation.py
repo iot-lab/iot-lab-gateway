@@ -180,12 +180,6 @@ class GatewayValidation(object):
                 ret_val += self.test_radio_ping_pong(channel)
                 ret_val += self.test_radio_with_rssi(channel)
 
-            # Disabled: battery switch to battery
-            #           make open A8 reboot but not M3
-            # if is_m3:
-            #     # test battery switch (after some time to get a big uptime)
-            #     ret_val += self.test_battery_switch()
-
             # test consumption measures
             ret_val += self.test_consumption_dc()
             if is_m3:
@@ -282,36 +276,6 @@ class GatewayValidation(object):
         if 0 != ret_val:  # fatal Error
             raise FatalError("Open Node unreachable on battery")
 
-    def test_battery_switch(self):
-        """ test_battery_switch
-        test if changing to battery and back resets open_node
-        """
-        ret_val = 0
-
-        # save time before test
-        answer = self.on_serial.send_command(['get_time'])
-        time_1 = int(answer[3]) if answer[0] == 'ACK' else 0
-
-        # switch to battery and get_time
-        ret = self.g_m.open_power_start(power='battery')
-        ret_val += self._validate(ret, 'open_battery_start', ret)
-        time.sleep(0.5)
-        answer = self.on_serial.send_command(['get_time'])
-        time_2 = int(answer[3]) if answer[0] == 'ACK' else 0
-
-        # switch back to dc and get_time
-        ret = self.g_m.open_power_start(power='dc')
-        ret_val += self._validate(ret, 'open_power_start', ret)
-        time.sleep(0.5)
-        answer = self.on_serial.send_command(['get_time'])
-        time_3 = int(answer[3]) if answer[0] == 'ACK' else 0
-
-        # check time increasing => no reboot
-        time_increasing = 0 if time_3 > time_2 > time_1 else 1
-        ret_val += self._validate(time_increasing, 'no_reboot_on_alim_switch',
-                                  '%d < %d < %d' % (time_1, time_2, time_3))
-        return ret_val
-
 #
 # sensors and flash
 #
@@ -385,7 +349,6 @@ class GatewayValidation(object):
         # setup control node
         cmd = ['test_i2c', 'start']
         ret_val += self.g_m.protocol.send_cmd(cmd)
-        ret_val = 0  # TODO REMOVE ME WHEN CN FIRMWARE FIXED
 
         answer = self.on_serial.send_command(['test_i2c'])
         ret = (answer[:2] == ['ACK', 'I2C2_CN'])
@@ -394,7 +357,6 @@ class GatewayValidation(object):
         # cleanup
         cmd = ['test_i2c', 'stop']
         ret_val += self.g_m.protocol.send_cmd(cmd)
-        ret_val = 0  # TODO REMOVE ME WHEN CN FIRMWARE FIXED
 
         return ret_val
 
