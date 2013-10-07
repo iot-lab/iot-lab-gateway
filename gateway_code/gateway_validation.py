@@ -7,19 +7,29 @@ auto tests implementation
 
 import time
 import Queue
-import logging
 
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 
 from gateway_code import config
 from gateway_code import open_node_validation_interface
 from gateway_code import open_a8_interface
 from gateway_code.profile import Consumption, Radio
 
+import logging
 LOGGER = logging.getLogger('gateway_code')
 
 MAC_CMD = "ip link show dev eth0 " + \
     r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'"
+
+
+class FatalError(Exception):
+    """ FatalError during tests """
+    def __init__(self, value):
+        super(FatalError, self).__init__()
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 
 class GatewayValidation(object):
@@ -63,6 +73,7 @@ class GatewayValidation(object):
         """ setup connection with m3 """
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         ret_val = 0
+        LOGGER.info("Setup autotests")
 
         # configure Control Node
         ret_val += self.g_m.node_soft_reset('gwt')
@@ -86,9 +97,14 @@ class GatewayValidation(object):
             self.on_serial.start()
 
         elif board_type == 'A8':
-            LOGGER.debug("Wait 60sec that open A8 node start...")
-            time.sleep(60)  # wait open node started
-            # time.sleep(1)  # wait open node started
+
+            # wait open node started
+            LOGGER.debug("Wait that open A8 node start:")
+            for time_remaining in range(60, 0, -10):
+                LOGGER.debug("%dsecs remaining...", time_remaining)
+                time.sleep(10)
+            LOGGER.debug("GO!")
+
             self.a8_connection = open_a8_interface.OpenA8Connection()
             self.a8_connection.start()
             open_a8_mac_addr = self.a8_connection.get_mac_addr()
@@ -105,11 +121,14 @@ class GatewayValidation(object):
             time.sleep(1)
             self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
 
-        return self._validate(ret_val, 'setup', ret_val)
+        ret_val = self._validate(ret_val, 'setup', ret_val)
+        if 0 != ret_val:
+            raise FatalError('Setup failed')
 
     def teardown(self, blink):
         """ cleanup """
         ret_val = 0
+        LOGGER.info("Teardown autotests")
 
         # restore
         self.on_serial.stop()
@@ -122,12 +141,14 @@ class GatewayValidation(object):
             LOGGER.debug("Stop open node, no blinking")
             ret_val += self.g_m.open_power_stop(power='dc')
         else:
-            LOGGER.debug("LEDs keep blinking")
+            LOGGER.debug("Set status on LEDs")
 
         self.g_m.cn_serial.stop()
+        LOGGER.debug("cn_serial stopped")
 
         if self.a8_connection is not None:
             self.a8_connection.stop()
+            LOGGER.debug("a8_connection_stopped")
 
         return self._validate(ret_val, 'teardown', ret_val)
 
@@ -136,55 +157,60 @@ class GatewayValidation(object):
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
+        board_type = config.board_type()
+        is_m3 = 'M3' == board_type
 
-        ret_val += self.setup()
-        if ret_val == 0:
+        try:
+            self.setup()
             # can communicate and get_time working
-            ret_val += self.test_get_time()
+            self.check_get_time()  # Error == Fatal
+            if is_m3:
+                # check battery
+                self.check_battery(board_type)  # Error == Fatal
 
             # test IMU
             ret_val += self.test_gyro()
             ret_val += self.test_magneto()
             ret_val += self.test_accelero()
-            if 'M3' == config.board_type():
-                # test pressure and flash
-                ret_val += self.test_pressure()
-                ret_val += self.test_flash()
 
             # test M3-ON communication
             ret_val += self.test_gpio()
             ret_val += self.test_i2c()
-
-            # radio tests
-            if channel is not None:
+            if channel is not None:  # radio tests
                 ret_val += self.test_radio_ping_pong(channel)
                 ret_val += self.test_radio_with_rssi(channel)
 
-            if 'M3' == config.board_type():
-                # test battery switch
-                # (done after some time to get a big uptime)
-                ret_val += self.test_battery_switch()
+            # Disabled: battery switch to battery
+            #           make open A8 reboot but not M3
+            # if is_m3:
+            #     # test battery switch (after some time to get a big uptime)
+            #     ret_val += self.test_battery_switch()
 
-            # test measure_conso
+            # test consumption measures
             ret_val += self.test_consumption_dc()
-            if 'M3' == config.board_type():
-                # TODO A8 Maybe later too lazy to check that not shut down
+            if is_m3:
                 ret_val += self.test_consumption_batt()
 
-            if 'M3' == config.board_type():
-                # test leds (requires conso)
+            # M3 specific tests
+            if is_m3:
+                # cannot test this with A8 I think
                 ret_val += self.test_leds_with_consumption()
-                # test light sensor (requires test leds and light sensor)
+                # test m3 specific sensors
+                ret_val += self.test_pressure()
+                ret_val += self.test_flash()
                 ret_val += self.test_light()
 
             # set_leds
-            _ = self.on_serial.send_command(['leds_off', '7', '500'])
+            _ = self.on_serial.send_command(['leds_off', '7'])
             if ret_val == 0:
                 _ = self.on_serial.send_command(['leds_blink', '7', '500'])
             else:  # pragma: no cover
                 pass
-        else:  # pragma: no cover
-            pass
+        except FatalError as err:
+            # Fatal Error during test, don't run further tests
+            LOGGER.error("Fatal Error in tests, stop further tests: %s",
+                         str(err))
+            ret_val += 1
 
         ret_val += self.teardown(blink)
         self.ret_dict['ret'] = ret_val
@@ -205,13 +231,56 @@ class GatewayValidation(object):
 # Test implementation
 #
 
-    def test_get_time(self):
-        """ runs the 'get_time' command """
+    def check_get_time(self):
+        """ runs the 'get_time' command
+        Error on this check are fatal
+        """
         # get_time: ['ACK', 'CURRENT_TIME', '=', '122953', 'tick_32khz']
         answer = self.on_serial.send_command(['get_time'])
 
-        ret = (answer[:2] == ['ACK', 'CURRENT_TIME']) and answer[3].isdigit()
-        return self._validate(int(not ret), 'get_time', answer)
+        ret = ((answer is not None) and
+               (['ACK', 'CURRENT_TIME'] == answer[:2]) and
+               answer[3].isdigit())
+
+        ret_val = self._validate(int(not ret), 'check_get_time', answer)
+        if 0 != ret_val:  # fatal Error
+            raise FatalError("get_time failed. " +
+                             "Can't communicate with M3 node")
+
+    def check_battery(self, node_type):
+        """ check that battery works
+        Error is fatal
+
+        If battery makes open node reboot error is raised for A8 nodes
+        """
+        ret_val = 0
+
+        # switch to battery
+        ret = self.g_m.open_power_start(power='battery')
+        ret_val += self._validate(ret, 'open_battery_start', ret)
+        time.sleep(1)
+
+        msg = None
+        if 'M3' == node_type:
+            answer = self.on_serial.send_command(['get_time'])
+            ret = ((answer is not None) and
+                   (['ACK', 'CURRENT_TIME'] == answer[:2]) and
+                   answer[3].isdigit())
+            msg = answer
+        else:  # node_type == 'A8'
+            try:
+                self.a8_connection.ssh_run("echo test")
+                ret = True
+            except CalledProcessError:
+                ret = False
+                msg = "Open A8 unreachable"
+        ret_val += self._validate(int(not ret), 'check_battery', msg)
+
+        # switch back to DC
+        _ = self.g_m.open_power_start(power='dc')
+
+        if 0 != ret_val:  # fatal Error
+            raise FatalError("Open Node unreachable on battery")
 
     def test_battery_switch(self):
         """ test_battery_switch
