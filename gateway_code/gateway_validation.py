@@ -8,7 +8,8 @@ auto tests implementation
 import time
 import Queue
 
-from subprocess import Popen, PIPE, STDOUT, CalledProcessError
+from subprocess import Popen, PIPE, STDOUT
+from serial import SerialException
 
 from gateway_code import config
 from gateway_code import open_node_validation_interface
@@ -69,8 +70,10 @@ class GatewayValidation(object):
         mac_addr = process.communicate()[0].strip()
         return mac_addr
 
-    def setup(self):
-        """ setup connection with m3 """
+    def setup(self, power):
+        """ setup connection with m3
+        param power: values in ['dc', 'battery']"""
+
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         ret_val = 0
         LOGGER.info("Setup autotests")
@@ -82,22 +85,29 @@ class GatewayValidation(object):
         time.sleep(1)
         board_type = config.board_type()
 
-        ret_val += self.g_m.open_power_start(power='dc')
         ret_val += self.g_m.reset_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
+        # setup open node
         if board_type == 'M3':
-            # setup open node
-            ret_val += self.g_m.node_flash('m3',
-                                           config.FIRMWARES['m3_autotest'])
+            # test flash in DC and 'power' (should be battery)
+            for alim in ['dc', power]:
+                ret_val += self.g_m.open_power_start(power=alim)
+                time.sleep(1)
+                ret = self.g_m.node_flash(
+                    'm3', config.FIRMWARES['m3_autotest'])
+                ret_val += self._validate(ret, 'flash_m3_on_%s' % alim, ret)
+            # alim == param power
+
             self.on_serial = open_node_validation_interface.OpenNodeSerial()
             time.sleep(1)
             self.on_serial.start()
 
         elif board_type == 'A8':
 
+            ret_val += self.g_m.open_power_start(power=power)
             # wait open node started
             LOGGER.debug("Wait that open A8 node start:")
             for time_remaining in range(60, 0, -10):
@@ -105,21 +115,26 @@ class GatewayValidation(object):
                 time.sleep(10)
             LOGGER.debug("GO!")
 
-            self.a8_connection = open_a8_interface.OpenA8Connection()
-            self.a8_connection.start()
-            open_a8_mac_addr = self.a8_connection.get_mac_addr()
-            self.ret_dict['mac']['A8'] = open_a8_mac_addr
+            try:
+                self.a8_connection = open_a8_interface.OpenA8Connection()
+                self.a8_connection.start()
+                open_a8_mac_addr = self.a8_connection.get_mac_addr()
+                self.ret_dict['mac']['A8'] = open_a8_mac_addr
 
-            # open A8 flash
-            self.a8_connection.ssh_run(
-                'source /etc/profile; ' +
-                '/home/root/bin/flash_a8.sh ' +
-                '/var/lib/gateway_code/a8_autotest.elf')
-            time.sleep(5)
+                # open A8 flash
+                self.a8_connection.ssh_run(
+                    'source /etc/profile; ' +
+                    '/home/root/bin/flash_a8.sh ' +
+                    '/var/lib/gateway_code/a8_autotest.elf')
+                time.sleep(5)
 
-            self.on_serial = open_node_validation_interface.OpenNodeSerial()
-            time.sleep(1)
-            self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
+                self.on_serial = open_node_validation_interface.\
+                    OpenNodeSerial()
+                time.sleep(1)
+                self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
+            except SerialException as err:
+                ret_val += self._validate(1, 'access_A8_serial_on_%s' % power,
+                                          str(err))
 
         ret_val = self._validate(ret_val, 'setup', ret_val)
         if 0 != ret_val:
@@ -130,14 +145,17 @@ class GatewayValidation(object):
         ret_val = 0
         LOGGER.info("Teardown autotests")
 
-        # restore
-        self.on_serial.stop()
-        self.on_serial = None
+        # ensure DC alim
+        ret_val += self.g_m.open_power_start(power='dc')
 
-        # keep test firmware
+        try:
+            self.on_serial.stop()
+        except AttributeError:  # access attribute on NoneType
+            ret_val += 1
+        finally:
+            self.on_serial = None
 
-        # TODO actually shut down the A8 node but not now
-        if not blink and self.a8_connection is None:
+        if not blink:
             LOGGER.debug("Stop open node, no blinking")
             ret_val += self.g_m.open_power_stop(power='dc')
         else:
@@ -161,12 +179,25 @@ class GatewayValidation(object):
         is_m3 = 'M3' == board_type
 
         try:
-            self.setup()
+            self.setup(power='battery')
+
+            ##
+            ## Tests using Battery
+            ##
+            # dc -> battery: A8 reboot
+            # battery -> dc: No reboot
+            #
+            # so start node with battery and then switch to DC (no reboot)
+
             # can communicate and get_time working
-            self.check_get_time()  # Error == Fatal
-            if is_m3:
-                # check battery
-                self.check_battery(board_type)  # Error == Fatal
+            self.check_get_time()
+            ret_val += self.test_consumption_batt()
+
+            ##
+            ## Other tests, run on DC
+            ##
+            ret = self.g_m.open_power_start(power='dc')
+            ret_val += self._validate(ret, 'switch_to_dc', ret)
 
             # test IMU
             ret_val += self.test_gyro()
@@ -182,8 +213,6 @@ class GatewayValidation(object):
 
             # test consumption measures
             ret_val += self.test_consumption_dc()
-            if is_m3:
-                ret_val += self.test_consumption_batt()
 
             # M3 specific tests
             if is_m3:
@@ -240,41 +269,6 @@ class GatewayValidation(object):
         if 0 != ret_val:  # fatal Error
             raise FatalError("get_time failed. " +
                              "Can't communicate with M3 node")
-
-    def check_battery(self, node_type):
-        """ check that battery works
-        Error is fatal
-
-        If battery makes open node reboot error is raised for A8 nodes
-        """
-        ret_val = 0
-
-        # switch to battery
-        ret = self.g_m.open_power_start(power='battery')
-        ret_val += self._validate(ret, 'open_battery_start', ret)
-        time.sleep(1)
-
-        msg = None
-        if 'M3' == node_type:
-            answer = self.on_serial.send_command(['get_time'])
-            ret = ((answer is not None) and
-                   (['ACK', 'CURRENT_TIME'] == answer[:2]) and
-                   answer[3].isdigit())
-            msg = answer
-        else:  # node_type == 'A8'
-            try:
-                self.a8_connection.ssh_run("echo test")
-                ret = True
-            except CalledProcessError:
-                ret = False
-                msg = "Open A8 unreachable"
-        ret_val += self._validate(int(not ret), 'check_battery', msg)
-
-        # switch back to DC
-        _ = self.g_m.open_power_start(power='dc')
-
-        if 0 != ret_val:  # fatal Error
-            raise FatalError("Open Node unreachable on battery")
 
 #
 # sensors and flash
@@ -520,7 +514,6 @@ class GatewayValidation(object):
 
         # TODO Validate value ranges (maybe with idle firmware)
         ret_val += self.g_m.protocol.config_consumption(None)
-        ret_val += self.g_m.open_power_start(power='dc')
 
         return ret_val
 
