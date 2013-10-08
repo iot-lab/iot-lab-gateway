@@ -316,7 +316,6 @@ class TestAutoTests(GatewayCodeMock):
             self.assertNotEquals(None, answer)
             open_serial.stop()
 
-
     def test_mode_no_blink_no_radio(self):
 
         g_v = gateway_code.gateway_validation.GatewayValidation(
