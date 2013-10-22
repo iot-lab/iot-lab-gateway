@@ -119,7 +119,7 @@ class Protocol(object):
         """
         ret = None
         if 'measure' == radio.mode:
-            ret = self._config_radio_measure("start", radio.freq)
+            ret = self._config_radio_measure("start", radio.frequency)
         else:
             raise NotImplementedError("Uknown radio mode: %s", radio.mode)
 
@@ -128,17 +128,17 @@ class Protocol(object):
             self.current_radio_mode = radio.mode
         return ret
 
-    def _config_radio_measure(self, command="stop", freq=None):
+    def _config_radio_measure(self, command="stop", frequency=None):
         """
         Configure radio measure
         """
         # config_radio_signal
         #     <stop>
-        #     <start> <freq>
+        #     <start> <frequency>
         cmd = ['config_radio_measure']
         cmd.append(command)
         if "start" == command:
-            cmd.append(str(freq))
+            cmd.append(str(frequency))
 
         ret = self._send_cmd(cmd)
         return ret

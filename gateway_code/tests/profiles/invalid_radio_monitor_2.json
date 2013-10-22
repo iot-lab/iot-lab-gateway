@@ -5,6 +5,6 @@
     "radio": {
         "power" : 17,
         "mode" : "measure",
-        "freq" : 2
+        "frequency" : 2
     }
 }
