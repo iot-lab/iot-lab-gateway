@@ -262,23 +262,36 @@ class TestMainFunction:
     def test_simple_case(self, mock_popen):
         import signal
 
+        # stub Popen
         sem = Semaphore(0)
         def communicate():
             sem.acquire(True)
             return mock.DEFAULT
         def terminate():
             sem.release()
-
         popen = mock_popen.return_value
         popen.terminate.side_effect = terminate
         popen.communicate.side_effect = communicate
         popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
         popen.returncode = mock_ret = 0
 
+        def wait_mock():
+            """
+            'wait' will call the ctrl+c handler has if a ctrl+c was got
+            """
+            import signal
+            handler = signal.getsignal(signal.SIGINT)
+            handler(None, None)
+
+
         with mock.patch.object(signal, 'pause') as mock_pause:
-            node = 'm3'
-            args = ['serial_redirection.py', node]
-            serial_redirection.main(args)
+            with mock.patch('gateway_code.serial_redirection.Event') as mock_event:
+                event = mock_event.return_value
+                event.wait.side_effect = wait_mock
+
+                serial_redirection.main(['serial_redirection.py', 'm3'])
+                assert event.wait.call_count == 1
+
 
     def test_error_on_communicate(self, mock_popen):
         import signal
