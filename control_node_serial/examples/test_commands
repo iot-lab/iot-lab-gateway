@@ -1,0 +1,26 @@
+
+
+config_consumption_measure stop
+start battery
+stop battery
+stop dc
+start dc
+reset_time
+config_consumption_measure start 3.3V p 1 v 1 c 1 -p 1100 -a 512
+
+
+
+
+config_consumption_measure start 3.3V p 0 v 1 c 0 -p 1100 -a 512
+
+
+
+
+reset_time
+
+
+
+
+
+config_consumption_measure stop
+

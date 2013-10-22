@@ -1,0 +1,12 @@
+{
+    "profilename": "consumption_3",
+    "power": "battery",
+
+    "consumption": {
+        "power"  : false,
+
+        "average": 1024,
+
+        "period" : 140
+    }
+}

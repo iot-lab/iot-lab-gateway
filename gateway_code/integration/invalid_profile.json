@@ -1,0 +1,10 @@
+{
+    "profilename": "test_profile",
+    "power": "dc",
+
+    "consumption": {
+        "current": true,
+        "voltage": true,
+        "power"  : false
+    }
+}

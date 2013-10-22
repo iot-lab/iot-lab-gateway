@@ -1,0 +1,32 @@
+start dc
+start battery
+stop dc
+stop battery
+reset_time
+
+start dc
+
+# consumption commands
+config_consumption_measure start BATT p 1 v 1 c 1 -p 140 -a 1024
+
+config_consumption_measure start 3.3V p 1 v 1 c 1 -p 8244 -a 1
+
+config_consumption_measure start 3.3V p 1 v 1 c 1 -p 8244 -a 1024
+
+config_consumption_measure stop
+
+# radio commands
+config_radio_signal 3.0 25
+config_radio_measure start 499
+
+config_radio_measure start 100
+
+config_radio_measure stop
+
+
+#
+test_radio_ping_pong start
+
+test_radio_ping_pong stop
+
+

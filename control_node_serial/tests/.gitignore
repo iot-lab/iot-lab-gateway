@@ -1,0 +1,4 @@
+bin/
+obj/
+results/
+empty_test.c

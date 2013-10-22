@@ -1,0 +1,17 @@
+
+
+reset_time
+
+config_radio_signal 3.0 25
+config_radio_measure start 100
+
+
+
+
+
+
+config_radio_measure start 499
+
+
+config_radio_measure stop
+

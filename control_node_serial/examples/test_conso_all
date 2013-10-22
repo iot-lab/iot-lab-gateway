@@ -1,0 +1,46 @@
+config_consumption_measure stop
+start dc
+
+config_consumption_measure start 3.3V p 1 v 1 c 1 -p 1100 -a 512
+
+
+
+
+
+
+
+
+
+
+
+start battery
+
+config_consumption_measure start BATT p 1 v 1 c 1 -p 1100 -a 512
+
+
+
+
+
+
+
+
+
+
+
+
+# check 3.3V even in battery mode
+config_consumption_measure start 3.3V p 1 v 1 c 1 -p 1100 -a 512
+
+
+
+
+
+
+
+
+
+
+
+
+config_consumption_measure stop
+start dc

@@ -1,0 +1,9 @@
+*.out
+*.gcov
+*.gcda
+*.gcno
+*.o
+*.d
+obj/
+
+control_node_serial_interface

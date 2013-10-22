@@ -1,0 +1,20 @@
+{
+    "profilename": "mixed_profile",
+    "power": "dc",
+
+    "consumption": {
+
+        "average": 1,
+
+        "power"  : true,
+        "current": false,
+        "period" : 8244
+    },
+
+    "radio": {
+        "power" : 17.0,
+        "channel" : 11,
+        "mode" : "measure",
+        "frequency" : 2
+    }
+}
