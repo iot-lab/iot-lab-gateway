@@ -67,10 +67,11 @@ def flash(node, elf_file):
 
 def parse_arguments(args):
     """
-    Parsing arguments:
+    Parse arguments:
+        [node, firmware_path]
 
-    script.py node firmware.elf
-    Only pass arguments to function without script name
+    :param args: arguments, without the script name == sys.argv[1:]
+    :type args: list
 
     """
     import argparse
