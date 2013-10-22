@@ -219,7 +219,7 @@ from cStringIO import StringIO
 captured_err = StringIO()
 @mock.patch('sys.stderr', captured_err)
 @mock.patch('subprocess.Popen')
-class TestMainFunction(object):
+class TestSerialRedirection(object):
 
     def test_simple_case(self, mock_popen):
 
