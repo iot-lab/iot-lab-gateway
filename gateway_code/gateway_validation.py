@@ -235,7 +235,8 @@ class GatewayValidation(object):
                          str(err))
             ret_val += 1
 
-        ret_val += self.teardown(blink)
+        # shutdown node if test failed
+        ret_val += self.teardown(blink and (ret_val == 0))
         self.ret_dict['ret'] = ret_val
 
         return self.ret_dict
