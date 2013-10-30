@@ -70,9 +70,8 @@ class GatewayValidation(object):
         mac_addr = process.communicate()[0].strip()
         return mac_addr
 
-    def setup(self, power):
-        """ setup connection with m3
-        param power: values in ['dc', 'battery']"""
+    def setup_control_node(self):
+        """ setup connection with control_node"""
 
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         ret_val = 0
@@ -83,23 +82,29 @@ class GatewayValidation(object):
         self.g_m.cn_serial.start(_args=['-d'],
                                  _measures_handler=self._measures_handler)
         time.sleep(1)
-        board_type = config.board_type()
 
         ret_val += self.g_m.reset_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
+        ret_val = self._validate(ret_val, 'setup_cn_connection', ret_val)
+        if 0 != ret_val:
+            raise FatalError('Setup control node failed')
+
+    def setup_open_node_connection(self):
+        """ Setup the connection with Open Node
+        Should be done on DC"""
+
+        ret_val = 0
+        ret_val += self.g_m.open_power_start(power='dc')
+
+        board_type = config.board_type()
         # setup open node
         if board_type == 'M3':
-            # test flash in DC and 'power' (should be battery)
-            for alim in ['dc', power]:
-                ret_val += self.g_m.open_power_start(power=alim)
-                time.sleep(1)
-                ret = self.g_m.node_flash(
-                    'm3', config.FIRMWARES['m3_autotest'])
-                ret_val += self._validate(ret, 'flash_m3_on_%s' % alim, ret)
-            # alim == param power
+            time.sleep(1)
+            ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+            ret_val += self._validate(ret, 'flash_m3', ret)
 
             self.on_serial = open_node_validation_interface.OpenNodeSerial()
             time.sleep(1)
@@ -107,7 +112,6 @@ class GatewayValidation(object):
 
         elif board_type == 'A8':
 
-            ret_val += self.g_m.open_power_start(power=power)
             # wait open node started
             LOGGER.debug("Wait that open A8 node start:")
             for time_remaining in range(60, 0, -10):
@@ -117,9 +121,14 @@ class GatewayValidation(object):
 
             try:
                 self.a8_connection = open_a8_interface.OpenA8Connection()
+            except SerialException as err:
+                ret_val += self._validate(1, 'access_A8_serial', str(err))
+            else:
+                # got the ip address via serial
                 self.a8_connection.start()
-                open_a8_mac_addr = self.a8_connection.get_mac_addr()
-                self.ret_dict['mac']['A8'] = open_a8_mac_addr
+
+                # save mac address
+                self.ret_dict['mac']['A8'] = self.a8_connection.get_mac_addr()
 
                 # open A8 flash
                 self.a8_connection.ssh_run(
@@ -132,13 +141,8 @@ class GatewayValidation(object):
                     OpenNodeSerial()
                 time.sleep(1)
                 self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
-            except SerialException as err:
-                ret_val += self._validate(1, 'access_A8_serial_on_%s' % power,
-                                          str(err))
-
-        ret_val = self._validate(ret_val, 'setup', ret_val)
         if 0 != ret_val:
-            raise FatalError('Setup failed')
+            raise FatalError('Setup Open Node failed')
 
     def teardown(self, blink):
         """ cleanup """
@@ -179,19 +183,20 @@ class GatewayValidation(object):
         is_m3 = 'M3' == board_type
 
         try:
-            self.setup(power='battery')
+            self.setup_control_node()
 
             ##
             ## Tests using Battery
             ##
             # dc -> battery: A8 reboot
             # battery -> dc: No reboot
-            #
-            # so start node with battery and then switch to DC (no reboot)
+            # A8 may not work with new batteries (not enough power)
+            # so check battery and then switch to DC
+            ret_val += self.test_consumption_batt(board_type)
 
-            # can communicate and get_time working
+            # switch to DN and configure open node
+            self.setup_open_node_connection()
             self.check_get_time()
-            ret_val += self.test_consumption_batt()
 
             ##
             ## Other tests, run on DC
@@ -266,7 +271,8 @@ class GatewayValidation(object):
                (['ACK', 'CURRENT_TIME'] == answer[:2]) and
                answer[3].isdigit())
 
-        ret_val = self._validate(int(not ret), 'check_get_time', answer)
+        ret_val = self._validate(
+            int(not ret), 'check_m3_communication_with_get_time', answer)
         if 0 != ret_val:  # fatal Error
             raise FatalError("get_time failed. " +
                              "Can't communicate with M3 node")
@@ -278,7 +284,11 @@ class GatewayValidation(object):
     def test_flash(self):
         """ test Flash """
         answer = self.on_serial.send_command(['test_flash'])
-        ret = answer[:2] == ['ACK', 'TST_FLASH']
+        if (answer is None) or (answer[0] != 'ACK'):
+            LOGGER.debug('test_flash answer == %r', answer)
+            ret = 1
+        else:
+            ret = answer[:2] == ['ACK', 'TST_FLASH']
         return self._validate(int(not ret), 'test_flash', answer)
 
     def test_pressure(self):
@@ -287,9 +297,12 @@ class GatewayValidation(object):
         values = []
         for _ in range(0, 10):
             answer = self.on_serial.send_command(['get_pressure'])
-            values.append(float(answer[3]))
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_pressure answer == %r', answer)
+            else:
+                values.append(float(answer[3]))
 
-        got_diff_values = 0 if (1 != len(set(values))) else 1
+        got_diff_values = 0 if (1 < len(set(values))) else 1
         return self._validate(got_diff_values, 'test_pressure', values)
 
     def test_light(self):
@@ -301,7 +314,10 @@ class GatewayValidation(object):
         values = []
         for _ in range(0, 10):
             answer = self.on_serial.send_command(['get_light'])
-            values.append(float(answer[3]))
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_light answer == %r', answer)
+            else:
+                values.append(float(answer[3]))
             time.sleep(1)
 
         _ = self.on_serial.send_command(['leds_blink', '7', '0'])
@@ -313,7 +329,7 @@ class GatewayValidation(object):
             self.ret_dict['warning'] = {'get_light_value': 0.12207031}
             got_diff_values = 0
         else:
-            got_diff_values = int(not(1 != len(set(values))))
+            got_diff_values = int(not(1 < len(set(values))))
         return self._validate(got_diff_values, 'get_light', values)
 
 #
@@ -328,8 +344,13 @@ class GatewayValidation(object):
         ret_val += self.g_m.protocol.send_cmd(cmd)
 
         answer = self.on_serial.send_command(['test_gpio'])
-        ret = (answer[:2] == ['ACK', 'GPIO'])
-        ret_val += self._validate(int(not ret), 'test_gpio', answer)
+        if (answer is None) or (answer[0] != 'ACK'):
+            LOGGER.debug('test_gpio answer == %r', answer)
+            ret = 1
+        else:
+            ret = (answer[:2] == ['ACK', 'GPIO'])
+
+        ret_val += self._validate(int(not ret), 'test_gpio_ON<->CN', answer)
 
         # cleanup
         cmd = ['test_gpio', 'stop']
@@ -346,8 +367,12 @@ class GatewayValidation(object):
         ret_val += self.g_m.protocol.send_cmd(cmd)
 
         answer = self.on_serial.send_command(['test_i2c'])
-        ret = (answer[:2] == ['ACK', 'I2C2_CN'])
-        ret_val += self._validate(int(not ret), 'test_i2c', answer)
+        if (answer is None) or (answer[0] != 'ACK'):
+            LOGGER.debug('test_i2c answer == %r', answer)
+            ret = 1
+        else:
+            ret = (answer[:2] == ['ACK', 'I2C2_CN'])
+        ret_val += self._validate(int(not ret), 'test_i2c_ON<->CN', answer)
 
         # cleanup
         cmd = ['test_i2c', 'stop']
@@ -364,9 +389,12 @@ class GatewayValidation(object):
         values = []
         for _ in range(0, 10):
             answer = self.on_serial.send_command(['get_magneto'])
-            measures = tuple([float(val) for val in answer[3:6]])
-            values.append(measures)
-        got_diff_values = 0 if (1 != len(set(values))) else 1
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_magneto answer == %r', answer)
+            else:
+                measures = tuple([float(val) for val in answer[3:6]])
+                values.append(measures)
+        got_diff_values = 0 if (1 < len(set(values))) else 1
         return self._validate(got_diff_values, 'get_magneto', values)
 
     def test_gyro(self):
@@ -376,9 +404,12 @@ class GatewayValidation(object):
         values = []
         for _ in range(0, 10):
             answer = self.on_serial.send_command(['get_gyro'])
-            measures = tuple([float(val) for val in answer[3:6]])
-            values.append(measures)
-        got_diff_values = 0 if (1 != len(set(values))) else 1
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_gyro answer == %r', answer)
+            else:
+                measures = tuple([float(val) for val in answer[3:6]])
+                values.append(measures)
+        got_diff_values = 0 if (1 < len(set(values))) else 1
         return self._validate(got_diff_values, 'get_gyro', values)
 
     def test_accelero(self):
@@ -387,9 +418,12 @@ class GatewayValidation(object):
         values = []
         for _ in range(0, 10):
             answer = self.on_serial.send_command(['get_accelero'])
-            measures = tuple([float(val) for val in answer[3:6]])
-            values.append(measures)
-        got_diff_values = 0 if (1 != len(set(values))) else 1
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_accelero answer == %r', answer)
+            else:
+                measures = tuple([float(val) for val in answer[3:6]])
+                values.append(measures)
+        got_diff_values = 0 if (1 < len(set(values))) else 1
         return self._validate(got_diff_values, 'get_accelero', values)
 
 #
@@ -411,15 +445,19 @@ class GatewayValidation(object):
         for _ in range(0, 10):
             cmd_on = ['radio_ping_pong', '3dBm', str(channel)]
             answer = self.on_serial.send_command(cmd_on)
-            values.append(int(not(answer[:2] == ['ACK', 'RADIO_PINGPONG'])))
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_accelero answer == %r', answer)
+            else:
+                values.append(int(not(
+                    answer[:2] == ['ACK', 'RADIO_PINGPONG'])))
 
         # got at least one answer from control_node
         result = int(not(0 in values))  # at least one success
-        ret_val += self._validate(result, 'radio_ping_pong_pkts', values)
-
+        ret_val += self._validate(result, 'radio_ping_pong_ON<->CN',
+                                  values)
         # cleanup
         ret_val += self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
-        self._validate(ret_val, 'radio_ping_pong_test', 'Cleanup error')
+        self._validate(ret_val, 'radio_ping_pong_cleanup', 'Cleanup error')
         return ret_val
 
     def test_radio_with_rssi(self, channel):
@@ -450,7 +488,7 @@ class GatewayValidation(object):
 
         # check that values other than (0,0) were measured
         values.append((0, 0))
-        got_diff_values = 0 if (1 != len(set(values))) else 1
+        got_diff_values = 0 if (1 < len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'rssi_measures', values)
 
         return ret_val
@@ -490,16 +528,26 @@ class GatewayValidation(object):
 
         return ret_val
 
-    def test_consumption_batt(self):
+    def test_consumption_batt(self, board_type):
         """ Try consumption for Battery """
 
-        # one measure every ~0.1 seconds
         ret_val = 0
+        ret_val += self.g_m.open_power_start(power='battery')
+
+        # set a firmware on M3 to ensure corret consumption measures
+        # on A8, linux is consuming enough I think
+        if 'M3' == board_type:
+            time.sleep(1)
+            ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+            ret_val += self._validate(ret, 'flash_m3_on_battery', ret)
+
+        # configure consumption
+        # one measure every ~0.1 seconds
         conso = Consumption(power_source='battery',
-                            board_type=config.board_type(),
+                            board_type=board_type,
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
-        ret_val += self.g_m.open_power_start(power='battery')
+
         ret_val += self.g_m.protocol.config_consumption(conso)
 
         values = []
