@@ -141,6 +141,10 @@ class GatewayValidation(object):
                     OpenNodeSerial()
                 time.sleep(1)
                 self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
+        else:  # invalid board type
+            ret_val += self._validate(1, 'board_type: %s' % board_type,
+                                      'unkown type')
+
         if 0 != ret_val:
             raise FatalError('Setup Open Node failed')
 
