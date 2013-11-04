@@ -1,5 +1,5 @@
 TARGET     = control_node_serial_interface
-CC         = gcc
+CC         ?= gcc
 
 
 # VERB = 1

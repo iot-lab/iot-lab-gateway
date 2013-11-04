@@ -22,8 +22,9 @@ Pylint and pep8 checker:
 
 """
 
-from setuptools import setup, Command
+from setuptools import setup, Command, Extension
 from setuptools.command.install import install
+from setuptools.command.build_ext import build_ext
 
 import sys
 import os
@@ -39,14 +40,17 @@ from gateway_code import config
 # pylint: disable=R0904,W0201,C0111,R0201,W0232
 
 
+# change to script directory
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+
 STATIC_FILES_PATH = config.STATIC_FILES_PATH
 STATIC_FILES = ['static/' + item for item in os.listdir('static')]
-INIT_SCRIPT = ('/etc/init.d/', ['bin/init_script/gateway-server-daemon'])
+DATA = [(STATIC_FILES_PATH, STATIC_FILES)]
 
-DATA = [(STATIC_FILES_PATH, STATIC_FILES), INIT_SCRIPT]
+SCRIPTS = ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
 
-SCRIPTS = ['control_node_serial/' + config.CONTROL_NODE_SERIAL_INTERFACE]
-SCRIPTS += ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
+EXT_MODULES = Extension(config.CONTROL_NODE_SERIAL_INTERFACE, [])
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
 TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
@@ -88,70 +92,61 @@ class _Tee(object):
         pass
 
 
-def build_c_executable():
-    """
-    Build control node serial interface
-    """
-    saved_path = os.getcwd()
-    os.chdir('control_node_serial')
-    args = ['make', 'realclean', 'all']
-
-    try:
-        subprocess.check_call(args)
-    except subprocess.CalledProcessError:
-        exit(1)
-    os.chdir(saved_path)
-
-
-def setup_permissions():
-    """
-    Setup file permissions on scripts
-    Add www-data user to dialout group
-    """
-    # set init script executable
-    init_script_path = INIT_SCRIPT[0] + os.path.basename(INIT_SCRIPT[1][0])
-    mode = 0755
-    os.chmod(init_script_path, mode)
-    print "changing mode of %s to %d" % (init_script_path, mode)
-
-    usermod_args = ['usermod', '-a', '-G', 'dialout', 'www-data']
-    subprocess.check_call(usermod_args)
-
-
-class BuildSerial(Command):
-    """
-    Build control node serial interface command
-    """
+class _EmptyCommand(Command):
+    """ An empty command doing nothing used for inheritance"""
     user_options = []
 
     def initialize_options(self):
-        self.debug_measures = 0
+        pass
 
     def finalize_options(self):
         pass
 
     def run(self):
-        build_c_executable()
+        pass
 
 
-class Install(install):
-    """
-    Install command
+class BuildExt(build_ext):
+    """ Overwrite build_ext to build control node serial """
 
-    * Build control node serial
-    * install python code
-    * correct file permissions
-    """
     def run(self):
-        build_c_executable()
+        """ Build control node serial interface """
+        args = ['make', '-C', 'control_node_serial', 'realclean', 'all']
+        try:
+            subprocess.check_call(args)
+        except subprocess.CalledProcessError as err:
+            exit(err.returncode)
+
+
+class Release(_EmptyCommand):
+    """ Install and do the 'post installation' procedure too.
+    Meant to be used directly on the gateways """
+
+    def run(self):
         install.run(self)
-        setup_permissions()
+        self.post_installation()
+
+    @staticmethod
+    def post_installation():
+        """ Install init.d script
+        Add www-data user to dialout group """
+        import shutil
+
+        # setup init script
+        init_script = 'gateway-server-daemon'
+        update_rc_d_args = ['update-rc.d', init_script,
+                            'start', '80', '2', '3', '4', '5', '.',
+                            'stop', '20', '0', '1', '6', '.']
+        shutil.copy('bin/init_script/' + init_script, '/etc/init.d/')
+        os.chmod('/etc/init.d/' + init_script, 0755)
+        subprocess.check_call(update_rc_d_args)
+
+        #  add `www-data` user to `dialout` group
+        subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
 
 
 class Lint(Command):
-    """
-    Pylint command
-    """
+    """ Pylint command """
     user_options = [
         ('report', 'r', "print errors and report"),
         ('outfile=', 'o', "duplicate output to file")]
@@ -173,18 +168,13 @@ class Lint(Command):
             lint.Run(lint_args, exit=False)
 
 
-class Pep8(Command):
-    """
-    Pep8 command
-    """
+class Pep8(_EmptyCommand):
+    """ Pep8 command """
     user_options = [('outfile=', 'o', "duplicate output to file")]
 
     def initialize_options(self):
         self.exclude = None
         self.outfile = '/dev/null'
-
-    def finalize_options(self):
-        pass
 
     def run(self):
         import pep8
@@ -194,10 +184,8 @@ class Pep8(Command):
 
 
 def _add_path_to_coverage_xml():
-    """
-    Add source path in coverage report,
-    relativ to parent folder of git repository
-    """
+    """ Add source path in coverage report,
+    relativ to parent folder of git repository """
     current_folder = os.path.abspath('.')
     base_folder = os.path.abspath('../..') + '/'
 
@@ -211,18 +199,8 @@ def _add_path_to_coverage_xml():
     subprocess.check_call(args)
 
 
-class Tests(Command):
-    """
-    Run unit tests, pylint and pep8
-    """
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
+class Tests(_EmptyCommand):
+    """ Run unit tests, pylint and pep8 """
     def run(self):
         args = ['python', 'setup.py']
 
@@ -232,31 +210,22 @@ class Tests(Command):
             _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
-        except subprocess.CalledProcessError:
-            exit(1)
+        except subprocess.CalledProcessError as err:
+            exit(err.returncode)
         return ret
 
 
-class TestsRoomba(Command):
+class TestsRoomba(_EmptyCommand):
     """
     Run roomba specific tests, should be run on a node with a robot conected
     """
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
     def run(self):
         args = ['python', 'setup.py']
-
         try:
             subprocess.check_call(args + ['nosetests', '-i=*robot/*'])
             _add_path_to_coverage_xml()
-        except subprocess.CalledProcessError:
-            exit(1)
+        except subprocess.CalledProcessError as err:
+            exit(err.returncode)
 
 
 class IntegrationTests(Command):
@@ -274,55 +243,6 @@ class IntegrationTests(Command):
         if self.stop:
             self.nose_args += ['--stop']
 
-    @staticmethod
-    def cleanup_workspace():
-        """
-        Remove old scripts output.
-        Correct file permissions to be used with www-data
-        """
-        import stat
-        # remove outfiles
-        outfiles = ('coverage.xml', 'nosetests.xml', 'pylint.out', 'pep8.out')
-        _ = [os.remove(_f) for _f in outfiles if os.path.exists(_f)]
-
-        # chmod o+x script_dir
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        mode = os.stat(script_dir).st_mode | stat.S_IWOTH
-        os.chmod(script_dir, mode)
-
-    @staticmethod
-    def popen_as_user(user):
-        """
-        Allow running popen as another user.
-        Also sets all groups user belongs to.
-        """
-        import pwd
-        import grp
-
-        pw_record = pwd.getpwnam(user)
-
-        user_gid = pw_record.pw_gid
-        user_uid = pw_record.pw_uid
-        user_name = pw_record.pw_name
-        user_home_dir = pw_record.pw_dir
-
-        env = os.environ.copy()
-        env['LOGNAME'] = user_name
-        env['USER'] = user_name
-        env['HOME'] = user_home_dir
-
-        def preexec_set_uid_gid():
-            """
-            preexec fct run by popen to update user and groups
-            """
-            groups = [group.gr_gid for group in grp.getgrall()
-                      if user in group.gr_mem]
-            os.setgroups(groups)  # add all groups of user (for 'dialout')
-            os.setgid(user_gid)
-            os.setuid(user_uid)  # setuid after setgid to have permissions
-
-        return preexec_set_uid_gid, env
-
     def run(self):
         args = ['python', 'setup.py']
 
@@ -330,14 +250,17 @@ class IntegrationTests(Command):
         ret = 0
 
         try:
-            _ = subprocess.check_call(args + ['build_cn_serial']),
+            env = os.environ.copy()
+            if 'www-data' != env['USER']:
+                sys.stderr.write("ERR: Run Integration tests as 'www-data':\n")
+                sys.stderr.write(
+                    "\tsu www-data -c 'python setup.py integration'\n")
+                exit(1)
 
-            preexec_fn, env = self.popen_as_user('www-data')
             env['PATH'] = './control_node_serial/:%s' % env['PATH']
-
             _nose_args = args + ['nosetests', '-i=*integration/*']
             _nose_args += self.nose_args
-            ret = subprocess.call(_nose_args, preexec_fn=preexec_fn, env=env)
+            ret = subprocess.call(_nose_args, env=env)
 
             _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
@@ -345,6 +268,18 @@ class IntegrationTests(Command):
         except subprocess.CalledProcessError:
             exit(1)
         return ret
+
+    @staticmethod
+    def cleanup_workspace():
+        """
+        Remove old scripts output.
+        Correct file permissions to be used with www-data
+        """
+        import stat
+
+        # remove outfiles
+        outfiles = ('coverage.xml', 'nosetests.xml', 'pylint.out', 'pep8.out')
+        _ = [os.remove(_f) for _f in outfiles if os.path.exists(_f)]
 
 
 setup(name='gateway_code',
@@ -357,8 +292,10 @@ setup(name='gateway_code',
       scripts=SCRIPTS,
       data_files=DATA,
 
-      cmdclass={'install': Install,
-                'build_cn_serial': BuildSerial,
+      ext_modules=[EXT_MODULES],
+
+      cmdclass={'build_ext': BuildExt,
+                'release': Release,
                 'lint': Lint,
                 'pep8': Pep8,
                 'tests': Tests,
