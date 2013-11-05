@@ -4,9 +4,6 @@
 """
 Open A8 interface
 """
-import serial
-import re
-
 import shlex
 import time
 
@@ -27,7 +24,7 @@ SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "{cmd}"'
 SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 
 IP_CMD = ("ip addr show dev eth0 " +
-           r" | sed -n '/inet/ s/.*inet \([^ ]*\)\/.*/\1/p'")
+          r" | sed -n '/inet/ s/.*inet \([^ ]*\)\/.*/\1/p'")
 
 SOCAT_CMD = ('/usr/local/bin/socat -d TCP4-LISTEN:{port},reuseaddr ' +
              'open:{tty},b{baudrate},echo=0,raw ')
@@ -35,6 +32,7 @@ LOCAL_TTY = ('/usr/local/bin/socat -d tcp4-connect:{ip_addr}:{port} ' +
              ' PTY,link={tty},b{baudrate},echo=0,raw')
 MAC_CMD = ('ip link show dev eth0 ' +
            r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'")
+
 
 class A8ConnectionError(Exception):
     """ FatalError during tests """
@@ -44,6 +42,7 @@ class A8ConnectionError(Exception):
 
     def __str__(self):
         return repr(self.value)
+
 
 class OpenA8Connection(object):
     """ Connection to the Open A8, redirect A8-M3 node serial link """
@@ -67,11 +66,11 @@ class OpenA8Connection(object):
         a8_serial.send(IP_CMD)
         ip_address = a8_serial.expect(r'\d+\.\d+\.\d+.\d+', timeout=10)
         if not ret:
-            raise A8ConnectionError("Invalid Ip address caught %r" % ip_address)
+            raise A8ConnectionError(
+                "Invalid Ip address caught %r" % ip_address)
         a8_serial.send('exit')
 
         self.ip_addr = ip_address
-
 
     def start(self):
         """ Start a redirection of open_A8 M3 node serial """
@@ -124,8 +123,7 @@ class OpenA8Connection(object):
 
     def ssh_run(self, command):
         """ Run SSH command on A8 node """
-        cmd = SSH_CMD.format(ip_addr=self.ip_addr,
-                                 cmd=command)
+        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=command)
 
         process = Popen(shlex.split(cmd), stdout=PIPE, stderr=STDOUT)
         output = process.communicate()[0]
