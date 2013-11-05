@@ -30,13 +30,13 @@ class SerialExpect(object):
         """ Write given data to serial with newline"""
         self.serial_fd.write(data + '\n')
 
-    def expect_list(self, pattern_list, timeout=-1):
+    def expect_list(self, pattern_list, timeout=float('+inf')):
         """ expect multiple patterns """
         # concatenate in a single pattern
         pattern = '(' + ')|('.join(pattern_list) + ')'
         return self.expect(pattern, timeout)
 
-    def expect(self, pattern, timeout=-1):
+    def expect(self, pattern, timeout=float('+inf')):
         """ expect pattern
         return matching string on match
         return '' on timeout
@@ -46,9 +46,7 @@ class SerialExpect(object):
             print 'expect cannot accurately match multiline patterns'
             print 'it may fail depending on the runtime cases'
 
-        end_time = None
-        if timeout >= 0:
-            end_time = time.time() + timeout
+        end_time = time.time() + timeout
 
         buff = ''
         regexp = re.compile(pattern)
@@ -66,6 +64,6 @@ class SerialExpect(object):
             match = regexp.search(buff)
             if match:
                 return match.group(0)
-            elif end_time is not None and end_time <= time.time():
+            elif end_time <= time.time():
                 return ''  # timeout
             # continue

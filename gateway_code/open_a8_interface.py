@@ -57,9 +57,9 @@ class OpenA8Connection(object):
         a8_serial = expect.SerialExpect(**config.OPEN_A8_CFG)
 
         a8_serial.send('')
-        ret = a8_serial.expect(' login: ', timeout=100)
+        ret = a8_serial.expect(' login: ', timeout=200)
         if not ret:
-            raise A8ConnectionError("Open node didn't booted")
+            raise A8ConnectionError("Open node didn't booted: %r", ret)
 
         a8_serial.send('root')
         a8_serial.expect('# ')
@@ -111,8 +111,10 @@ class OpenA8Connection(object):
             self.local_tty.wait()
         except CalledProcessError:
             # Open node A8 unreachable
-            self.remote_tty.terminate()
-            self.local_tty.terminate()
+            if self.remote_tty is not None:
+                self.remote_tty.terminate()
+            if self.local_tty is not None:
+                self.local_tty.terminate()
 
     def get_mac_addr(self):
         """ Get eth0 mac address """
