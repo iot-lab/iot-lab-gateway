@@ -36,18 +36,50 @@ LOCAL_TTY = ('/usr/local/bin/socat -d tcp4-connect:{ip_addr}:{port} ' +
 MAC_CMD = ('ip link show dev eth0 ' +
            r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'")
 
+class A8ConnectionError(Exception):
+    """ FatalError during tests """
+    def __init__(self, value):
+        super(FatalError, self).__init__()
+        self.value = value
+
+    def __str__(self):
+        return repr(self.value)
 
 class OpenA8Connection(object):
     """ Connection to the Open A8, redirect A8-M3 node serial link """
     def __init__(self):
-        self.ip_addr = self._get_ip_address()
+        self.ip_addr = None
         self.local_tty = None
         self.remote_tty = None
+
+    def wait_boot_and_get_ip_address(self):
+        """ Wait until open node is booted and get its ip address"""
+        a8_serial = expect.SerialExpect(**config.OPEN_A8_CFG)
+
+        a8_serial.send('')
+        ret = a8_serial.expect(' login: ', timeout=100)
+        if not ret:
+            raise A8ConnectionError("Open node didn't booted")
+
+        a8_serial.send('root')
+        a8_serial.expect('# ')
+
+        a8_serial.send(IP_CMD)
+        ip_address = a8_serial.expect(r'\d+\.\d+\.\d+.\d+')
+        if not ret:
+            raise A8ConnectionError("Invalid Ip address caught %r", ip_address)
+        a8_serial.send('exit')
+
+        self.ip_addr = ip_address
+
 
     def start(self):
         """ Start a redirection of open_A8 M3 node serial """
         port = 20000
         config_a8 = config.NODES_CFG['a8']
+
+        # wait until boot
+        self.wait_boot_and_get_ip_address()
 
         # remote TTY
         socat_cmd = SOCAT_CMD.format(port=port, tty=config_a8['tty'],
@@ -68,7 +100,7 @@ class OpenA8Connection(object):
                 self.remote_tty.poll() is not None):
             self.remote_tty.terminate()
             self.local_tty.terminate()
-            raise Exception()
+            raise A8ConnectionError("Socat commands shut down too early")
 
     def stop(self):
         """ Stop redirection of open_A8 M3 node serial """
@@ -82,53 +114,8 @@ class OpenA8Connection(object):
             self.remote_tty.terminate()
             self.local_tty.terminate()
 
-#    @staticmethod
-#    def _get_ip_address():
-#        """ Get open node a8 ip address from console """
-#
-#        a8_serial = serial.Serial(config.OPEN_A8_CFG['tty'],
-#                                  config.OPEN_A8_CFG['baudrate'],
-#                                  timeout=0.5)
-#        # connect and wait for prompt == no newlines printed
-#        a8_serial.write("root\n")
-#        for _ in range(0, 10):
-#            if '' == a8_serial.readline():
-#                break
-#        else:
-#            raise ValueError()
-#
-#        # get ip address
-#        a8_serial.write(IP_CMD + "\n")
-#        for _ in range(0, 20):
-#            ip_address = a8_serial.readline().strip()
-#            if re.match(r'\d+\.\d+\.\d+.\d+', ip_address):
-#                break
-#        else:
-#            raise ValueError()
-#
-#        a8_serial.write("exit\n")
-#        a8_serial.close()
-#        return ip_address
-
     @staticmethod
     def _get_ip_address():
-        """ Get open node a8 ip address from console """
-        a8_serial = expect.SerialExpect(**config.OPEN_A8_CFG)
-
-        a8_serial.serial_fd.write('\n')
-        ret = a8_serial.expect(' login: ', timeout=100)
-        if not ret:
-            raise Exception("Open node didn't booted")
-
-        a8_serial.serial_fd.write('root\n')
-        a8_serial.expect('# ')
-
-        a8_serial.serial_fd.write(IP_CMD + '\n')
-        ip_address = a8_serial.expect(r'\d+\.\d+\.\d+.\d+')
-        if not ret:
-            raise Exception("Invalid Ip address caught %r", ip_address)
-        a8_serial.serial_fd.write('exit\n')
-        return ip_address
 
 
     def get_mac_addr(self):

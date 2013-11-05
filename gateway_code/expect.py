@@ -17,12 +17,18 @@ import serial
 class SerialExpect(object):
     """ Simple Expect implementation for serial """
 
-    def __init__(self, tty, baudrate):
+    def __init__(self, tty, baudrate, verbose=False):
         self.serial_fd = serial.Serial(tty, baudrate, timeout=0.1)
         self.serial_fd.flushInput()
+        self.verb = verbose
+        self.verb = True  # TODO REMOVE
 
     def __del__(self):
         self.serial_fd.close()
+
+    def send(self, data):
+        """ Write given data to serial with newline"""
+        self.serial_fd.write(data + '\n')
 
     def expect_list(self, pattern_list, timeout=-1):
         """ expect multiple patterns """
@@ -52,9 +58,9 @@ class SerialExpect(object):
 
             # get new data
             read_bytes = self.serial_fd.read(size=16)  # timeout 0.1
-            sys.stdout.write(read_bytes)
-            sys.stdout.flush()
-
+            if self.verb:
+                sys.stdout.write(read_bytes)
+                sys.stdout.flush()
             buff += read_bytes
 
             match = regexp.search(buff)

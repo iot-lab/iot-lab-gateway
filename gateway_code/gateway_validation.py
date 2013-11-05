@@ -111,22 +111,21 @@ class GatewayValidation(object):
             self.on_serial.start()
 
         elif board_type == 'A8':
-
-            # wait open node started
-            LOGGER.debug("Wait that open A8 node start:")
-            for time_remaining in range(60, 0, -10):
-                LOGGER.debug("%dsecs remaining...", time_remaining)
-                time.sleep(10)
-            LOGGER.debug("GO!")
-
             try:
+                # wait nodes booting
                 self.a8_connection = open_a8_interface.OpenA8Connection()
-            except SerialException as err:
-                ret_val += self._validate(1, 'access_A8_serial', str(err))
-            else:
-                # got the ip address via serial
+
+                # wait nodes start
+                # get ip address using serial
+                # run socats commands
+                LOGGER.debug("Wait that open A8 node starts")
                 self.a8_connection.start()
 
+            except SerialException as err:
+                ret_val += self._validate(1, 'access_A8_serial_port', str(err))
+            except open_a8_interface.A8ConnectionError as err:
+                ret_val += self._validate(1, 'error_in_open_a8_init', str(err))
+            else:
                 # save mac address
                 self.ret_dict['mac']['A8'] = self.a8_connection.get_mac_addr()
 
