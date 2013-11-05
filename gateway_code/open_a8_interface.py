@@ -39,7 +39,7 @@ MAC_CMD = ('ip link show dev eth0 ' +
 class A8ConnectionError(Exception):
     """ FatalError during tests """
     def __init__(self, value):
-        super(FatalError, self).__init__()
+        super(A8ConnectionError, self).__init__()
         self.value = value
 
     def __str__(self):
