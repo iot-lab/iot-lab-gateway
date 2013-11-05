@@ -114,10 +114,6 @@ class OpenA8Connection(object):
             self.remote_tty.terminate()
             self.local_tty.terminate()
 
-    @staticmethod
-    def _get_ip_address():
-
-
     def get_mac_addr(self):
         """ Get eth0 mac address """
         mac_addr_s = self.ssh_run(MAC_CMD)
