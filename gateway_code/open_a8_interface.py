@@ -57,17 +57,17 @@ class OpenA8Connection(object):
         a8_serial = expect.SerialExpect(**config.OPEN_A8_CFG)
 
         a8_serial.send('')
-        ret = a8_serial.expect(' login: ', timeout=200)
+        ret = a8_serial.expect(' login: ', timeout=120)
         if not ret:
-            raise A8ConnectionError("Open node didn't booted: %r", ret)
+            raise A8ConnectionError("Open node didn't booted: %r" % ret)
 
         a8_serial.send('root')
         a8_serial.expect('# ')
 
         a8_serial.send(IP_CMD)
-        ip_address = a8_serial.expect(r'\d+\.\d+\.\d+.\d+')
+        ip_address = a8_serial.expect(r'\d+\.\d+\.\d+.\d+', timeout=10)
         if not ret:
-            raise A8ConnectionError("Invalid Ip address caught %r", ip_address)
+            raise A8ConnectionError("Invalid Ip address caught %r" % ip_address)
         a8_serial.send('exit')
 
         self.ip_addr = ip_address
