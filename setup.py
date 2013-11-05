@@ -174,6 +174,7 @@ class Pep8(_EmptyCommand):
     user_options = [('outfile=', 'o', "duplicate output to file")]
 
     def initialize_options(self):
+        self.exclude = None
         self.outfile = '/dev/null'
 
     def run(self):
