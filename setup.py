@@ -27,6 +27,7 @@ from setuptools.command.install import install
 from setuptools.command.build_ext import build_ext
 
 import sys
+from sys import stderr
 import os
 import re
 import subprocess
@@ -124,10 +125,10 @@ class Release(_EmptyCommand):
 
     def run(self):
         install.run(self)
-        self.post_installation()
+        self.post_install()
 
     @staticmethod
-    def post_installation():
+    def post_install():
         """ Install init.d script
         Add www-data user to dialout group """
         import shutil
@@ -173,7 +174,6 @@ class Pep8(_EmptyCommand):
     user_options = [('outfile=', 'o', "duplicate output to file")]
 
     def initialize_options(self):
-        self.exclude = None
         self.outfile = '/dev/null'
 
     def run(self):
@@ -203,16 +203,14 @@ class Tests(_EmptyCommand):
     """ Run unit tests, pylint and pep8 """
     def run(self):
         args = ['python', 'setup.py']
-
-        ret = 0
         try:
             ret = subprocess.call(args + ['nosetests', '--cover-html'])
             _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
+            return ret
         except subprocess.CalledProcessError as err:
             exit(err.returncode)
-        return ret
 
 
 class TestsRoomba(_EmptyCommand):
@@ -246,40 +244,33 @@ class IntegrationTests(Command):
     def run(self):
         args = ['python', 'setup.py']
 
-        self.cleanup_workspace()
-        ret = 0
+        env = os.environ.copy()
+        if 'www-data' != env['USER']:
+            stderr.write("ERR: Run Integration tests as 'www-data':\n")
+            stderr.write("\nsu www-data -c 'python setup.py integration'\n")
+            exit(1)
 
         try:
-            env = os.environ.copy()
-            if 'www-data' != env['USER']:
-                sys.stderr.write("ERR: Run Integration tests as 'www-data':\n")
-                sys.stderr.write(
-                    "\tsu www-data -c 'python setup.py integration'\n")
-                exit(1)
+            self.cleanup_workspace()
 
-            env['PATH'] = './control_node_serial/:%s' % env['PATH']
-            _nose_args = args + ['nosetests', '-i=*integration/*']
-            _nose_args += self.nose_args
-            ret = subprocess.call(_nose_args, env=env)
-
+            env['PATH'] = './control_node_serial/:' + env['PATH']
+            ret = subprocess.call(
+                args + ['nosetests', '-i=*integration/*'] + self.nose_args,
+                env=env)
             _add_path_to_coverage_xml()
+
             subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
+            return ret
         except subprocess.CalledProcessError:
             exit(1)
-        return ret
 
     @staticmethod
     def cleanup_workspace():
-        """
-        Remove old scripts output.
-        Correct file permissions to be used with www-data
-        """
-        import stat
-
-        # remove outfiles
+        """ Remove old scripts output.  """
         outfiles = ('coverage.xml', 'nosetests.xml', 'pylint.out', 'pep8.out')
-        _ = [os.remove(_f) for _f in outfiles if os.path.exists(_f)]
+        for _file in outfiles:
+            os.remove(_file)
 
 
 setup(name='gateway_code',
