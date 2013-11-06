@@ -271,7 +271,10 @@ class IntegrationTests(Command):
         """ Remove old scripts output.  """
         outfiles = ('coverage.xml', 'nosetests.xml', 'pylint.out', 'pep8.out')
         for _file in outfiles:
-            os.remove(_file)
+            try:
+                os.remove(_file)
+            except OSError:
+                pass
 
 
 setup(name='gateway_code',
