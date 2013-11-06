@@ -36,9 +36,11 @@ Code development
 
 ### Running tests or deploying ###
 
-Install all the `gateway code`
+Install all the `gateway code` on a gateway
 
-        python setup.py install
+        python setup.py release
+
+It runs the `install` command and the `post_install` procedure.
 
 
 Run unit tests, pylint and pep8:

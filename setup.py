@@ -124,7 +124,10 @@ class Release(_EmptyCommand):
     Meant to be used directly on the gateways """
 
     def run(self):
-        install.run(self)
+        try:
+            ret = subprocess.call(['python', 'setup.py', 'install'])
+        except subprocess.CalledProcessError as err:
+            exit(err.returncode)
         self.post_install()
 
     @staticmethod
@@ -132,6 +135,7 @@ class Release(_EmptyCommand):
         """ Install init.d script
         Add www-data user to dialout group """
         import shutil
+        print >> sys.stderr, 'running post_install'
 
         # setup init script
         init_script = 'gateway-server-daemon'

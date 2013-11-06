@@ -2,6 +2,7 @@
 .coverage
 coverage.xml
 nosetests.xml
+build/
 cover
 *.log
 *.out
