@@ -13,7 +13,6 @@ import os
 from os.path import dirname
 import stat
 
-from string import Template  # pylint: disable=W0402
 from tempfile import NamedTemporaryFile
 
 import atexit
@@ -29,16 +28,16 @@ LOGGER = logging.getLogger('gateway_code')
 CONTROL_NODE_INTERFACE_ARGS = []
 
 
-_OML_XML = Template('''
-<omlc id='${node_id}' exp_id='${exp_id}'>
-  <collect url='file:${consumption}' encoding='text'>
+_OML_XML = '''
+<omlc id='{node_id}' exp_id='{exp_id}'>
+  <collect url='file:{consumption}' encoding='text'>
     <stream name="consumption" mp="consumption" samples='1' />
   </collect>
-  <collect url='file:${radio}' encoding='text'>
+  <collect url='file:{radio}' encoding='text'>
     <stream name="radio" mp="radio" samples='1' />
   </collect>
 </omlc>
-''')
+'''
 
 
 class ControlNodeSerial(object):
@@ -97,10 +96,10 @@ class ControlNodeSerial(object):
             'node_id': config.hostname()
             }
 
-        self.oml_files['consumption'] = Template(
-            config.MEASURES_PATH).substitute(subst_args, type='consumption')
-        self.oml_files['radio'] = Template(
-            config.MEASURES_PATH).substitute(subst_args, type='radio')
+        self.oml_files['consumption'] = \
+            config.MEASURES_PATH.format(type='consumption', **subst_args)
+        self.oml_files['radio'] = \
+            config.MEASURES_PATH.format(type='radio', **subst_args)
 
         # check that the directory exists
         if not (os.access(dirname(self.oml_files['consumption']), os.W_OK) and
@@ -118,9 +117,10 @@ class ControlNodeSerial(object):
                      | stat.S_IROTH | stat.S_IWOTH)
 
         # create a config file with OML_XML config
-        oml_xml_str = _OML_XML.substitute(
-            subst_args, radio=self.oml_files['radio'],
-            consumption=self.oml_files['consumption'])
+        oml_xml_str = _OML_XML.format(
+            radio=self.oml_files['radio'],
+            consumption=self.oml_files['consumption'],
+            **subst_args)
         # create tmp file
         self.oml_config_file = NamedTemporaryFile(suffix='--oml.config')
         self.oml_config_file.write(oml_xml_str)

@@ -46,7 +46,7 @@ FIRMWARES = {
 _BOARD_CONFIG = {}
 
 MEASURES_PATH = \
-    '/iotlab/users/${user}/.senslab/${exp_id}/${type}/${node_id}.oml'
+    '/iotlab/users/{user}/.senslab/{exp_id}/{type}/{node_id}.oml'
 
 
 def hostname():

@@ -161,7 +161,7 @@ class TestControlNodeSerial(unittest.TestCase):
                 pass
 
         with mock.patch('gateway_code.config.MEASURES_PATH',
-                        '/tmp/${type}/${node_id}.oml'):
+                        '/tmp/{type}/{node_id}.oml'):
             self.cn.start(user='harter', exp_id=123)
             self.read_line_called.wait()
 

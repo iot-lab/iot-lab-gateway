@@ -4,7 +4,6 @@ import gateway_code
 import time
 import os
 import recordtype # mutable namedtuple (for small classes)
-from string import Template
 import shutil
 import math
 
@@ -147,9 +146,9 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         ret = self.app.admin_control_soft_reset()
         self.assertEquals(ret, {'ret':0})
 
-        measure_path = Template(gateway_code.config.MEASURES_PATH)
-        self.radio_path = measure_path.substitute(self.exp_conf, type='radio')
-        self.conso_path = measure_path.substitute(self.exp_conf, type='consumption')
+        measure_path = gateway_code.config.MEASURES_PATH
+        self.radio_path = measure_path.format(type='radio', **self.exp_conf)
+        self.conso_path = measure_path.format(type='consumption', **self.exp_conf)
         for measure_file in (self.conso_path, self.radio_path):
             try:
                 folder_path = os.path.dirname(measure_file)
@@ -348,7 +347,7 @@ class TestInvalidCases(GatewayCodeMock):
                 pass
 
         with mock.patch('gateway_code.config.MEASURES_PATH',
-                        '/tmp/${type}/${node_id}.oml'):
+                        '/tmp/{type}/{node_id}.oml'):
             ret = self.app.exp_start(123, 'harter')
             self.assertEquals(ret, {'ret':0})
             ret = self.app.exp_start(123, 'harter') # cannot start started exp

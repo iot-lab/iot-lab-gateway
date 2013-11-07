@@ -4,9 +4,11 @@
 """
 setup.py deployement script
 
-Install command:
+Install all the `gateway code` on a gateway
 
-    python setup.py install
+        python setup.py release
+
+It runs the `install` command and the `post_install` procedure.
 
 Tests commands:
 
@@ -23,7 +25,6 @@ Pylint and pep8 checker:
 """
 
 from setuptools import setup, Command, Extension
-from setuptools.command.install import install
 from setuptools.command.build_ext import build_ext
 
 import sys
@@ -125,7 +126,7 @@ class Release(_EmptyCommand):
 
     def run(self):
         try:
-            ret = subprocess.call(['python', 'setup.py', 'install'])
+            subprocess.call(['python', 'setup.py', 'install'])
         except subprocess.CalledProcessError as err:
             exit(err.returncode)
         self.post_install()
