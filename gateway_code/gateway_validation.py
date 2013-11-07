@@ -237,6 +237,7 @@ class GatewayValidation(object):
             _ = self.on_serial.send_command(['leds_off', '7'])
             if ret_val == 0:
                 _ = self.on_serial.send_command(['leds_blink', '7', '500'])
+                _ = self.g_m.protocol.green_led_blink()
             else:  # pragma: no cover
                 pass
         except FatalError as err:

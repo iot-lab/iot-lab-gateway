@@ -47,6 +47,17 @@ class Protocol(object):
         cmd = ['reset_time']
         return self.send_cmd(cmd)
 
+    def green_led_blink(self):
+        """ Set green led in blinking mode """
+        cmd = ['green_led_blink']
+        return self.send_cmd(cmd)
+
+    def green_led_on(self):
+        """ Set green led on """
+        # reset_time
+        cmd = ['green_led_on']
+        return self.send_cmd(cmd)
+
     def config_consumption(self, consumption=None):
         """
         Configure consumption measures on control node

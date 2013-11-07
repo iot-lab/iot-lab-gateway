@@ -117,6 +117,8 @@ class GatewayManager(object):
         # # # # # # # # # # # # #
         # Prepare Control Node  #
         # # # # # # # # # # # # #
+        ret = self.protocol.green_led_blink()
+        ret_val += ret
         ret = self.open_power_start(power='dc')
         ret_val += ret
         ret = self.reset_time()
@@ -177,6 +179,8 @@ class GatewayManager(object):
         ret = self.exp_update_profile()
         ret_val += ret
         ret = self.open_power_start(power='dc')
+        ret_val += ret
+        ret = self.protocol.green_led_on()
         ret_val += ret
 
         if self.robot == 'roomba':
