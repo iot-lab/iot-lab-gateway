@@ -25,11 +25,16 @@ enum frame_type {
 
 	CONFIG_POWER_POLL    = 0x79,
 
+        //LED management
+        GREEN_LED_ON         = 0xB5,
+        GREEN_LED_BLINK      = 0xB6,
+
         // Error
 	ERROR_FRAME          = 0xEE,
 
         // Command ack for measures handler
         ACK_FRAME            = 0xFA,
+
 
         // Measures
 	RADIO_POLL_FRAME     = 0xFE,

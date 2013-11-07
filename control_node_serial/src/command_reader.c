@@ -109,6 +109,9 @@ struct dict_entry commands_d[] = {
 
         {"config_consumption_measure", CONFIG_POWER_POLL},
 
+        {"green_led_on", GREEN_LED_ON},
+        {"green_led_blink", GREEN_LED_BLINK},
+
         {"test_radio_ping_pong", TEST_RADIO_PING_PONG},
         {"test_gpio", TEST_GPIO},
         {"test_i2c", TEST_I2C},
@@ -282,6 +285,11 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 } else {
                         got_error |= 1;
                 }
+        // leds control
+        } else if ((strcmp(command, "green_led_on") == 0) || \
+                   (strcmp(command, "green_led_blink") == 0)) {
+                got_error |= get_val(command, commands_d, &frame_type);
+                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
         /* Tests commands */
         } else if ((strcmp(command, "test_radio_ping_pong") == 0) || \
                    (strcmp(command, "test_gpio") == 0) || \

@@ -33,7 +33,6 @@ TEST(test_parse_cmd, simple_commands)
         ret = parse_cmd(reset_cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_EQ(1, cmd_buff.u.s.len);
-
         ASSERT_EQ(RESET_TIME, cmd_buff.u.s.payload[0]);
 
         char start_cmd[] = "start dc";
@@ -47,6 +46,18 @@ TEST(test_parse_cmd, simple_commands)
         ASSERT_EQ(0, ret);
         ASSERT_EQ(2, cmd_buff.u.s.len);
         ASSERT_EQ(OPEN_NODE_STOP, cmd_buff.u.s.payload[0]);
+
+        // leds
+        char led_on[] = "green_led_on";
+        ret = parse_cmd(led_on, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(1, cmd_buff.u.s.len);
+        ASSERT_EQ(GREEN_LED_ON, cmd_buff.u.s.payload[0]);
+        char led_blink[] = "green_led_blink";
+        ret = parse_cmd(led_blink, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(1, cmd_buff.u.s.len);
+        ASSERT_EQ(GREEN_LED_BLINK, cmd_buff.u.s.payload[0]);
 }
 
 TEST(test_parse_cmd, consumption)
@@ -307,6 +318,19 @@ TEST(test_write_answer, valid_answers)
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("config_radio_measure ACK\n", print_buff);
+
+        /* leds */
+        data[0] = GREEN_LED_ON;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("green_led_on ACK\n", print_buff);
+
+        data[0] = GREEN_LED_BLINK;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("green_led_blink ACK\n", print_buff);
 
 
         /* test commands */
