@@ -51,6 +51,7 @@ STATIC_FILES = ['static/' + item for item in os.listdir('static')]
 DATA = [(STATIC_FILES_PATH, STATIC_FILES)]
 
 SCRIPTS = ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
+SCRIPTS += ['control_node_serial/' + config.CONTROL_NODE_SERIAL_INTERFACE]
 
 EXT_MODULES = Extension(config.CONTROL_NODE_SERIAL_INTERFACE, [])
 
