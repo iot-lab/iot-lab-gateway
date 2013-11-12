@@ -102,7 +102,7 @@ class GatewayValidation(object):
         board_type = config.board_type()
         # setup open node
         if board_type == 'M3':
-            time.sleep(1)
+            time.sleep(2)
             ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
             ret_val += self._validate(ret, 'flash_m3', ret)
 
