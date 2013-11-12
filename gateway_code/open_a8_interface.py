@@ -53,7 +53,7 @@ class OpenA8Connection(object):
 
     def wait_boot_and_get_ip_address(self):
         """ Wait until open node is booted and get its ip address"""
-        a8_serial = expect.SerialExpect(**config.OPEN_A8_CFG)
+        a8_serial = expect.SerialExpect(verbose=True, **config.OPEN_A8_CFG)
 
         a8_serial.send('')
         ret = a8_serial.expect(' login: ', timeout=120)

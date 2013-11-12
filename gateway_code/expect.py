@@ -21,7 +21,6 @@ class SerialExpect(object):
         self.serial_fd = serial.Serial(tty, baudrate, timeout=0.1)
         self.serial_fd.flushInput()
         self.verb = verbose
-        self.verb = True  # TODO REMOVE
 
     def __del__(self):
         self.serial_fd.close()

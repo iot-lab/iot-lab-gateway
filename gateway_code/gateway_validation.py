@@ -202,6 +202,7 @@ class GatewayValidation(object):
             # switch to DN and configure open node
             self.setup_open_node_connection()
             self.check_get_time()
+            self.get_uid()
 
             ##
             ## Other tests, run on DC
@@ -283,6 +284,22 @@ class GatewayValidation(object):
             raise FatalError("get_time failed. " +
                              "Can't communicate with M3 node")
 
+    def get_uid(self):
+        """ runs the 'get_uid' command
+        And add the resulting UID to the global return dictionary
+        """
+        # get_uid: ['ACK', 'UID', '=', '05D8FF323632483343037109']
+        answer = self.on_serial.send_command(['get_uid'])
+        ret = (answer is not None) and (['ACK', 'UID'] == answer[:2])
+
+        # return UID
+        uid_str = answer[3]
+        uid = ':'.join([uid_str[i:i+4] for i in range(0, len(uid_str), 4)])
+        self.ret_dict['open_node_m3_uid'] = uid
+
+        ret_val = self._validate(
+            int(not ret), 'get_uid', answer)
+        return ret_val
 #
 # sensors and flash
 #

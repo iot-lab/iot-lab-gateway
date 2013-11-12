@@ -35,19 +35,22 @@ COMMAND_DICT = {
     'get_gyro': 0x05,
     'get_accelero': 0x06,
     'get_magneto': 0x07,
-    # flash
+
     'test_flash': 0x08,
-    # TBD
-    'test_i2c': 0x09,
-    # 'test_gpio_pps': 0x0A,  # not implemented
 
     # radio
     'radio_pkt': 0x0B,
     'radio_ping_pong': 0xBB,
-    'test_gpio': 0xBE,
 
-    # get_time
+    # 'test_gpio_pps': 0x0A,  # not implemented
+
+    # test ON-CN communication
+    'test_gpio': 0xBE,
+    'test_i2c': 0x09,
+
+    # get_ commands
     'get_time': 0x0D,
+    'get_uid': 0x0E,
 }
 
 
