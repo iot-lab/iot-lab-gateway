@@ -42,11 +42,11 @@ run: all $(TEST_RESULTS)
 coverage: run  $(RESULTDIR)/c_code_coverage.xml
 
 
+GCOVRFLAGS  = -b -r '../../../../' -e '.*/tests'
 $(RESULTDIR)/c_code_coverage.xml: $(TEST_RESULTS)
-	$(call quiet-cmd, gcovr -r '../../../../' -e '.*/tests' -x >$@, \
-		"  GCOV  $@")
-	$(call quiet-cmd, gcovr -r '../../../../' -e '.*/tests' \
-		-f'.*/gateway_code_python/',"  GCOV  STDOUT")
+	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -x -o $@, "  GCOV  $@")
+	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -f'.*/gateway_code_python/', \
+		"  GCOV  STDOUT")
 
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
 	$(call quiet-cmd, ./$^ --gtest_output=xml:$@, "  $^")
