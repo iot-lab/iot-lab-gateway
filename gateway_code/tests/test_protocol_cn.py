@@ -105,6 +105,17 @@ class TestProtocol(unittest.TestCase):
         self.sender.assert_called_with(['reset_time'])
         self.assertEquals(1, ret)
 
+    def test_led_control(self):
+
+        self.sender.return_value = ['green_led_blink', 'ACK']
+        ret = self.protocol.green_led_blink()
+        self.sender.assert_called_with(['green_led_blink'])
+        self.assertEquals(0, ret)
+
+        self.sender.return_value = ['green_led_on', 'ACK']
+        ret = self.protocol.green_led_on()
+        self.sender.assert_called_with(['green_led_on'])
+        self.assertEquals(0, ret)
 
 
 class TestProtocolRadio(unittest.TestCase):

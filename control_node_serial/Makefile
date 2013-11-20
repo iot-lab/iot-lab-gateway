@@ -33,13 +33,16 @@ DEPS       = $(SRCS:$(SRCDIR)/%.c=$(OBJDIR)/%.d)
 SRCDIR     = src
 OBJDIR     = obj
 
-.PHONY: all clean realclean run test
+.PHONY: all clean realclean run test tests
 .DEFAULT: all
 
 all: $(OBJDIR) $(TARGET)
 
+
 run: all
 	./$(TARGET)
+
+tests: test
 test: all
 	make -C tests --no-print-directory run
 coverage: all

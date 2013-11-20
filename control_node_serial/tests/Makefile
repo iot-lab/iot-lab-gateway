@@ -1,4 +1,4 @@
-.PHONY: all run clean realclean
+.PHONY: all run clean realclean gcovr
 quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
 
 
@@ -39,7 +39,15 @@ empty_test.c: $(wildcard $(SRCDIR)/*.c) $(SRCS)
 
 
 run: all $(TEST_RESULTS)
-coverage: run  $(RESULTDIR)/c_code_coverage.xml
+coverage: run gcovr $(RESULTDIR)/c_code_coverage.xml
+
+
+gcovr:
+	@gcovr --version > /dev/null || { echo "Missing dependency 'gcovr'. Install it with "; \
+		echo ""; \
+		echo "    # pip install gcovr"; \
+		echo ""; false ; }
+
 
 
 GCOVRFLAGS  = -b -r '../../../../' -e '.*/tests'
