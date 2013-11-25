@@ -56,7 +56,8 @@ class OpenA8Connection(object):
         a8_serial = expect.SerialExpect(verbose=True, **config.OPEN_A8_CFG)
 
         a8_serial.send('')
-        ret = a8_serial.expect(' login: ', timeout=120)
+        # timeout 4 minutes -> max 5 minutes for all tests
+        ret = a8_serial.expect(' login: ', timeout=240)
         if not ret:
             raise A8ConnectionError("Open node didn't booted: %r" % ret)
 
