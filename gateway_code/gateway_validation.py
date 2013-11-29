@@ -348,7 +348,7 @@ class GatewayValidation(object):
 
         if (len(set(values)) == 1 and values[0] < 0.20):
             # test fails when run with low light, like at night
-            LOGGER.warning("Got the same value which is '%f'" % values[0])
+            LOGGER.warning("Got the same value which is '%f'", values[0])
             self.ret_dict['warning'] = {'get_light_value': values[0]}
             got_diff_values = 0
         else:
