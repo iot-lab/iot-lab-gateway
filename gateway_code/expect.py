@@ -42,8 +42,7 @@ class SerialExpect(object):
         It cannot match multiline pattern correctly """
 
         if '\n' in pattern:
-            print 'expect cannot accurately match multiline patterns'
-            print 'it may fail depending on the runtime cases'
+            raise ValueError("Does not handle multiline patterns with '\\n'")
 
         end_time = time.time() + timeout
 
