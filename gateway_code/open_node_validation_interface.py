@@ -91,12 +91,16 @@ class OpenNodeSerial(object):
         # open serial
         tty = tty or config.NODES_CFG['m3']['tty']
         baudrate = config.NODES_CFG['m3']['baudrate']
-        self.serial_fd = serial.Serial(tty, baudrate, timeout=0.5)
-        self.serial_fd.flushInput()
+        try:
+            self.serial_fd = serial.Serial(tty, baudrate, timeout=0.5)
+            self.serial_fd.flushInput()
 
-        # start reader thread
-        self.reader_thread = threading.Thread(target=self._serial_reader)
-        self.reader_thread.start()
+            # start reader thread
+            self.reader_thread = threading.Thread(target=self._serial_reader)
+            self.reader_thread.start()
+        except serial.SerialException as err:
+            return 1, str(err)
+        return 0, 'OK'
 
     def stop(self):
         """ Stop serial interface """

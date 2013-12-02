@@ -108,7 +108,8 @@ class GatewayValidation(object):
 
             self.on_serial = open_node_validation_interface.OpenNodeSerial()
             time.sleep(1)
-            self.on_serial.start()
+            ret, err_msg = self.on_serial.start()
+            ret_val += self._validate(ret, 'open_M3_serial', err_msg)
 
         elif board_type == 'A8':
             try:
@@ -139,7 +140,9 @@ class GatewayValidation(object):
                 self.on_serial = open_node_validation_interface.\
                     OpenNodeSerial()
                 time.sleep(1)
-                self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
+                ret, err_msg = self.on_serial.start(
+                    tty=open_a8_interface.A8_TTY_PATH)
+                ret_val += self._validate(ret, 'open_A8_serial', err_msg)
 
         if 0 != ret_val:
             raise FatalError('Setup Open Node failed')
