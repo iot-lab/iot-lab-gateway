@@ -8,7 +8,7 @@ auto tests implementation
 import time
 import Queue
 
-from subprocess import Popen, PIPE, STDOUT
+from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from serial import SerialException
 
 from gateway_code import config
@@ -132,18 +132,22 @@ class GatewayValidation(object):
                 self.ret_dict['mac']['A8'] = self.a8_connection.get_mac_addr()
 
                 # open A8 flash
-                self.a8_connection.ssh_run(
-                    'source /etc/profile; ' +
-                    '/home/root/bin/flash_a8.sh ' +
-                    '/var/lib/gateway_code/a8_autotest.elf')
-                time.sleep(5)
-
-                self.on_serial = open_node_validation_interface.\
-                    OpenNodeSerial()
-                time.sleep(1)
-                ret, err_msg = self.on_serial.start(
-                    tty=open_a8_interface.A8_TTY_PATH)
-                ret_val += self._validate(ret, 'open_A8_serial', err_msg)
+                try:
+                    self.a8_connection.ssh_run(
+                        'source /etc/profile; ' +
+                        '/home/root/bin/flash_a8.sh ' +
+                        '/var/lib/gateway_code/a8_autotest.elf')
+                    time.sleep(5)
+                except CalledProcessError as err:
+                    ret_val += self._validate(
+                        1, 'flash_a8.sh a8_autotests failed', str(err))
+                else:
+                    self.on_serial = open_node_validation_interface.\
+                        OpenNodeSerial()
+                    time.sleep(1)
+                    ret, err_msg = self.on_serial.start(
+                        tty=open_a8_interface.A8_TTY_PATH)
+                    ret_val += self._validate(ret, 'open_A8_serial', err_msg)
 
         if 0 != ret_val:
             raise FatalError('Setup Open Node failed')
