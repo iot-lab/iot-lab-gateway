@@ -83,6 +83,12 @@ class OpenA8Connection(object):
         # wait until boot
         self.wait_boot_and_get_ip_address()
 
+        # test if config OK for OPEN A8 m3
+        output = self.ssh_run('ftdi-devices-list')
+        if not 'FITECO A8' in output:
+            raise A8ConnectionError("Open A8 doesn't have it's M3 configured")
+
+
         # remote TTY
         socat_cmd = SOCAT_CMD.format(port=port, tty=config_a8['tty'],
                                      baudrate=config_a8['baudrate'])
