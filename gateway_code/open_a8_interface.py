@@ -36,12 +36,13 @@ MAC_CMD = ('ip link show dev eth0 ' +
 
 class A8ConnectionError(Exception):
     """ FatalError during tests """
-    def __init__(self, value):
+    def __init__(self, value, err_msg):
         super(A8ConnectionError, self).__init__()
         self.value = value
+        self.err_msg = err_msg
 
     def __str__(self):
-        return repr(self.value)
+        return repr(self.value) + ' : ' + repr(self.err_msg)
 
 
 class OpenA8Connection(object):
@@ -61,7 +62,8 @@ class OpenA8Connection(object):
         ret = a8_serial.expect(' login: ', timeout=300)
         LOGGER.debug("Time after boot %s", datetime.datetime.now())
         if not ret:
-            raise A8ConnectionError("Open node didn't booted: %r" % ret)
+            raise A8ConnectionError("Open node didn't booted: %r" % ret,
+                                    'boot_timeout')
 
         a8_serial.send('root')
         a8_serial.expect('# ')
@@ -69,8 +71,8 @@ class OpenA8Connection(object):
         a8_serial.send(IP_CMD)
         ip_address = a8_serial.expect(r'\d+\.\d+\.\d+.\d+', timeout=10)
         if not ret:
-            raise A8ConnectionError(
-                "Invalid Ip address caught %r" % ip_address)
+            raise A8ConnectionError("Invalid Ip address",
+                                    "invalid_ip:%r" % ip_address)
         a8_serial.send('exit')
 
         self.ip_addr = ip_address
@@ -86,7 +88,8 @@ class OpenA8Connection(object):
         # test if config OK for OPEN A8 m3
         output = self.ssh_run('ftdi-devices-list')
         if not 'FITECO A8' in output:
-            raise A8ConnectionError("Open A8 doesn't have it's M3 configured")
+            raise A8ConnectionError("Open A8 doesn't have M3 configured",
+                                    "Open_A8_m3_ftdi_not_configured")
 
 
         # remote TTY
@@ -108,7 +111,8 @@ class OpenA8Connection(object):
                 self.remote_tty.poll() is not None):
             self.remote_tty.terminate()
             self.local_tty.terminate()
-            raise A8ConnectionError("Socat commands shut down too early")
+            raise A8ConnectionError("Socat commands shut down too early",
+                                    "socat_terminated")
 
     def stop(self):
         """ Stop redirection of open_A8 M3 node serial """

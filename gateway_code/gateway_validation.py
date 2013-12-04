@@ -125,7 +125,8 @@ class GatewayValidation(object):
             except SerialException as err:
                 ret_val += self._validate(1, 'access_A8_serial_port', str(err))
             except open_a8_interface.A8ConnectionError as err:
-                ret_val += self._validate(1, 'error_in_open_a8_init', str(err))
+                ret_val += self._validate(
+                    1, 'error_in_open_a8_init: %s' % err.err_msg, str(err))
             else:
                 # save mac address
                 self.ret_dict['mac']['A8'] = self.a8_connection.get_mac_addr()
