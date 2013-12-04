@@ -56,10 +56,11 @@ class OpenA8Connection(object):
         a8_serial = expect.SerialExpect(verbose=True, **config.OPEN_A8_CFG)
 
         import datetime
-        print datetime.datetime.now()
+        import sys
+        sys.stdout.write("time before %r" % datetime.datetime.now()
         # timeout 4 minutes -> max 5 minutes for all tests
         ret = a8_serial.expect(' login: ', timeout=300)
-        print datetime.datetime.now()
+        sys.stdout.write("time after %r" % datetime.datetime.now()
         if not ret:
             raise A8ConnectionError("Open node didn't booted: %r" % ret)
 
