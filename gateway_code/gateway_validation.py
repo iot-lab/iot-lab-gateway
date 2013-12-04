@@ -582,8 +582,14 @@ class GatewayValidation(object):
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
         for _ in range(0, 10):
-            val = self._get_measure(timeout=1).split(' ')
-            values.append(tuple([float(meas) for meas in val[3:6]]))
+            try:
+                val = self._get_measure(timeout=1).split(' ')
+                values.append(tuple([float(meas) for meas in val[3:6]]))
+            except AttributeError:
+                # 'NoneType' object has no attribute 'split'
+                # control_node_serial exited (it happened)
+                LOGGER.debug('consumption_measure val == %r', val)
+
         got_diff_values = 0 if (1 < len(set(values))) else 1
         ret_val += self._validate(got_diff_values, 'consumption_batt', values)
 
