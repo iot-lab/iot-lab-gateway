@@ -58,8 +58,8 @@ class OpenA8Connection(object):
 
         import datetime
         LOGGER.debug("Time before boot %s", datetime.datetime.now())
-        # timeout 4 minutes -> max 5 minutes for all tests
-        ret = a8_serial.expect(' login: ', timeout=300)
+        # boot timeout 2 minutes (seen 50 seconds for a boot in tests)
+        ret = a8_serial.expect(' login: ', timeout=120)
         LOGGER.debug("Time after boot %s", datetime.datetime.now())
         if not ret:
             raise A8ConnectionError("Open node didn't booted: %r" % ret,
