@@ -586,6 +586,7 @@ class GatewayValidation(object):
         # measures_debug: consumption_measure
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
+        val = None
         for _ in range(0, 10):
             try:
                 val = self._get_measure(timeout=1).split(' ')
