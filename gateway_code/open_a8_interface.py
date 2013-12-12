@@ -85,6 +85,14 @@ class OpenA8Connection(object):
         # wait until boot
         self.wait_boot_and_get_ip_address()
 
+        try:
+            output = self.ssh_run('cat /tmp/boot_errors')
+        except CalledProcessError:
+            pass  # file does not exist, don't care
+        else:
+            if len(output):
+                raise A8ConnectionError("Open A8 FTDI config failed", output)
+
         # test if config OK for OPEN A8 m3
         output = self.ssh_run('ftdi-devices-list')
         if not 'FITECO A8' in output:
