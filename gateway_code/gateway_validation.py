@@ -113,6 +113,7 @@ class GatewayValidation(object):
 
         elif board_type == 'A8':
             try:
+                time.sleep(2)  # wait ftdi
                 # wait nodes booting
                 self.a8_connection = open_a8_interface.OpenA8Connection()
 
