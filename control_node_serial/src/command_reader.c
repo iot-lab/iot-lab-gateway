@@ -115,6 +115,8 @@ struct dict_entry commands_d[] = {
         {"test_radio_ping_pong", TEST_RADIO_PING_PONG},
         {"test_gpio", TEST_GPIO},
         {"test_i2c", TEST_I2C},
+        {"test_pps", TEST_PPS},
+        {"test_got_pps", TEST_GOT_PPS},
         {NULL, 0},
 };
 struct dict_entry radio_state_d[] = {
@@ -285,15 +287,17 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 } else {
                         got_error |= 1;
                 }
-        // leds control
+        // leds control and no args commands
         } else if ((strcmp(command, "green_led_on") == 0) || \
-                   (strcmp(command, "green_led_blink") == 0)) {
+                   (strcmp(command, "green_led_blink") == 0) || \
+                   (strcmp(command, "test_got_pps") == 0)) {
                 got_error |= get_val(command, commands_d, &frame_type);
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
-        /* Tests commands */
+        /* Tests commands (start stop)*/
         } else if ((strcmp(command, "test_radio_ping_pong") == 0) || \
                    (strcmp(command, "test_gpio") == 0) || \
-                   (strcmp(command, "test_i2c") == 0)) {
+                   (strcmp(command, "test_i2c") == 0) || \
+                   (strcmp(command, "test_pps") == 0)) {
                 got_error |= get_val(command, commands_d, &frame_type);
                 cmd_buff->u.s.payload[cmd_buff->u.s.len++] = frame_type;
 

@@ -232,6 +232,26 @@ TEST(test_parse_cmd, test_commands)
         ASSERT_EQ(0, ret);
         ASSERT_EQ(2, cmd_buff.u.s.len);
         ASSERT_EQ(TEST_I2C, cmd_buff.u.s.payload[0]);
+
+        /* pps */
+        char pps_start[] = "test_pps start";
+        ret = parse_cmd(pps_start, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_PPS, cmd_buff.u.s.payload[0]);
+
+        char pps_stop[] = "test_pps stop";
+        ret = parse_cmd(pps_stop, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(2, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_PPS, cmd_buff.u.s.payload[0]);
+
+        char pps_got[] = "test_got_pps";
+        ret = parse_cmd(pps_got, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(1, cmd_buff.u.s.len);
+        ASSERT_EQ(TEST_GOT_PPS, cmd_buff.u.s.payload[0]);
+
 }
 
 /*
@@ -351,6 +371,18 @@ TEST(test_write_answer, valid_answers)
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("test_i2c ACK\n", print_buff);
+
+        data[0] = TEST_PPS;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("test_pps ACK\n", print_buff);
+
+        data[0] = TEST_GOT_PPS;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("test_got_pps ACK\n", print_buff);
 }
 
 TEST(test_write_answer, invalid_answers)

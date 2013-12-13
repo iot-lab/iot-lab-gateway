@@ -10,40 +10,44 @@ enum defines {
 // type byte
 enum frame_type {
         // Commands
-	OPEN_NODE_START      = 0x70,
-	OPEN_NODE_STOP       = 0x71,
+        OPEN_NODE_START      = 0x70,
+        OPEN_NODE_STOP       = 0x71,
 
-	RESET_TIME           = 0x72,
+        RESET_TIME           = 0x72,
 
         // Measure config
-	CONFIG_RADIO         = 0x74,
-	CONFIG_RADIO_POLL    = 0x75,
-	CONFIG_RADIO_NOISE   = 0x76,
-	CONFIG_SNIFFER       = 0x77,
+        CONFIG_RADIO         = 0x74,
+        CONFIG_RADIO_POLL    = 0x75,
+        CONFIG_RADIO_NOISE   = 0x76,
+        CONFIG_SNIFFER       = 0x77,
 
-	CONFIG_SENSOR        = 0x78,
+        CONFIG_SENSOR        = 0x78,
 
-	CONFIG_POWER_POLL    = 0x79,
+        CONFIG_POWER_POLL    = 0x79,
 
         //LED management
         GREEN_LED_ON         = 0xB5,
         GREEN_LED_BLINK      = 0xB6,
 
         // Error
-	ERROR_FRAME          = 0xEE,
+        ERROR_FRAME          = 0xEE,
 
         // Command ack for measures handler
         ACK_FRAME            = 0xFA,
 
 
         // Measures
-	RADIO_POLL_FRAME     = 0xFE,
-	PW_POLL_FRAME        = 0xFF,
+        RADIO_POLL_FRAME     = 0xFE,
+        PW_POLL_FRAME        = 0xFF,
 
         // Test commands
-	TEST_RADIO_PING_PONG = 0xBB,
-	TEST_GPIO = 0xBE,
-	TEST_I2C = 0xB9,
+        TEST_RADIO_PING_PONG = 0xBB,
+        TEST_GPIO            = 0xBE,
+        TEST_I2C             = 0xB9,
+
+        TEST_PPS             = 0xBC,
+        TEST_GOT_PPS         = 0xBD,
+
 };
 
 enum ack_nack {
@@ -52,7 +56,7 @@ enum ack_nack {
 };
 
 enum alimentation {
-	BATTERY = 0x0,
+        BATTERY = 0x0,
         DC      = 0x1,
 };
 
@@ -62,10 +66,10 @@ enum radio_config {
 };
 
 enum cn_error_t {
-	OK                         = 0,
+        OK                         = 0,
         NETWORK_QUEUE_OVERFLOW     = -1,
         APPLICATION_QUEUE_OVERFLOW = -2,
-	DEFENSIVE                  = -3,
+        DEFENSIVE                  = -3,
 };
 
 /* consumption config */
