@@ -4,7 +4,7 @@
 import unittest
 import mock
 
-from gateway_code import gateway_validation
+from gateway_code.autotest import gateway_validation
 
 
 class TestProtocol(unittest.TestCase):
@@ -14,7 +14,7 @@ class TestProtocol(unittest.TestCase):
         gateway_manager = mock.Mock()
         self.g_v = gateway_validation.GatewayValidation(gateway_manager)
 
-    @mock.patch('gateway_code.gateway_validation.LOGGER')
+    @mock.patch('gateway_code.autotest.gateway_validation.LOGGER')
     def test_validate(self, mock_logger):
 
         self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}
@@ -65,6 +65,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.g_v = gateway_validation.GatewayValidation(gateway_manager)
 
     @mock.patch('gateway_code.config.board_type', lambda: 'M3')
+    #@mock.patch('gateway_code.autotest.config.board_type', lambda: 'M3')
     def test_fail_on_setup_control_node(self):
         def setup(*args, **kwargs):
             self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}

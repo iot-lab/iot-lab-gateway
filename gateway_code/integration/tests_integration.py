@@ -308,7 +308,7 @@ class TestAutoTests(GatewayCodeMock):
 
         # test that ON still on => should be blinking and answering
         if gateway_code.config.board_type() == 'M3':
-            open_serial = gateway_code.open_node_validation_interface.\
+            open_serial = gateway_code.autotest.open_node_validation_interface.\
                 OpenNodeSerial()
             open_serial.start()
             answer = open_serial.send_command(['get_time'])
@@ -317,7 +317,7 @@ class TestAutoTests(GatewayCodeMock):
 
     def test_mode_no_blink_no_radio(self):
 
-        g_v = gateway_code.gateway_validation.GatewayValidation(
+        g_v = gateway_code.autotest.gateway_validation.GatewayValidation(
                 self.app.gateway_manager)
         # radio functions
         g_v.test_radio_ping_pong = mock.Mock()

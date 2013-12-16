@@ -10,7 +10,7 @@ from gateway_code import config
 from gateway_code import openocd_cmd
 from gateway_code.profile import Profile
 from gateway_code.serial_redirection import SerialRedirection
-from gateway_code import gateway_validation
+from gateway_code.autotest import gateway_validation
 
 from gateway_code import control_node_interface, protocol_cn
 

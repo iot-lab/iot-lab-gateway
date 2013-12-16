@@ -5,7 +5,7 @@ import mock
 import Queue
 import time
 
-from gateway_code import expect
+from gateway_code.autotest import expect
 
 
 class TestSerialExpect(unittest.TestCase):

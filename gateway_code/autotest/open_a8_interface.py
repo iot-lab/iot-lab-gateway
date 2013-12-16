@@ -8,7 +8,7 @@ import shlex
 import time
 
 from gateway_code import config
-from gateway_code import expect
+from gateway_code.autotest import expect
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 
 import logging
@@ -98,7 +98,6 @@ class OpenA8Connection(object):
         if not 'FITECO A8' in output:
             raise A8ConnectionError("Open A8 doesn't have M3 configured",
                                     "Open_A8_m3_ftdi_not_configured")
-
 
         # remote TTY
         socat_cmd = SOCAT_CMD.format(port=port, tty=config_a8['tty'],

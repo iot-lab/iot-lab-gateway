@@ -11,9 +11,10 @@ import Queue
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from serial import SerialException
 
-from gateway_code import config
-from gateway_code import open_node_validation_interface
-from gateway_code import open_a8_interface
+# config should be accessed through gateway_code to allow testing...
+import gateway_code
+from gateway_code.autotest import open_node_validation_interface
+from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
 
 import logging
@@ -99,11 +100,12 @@ class GatewayValidation(object):
         ret_val = 0
         ret_val += self.g_m.open_power_start(power='dc')
 
-        board_type = config.board_type()
+        board_type = gateway_code.config.board_type()
         # setup open node
         if board_type == 'M3':
             time.sleep(2)
-            ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+            ret = self.g_m.node_flash(
+                'm3', gateway_code.config.FIRMWARES['m3_autotest'])
             ret_val += self._validate(ret, 'flash_m3', ret)
 
             self.on_serial = open_node_validation_interface.OpenNodeSerial()
@@ -188,7 +190,7 @@ class GatewayValidation(object):
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
-        board_type = config.board_type()
+        board_type = gateway_code.config.board_type()
         is_m3 = 'M3' == board_type
 
         try:
@@ -534,7 +536,8 @@ class GatewayValidation(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption(power_source='dc', board_type=config.board_type(),
+        conso = Consumption(power_source='dc',
+                            board_type=gateway_code.config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')
@@ -570,7 +573,8 @@ class GatewayValidation(object):
         # on A8, linux is consuming enough I think
         if 'M3' == board_type:
             time.sleep(1)
-            ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+            ret = self.g_m.node_flash(
+                'm3', gateway_code.config.FIRMWARES['m3_autotest'])
             ret_val += self._validate(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption
@@ -612,7 +616,8 @@ class GatewayValidation(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption(power_source='dc', board_type=config.board_type(),
+        conso = Consumption(power_source='dc',
+                            board_type=gateway_code.config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')

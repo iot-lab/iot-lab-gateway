@@ -6,7 +6,7 @@ import mock
 
 import threading
 import Queue
-from gateway_code import open_node_validation_interface
+from gateway_code.autotest import open_node_validation_interface
 
 import sys
 
