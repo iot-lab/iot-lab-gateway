@@ -10,7 +10,7 @@ from gateway_code import config
 from gateway_code import openocd_cmd
 from gateway_code.profile import Profile
 from gateway_code.serial_redirection import SerialRedirection
-from gateway_code.autotest import gateway_validation
+from gateway_code.autotest import autotest
 
 from gateway_code import control_node_interface, protocol_cn
 
@@ -315,5 +315,5 @@ class GatewayManager(object):
         """
         Run Auto-tests on nodes and gateway
         """
-        gw_validation = gateway_validation.GatewayValidation(self)
-        return gw_validation.auto_tests(channel, blink)
+        autotest_manager = autotest.AutoTestManager(self)
+        return autotest_manager.auto_tests(channel, blink)

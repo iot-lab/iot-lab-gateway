@@ -6,7 +6,7 @@ import mock
 
 import threading
 import Queue
-from gateway_code.autotest import open_node_validation_interface
+from gateway_code.autotest import m3_node_interface
 
 import sys
 
@@ -14,7 +14,7 @@ import sys
 class TestOpenNodeAutoTestInterface(unittest.TestCase):
 
     def setUp(self):
-        self.on_interface = open_node_validation_interface.OpenNodeSerial()
+        self.on_interface = m3_node_interface.OpenNodeSerial()
         self.serial_patcher = mock.patch('serial.Serial')
         serial_class = self.serial_patcher.start()
         self.serial = serial_class.return_value
@@ -86,7 +86,7 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
     def test_serial_send_cmd(self, mock_queue_class):
         mock_queue = mock_queue_class.return_value
         # reinit interface to apply mock
-        self.on_interface = open_node_validation_interface.OpenNodeSerial()
+        self.on_interface = m3_node_interface.OpenNodeSerial()
         self.on_interface.start()
 
         # got answer
@@ -118,7 +118,7 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         self.serial.readline.side_effect = readline_mock
 
         # reinit interface to apply mock
-        self.on_interface = open_node_validation_interface.OpenNodeSerial()
+        self.on_interface = m3_node_interface.OpenNodeSerial()
         self.on_interface.start()
         self.readline_called.wait(5)
         self.assertTrue(self.readline_called.is_set())

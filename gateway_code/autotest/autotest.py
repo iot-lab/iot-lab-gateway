@@ -13,7 +13,7 @@ from serial import SerialException
 
 # config should be accessed through gateway_code to allow testing...
 import gateway_code
-from gateway_code.autotest import open_node_validation_interface
+from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
 
@@ -34,7 +34,7 @@ class FatalError(Exception):
         return repr(self.value)
 
 
-class GatewayValidation(object):
+class AutoTestManager(object):
     """ Gateway and open node auto tests """
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
@@ -108,7 +108,7 @@ class GatewayValidation(object):
                 'm3', gateway_code.config.FIRMWARES['m3_autotest'])
             ret_val += self._validate(ret, 'flash_m3', ret)
 
-            self.on_serial = open_node_validation_interface.OpenNodeSerial()
+            self.on_serial = m3_node_interface.OpenNodeSerial()
             time.sleep(1)
             ret, err_msg = self.on_serial.start()
             ret_val += self._validate(ret, 'open_M3_serial', err_msg)
@@ -145,7 +145,7 @@ class GatewayValidation(object):
                     ret_val += self._validate(
                         1, 'flash_a8.sh a8_autotests failed', str(err))
                 else:
-                    self.on_serial = open_node_validation_interface.\
+                    self.on_serial = m3_node_interface.\
                         OpenNodeSerial()
                     time.sleep(1)
                     ret, err_msg = self.on_serial.start(
