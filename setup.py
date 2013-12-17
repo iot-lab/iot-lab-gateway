@@ -289,7 +289,7 @@ setup(name='gateway_code',
       author='SensLAB Team',
       author_email='admin@senslab.info',
       url='http://www.senslab.info',
-      packages=['gateway_code', 'roomba'],
+      packages=['gateway_code', 'gateway_code.autotest', 'roomba'],
       scripts=SCRIPTS,
       data_files=DATA,
 
