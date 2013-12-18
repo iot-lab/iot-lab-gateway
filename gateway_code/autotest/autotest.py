@@ -375,11 +375,11 @@ class AutoTestManager(object):
         """ Test the pps on open A8 m3 node"""
         ret_val = 0
 
-        _ = self.on_serial.send_command(['test_pps start'])
+        _ = self.on_serial.send_command(['test_pps_start'])
         time.sleep(5)
 
         # ACK GPS_PPS_STOP = 6 pps
-        answer = self.on_serial.send_command(['test_pps stop'])
+        answer = self.on_serial.send_command(['test_pps_stop'])
         ret = (answer is not None) and (['ACK', 'GPS_PPS_STOP'] == answer[:2])
         if not ret:
             return self._validate(ret, 'test_pps_invalid_answer', answer)

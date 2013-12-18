@@ -42,11 +42,12 @@ COMMAND_DICT = {
     'radio_pkt': 0x0B,
     'radio_ping_pong': 0xBB,
 
-    # 'test_gpio_pps': 0x0A,  # not implemented
 
     # test ON-CN communication
     'test_gpio': 0xBE,
     'test_i2c': 0x09,
+    'test_pps_start': 0x0A,
+    'test_pps_stop': 0x1A,
 
     # get_ commands
     'get_time': 0x0D,
