@@ -93,7 +93,7 @@ class AutoTestManager(object):
         if 0 != ret_val:
             raise FatalError('Setup control node failed')
 
-    def setup_open_node_connection(self):
+    def _setup_open_node_connection(self):
         """ Setup the connection with Open Node
         Should be done on DC"""
 
@@ -185,7 +185,7 @@ class AutoTestManager(object):
 
         return self._validate(ret_val, 'teardown', ret_val)
 
-    def auto_tests(self, channel=None, blink=False):
+    def auto_tests(self, channel=None, blink=False, gps=False):
         """
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
@@ -211,7 +211,7 @@ class AutoTestManager(object):
             ret_val += self.test_consumption_batt(board_type)
 
             # switch to DN and configure open node
-            self.setup_open_node_connection()
+            self._setup_open_node_connection()
             self.check_get_time()
             self.get_uid()
 
@@ -244,6 +244,8 @@ class AutoTestManager(object):
                 ret_val += self.test_pressure()
                 ret_val += self.test_flash()
                 ret_val += self.test_light()
+            if gps:
+                ret_val += self.test_gps()
 
             # set_leds
             _ = self.on_serial.send_command(['leds_off', '7'])
@@ -365,6 +367,37 @@ class AutoTestManager(object):
         else:
             got_diff_values = int(not(1 < len(set(values))))
         return self._validate(got_diff_values, 'get_light', values)
+
+#
+# Test GPS
+#
+    def _test_pps_open_node(self):
+        """ Test the pps on open A8 m3 node"""
+        ret_val = 0
+
+        _ = self.on_serial.send_command(['test_pps_start'])
+        time.sleep(5)
+
+        # ACK GPS_PPS_STOP = 6 pps
+        answer = self.on_serial.send_command(['test_pps_stop'])
+        ret = (answer is not None) and (['ACK', 'GPS_PPS_STOP'] == answer[:2])
+        if not ret:
+            return self._validate(ret, 'test_pps_invalid_answer', answer)
+
+        # Check pps count
+        pps_count = int(answer[3])
+        ret = int(not(0 != pps_count))
+
+        ret_val = self._validate(ret, 'test_pps_open_node', pps_count)
+        return ret_val
+
+    def test_gps(self):
+        """ Test the gps """
+        ret_val = 0
+        ret_val += self._test_pps_open_node()
+
+        ret_val = self._validate(ret_val, 'test_gps', ret_val)
+        return ret_val
 
 #
 # Control Node <--> Open Node Interraction

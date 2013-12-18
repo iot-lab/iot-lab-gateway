@@ -290,6 +290,7 @@ class TestAutoTests(GatewayCodeMock):
 
         self.request.query = mock.Mock()
         self.request.query.channel = '22'
+        self.request.query.gps = ''
 
         # call using rest
         ret_dict = self.app.auto_tests(mode='blink')
