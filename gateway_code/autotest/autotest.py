@@ -268,13 +268,13 @@ class AutoTestManager(object):
 
     def _validate(self, ret, message, log_message=''):
         """ validate an return and print log if necessary """
-        if ret == 0:
+        if not(ret):
             self.ret_dict['success'].append(message)
             LOGGER.debug('autotest: %r OK: %r', message, log_message)
         else:
             self.ret_dict['error'].append(message)
             LOGGER.error('Autotest: %r: %r', message, log_message)
-        return ret
+        return int(ret)
 
 #
 # Test implementation
@@ -376,33 +376,43 @@ class AutoTestManager(object):
         # TODO Roger
         # wait that GPS is ready or timeout
         time.sleep(60)
-        return 0
-
+        ret = 0
+        ret_val = self._validate(ret, 'wait_gps_serial', "TODO TODO")
+        return ret_val
 
     def _test_pps_open_node(self):
         """ Test the pps on open A8 m3 node"""
         ret_val = 0
 
-        _ = self.on_serial.send_command(['test_pps_start'])
-        time.sleep(5)
-
-        # ACK GPS_PPS_STOP = 6 pps
-        answer = self.on_serial.send_command(['test_pps_stop'])
-        ret = (answer is not None) and (['ACK', 'GPS_PPS_STOP'] == answer[:2])
+        # start pps on open node
+        answer = self.on_serial.send_command(['test_pps_start'])
+        ret = (answer is not None) and (['ACK', 'GPS_PPS_START'])
         if not ret:
-            return self._validate(ret, 'test_pps_invalid_answer', answer)
+            return self._validate(not(ret), 'test_pps_start_failed', answer)
 
-        # Check pps count
-        pps_count = int(answer[3])
-        ret = int(not(0 != pps_count))
+        # try to get pps for max 2 min
+        end_time = time.time() + 120
+        while time.time() < end_time:
+            time.sleep(5)
+            answer = self.on_serial.send_command(['test_pps_get'])
+            ret = ((answer is not None) and
+                   (['ACK', 'GPS_PPS_GET'] == answer[:2]))
+            if not ret:
+                return self._validate(not(ret), 'test_pps_get_error', answer)
 
-        ret_val = self._validate(ret, 'test_pps_open_node', pps_count)
+            # get pps value
+            pps_count = int(answer[3])
+            if pps_count > 2:
+                ret_val = self._validate(True, 'test_pps_open_node', pps_count)
+                break
+
+        _ = self.on_serial.send_command(['test_pps_stop'])
         return ret_val
 
     def test_gps(self):
         """ Test the gps """
         ret_val = 0
-        ret_val += self._test_gps_serial()
+        #ret_val += self._test_gps_serial()
         ret_val += self._test_pps_open_node()
 
         ret_val = self._validate(ret_val, 'test_gps', ret_val)

@@ -48,6 +48,7 @@ COMMAND_DICT = {
     'test_i2c': 0x09,
     'test_pps_start': 0x0A,
     'test_pps_stop': 0x1A,
+    'test_pps_get': 0x2A,
 
     # get_ commands
     'get_time': 0x0D,
