@@ -371,6 +371,14 @@ class AutoTestManager(object):
 #
 # Test GPS
 #
+    def _test_gps_serial(self):
+        """ Test the gps via serial port """
+        # TODO Roger
+        # wait that GPS is ready or timeout
+        time.sleep(60)
+        return 0
+
+
     def _test_pps_open_node(self):
         """ Test the pps on open A8 m3 node"""
         ret_val = 0
@@ -394,6 +402,7 @@ class AutoTestManager(object):
     def test_gps(self):
         """ Test the gps """
         ret_val = 0
+        ret_val += self._test_gps_serial()
         ret_val += self._test_pps_open_node()
 
         ret_val = self._validate(ret_val, 'test_gps', ret_val)
