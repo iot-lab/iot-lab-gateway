@@ -391,7 +391,7 @@ class AutoTestManager(object):
             return self._validate(not(ret), 'test_pps_start_failed', answer)
 
         # try to get pps for max 5 min
-        end_time = time.time() + 300
+        end_time = time.time() + 300.0
         while time.time() < end_time:
             time.sleep(5)
             answer = self.on_serial.send_command(['test_pps_get'])
@@ -403,7 +403,7 @@ class AutoTestManager(object):
             # get pps value
             pps_count = int(answer[3])
             if pps_count > 2:
-                ret_val = self._validate(True, 'test_pps_open_node', pps_count)
+                ret_val = self._validate(0, 'test_pps_open_node', pps_count)
                 break
 
         _ = self.on_serial.send_command(['test_pps_stop'])
