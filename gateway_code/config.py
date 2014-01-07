@@ -14,19 +14,19 @@ STATIC_FILES_PATH = '/var/lib/gateway_code/'
 GATEWAY_CONFIG_PATH = '/var/local/config/'
 
 NODES_CFG = {
-    'gwt': {'openocd_cfg_file': 'fiteco-gwt.cfg',
-            'tty': '/dev/ttyFITECO_GWT',
+    'gwt': {'openocd_cfg_file': 'iot-lab-cn.cfg',
+            'tty': '/dev/ttyCN',
             'baudrate': 500000},
-    'm3': {'openocd_cfg_file': 'fiteco-m3.cfg',
-           'tty': '/dev/ttyFITECO_M3',
+    'm3': {'openocd_cfg_file': 'iot-lab-m3.cfg',
+           'tty': '/dev/ttyON_M3',
            'baudrate': 500000},
-    'a8': {'openocd_cfg_file': 'fiteco-a8.cfg',
-           'tty': '/dev/ttyFITECO_A8',
+    'a8': {'openocd_cfg_file': 'iot-lab-a8-m3.cfg',
+           'tty': '/dev/ttyA8_M3',
            'baudrate': 500000},
     }
 
 OPEN_A8_CFG = {
-    'tty': '/dev/ttyFITECO_A8_DBG',
+    'tty': '/dev/ttyON_A8',
     'baudrate': 115200
     }
 

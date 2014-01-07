@@ -11,7 +11,7 @@
 #include "decode.h"
 #include "measures_handler.h"
 
-#define TTY_PATH "/dev/ttyFITECO_GWT"
+#define TTY_PATH "/dev/ttyCN"
 
 
 static void usage(char *program_name)
