@@ -26,9 +26,9 @@ SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 IP_CMD = ("ip addr show dev eth0 " +
           r" | sed -n '/inet/ s/.*inet \([^ ]*\)\/.*/\1/p'")
 
-SOCAT_CMD = ('/usr/local/bin/socat -d TCP4-LISTEN:{port},reuseaddr ' +
+SOCAT_CMD = ('/usr/bin/socat -d TCP4-LISTEN:{port},reuseaddr ' +
              'open:{tty},b{baudrate},echo=0,raw ')
-LOCAL_TTY = ('/usr/local/bin/socat -d tcp4-connect:{ip_addr}:{port} ' +
+LOCAL_TTY = ('/usr/bin/socat -d tcp4-connect:{ip_addr}:{port} ' +
              ' PTY,link={tty},b{baudrate},echo=0,raw')
 MAC_CMD = ('ip link show dev eth0 ' +
            r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'")
@@ -86,6 +86,14 @@ class OpenA8Connection(object):
         self.wait_boot_and_get_ip_address()
 
         try:
+            # first run an empty command to prevent warning message
+            # "Warning: Permanently added '192.168.1.6' (RSA)
+            #  to the list of known hosts.\r\n"
+            self.ssh_run('echo "ssh ok"')
+        except CalledProcessError:
+            raise A8ConnectionError("Could note ssh connect to openA8")
+
+        try:
             output = self.ssh_run('cat /tmp/boot_errors')
         except CalledProcessError:
             pass  # file does not exist, don't care
@@ -102,7 +110,7 @@ class OpenA8Connection(object):
         # remote TTY
         socat_cmd = SOCAT_CMD.format(port=port, tty=config_a8['tty'],
                                      baudrate=config_a8['baudrate'])
-        remote_tty_cmd = 'pkill socat; ' + socat_cmd
+        remote_tty_cmd = 'killall socat; ' + socat_cmd
         cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=remote_tty_cmd)
         self.remote_tty = Popen(shlex.split(cmd))
         time.sleep(10)
@@ -124,7 +132,7 @@ class OpenA8Connection(object):
     def stop(self):
         """ Stop redirection of open_A8 M3 node serial """
         try:
-            self.ssh_run('pkill socat')
+            self.ssh_run('killall socat')
             time.sleep(1)
             self.remote_tty.wait()
             self.local_tty.wait()
