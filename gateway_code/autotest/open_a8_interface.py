@@ -155,7 +155,9 @@ class OpenA8Connection(object):
 
         process = Popen(shlex.split(cmd), stdout=PIPE, stderr=STDOUT)
         output = process.communicate()[0]
+        cleaned_output = ''.join([line for line in output.splitlines() if
+                                  'Warning: Permanently added' not in line])
         if 0 != process.returncode:
             raise CalledProcessError(returncode=process.returncode,
                                      cmd=shlex.split(cmd))
-        return output
+        return cleaned_output
