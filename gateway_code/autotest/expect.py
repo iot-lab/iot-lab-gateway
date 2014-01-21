@@ -50,20 +50,30 @@ class SerialExpect(object):
         buff = ''
         regexp = re.compile(pattern)
         while True:
-            # keep only last line in buffer (no multiline assurance)
-            buff = buff.split('\n')[-1]
-
             # get new data
             read_bytes = self.serial_fd.read(size=16)  # timeout 0.1
+
+            if end_time <= time.time():
+                # last read_bytes may not be printed but don't care
+                return ''  # timeout
+
+            # no data, continue
+            if not read_bytes:
+                continue
+
+            # add new bytes to remaining of last line
+            # no multiline patterns
+            buff = buff.split('\n')[-1] + read_bytes
+
+            # print each line with timestamp on front
             if self.verb:
-                sys.stdout.write("\nTIMESTAMP %s\n" % datetime.datetime.now())
-                sys.stdout.write(read_bytes)
+                timestamp = datetime.datetime.now().time()
+                line = read_bytes.replace('\n', '\n%s: ' % timestamp)
+                sys.stdout.write(line)
                 sys.stdout.flush()
-            buff += read_bytes
 
             match = regexp.search(buff)
             if match:
                 return match.group(0)
-            elif end_time <= time.time():
-                return ''  # timeout
+
             # continue
