@@ -10,6 +10,7 @@ Author: Gaëtan Harter gaetan.harter@inria.fr
 
 import re
 import time
+import datetime
 import sys
 import serial
 
@@ -55,6 +56,7 @@ class SerialExpect(object):
             # get new data
             read_bytes = self.serial_fd.read(size=16)  # timeout 0.1
             if self.verb:
+                sys.stdout.write("TIMESTAMP %s\n", datetime.datetime.now())
                 sys.stdout.write(read_bytes)
                 sys.stdout.flush()
             buff += read_bytes
