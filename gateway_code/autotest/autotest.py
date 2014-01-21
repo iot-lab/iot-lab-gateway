@@ -138,7 +138,7 @@ class AutoTestManager(object):
                 try:
                     self.a8_connection.ssh_run(
                         'source /etc/profile; ' +
-                        '/home/root/bin/flash_a8.sh ' +
+                        '/usr/bin/flash_a8.sh ' +
                         '/var/lib/gateway_code/a8_autotest.elf')
                     time.sleep(5)
                 except CalledProcessError as err:
