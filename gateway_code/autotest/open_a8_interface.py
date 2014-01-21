@@ -6,6 +6,7 @@ Open A8 interface
 """
 import shlex
 import time
+import datetime
 
 from gateway_code import config
 from gateway_code.autotest import expect
@@ -56,7 +57,6 @@ class OpenA8Connection(object):
         """ Wait until open node is booted and get its ip address"""
         a8_serial = expect.SerialExpect(verbose=True, **config.OPEN_A8_CFG)
 
-        import datetime
         LOGGER.debug("Time before boot %s", datetime.datetime.now())
         # boot timeout 2 minutes (seen 50 seconds for a boot in tests)
         ret = a8_serial.expect(' login: ', timeout=120)
