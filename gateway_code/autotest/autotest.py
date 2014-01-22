@@ -405,7 +405,8 @@ class AutoTestManager(object):
                 ret_val = self._validate(0, 'test_pps_open_node', pps_count)
                 break
         else:
-            ret_val = self._validate(1, 'test_pps_open_node_timeout', pps_count)
+            ret_val = self._validate(1, 'test_pps_open_node_timeout',
+                                     pps_count)
 
         _ = self.on_serial.send_command(['test_pps_stop'])
         return ret_val

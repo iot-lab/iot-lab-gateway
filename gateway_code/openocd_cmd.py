@@ -77,9 +77,9 @@ def _run_openocd_command(node, command_str):
     args_list = shlex.split(OPENOCD_BASE_CMD % (cfg_file, command_str))
     # Run openocd
     openocd = subprocess.Popen(args_list, stderr=PIPE)
-    err = openocd.communicate()
+    outputs = openocd.communicate()
     ret = openocd.returncode
-    return ret, err
+    return ret, outputs
 
 
 #
@@ -122,9 +122,9 @@ def _main(argv):
     namespace = _parse_arguments(argv[1:])
 
     if namespace.cmd == 'reset':
-        ret, out = reset(namespace.node)
+        ret, outputs = reset(namespace.node)
     elif namespace.cmd == 'flash':
-        ret, out = flash(namespace.node, namespace.firmware)
+        ret, outputs = flash(namespace.node, namespace.firmware)
     else:  # pragma: no cover
         raise ValueError('Uknown Command %s', namespace.command)
 
@@ -132,6 +132,6 @@ def _main(argv):
         sys.stderr.write('%s OK\n' % namespace.cmd)
     else:
         sys.stderr.write('%s KO: %d\n' % (namespace.cmd, ret))
-        sys.stderr.write(out)
+        sys.stderr.write(outputs[1])
 
     return ret
