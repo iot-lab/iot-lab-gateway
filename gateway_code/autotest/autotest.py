@@ -99,23 +99,22 @@ class AutoTestManager(object):
 
         ret_val = 0
         ret_val += self.g_m.open_power_start(power='dc')
+        time.sleep(2)  # wait open node ready
 
         board_type = gateway_code.config.board_type()
         # setup open node
         if board_type == 'M3':
-            time.sleep(2)
             ret = self.g_m.node_flash(
                 'm3', gateway_code.config.FIRMWARES['m3_autotest'])
             ret_val += self._validate(ret, 'flash_m3', ret)
+            time.sleep(2)
 
             self.on_serial = m3_node_interface.OpenNodeSerial()
-            time.sleep(1)
             ret, err_msg = self.on_serial.start()
             ret_val += self._validate(ret, 'open_M3_serial', err_msg)
 
         elif board_type == 'A8':
             try:
-                time.sleep(2)  # wait ftdi
                 # wait nodes booting
                 self.a8_connection = open_a8_interface.OpenA8Connection()
 
