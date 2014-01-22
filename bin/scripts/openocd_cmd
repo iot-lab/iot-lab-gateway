@@ -3,4 +3,4 @@
 from gateway_code import openocd_cmd
 import sys
 
-openocd_cmd._main(sys.argv)
+sys.exit(openocd_cmd._main(sys.argv))
