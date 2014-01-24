@@ -21,55 +21,66 @@ digraph g {
     ];
 
 '''
-FOOTER = '''
-}
-'''
-
-NODE  = '''    "%s" [
+FOOTER = '''}'''
+NODE = '''    "%s" [
         label = "<f0> %s"
     ];
 '''
-NODE_LINK  = '''    "%s" -> "%s"'''
+NODE_LINK = '''    "%s" -> "%s"'''
 
 
-source_files = ['gateway_code/' + python_file for python_file in os.listdir('gateway_code') if re.search('.py$', python_file) and python_file != '__init__.py']
+SOURCE_FILES = ['gateway_code/' + py_file for py_file in
+                os.listdir('gateway_code') if
+                re.search('.py$', py_file) and py_file != '__init__.py']
 
 
-
-
-print >> sys.stderr, source_files
+print >> sys.stderr, SOURCE_FILES
 
 nodes_assoc_list = []
 i = 0
-for current in source_files:
+for current in SOURCE_FILES:
+
+    # process each source file
     current_file = splitext(basename(current))[0]
-    other_files =  [splitext(basename(_f))[0] for _f in source_files if _f != current ]
+    other_files = [splitext(basename(_f))[0] for _f in SOURCE_FILES]
+    other_files.remove(current_file)
 
-    for cur_line in open(current):
-        if 'import' in cur_line:
-            # for each dependency
-            for dep_file in [deps for deps in other_files if deps in cur_line]:
-                print >> sys.stderr, current_file, dep_file
-                node_str = NODE_LINK % (current_file, dep_file)
-                if dep_file in ('config', 'common'):
-                    node_str += ' [style=invis, constraint=false]'
-                elif dep_file in ('gateway_logging', ):
-                    node_str += ' [constraint=false, minlen=4]'
-                else:
-                    if ('gateway_validation', 'profile') != (current_file, dep_file):
-                        node_str += ' [headport="w"]'
+    # line containing 'import'
+    import_lines = [line for line in open(current) if 'import' in line]
 
-                nodes_assoc_list.append(node_str)
+    for cur_line in import_lines:
+        # for each dependency
+        for dep_file in [deps for deps in other_files if deps in cur_line]:
 
-nodes_assoc_list.append(NODE_LINK % ('profile', 'open_node_validation_interface') + ' [style=invis]')
-nodes_assoc_list.append(NODE_LINK % ('config', 'gateway_logging') + ' [style=invis]')
+            node_str = NODE_LINK % (current_file, dep_file)
+            print >> sys.stderr, current_file, dep_file
+
+            # lots of magic is done here to get the visually wanted result
+            if dep_file in ('config', 'common'):
+                node_str += ' [style=invis, constraint=false]'
+            elif dep_file in ('gateway_logging', ):
+                node_str += ' [constraint=false, minlen=4]'
+            else:
+                if ('gateway_validation', 'profile') != \
+                        (current_file, dep_file):
+                    node_str += ' [headport="w"]'
+
+            nodes_assoc_list.append(node_str)
+
+
+nodes_assoc_list.append(
+    NODE_LINK % ('profile', 'open_node_validation_interface') +
+    ' [style=invis]')
+nodes_assoc_list.append(
+    NODE_LINK % ('config', 'gateway_logging') + ' [style=invis]')
 
 nodes_assoc_list.append(NODE_LINK % ('gateway_roomba', 'roomba/roomba.py'))
-nodes_assoc_list.append(NODE_LINK % ('control_node_interface', 'control_node_serial'))
+nodes_assoc_list.append(NODE_LINK % ('control_node_interface',
+                                     'control_node_serial'))
 
 
 print HEADER,
-for file_path in source_files:
+for file_path in SOURCE_FILES:
     file_name = splitext(basename(file_path))[0]
     print NODE % (file_name, file_name),
 
@@ -104,9 +115,5 @@ print """    subgraph cluster_subprocess {
         openocd_cmd;
         serial_redirection;
         style = dotted;
-    }
-"""
+    }"""
 print FOOTER,
-
-
-
