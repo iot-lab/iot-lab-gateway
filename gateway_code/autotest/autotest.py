@@ -321,10 +321,10 @@ class AutoTestManager(object):
         answer = self.on_serial.send_command(['test_flash'])
         if (answer is None) or (answer[0] != 'ACK'):
             LOGGER.debug('test_flash answer == %r', answer)
-            ret = 1
+            test_ok = False
         else:
-            ret = answer[:2] == ['ACK', 'TST_FLASH']
-        return self._validate(int(not ret), 'test_flash', answer)
+            test_ok = answer[:2] == ['ACK', 'TST_FLASH']
+        return self._validate(int(not test_ok), 'test_flash', answer)
 
     def test_pressure(self):
         """ test pressure sensor """
