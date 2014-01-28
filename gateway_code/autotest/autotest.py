@@ -534,18 +534,19 @@ class AutoTestManager(object):
             cmd_on = ['radio_ping_pong', '3dBm', str(channel)]
             answer = self.on_serial.send_command(cmd_on)
             if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_accelero answer == %r', answer)
+                LOGGER.debug('radio_ping_pong answer == %r', answer)
             else:
                 values.append(int(not(
                     answer[:2] == ['ACK', 'RADIO_PINGPONG'])))
 
         # got at least one answer from control_node
         result = int(not(0 in values))  # at least one success
-        ret_val += self._validate(result, 'radio_ping_pong_ON<->CN',
-                                  values)
+        ret_val += self._validate(result, 'radio_ping_pong_ON<->CN', values)
+
         # cleanup
-        ret_val += self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
-        self._validate(ret_val, 'radio_ping_pong_cleanup', 'Cleanup error')
+        ret = self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
+        ret_val += self._validate(ret, 'radio_ping_pong_cleanup',
+                                  'Cleanup error')
         return ret_val
 
     def test_radio_with_rssi(self, channel):
