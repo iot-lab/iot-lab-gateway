@@ -91,7 +91,8 @@ class OpenA8Connection(object):
             #  to the list of known hosts.\r\n"
             self.ssh_run('echo "ssh ok"')
         except CalledProcessError:
-            raise A8ConnectionError("Could note ssh connect to openA8")
+            raise A8ConnectionError("Could note ssh connect to openA8",
+                                    "open_a8_ssh_connection_failed")
 
         try:
             output = self.ssh_run('cat /tmp/boot_errors')
