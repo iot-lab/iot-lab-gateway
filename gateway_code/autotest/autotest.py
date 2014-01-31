@@ -286,12 +286,12 @@ class AutoTestManager(object):
         # get_time: ['ACK', 'CURRENT_TIME', '=', '122953', 'tick_32khz']
         answer = self.on_serial.send_command(['get_time'])
 
-        ret = ((answer is not None) and
-               (['ACK', 'CURRENT_TIME'] == answer[:2]) and
-               answer[3].isdigit())
+        test_ok = ((answer is not None) and
+                   (['ACK', 'CURRENT_TIME'] == answer[:2]) and
+                   answer[3].isdigit())
 
         ret_val = self._validate(
-            int(not ret), 'check_m3_communication_with_get_time', answer)
+            int(not test_ok), 'check_m3_communication_with_get_time', answer)
         if 0 != ret_val:  # fatal Error
             raise FatalError("get_time failed. " +
                              "Can't communicate with M3 node")
@@ -302,7 +302,7 @@ class AutoTestManager(object):
         """
         # get_uid: ['ACK', 'UID', '=', '05D8FF323632483343037109']
         answer = self.on_serial.send_command(['get_uid'])
-        ret = (answer is not None) and (['ACK', 'UID'] == answer[:2])
+        test_ok = (answer is not None) and (['ACK', 'UID'] == answer[:2])
 
         # return UID
         uid_str = answer[3]
@@ -310,7 +310,7 @@ class AutoTestManager(object):
         self.ret_dict['open_node_m3_uid'] = uid
 
         ret_val = self._validate(
-            int(not ret), 'get_uid', answer)
+            int(not test_ok), 'get_uid', answer)
         return ret_val
 #
 # sensors and flash
@@ -385,19 +385,21 @@ class AutoTestManager(object):
 
         # start pps on open node
         answer = self.on_serial.send_command(['test_pps_start'])
-        ret = (answer is not None) and (['ACK', 'GPS_PPS_START'])
-        if not ret:
-            return self._validate(not(ret), 'test_pps_start_failed', answer)
+        test_ok = (answer is not None) and (['ACK', 'GPS_PPS_START'])
+        if not test_ok:
+            return self._validate(int(not test_ok), 'test_pps_start_failed',
+                                  answer)
 
         # try to get pps for max 2 min
         end_time = time.time() + 120.0
         while time.time() < end_time:
             time.sleep(5)
             answer = self.on_serial.send_command(['test_pps_get'])
-            ret = ((answer is not None) and
-                   (['ACK', 'GPS_PPS_GET'] == answer[:2]))
-            if not ret:
-                return self._validate(not(ret), 'test_pps_get_error', answer)
+            test_ok = ((answer is not None) and
+                       (['ACK', 'GPS_PPS_GET'] == answer[:2]))
+            if not test_ok:
+                return self._validate(
+                    int(not test_ok), 'test_pps_get_error', answer)
 
             # get pps value
             pps_count = int(answer[3])
@@ -434,11 +436,12 @@ class AutoTestManager(object):
         answer = self.on_serial.send_command(['test_gpio'])
         if (answer is None) or (answer[0] != 'ACK'):
             LOGGER.debug('test_gpio answer == %r', answer)
-            ret = 1
+            test_ok = False
         else:
-            ret = (answer[:2] == ['ACK', 'GPIO'])
+            test_ok = (answer[:2] == ['ACK', 'GPIO'])
 
-        ret_val += self._validate(int(not ret), 'test_gpio_ON<->CN', answer)
+        ret_val += self._validate(
+            int(not test_ok), 'test_gpio_ON<->CN', answer)
 
         # cleanup
         cmd = ['test_gpio', 'stop']
@@ -457,10 +460,10 @@ class AutoTestManager(object):
         answer = self.on_serial.send_command(['test_i2c'])
         if (answer is None) or (answer[0] != 'ACK'):
             LOGGER.debug('test_i2c answer == %r', answer)
-            ret = 1
+            test_ok = False
         else:
-            ret = (answer[:2] == ['ACK', 'I2C2_CN'])
-        ret_val += self._validate(int(not ret), 'test_i2c_ON<->CN', answer)
+            test_ok = (answer[:2] == ['ACK', 'I2C2_CN'])
+        ret_val += self._validate(int(not test_ok), 'test_i2c_ON<->CN', answer)
 
         # cleanup
         cmd = ['test_i2c', 'stop']
