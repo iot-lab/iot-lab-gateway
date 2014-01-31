@@ -49,6 +49,7 @@ class AutoTestManager(object):
 
     def _measures_handler(self, measure):
         """ Discard previous measure and add new one """
+        LOGGER.debug("Got Measure: %r", measure)
         if not self.keep_all_measures:
             try:
                 self.last_measure.get_nowait()  # discard old measure
@@ -561,6 +562,8 @@ class AutoTestManager(object):
                       frequency=100)
         ret_val += self.g_m.protocol.config_radio(radio)
 
+        while not self.last_measure.empty():
+            _ = self.last_measure.get()
         # send 10 radio packets and keep all radio measures
         self.keep_all_measures = True
         for _ in range(0, 10):
@@ -576,7 +579,10 @@ class AutoTestManager(object):
         values = []
         while not self.last_measure.empty():
             val = self.last_measure.get().split(' ')
-            values.append(tuple([int(meas) for meas in val[3:5]]))
+	    try:
+		values.append(tuple([int(meas) for meas in val[3:5]]))
+	    except:
+		pass
 
         # check that values other than (0,0) were measured
         values.append((0, 0))
@@ -687,20 +693,22 @@ class AutoTestManager(object):
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
 
-        # keep only power
-        time.sleep(0.5)
-        val = self._get_measure(timeout=1).split(' ')
-        value_0 = float(val[3])
 
-        for i in ['1', '2', '4', '7']:
-            _ = self.on_serial.send_command(['leds_on', i])
+        for leds in ['0', '1', '2', '4', '7']:
+            _ = self.on_serial.send_command(['leds_on', leds])
             time.sleep(0.5)
-            val = self._get_measure(timeout=1).split(' ')
-            values.append(float(val[3]))
+            try:
+                val = self._get_measure(timeout=1).split(' ')
+                values.append(float(val[3]))
+            except AttributeError:
+                values.append(float('NaN'))
             _ = self.on_serial.send_command(['leds_off', '7'])
+
 
         ret_val += self.g_m.protocol.config_consumption(None)
 
+        # check that consumption is higher with each led than with no leds on
+        value_0 = values.pop(0)
         leds_working = int(not(all([value_0 < val for val in values])))
         ret_val += self._validate(leds_working, 'test_leds_using_conso',
                                   (value_0, values))
