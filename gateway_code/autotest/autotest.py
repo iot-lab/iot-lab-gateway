@@ -33,6 +33,8 @@ class FatalError(Exception):
     def __str__(self):
         return repr(self.value)
 
+TST_OK = lambda bool_value: (0 if bool_value else 1)
+
 
 class AutoTestManager(object):
     """ Gateway and open node auto tests """
@@ -90,7 +92,7 @@ class AutoTestManager(object):
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
-        ret_val = self._validate(ret_val, 'setup_cn_connection', ret_val)
+        ret_val = self._check(ret_val, 'setup_cn_connection', ret_val)
         if 0 != ret_val:
             raise FatalError('Setup control node failed')
 
@@ -107,12 +109,12 @@ class AutoTestManager(object):
         if board_type == 'M3':
             ret = self.g_m.node_flash(
                 'm3', gateway_code.config.FIRMWARES['m3_autotest'])
-            ret_val += self._validate(ret, 'flash_m3', ret)
+            ret_val += self._check(ret, 'flash_m3', ret)
             time.sleep(2)
 
             self.on_serial = m3_node_interface.OpenNodeSerial()
             ret, err_msg = self.on_serial.start()
-            ret_val += self._validate(ret, 'open_M3_serial', err_msg)
+            ret_val += self._check(ret, 'open_M3_serial', err_msg)
 
         elif board_type == 'A8':
             try:
@@ -126,9 +128,9 @@ class AutoTestManager(object):
                 self.a8_connection.start()
 
             except SerialException as err:
-                ret_val += self._validate(1, 'access_A8_serial_port', str(err))
+                ret_val += self._check(1, 'access_A8_serial_port', str(err))
             except open_a8_interface.A8ConnectionError as err:
-                ret_val += self._validate(
+                ret_val += self._check(
                     1, 'error_in_open_a8_init: %s' % err.err_msg, str(err))
             else:
                 # save mac address
@@ -142,7 +144,7 @@ class AutoTestManager(object):
                         '/var/lib/gateway_code/a8_autotest.elf')
                     time.sleep(5)
                 except CalledProcessError as err:
-                    ret_val += self._validate(
+                    ret_val += self._check(
                         1, 'flash_a8.sh a8_autotests failed', str(err))
                 else:
                     self.on_serial = m3_node_interface.\
@@ -150,7 +152,7 @@ class AutoTestManager(object):
                     time.sleep(1)
                     ret, err_msg = self.on_serial.start(
                         tty=open_a8_interface.A8_TTY_PATH)
-                    ret_val += self._validate(ret, 'open_A8_serial', err_msg)
+                    ret_val += self._check(ret, 'open_A8_serial', err_msg)
 
         if 0 != ret_val:
             raise FatalError('Setup Open Node failed')
@@ -183,7 +185,7 @@ class AutoTestManager(object):
             self.a8_connection.stop()
             LOGGER.debug("a8_connection_stopped")
 
-        return self._validate(ret_val, 'teardown', ret_val)
+        return self._check(ret_val, 'teardown', ret_val)
 
     def auto_tests(self, channel=None, blink=False, gps=False):
         """
@@ -197,7 +199,7 @@ class AutoTestManager(object):
             self.setup_control_node()
 
             if board_type not in ['M3', 'A8']:
-                ret_val += self._validate(1, 'board_type: %s' % board_type,
+                ret_val += self._check(1, 'board_type: %s' % board_type,
                                           'unkown type')
                 raise FatalError('Unkown board_type')
 
@@ -219,7 +221,7 @@ class AutoTestManager(object):
             ## Other tests, run on DC
             ##
             ret = self.g_m.open_power_start(power='dc')
-            ret_val += self._validate(ret, 'switch_to_dc', ret)
+            ret_val += self._check(ret, 'switch_to_dc', ret)
 
             # test IMU
             ret_val += self.test_gyro()
@@ -266,15 +268,20 @@ class AutoTestManager(object):
 
         return self.ret_dict
 
-    def _validate(self, ret, message, log_message=''):
-        """ validate an return and print log if necessary """
-        if not(ret):
-            self.ret_dict['success'].append(message)
-            LOGGER.debug('autotest: %r OK: %r', message, log_message)
+    def _check(self, ret, operation, log_message=''):
+        """ Check the operation
+        Adds `operation` to ret_dict in the correct failed or success entry
+
+        :param ret: 0 means success non zero means failure
+        :return: 0 if `ret` == 0, a positive value otherwise
+        """
+        if (0 == int(ret)):
+            self.ret_dict['success'].append(operation)
+            LOGGER.debug('autotest: %r OK: %r', operation, log_message)
         else:
-            self.ret_dict['error'].append(message)
-            LOGGER.error('Autotest: %r: %r', message, log_message)
-        return int(ret)
+            self.ret_dict['error'].append(operation)
+            LOGGER.error('Autotest: %r: %r', operation, log_message)
+        return abs(int(ret))
 
 #
 # Test implementation
@@ -287,15 +294,14 @@ class AutoTestManager(object):
         # get_time: ['ACK', 'CURRENT_TIME', '=', '122953', 'tick_32khz']
         answer = self.on_serial.send_command(['get_time'])
 
-        test_ok = ((answer is not None) and
-                   (['ACK', 'CURRENT_TIME'] == answer[:2]) and
-                   answer[3].isdigit())
+        test_ok = (answer is not None)
+        test_ok &= ['ACK', 'CURRENT_TIME'] == answer[:2]
+        test_ok &= answer[3].isdigit()
 
-        ret_val = self._validate(
-            int(not test_ok), 'check_m3_communication_with_get_time', answer)
+        ret_val = self._check(TST_OK(test_ok), 'm3_comm_with_get_time', answer)
+
         if 0 != ret_val:  # fatal Error
-            raise FatalError("get_time failed. " +
-                             "Can't communicate with M3 node")
+            raise FatalError("get_time failed. Can't communicate with M3 node")
 
     def get_uid(self):
         """ runs the 'get_uid' command
@@ -310,8 +316,7 @@ class AutoTestManager(object):
         uid = ':'.join([uid_str[i:i+4] for i in range(0, len(uid_str), 4)])
         self.ret_dict['open_node_m3_uid'] = uid
 
-        ret_val = self._validate(
-            int(not test_ok), 'get_uid', answer)
+        ret_val = self._check(TST_OK(test_ok), 'get_uid', answer)
         return ret_val
 #
 # sensors and flash
@@ -325,7 +330,7 @@ class AutoTestManager(object):
             test_ok = False
         else:
             test_ok = answer[:2] == ['ACK', 'TST_FLASH']
-        return self._validate(int(not test_ok), 'test_flash', answer)
+        return self._check(TST_OK(test_ok), 'test_flash', answer)
 
     def test_pressure(self):
         """ test pressure sensor """
@@ -338,8 +343,8 @@ class AutoTestManager(object):
             else:
                 values.append(float(answer[3]))
 
-        got_diff_values = 0 if (1 < len(set(values))) else 1
-        return self._validate(got_diff_values, 'test_pressure', values)
+        test_ok = 1 < len(set(values))
+        return self._check(TST_OK(test_ok), 'test_pressure', values)
 
     def test_light(self):
         """ test light sensor with leds"""
@@ -361,12 +366,13 @@ class AutoTestManager(object):
 
         if (len(set(values)) == 1 and values[0] < 0.20):
             # test fails when run with low light, like at night
+            # so hack to let it work
             LOGGER.warning("Got the same value which is '%f'", values[0])
             self.ret_dict['warning'] = {'get_light_value': values[0]}
-            got_diff_values = 0
+            test_ok = False
         else:
-            got_diff_values = int(not(1 < len(set(values))))
-        return self._validate(got_diff_values, 'get_light', values)
+            test_ok = 1 < len(set(values))  # got different values
+        return self._check(TST_OK(test_ok), 'get_light', values)
 
 #
 # Test GPS
@@ -377,7 +383,7 @@ class AutoTestManager(object):
         # wait that GPS is ready or timeout
         time.sleep(60)
         ret = 0
-        ret_val = self._validate(ret, 'wait_gps_serial', "TODO TODO")
+        ret_val = self._check(ret, 'wait_gps_serial', "TODO TODO")
         return ret_val
 
     def _test_pps_open_node(self):
@@ -388,28 +394,26 @@ class AutoTestManager(object):
         answer = self.on_serial.send_command(['test_pps_start'])
         test_ok = (answer is not None) and (['ACK', 'GPS_PPS_START'])
         if not test_ok:
-            return self._validate(int(not test_ok), 'test_pps_start_failed',
-                                  answer)
+            return self._check(TST_OK(test_ok), 'test_pps_start', answer)
 
         # try to get pps for max 2 min
         end_time = time.time() + 120.0
         while time.time() < end_time:
             time.sleep(5)
             answer = self.on_serial.send_command(['test_pps_get'])
-            test_ok = ((answer is not None) and
-                       (['ACK', 'GPS_PPS_GET'] == answer[:2]))
+            test_ok = (answer is not None)
+            test_ok &= ['ACK', 'GPS_PPS_GET'] == answer[:2]
+
             if not test_ok:
-                return self._validate(
-                    int(not test_ok), 'test_pps_get_error', answer)
+                return self._check(TST_OK(test_ok), 'test_pps_get', answer)
 
             # get pps value
             pps_count = int(answer[3])
             if pps_count > 2:
-                ret_val = self._validate(0, 'test_pps_open_node', pps_count)
+                ret_val = self._check(0, 'test_pps_open_node', pps_count)
                 break
         else:
-            ret_val = self._validate(1, 'test_pps_open_node_timeout',
-                                     pps_count)
+            ret_val = self._check(1, 'test_pps_open_node_timeout', pps_count)
 
         _ = self.on_serial.send_command(['test_pps_stop'])
         return ret_val
@@ -420,7 +424,7 @@ class AutoTestManager(object):
         #ret_val += self._test_gps_serial()
         ret_val += self._test_pps_open_node()
 
-        ret_val = self._validate(ret_val, 'test_gps', ret_val)
+        ret_val = self._check(ret_val, 'test_gps', ret_val)
         return ret_val
 
 #
@@ -441,8 +445,7 @@ class AutoTestManager(object):
         else:
             test_ok = (answer[:2] == ['ACK', 'GPIO'])
 
-        ret_val += self._validate(
-            int(not test_ok), 'test_gpio_ON<->CN', answer)
+        ret_val += self._check(TST_OK(test_ok), 'test_gpio_ON<->CN', answer)
 
         # cleanup
         cmd = ['test_gpio', 'stop']
@@ -464,7 +467,7 @@ class AutoTestManager(object):
             test_ok = False
         else:
             test_ok = (answer[:2] == ['ACK', 'I2C2_CN'])
-        ret_val += self._validate(int(not test_ok), 'test_i2c_ON<->CN', answer)
+        ret_val += self._check(TST_OK(test_ok), 'test_i2c_ON<->CN', answer)
 
         # cleanup
         cmd = ['test_i2c', 'stop']
@@ -486,8 +489,8 @@ class AutoTestManager(object):
             else:
                 measures = tuple([float(val) for val in answer[3:6]])
                 values.append(measures)
-        got_diff_values = 0 if (1 < len(set(values))) else 1
-        return self._validate(got_diff_values, 'get_magneto', values)
+        test_ok = 1 < len(set(values))  # got different values
+        return self._check(TST_OK(test_ok), 'get_magneto', values)
 
     def test_gyro(self):
         """ test gyro sensor """
@@ -501,8 +504,9 @@ class AutoTestManager(object):
             else:
                 measures = tuple([float(val) for val in answer[3:6]])
                 values.append(measures)
-        got_diff_values = 0 if (1 < len(set(values))) else 1
-        return self._validate(got_diff_values, 'get_gyro', values)
+
+        test_ok = 1 < len(set(values))  # got different values
+        return self._check(TST_OK(test_ok), 'get_gyro', values)
 
     def test_accelero(self):
         """ test accelerator sensor """
@@ -515,8 +519,8 @@ class AutoTestManager(object):
             else:
                 measures = tuple([float(val) for val in answer[3:6]])
                 values.append(measures)
-        got_diff_values = 0 if (1 < len(set(values))) else 1
-        return self._validate(got_diff_values, 'get_accelero', values)
+        test_ok = 1 < len(set(values))  # got different values
+        return self._check(TST_OK(test_ok), 'get_accelero', values)
 
 #
 # Radio tests
@@ -540,17 +544,16 @@ class AutoTestManager(object):
             if (answer is None) or (answer[0] != 'ACK'):
                 LOGGER.debug('radio_ping_pong answer == %r', answer)
             else:
-                values.append(int(not(
-                    answer[:2] == ['ACK', 'RADIO_PINGPONG'])))
+                values.append(TST_OK(answer[:2] == ['ACK', 'RADIO_PINGPONG']))
 
         # got at least one answer from control_node
-        result = int(not(0 in values))  # at least one success
-        ret_val += self._validate(result, 'radio_ping_pong_ON<->CN', values)
+        test_ok = (0 in values)  # at least one success
+        ret_val += self._check(
+            TST_OK(test_ok), 'radio_ping_pong_ON<->CN', values)
 
         # cleanup
         ret = self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
-        ret_val += self._validate(ret, 'radio_ping_pong_cleanup',
-                                  'Cleanup error')
+        ret_val += self._check(ret, 'radio_ping_pong_cleanup', 'cleanup error')
         return ret_val
 
     def test_radio_with_rssi(self, channel):
@@ -576,18 +579,14 @@ class AutoTestManager(object):
         # extract rssi measures
         # ['measures_debug:', 'radio_measure',
         #  '1378466517.186216:21.018127', '0', '0']
-        values = []
+        values = [(0, 0)]  # expect other values than (0, 0)
         while not self.last_measure.empty():
             val = self.last_measure.get().split(' ')
-	    try:
-		values.append(tuple([int(meas) for meas in val[3:5]]))
-	    except:
-		pass
+            values.append(tuple([int(meas) for meas in val[3:5]]))
 
         # check that values other than (0,0) were measured
-        values.append((0, 0))
-        got_diff_values = 0 if (1 < len(set(values))) else 1
-        ret_val += self._validate(got_diff_values, 'rssi_measures', values)
+        test_ok = 1 < len(set(values))
+        ret_val += self._check(TST_OK(test_ok), 'rssi_measures', values)
 
         return ret_val
 
@@ -622,8 +621,8 @@ class AutoTestManager(object):
 
         # TODO Validate value ranges (maybe with idle firmware)
 
-        got_diff_values = 0 if (1 < len(set(values))) else 1
-        ret_val += self._validate(got_diff_values, 'consumption_dc', values)
+        test_ok = 1 < len(set(values))
+        ret_val += self._check(TST_OK(test_ok), 'consumption_dc', values)
 
         return ret_val
 
@@ -639,7 +638,7 @@ class AutoTestManager(object):
             time.sleep(1)
             ret = self.g_m.node_flash(
                 'm3', gateway_code.config.FIRMWARES['m3_autotest'])
-            ret_val += self._validate(ret, 'flash_m3_on_battery', ret)
+            ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption
         # one measure every ~0.1 seconds
@@ -665,8 +664,8 @@ class AutoTestManager(object):
                 # control_node_serial exited (it happened)
                 LOGGER.debug('consumption_measure val == %r', val)
 
-        got_diff_values = 0 if (1 < len(set(values))) else 1
-        ret_val += self._validate(got_diff_values, 'consumption_batt', values)
+        test_ok = 1 < len(set(values))
+        ret_val += self._check(TST_OK(test_ok), 'consumption_batt', values)
 
         # TODO Validate value ranges (maybe with idle firmware)
         ret_val += self.g_m.protocol.config_consumption(None)
@@ -693,7 +692,8 @@ class AutoTestManager(object):
         #     1378387028.906210:21.997924
         #     0.257343 3.216250 0.080003
 
-
+        # get consumption for all leds mode:
+        #     no leds, each led, all leds
         for leds in ['0', '1', '2', '4', '7']:
             _ = self.on_serial.send_command(['leds_on', leds])
             time.sleep(0.5)
@@ -704,13 +704,13 @@ class AutoTestManager(object):
                 values.append(float('NaN'))
             _ = self.on_serial.send_command(['leds_off', '7'])
 
-
         ret_val += self.g_m.protocol.config_consumption(None)
 
         # check that consumption is higher with each led than with no leds on
         value_0 = values.pop(0)
-        leds_working = int(not(all([value_0 < val for val in values])))
-        ret_val += self._validate(leds_working, 'test_leds_using_conso',
-                                  (value_0, values))
+        test_ok = all([value_0 < val for val in values])
+
+        ret_val += self._check(TST_OK(test_ok), 'leds_using_conso',
+                               (value_0, values))
 
         return ret_val

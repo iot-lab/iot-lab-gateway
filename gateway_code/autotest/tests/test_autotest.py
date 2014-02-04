@@ -15,13 +15,13 @@ class TestProtocol(unittest.TestCase):
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
     @mock.patch('gateway_code.autotest.autotest.LOGGER')
-    def test_validate(self, mock_logger):
+    def test__check(self, mock_logger):
 
         self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}
 
         # test validate
-        ret_1 = self.g_v._validate(0, 'message_1', ['1', '2'])
-        ret_2 = self.g_v._validate(1, 'message_2', ['3', '4'])
+        ret_1 = self.g_v._check(0, 'message_1', ['1', '2'])
+        ret_2 = self.g_v._check(1, 'message_2', ['3', '4'])
 
         self.assertEquals(0, ret_1)
         self.assertEquals(1, ret_2)
