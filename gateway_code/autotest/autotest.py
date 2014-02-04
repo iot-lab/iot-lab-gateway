@@ -51,7 +51,6 @@ class AutoTestManager(object):
 
     def _measures_handler(self, measure):
         """ Discard previous measure and add new one """
-        LOGGER.debug("Got Measure: %r", measure)
         if not self.keep_all_measures:
             try:
                 self.last_measure.get_nowait()  # discard old measure
