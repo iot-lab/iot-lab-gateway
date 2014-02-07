@@ -8,3 +8,5 @@ else
 fi
 
 curl -X PUT http://$IP_ADDR:8080/status/blink?channel=22; echo
+
+date
