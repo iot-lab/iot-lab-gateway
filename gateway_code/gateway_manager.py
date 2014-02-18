@@ -136,6 +136,8 @@ class GatewayManager(object):
             ret_val += ret
             # ret = self.gdb_server.start()
             # ret_val += ret
+        elif config.board_type() == 'A8':
+            pass
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
 
@@ -197,10 +199,12 @@ class GatewayManager(object):
             ret_val += ret
             ret = self.node_flash('m3', config.FIRMWARES['idle'])
             ret_val += ret
-            ret = self.open_power_stop(power='dc')
-            ret_val += ret
+        elif config.board_type() == 'A8':
+            pass
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
+        ret = self.open_power_stop(power='dc')
+        ret_val += ret
 
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
