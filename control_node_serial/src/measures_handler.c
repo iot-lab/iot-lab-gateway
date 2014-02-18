@@ -16,14 +16,13 @@
 
 
 struct power_vals {
-        unsigned int time;
+        uint32_t time_us; // TODO RENAME
         float val[3];
 };
 
 struct radio_measure_vals {
-        unsigned int time;
+        unsigned int time_us;
         signed char rssi;
-        unsigned char lqi;
 };
 
 static struct _measure_handler_state {
@@ -41,21 +40,19 @@ static struct _measure_handler_state {
 } mh_state;
 
 
-static void calculate_time(struct timeval *total_time, const struct timeval *time_ref,
-                           unsigned int cn_time)
+static void calculate_time_extended(struct timeval *total_time,
+                const struct timeval *time_ref,
+                uint32_t pkt_timeref_s, uint32_t time_us)
 {
         total_time->tv_sec  = time_ref->tv_sec;
         total_time->tv_usec = time_ref->tv_usec;
 
-        total_time->tv_sec  += cn_time / TIME_FACTOR;
-        total_time->tv_usec += (suseconds_t) (
-                        (1000000 * ((uint64_t) cn_time % TIME_FACTOR))
-                        / TIME_FACTOR);
+        total_time->tv_sec  += pkt_timeref_s;
+        total_time->tv_usec += time_us;
 
-        if (1000000 <= total_time->tv_usec) {
-                total_time->tv_usec -= 1000000;
-                total_time->tv_sec  += 1;
-        }
+        // correct if tv_usec is > 1second
+        total_time->tv_sec += (total_time->tv_usec / 1000000);
+        total_time->tv_usec %= 1000000;
 }
 
 
@@ -85,6 +82,7 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
         struct power_vals pw_vals;
 
         size_t values_len;
+        uint32_t pkt_timeref_s = 0;
 
         if (!mh_state.power.is_valid) {
                 // Should have got a 'CONFIG_POWER_POLL' ACK before
@@ -96,20 +94,28 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
         num_measures     = data[1];
         current_data_ptr = &data[2];
 
-        size_t expected_len = 2 + values_len * num_measures;
+        // Add time size
+        size_t expected_len = 2 + sizeof(uint32_t) + values_len * num_measures;
 
         if (expected_len != len) {
-                PRINT_ERROR("Invalid measure pkt len: %zu != expected %zu\n",
-                                len, expected_len);
+                // TODO
+                PRINT_ERROR("Invalid consumption pkt len: "
+                        "%zu != expected %zu\n", len, expected_len);
                 return;
         }
+
+        /* copy basetime for seconds */
+        memcpy(&pkt_timeref_s, current_data_ptr, sizeof(uint32_t));
+        current_data_ptr += sizeof(uint32_t);
 
         for (int j = 0; j < num_measures; j++) {
                 int i = 0;
 
                 memcpy(&pw_vals, current_data_ptr, values_len);
                 current_data_ptr += values_len;
-                calculate_time(&timestamp, &mh_state.time_ref, pw_vals.time);
+                calculate_time_extended(&timestamp, &mh_state.time_ref,
+                                pkt_timeref_s, pw_vals.time_us);
+
 
                 if (mh_state.power.p)
                         p = pw_vals.val[i++];
@@ -140,45 +146,47 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
         unsigned char *current_data_ptr;
         struct radio_measure_vals radio_vals;
 
-        size_t values_len = 6;
+        size_t values_len = 5;
+        uint32_t pkt_timeref_s = 0;
 
         num_measures     = data[1];
         current_data_ptr = &data[2];
 
-        size_t expected_len = 2 + values_len * num_measures;
+        size_t expected_len = 2 + sizeof(uint32_t) + values_len * num_measures;
         if (expected_len != len) {
                 PRINT_ERROR("Invalid measure pkt len: %zu != expected %zu\n",
                                 len, expected_len);
                 return;
         }
 
+        /* copy basetime for seconds */
+        memcpy(&pkt_timeref_s, current_data_ptr, sizeof(uint32_t));
+        current_data_ptr += sizeof(uint32_t);
+
         for (int j = 0; j < num_measures; j++) {
                 memcpy(&radio_vals, current_data_ptr, values_len);
                 current_data_ptr += values_len;
 
-                calculate_time(&timestamp, &mh_state.time_ref, radio_vals.time);
+                calculate_time_extended(&timestamp, &mh_state.time_ref,
+                                pkt_timeref_s, radio_vals.time_us);
 
                 if (mh_state.has_oml) {
                         oml_measures_radio(
                                 timestamp.tv_sec, timestamp.tv_usec,
-                                radio_vals.rssi, radio_vals.lqi);
+                                radio_vals.rssi);
                 }
 
-                PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %i %u\n",
+                PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %i\n",
                               "radio_measure",
                               timestamp.tv_sec, timestamp.tv_usec,
-                              radio_vals.rssi, radio_vals.lqi);
+                              radio_vals.rssi);
         }
 }
 
 static void handle_ack_pkt(unsigned char *data, size_t len)
 {
         // ACK_FRAME | config_type | [config]
-        // if (len != 3) {
-        //         PRINT_ERROR("Invalid len for ACK %zu\n", len);
-        //         return;
-        // }
-        (void) len;
+        (void)len;
         uint8_t ack_type = data[1];
         uint8_t config   = data[2];
 
@@ -188,14 +196,14 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
                         PRINT_MSG("config_ack reset_time\n");
                         gettimeofday(&mh_state.time_ref, NULL); // update time reference
                         break;
-                case CONFIG_POWER_POLL:
+                case CONFIG_CONSUMPTION:
                         PRINT_MSG("config_ack config_consumption_measure\n");
                         // cleanup for new configuration
                         memset(&mh_state.power, 0, sizeof(mh_state.power));
 
                         mh_state.power.is_valid = 1;
                         mh_state.power.power_source = config &
-                                (SOURCE_3_3V | SOURCE_5V | SOURCE_BATT);
+                                (PW_SRC_3_3V | PW_SRC_5V | PW_SRC_BATT);
 
                         mh_state.power.raw_values_len = sizeof(unsigned int);
                         if (config & MEASURE_POWER) {
@@ -211,10 +219,10 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
                                 mh_state.power.raw_values_len += sizeof(float);
                         }
                         break;
-                case CONFIG_RADIO:
-                        PRINT_MSG("config_ack config_radio_signal\n");
+                case CONFIG_RADIO_STOP:
+                        PRINT_MSG("config_ack config_radio_stop\n");
                         break;
-                case CONFIG_RADIO_POLL:
+                case CONFIG_RADIO_MEAS:
                         PRINT_MSG("config_ack config_radio_measure\n");
                         break;
                 default:
@@ -229,10 +237,10 @@ int handle_measure_pkt(unsigned char *data, size_t len)
         uint8_t pkt_type = data[0];
 
         switch (pkt_type) {
-                case PW_POLL_FRAME:
+                case CONSUMPTION_FRAME:
                         handle_pw_pkt(data, len);
                         break;
-                case RADIO_POLL_FRAME:
+                case RADIO_MEAS_FRAME:
                         handle_radio_measure_pkt(data, len);
                         break;
                 case ACK_FRAME:

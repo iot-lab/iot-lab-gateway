@@ -2,51 +2,59 @@
 #define CONSTANTS_H
 
 enum defines {
-        SYNC_BYTE           = 0x80,
-        MEASURES_FRAME_MASK = 0xF0,
-        TIME_FACTOR         = 32768,
+        SYNC_BYTE            = 0x80,
+        ASYNC_FRAME_MASK     = 0xF0,
 };
 
 // type byte
 enum frame_type {
-        // Commands
-        OPEN_NODE_START      = 0x70,
-        OPEN_NODE_STOP       = 0x71,
+        /* Commands */
+        OPEN_NODE_STOP       = 0x10,
+        OPEN_NODE_START      = 0x11,
 
-        RESET_TIME           = 0x72,
+        RESET_TIME           = 0x20,
 
-        // Measure config
-        CONFIG_RADIO         = 0x74,
-        CONFIG_RADIO_POLL    = 0x75,
-        CONFIG_RADIO_NOISE   = 0x76,
-        CONFIG_SNIFFER       = 0x77,
+        /* LED management */
+        GREEN_LED_ON         = 0x35,
+        GREEN_LED_BLINK      = 0x36,
 
-        CONFIG_SENSOR        = 0x78,
 
-        CONFIG_POWER_POLL    = 0x79,
+        /* Control node measure/noise config */
+        CONFIG_RADIO_STOP    = 0xC0,
+        CONFIG_RADIO_MEAS    = 0xC1,
+        /*
+         * CONFIG_RADIO_NOISE   = 0xC2,
+         * CONFIG_RADIO_SNIFFER = 0xC3,
+         * CONFIG_RADIO_INJECTION = 0xC4,
+         *
+         * CONFIG_SENSOR        = 0xC9,
+         */
+        CONFIG_CONSUMPTION   = 0xCC,
 
-        //LED management
-        GREEN_LED_ON         = 0xB5,
-        GREEN_LED_BLINK      = 0xB6,
 
-        // Error
-        ERROR_FRAME          = 0xEE,
+        /*
+         * Asyncronous frames
+         */
 
-        // Command ack for measures handler
+        // config ACK frame
         ACK_FRAME            = 0xFA,
 
-
         // Measures
-        RADIO_POLL_FRAME     = 0xFE,
-        PW_POLL_FRAME        = 0xFF,
+        RADIO_MEAS_FRAME     = 0xF1,
+        CONSUMPTION_FRAME    = 0xFC,
 
-        // Test commands
-        TEST_RADIO_PING_PONG = 0xBB,
-        TEST_GPIO            = 0xBE,
-        TEST_I2C             = 0xB9,
+        ERROR_FRAME          = 0xEE,  // log messages
 
-        TEST_PPS             = 0xBC,
-        TEST_GOT_PPS         = 0xBD,
+
+        /*
+         * Test commands
+         */
+        TEST_GPIO            = 0x71,
+        TEST_I2C2            = 0x72,
+        TEST_RADIO_PING_PONG = 0x73,
+
+        TEST_PPS             = 0x74,
+        TEST_GOT_PPS         = 0x76,
 
 };
 
@@ -60,33 +68,23 @@ enum alimentation {
         DC      = 0x1,
 };
 
-enum radio_config {
-        RADIO_STOP = 0x0,
-        RADIO_START = 0x1,
+enum {
+        STOP  = 0x0,
+        START = 0x1,
 };
 
-enum cn_error_t {
-        OK                         = 0,
-        NETWORK_QUEUE_OVERFLOW     = -1,
-        APPLICATION_QUEUE_OVERFLOW = -2,
-        DEFENSIVE                  = -3,
-};
 
 /* consumption config */
-// Wanted Measures
 enum power_measures {
         MEASURE_POWER       = 1 << 0,
         MEASURE_VOLTAGE     = 1 << 1,
         MEASURE_CURRENT     = 1 << 2,
         // Nothing on bit 4
-        SOURCE_3_3V         = 1 << 4,
-        SOURCE_5V           = 1 << 5,
-        SOURCE_BATT         = 1 << 6,
-
-        CONSUMPTION_START   = 1 << 7,
-        CONSUMPTION_STOP    = 0 << 7,
+        PW_SRC_3_3V         = 1 << 4,
+        PW_SRC_5V           = 1 << 5,
+        PW_SRC_BATT         = 1 << 6,
+        PW_SRC_MASK = 0x70,
 };
-
 
 // INA226 config
 enum ina226_periods {
@@ -98,6 +96,8 @@ enum ina226_periods {
         PERIOD_2116us = 5,
         PERIOD_4156us = 6,
         PERIOD_8244us = 7,
+
+        PERIOD_MASK  = 0x7,
 };
 // Padding between period and average: 0 << 3
 enum ina226_average {
@@ -109,10 +109,12 @@ enum ina226_average {
         AVERAGE_256   = 5 << 4,
         AVERAGE_512   = 6 << 4,
         AVERAGE_1024  = 7 << 4,
+
+        AVERAGE_MASK = 0x70,
 };
 
 // Radio config
-//TODO review still correct on next openlab release
+// TODO review still correct on next openlab release
 enum radio_tx_power {
         POWER_3dBm   = 38,
         POWER_2_8dBm = 37,

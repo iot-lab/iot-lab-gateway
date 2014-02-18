@@ -98,8 +98,10 @@ class Consumption(_CONSUMPTION_TYPE):
             raise ValueError("Error in consumption arguments")
 
 
-_RADIO_TYPE = recordtype('radio', ['power', 'channel', 'mode',
-                                   ('frequency', None)])
+_RADIO_TYPE = recordtype('radio', ['mode', 'channels', 'period',
+                                   ('num_per_channel', None),
+                                   ('power', None),
+                                   ('pkt_size', None)])
 
 
 class Radio(_RADIO_TYPE):
@@ -108,10 +110,15 @@ class Radio(_RADIO_TYPE):
     """
 
     def __init__(self, *args, **kwargs):
-        self.power = None
-        self.channel = None
         self.mode = None
-        self.frequency = None
+        self.channels = None
+        self.period = None
+
+        self.num_per_channel = None
+
+        self.power = None
+
+        self.pkt_size = None
         try:
             _RADIO_TYPE.__init__(self, *args, **kwargs)
         except TypeError:
@@ -123,15 +130,20 @@ class Radio(_RADIO_TYPE):
         """
         raise ValueError if self is not a 'valid' configuration
         """
-        if self.channel not in range(11, 26 + 1):
+
+        if 0 == len(self.channels):
+            raise ValueError
+        # all channels must be in [11, 26]
+        if len(set(self.channels) - set(range(11, 26 + 1))):
+            raise ValueError
+
+        if self.period not in range(0, 2**16):
             raise ValueError
 
         if self.mode == "measure":
-            # measure should have a 'frequency' entry
-            if self.frequency is None:
+            if self.period < 2:  # min period == 2 for 'rssi'
                 raise ValueError
-            # frequency in valid range
-            elif self.frequency not in range(2, 499 + 1):
+            if self.num_per_channel is None:
                 raise ValueError
 
         # invalid measures types (at the end for coverage issue)

@@ -2,16 +2,11 @@
 
 reset_time
 
-config_radio_signal 3.0 25
-config_radio_measure start 100
+config_radio_measure 11,25 100 2
 
 
 
+config_radio_measure 11 500 0
 
 
-
-config_radio_measure start 499
-
-
-config_radio_measure stop
-
+config_radio_stop

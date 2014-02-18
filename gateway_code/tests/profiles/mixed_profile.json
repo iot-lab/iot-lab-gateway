@@ -12,9 +12,9 @@
     },
 
     "radio": {
-        "power" : 17.0,
-        "channel" : 11,
         "mode" : "measure",
-        "frequency" : 2
+        "channels" : [11],
+        "period" : 1024,
+        "num_per_channel" : 1
     }
 }

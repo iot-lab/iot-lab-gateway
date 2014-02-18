@@ -90,9 +90,9 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
 
         // add measures
         oml_measures_consumption(42, 69, 12.34, 3.3, 40.72);
-        oml_measures_radio(42, 70, -20, 0);
+        oml_measures_radio(42, 70, -20);
         oml_measures_consumption(43, 69, 12.34, 3.3, 40.72);
-        oml_measures_radio(43, 70, -20, 0);
+        oml_measures_radio(43, 70, -20);
 
         /* write many values to ensure that oml writes them to disk
          * before calling close
@@ -102,7 +102,7 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
          */
         for (int i = 0; i < 10000; i++) {
                 oml_measures_consumption(0, 0, 0.0, NAN, 0.0);
-                oml_measures_radio(0, 0, 0, 0);
+                oml_measures_radio(0, 0, 0);
         }
 
         ret_stop = oml_measures_stop();

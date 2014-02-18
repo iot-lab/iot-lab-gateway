@@ -530,9 +530,7 @@ class AutoTestManager(object):
         ret_val = 0
 
         # setup control node
-        cmd = ['config_radio_signal', '3.0', str(channel)]
-        ret_val += self.g_m.protocol.send_cmd(cmd)
-        cmd = ['test_radio_ping_pong', 'start']
+        cmd = ['test_radio_ping_pong', 'start', str(channel), '3.0']
         ret_val += self.g_m.protocol.send_cmd(cmd)
 
         # send 10 packets
@@ -560,8 +558,8 @@ class AutoTestManager(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        radio = Radio(power=3.0, channel=channel, mode="measure",
-                      frequency=100)
+        radio = Radio(mode="measure", channels=[channel],
+                      period=100, num_per_channel=0)
         ret_val += self.g_m.protocol.config_radio(radio)
 
         while not self.last_measure.empty():
@@ -578,10 +576,11 @@ class AutoTestManager(object):
         # extract rssi measures
         # ['measures_debug:', 'radio_measure',
         #  '1378466517.186216:21.018127', '0', '0']
-        values = [(0, 0)]  # expect other values than (0, 0)
+        values = [-91]  # expect other values than (-91)
         while not self.last_measure.empty():
             val = self.last_measure.get().split(' ')
-            values.append(tuple([int(meas) for meas in val[3:5]]))
+            if val[1] == 'radio_measure':
+                values.append(int(val[3]))
 
         # check that values other than (0,0) were measured
         test_ok = 1 < len(set(values))
@@ -615,7 +614,8 @@ class AutoTestManager(object):
                 val = self._get_measure(timeout=1).split(' ')
             except AttributeError:
                 continue
-            values.append(tuple([float(meas) for meas in val[3:6]]))
+            if val[1] == 'consumption_measure':
+                values.append(tuple([float(meas) for meas in val[3:6]]))
         ret_val += self.g_m.protocol.config_consumption(None)
 
         # TODO Validate value ranges (maybe with idle firmware)
@@ -657,7 +657,8 @@ class AutoTestManager(object):
         for _ in range(0, 10):
             try:
                 val = self._get_measure(timeout=1).split(' ')
-                values.append(tuple([float(meas) for meas in val[3:6]]))
+                if val[1] == 'consumption_measure':
+                    values.append(tuple([float(meas) for meas in val[3:6]]))
             except AttributeError:
                 # 'NoneType' object has no attribute 'split'
                 # control_node_serial exited (it happened)
@@ -698,7 +699,8 @@ class AutoTestManager(object):
             time.sleep(0.5)
             try:
                 val = self._get_measure(timeout=1).split(' ')
-                values.append(float(val[3]))
+                if val[1] == 'consumption_measure':
+                    values.append(float(val[3]))
             except AttributeError:
                 values.append(float('NaN'))
             _ = self.on_serial.send_command(['leds_off', '7'])

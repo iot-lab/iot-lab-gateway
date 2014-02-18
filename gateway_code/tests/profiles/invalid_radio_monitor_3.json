@@ -4,6 +4,6 @@
 
     "radio": {
         "power" : 17.0,
-        "channel" : 11
+        "channels" : [11]
     }
 }

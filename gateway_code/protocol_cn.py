@@ -12,10 +12,6 @@ class Protocol(object):
 
     def __init__(self, sender):
         self.sender = sender
-        self.current_radio_mode = None
-        self.radio_cmd_association = {
-            'measure': self._config_radio_measure,
-        }
 
     def send_cmd(self, command_list):
         """
@@ -94,82 +90,35 @@ class Protocol(object):
 
         It stops previous radio measures if necessary
         """
-        ret = 0
-
-        # stop current radio
-        ret_val = self._stop_radio_if_required(radio)
-        if 0 != ret_val:
-            return ret_val
 
         if radio is None:
-            # no config, Finished
-            return 0
-
-        # channel config
-        ret += self._config_radio_signal(radio)
-
-        # radio mode config
-        ret += self._config_radio_mode(radio)
-
-        return ret
-
-    def _config_radio_signal(self, radio):
-        """
-        Configure radio signal: tx power and channel
-        """
-        # config_radio_signal <power> <channel>
-        cmd = ['config_radio_signal']
-        cmd.append(str(radio.power))
-        cmd.append(str(radio.channel))
-        ret = self.send_cmd(cmd)
-        return ret
+            return self._stop_radio()  # stop current mode
+        else:
+            return self._config_radio_mode(radio)
 
     def _config_radio_mode(self, radio):
-        """
-        Configure the appropriate radio mode
-        """
-        ret = None
+        """ Configure the appropriate radio mode """
+
         if 'measure' == radio.mode:
-            ret = self._config_radio_measure("start", radio.frequency)
-        else:
-            raise NotImplementedError("Uknown radio mode: %s", radio.mode)
+            return self._config_radio_measure(radio)
+        raise NotImplementedError("Uknown radio mode: %s", radio.mode)
 
-        # update radio mode
-        if 0 == ret:
-            self.current_radio_mode = radio.mode
-        return ret
-
-    def _config_radio_measure(self, command="stop", frequency=None):
+    def _config_radio_measure(self, radio):
         """
         Configure radio measure
         """
-        # config_radio_signal
-        #     <stop>
-        #     <start> <frequency>
+        # config_radio_measure
+        #     <channel,list,comma,separated>
+        #     <period>
+        #     <num_measure_per_channel>
         cmd = ['config_radio_measure']
-        cmd.append(command)
-        if "start" == command:
-            cmd.append(str(frequency))
+        cmd.append(','.join(str(x) for x in set(radio.channels)))
+        cmd.append(str(radio.period))
+        cmd.append(str(radio.num_per_channel))
 
         ret = self.send_cmd(cmd)
         return ret
 
-    def _stop_radio_if_required(self, radio):
-        """
-        Stop the radio if current mode and new mode are not the same
-        """
-
-        # is radio running
-        if self.current_radio_mode is None:
-            return 0
-
-        # is new mode the same as current mode
-        if radio is not None and self.current_radio_mode == radio.mode:
-            return 0
-
-        # stop current mode
-        ret = self.radio_cmd_association[self.current_radio_mode]()
-        if ret == 0:
-            self.current_radio_mode = None
-
-        return ret
+    def _stop_radio(self):
+        """ Stop the radio """
+        return self.send_cmd(['config_radio_stop'])

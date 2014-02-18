@@ -3,8 +3,6 @@
     "power": "dc",
 
     "radio": {
-        "power" : 17.0,
-        "channel" : 11,
         "mode" : "invalid_mode"
     }
 }

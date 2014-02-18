@@ -15,7 +15,7 @@ void decode_pkt(struct pkt *current_pkt)
 
         DEBUG_PRINT_PACKET(current_pkt->data, current_pkt->len);
 
-        if ((pkt_type & MEASURES_FRAME_MASK) == MEASURES_FRAME_MASK) {
+        if ((pkt_type & ASYNC_FRAME_MASK) == ASYNC_FRAME_MASK) {
                 // send to measures packets handler
                 ret = handle_measure_pkt(current_pkt->data, current_pkt->len);
         } else {
@@ -25,7 +25,7 @@ void decode_pkt(struct pkt *current_pkt)
 
         if (ret) {
                 PRINT_ERROR("Error in decode packet: ret %d: " \
-                                "len %d - %02X %02X\n", ret,
+                                "len %d - 0x%02X 0x%02X\n", ret,
                                 current_pkt->len,
                                 current_pkt->data[0],
                                 current_pkt->data[1]);

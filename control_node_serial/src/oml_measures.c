@@ -44,10 +44,10 @@ void oml_measures_consumption(uint64_t timestamp_s, uint32_t timestamp_us,
 }
 
 void oml_measures_radio(uint64_t timestamp_s, uint32_t timestamp_us,
-                        int32_t rssi, int32_t lqi)
+                        int32_t rssi)
 {
         oml_inject_radio(g_oml_mps_control_node_measures->radio,
-                         timestamp_s, timestamp_us, rssi, lqi);
+                         timestamp_s, timestamp_us, rssi);
 }
 
 

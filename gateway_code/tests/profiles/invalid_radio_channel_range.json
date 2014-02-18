@@ -3,9 +3,9 @@
     "power": "dc",
 
     "radio": {
-        "power" : -17.0,
-        "channel" : 10,
         "mode" : "measure",
-        "frequency" : 1024
+        "channels" : [10],
+        "period" : 1024,
+        "num_per_channel" : 0
     }
 }

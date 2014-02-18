@@ -21,7 +21,6 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
     mp.defMetric('timestamp_s', :uint64)
     mp.defMetric('timestamp_us', :uint32)
     mp.defMetric('rssi', :int32)
-    mp.defMetric('lqi', :int32)
   end
 end
 

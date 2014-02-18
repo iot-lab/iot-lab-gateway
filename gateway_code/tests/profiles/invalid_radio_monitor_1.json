@@ -3,8 +3,8 @@
     "power": "dc",
 
     "radio": {
-        "channel" : 11,
         "mode" : "measure",
-        "frequency" : 2
+        "channels" : [15],
+        "period" : 15
     }
 }

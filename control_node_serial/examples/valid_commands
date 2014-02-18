@@ -16,16 +16,14 @@ config_consumption_measure start 3.3V p 1 v 1 c 1 -p 8244 -a 1024
 config_consumption_measure stop
 
 # radio commands
-config_radio_signal 3.0 25
-config_radio_measure start 499
+config_radio_measure 11,25 100 2
 
-config_radio_measure start 100
 
-config_radio_measure stop
+config_radio_stop
 
 
 #
-test_radio_ping_pong start
+test_radio_ping_pong start 11 3.0
 
 test_radio_ping_pong stop
 

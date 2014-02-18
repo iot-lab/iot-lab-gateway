@@ -7,3 +7,4 @@ nosetests.xml
 cover
 *.log
 *.out
+*.egg

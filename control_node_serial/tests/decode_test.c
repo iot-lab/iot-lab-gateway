@@ -100,12 +100,12 @@ TEST(test_decode_pkt, error_in_decode)
         packet.data[0] = 0x00;
         decode_pkt(&packet);
         ASSERT_STREQ("cn_serial_error: Error in decode packet: ret -42: " \
-                        "len 2 - 00 00\n", print_buff);
+                        "len 2 - 0x00 0x00\n", print_buff);
 
         packet.data[0] = 0xFF;
         decode_pkt(&packet);
         ASSERT_STREQ("cn_serial_error: Error in decode packet: ret 1: " \
-                        "len 2 - FF 00\n", print_buff);
+                        "len 2 - 0xFF 0x00\n", print_buff);
 
         ASSERT_EQ(1, handle_measure_called);
         ASSERT_EQ(1, write_answer_called);

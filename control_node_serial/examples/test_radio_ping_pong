@@ -1,8 +1,0 @@
-
-config_radio_signal 3.0 25
-test_radio_ping_pong start
-
-
-test_radio_ping_pong stop
-
-
