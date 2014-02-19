@@ -16,8 +16,12 @@ config_consumption_measure start 3.3V p 1 v 1 c 1 -p 8244 -a 1024
 config_consumption_measure stop
 
 # radio commands
-config_radio_measure 11,25 100 2
+config_radio_measure 11,25,16 100 2
 
+
+
+
+config_radio_measure 11,25,16 100 0
 
 config_radio_stop
 

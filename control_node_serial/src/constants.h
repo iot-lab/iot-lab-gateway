@@ -113,25 +113,53 @@ enum ina226_average {
         AVERAGE_MASK = 0x70,
 };
 
-// Radio config
-// TODO review still correct on next openlab release
+/*
+ * Radio config
+ *     Extracted from phy.h
+ *     Only values starting with POWER are used and valid
+ */
 enum radio_tx_power {
-        POWER_3dBm   = 38,
-        POWER_2_8dBm = 37,
-        POWER_2_3dBm = 36,
-        POWER_1_8dBm = 34,
-        POWER_1_3dBm = 33,
-        POWER_0_7dBm = 31,
-        POWER_0dBm   = 30,
-        POWER_m1dBm  = 29,
-        POWER_m2dBm  = 28,
-        POWER_m3dBm  = 27,
-        POWER_m4dBm  = 26,
-        POWER_m5dBm  = 25,
-        POWER_m7dBm  = 23,
-        POWER_m9dBm  = 21,
-        POWER_m12dBm = 18,
-        POWER_m17dBm = 13,
+        UNUSED_PHY_POWER_m30dBm,
+        UNUSED_PHY_POWER_m29dBm,
+        UNUSED_PHY_POWER_m28dBm,
+        UNUSED_PHY_POWER_m27dBm,
+        UNUSED_PHY_POWER_m26dBm,
+        UNUSED_PHY_POWER_m25dBm,
+        UNUSED_PHY_POWER_m24dBm,
+        UNUSED_PHY_POWER_m23dBm,
+        UNUSED_PHY_POWER_m22dBm,
+        UNUSED_PHY_POWER_m21dBm,
+        UNUSED_PHY_POWER_m20dBm,
+        UNUSED_PHY_POWER_m19dBm,
+        UNUSED_PHY_POWER_m18dBm,
+        POWER_m17dBm,
+        UNUSED_PHY_POWER_m16dBm,
+        UNUSED_PHY_POWER_m15dBm,
+        UNUSED_PHY_POWER_m14dBm,
+        UNUSED_PHY_POWER_m13dBm,
+        POWER_m12dBm,
+        UNUSED_PHY_POWER_m11dBm,
+        UNUSED_PHY_POWER_m10dBm,
+        POWER_m9dBm,
+        UNUSED_PHY_POWER_m8dBm,
+        POWER_m7dBm,
+        UNUSED_PHY_POWER_m6dBm,
+        POWER_m5dBm,
+        POWER_m4dBm,
+        POWER_m3dBm,
+        POWER_m2dBm,
+        POWER_m1dBm,
+        POWER_0dBm,
+        POWER_0_7dBm,
+        UNUSED_PHY_POWER_1dBm,
+        POWER_1_3dBm,
+        POWER_1_8dBm,
+        UNUSED_PHY_POWER_2dBm,
+        POWER_2_3dBm,
+        POWER_2_8dBm,
+        POWER_3dBm,
+        UNUSED_PHY_POWER_4dBm,
+        UNUSED_PHY_POWER_5dBm,
 };
 
 #endif // CONSTANTS_H

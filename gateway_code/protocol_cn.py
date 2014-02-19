@@ -93,14 +93,10 @@ class Protocol(object):
 
         if radio is None:
             return self._stop_radio()  # stop current mode
-        else:
-            return self._config_radio_mode(radio)
-
-    def _config_radio_mode(self, radio):
-        """ Configure the appropriate radio mode """
 
         if 'measure' == radio.mode:
             return self._config_radio_measure(radio)
+
         raise NotImplementedError("Uknown radio mode: %s", radio.mode)
 
     def _config_radio_measure(self, radio):
@@ -111,8 +107,10 @@ class Protocol(object):
         #     <channel,list,comma,separated>
         #     <period>
         #     <num_measure_per_channel>
+        sorted_channels = sorted(list(set(radio.channels)))
+
         cmd = ['config_radio_measure']
-        cmd.append(','.join(str(x) for x in set(radio.channels)))
+        cmd.append(','.join(str(x) for x in sorted_channels))
         cmd.append(str(radio.period))
         cmd.append(str(radio.num_per_channel))
 

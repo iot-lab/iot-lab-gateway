@@ -556,35 +556,39 @@ class AutoTestManager(object):
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
 
-        # one measure every ~0.1 seconds
+        # pkt length = 125
+        # one measure every ~0.01 seconds
         ret_val = 0
         radio = Radio(mode="measure", channels=[channel],
-                      period=100, num_per_channel=0)
+                      period=10, num_per_channel=0)
         ret_val += self.g_m.protocol.config_radio(radio)
 
         while not self.last_measure.empty():
             _ = self.last_measure.get()
+
         # send 10 radio packets and keep all radio measures
+
         self.keep_all_measures = True
+        cmd_on = ['radio_pkt', '3dBm', str(channel)]
         for _ in range(0, 10):
-            cmd_on = ['radio_pkt', '3dBm', str(channel)]
             _ = self.on_serial.send_command(cmd_on)
             time.sleep(0.5)
+
         ret_val += self.g_m.protocol.config_radio(None)
         self.keep_all_measures = False
 
         # extract rssi measures
         # ['measures_debug:', 'radio_measure',
-        #  '1378466517.186216:21.018127', '0', '0']
+        #  '1378466517.186216', '11', '-91']
         values = [-91]  # expect other values than (-91)
         while not self.last_measure.empty():
             val = self.last_measure.get().split(' ')
             if val[1] == 'radio_measure':
-                values.append(int(val[3]))
+                values.append(int(val[4]))
 
         # check that values other than (0,0) were measured
         test_ok = 1 < len(set(values))
-        ret_val += self._check(TST_OK(test_ok), 'rssi_measures', values)
+        ret_val += self._check(TST_OK(test_ok), 'rssi_measures', set(values))
 
         return ret_val
 

@@ -137,12 +137,10 @@ class Radio(_RADIO_TYPE):
         if len(set(self.channels) - set(range(11, 26 + 1))):
             raise ValueError
 
-        if self.period not in range(0, 2**16):
+        if self.period not in range(1, 2**16):
             raise ValueError
 
         if self.mode == "measure":
-            if self.period < 2:  # min period == 2 for 'rssi'
-                raise ValueError
             if self.num_per_channel is None:
                 raise ValueError
 

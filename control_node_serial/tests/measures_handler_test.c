@@ -41,13 +41,15 @@ static int radio_mock_called = 0;
 static struct {
         uint64_t timestamp_s;
         uint32_t timestamp_us;
+        uint32_t channel;
         int32_t rssi;
 } radio_call_args;
 void oml_measures_radio(uint64_t timestamp_s, uint32_t timestamp_us,
-                int32_t rssi)
+                uint32_t channel, int32_t rssi)
 {
         radio_call_args.timestamp_s = timestamp_s;
         radio_call_args.timestamp_us = timestamp_us;
+        radio_call_args.channel = channel;
         radio_call_args.rssi = rssi;
         radio_mock_called +=1;
 }
@@ -236,7 +238,7 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
 {
         unsigned char data[256];
         struct radio_measure_vals radio;
-        size_t data_size = 5;
+        size_t data_size = 6;
 
         measures_handler_start(0, OML_CONFIG_PATH);
         memset(print_buff, '\0', sizeof(print_buff));
@@ -251,6 +253,7 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
 
         // first value
         radio.time_us = (unsigned int) 0;
+        radio.channel = 21;
         radio.rssi = -42;
         memcpy(&data[index], &radio, data_size);
         index += data_size;
@@ -264,11 +267,13 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
 
         ASSERT_EQ(15, radio_call_args.timestamp_s);
         ASSERT_EQ(0, radio_call_args.timestamp_us);
+        ASSERT_EQ(21, radio_call_args.channel);
         ASSERT_EQ(-42, radio_call_args.rssi);
         measures_handler_stop();
 
         // num == 2
         radio.time_us = (unsigned int) 1000000;
+        radio.channel = 25;
         radio.rssi = 42;
         memcpy(&data[index], &radio, data_size);
         index += data_size;
@@ -281,6 +286,7 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
 
         ASSERT_EQ(16, radio_call_args.timestamp_s);
         ASSERT_EQ(0, radio_call_args.timestamp_us);
+        ASSERT_EQ(25, radio_call_args.channel);
         ASSERT_EQ(42, radio_call_args.rssi);
         measures_handler_stop();
 

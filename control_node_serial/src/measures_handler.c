@@ -21,8 +21,9 @@ struct power_vals {
 };
 
 struct radio_measure_vals {
-        unsigned int time_us;
-        signed char rssi;
+        uint32_t time_us;
+        uint8_t channel;
+        int8_t rssi;
 };
 
 static struct _measure_handler_state {
@@ -146,7 +147,7 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
         unsigned char *current_data_ptr;
         struct radio_measure_vals radio_vals;
 
-        size_t values_len = 5;
+        size_t values_len = sizeof(uint32_t) + sizeof(uint8_t) + sizeof(int8_t);
         uint32_t pkt_timeref_s = 0;
 
         num_measures     = data[1];
@@ -173,13 +174,13 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
                 if (mh_state.has_oml) {
                         oml_measures_radio(
                                 timestamp.tv_sec, timestamp.tv_usec,
-                                radio_vals.rssi);
+                                radio_vals.channel, radio_vals.rssi);
                 }
 
-                PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %i\n",
+                PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %u %i\n",
                               "radio_measure",
                               timestamp.tv_sec, timestamp.tv_usec,
-                              radio_vals.rssi);
+                              radio_vals.channel, radio_vals.rssi);
         }
 }
 

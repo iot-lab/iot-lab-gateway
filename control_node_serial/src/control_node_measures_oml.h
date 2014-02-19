@@ -41,6 +41,7 @@ static OmlMPDef oml_consumption_def[] = {
 static OmlMPDef oml_radio_def[] = {
   {"timestamp_s", OML_UINT64_VALUE},
   {"timestamp_us", OML_UINT32_VALUE},
+  {"channel", OML_UINT32_VALUE},
   {"rssi", OML_INT32_VALUE},
   {NULL, (OmlValueT)0}
 };
@@ -84,15 +85,16 @@ oml_inject_consumption(OmlMP* mp, uint64_t timestamp_s, uint32_t timestamp_us, d
 }
 
 static inline void
-oml_inject_radio(OmlMP* mp, uint64_t timestamp_s, uint32_t timestamp_us, int32_t rssi)
+oml_inject_radio(OmlMP* mp, uint64_t timestamp_s, uint32_t timestamp_us, uint32_t channel, int32_t rssi)
 {
-  OmlValueU v[3];
+  OmlValueU v[4];
 
-  omlc_zero_array(v, 3);
+  omlc_zero_array(v, 4);
 
   omlc_set_uint64(v[0], timestamp_s);
   omlc_set_uint32(v[1], timestamp_us);
-  omlc_set_int32(v[2], rssi);
+  omlc_set_uint32(v[2], channel);
+  omlc_set_int32(v[3], rssi);
 
   omlc_inject(mp, v);
 

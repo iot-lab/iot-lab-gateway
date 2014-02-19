@@ -5,7 +5,7 @@
     "radio": {
         "mode" : "measure",
         "channels" : [15],
-        "period" : 1,
+        "period" : 0,
         "num_per_channel" : 0
     }
 }

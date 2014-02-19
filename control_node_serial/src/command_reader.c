@@ -199,8 +199,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 got_error |= get_val(arg, alim_d, &val);
                 append_data(cmd_buff, &val, sizeof(uint8_t));
 
-        } else if ((strcmp(command, "config_consumption_measure") == 0) || \
-                   (strcmp(command, "config_consumption_measure_new") == 0)) {
+        } else if (strcmp(command, "config_consumption_measure") == 0) {
                 /*
                  * 1B: start/stop
                  * 1B: source | measures
@@ -265,7 +264,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 
                 if (3 != count)
                         return 1;
-                if (period < 2 || period >= (1 << 16))
+                if ((period & 0xFFFF) == 0)  // non zero and hold on 16bit
                         return 2;
                 uint32_t channels_flag = parse_channels_list(channels_list);
                 if (0 == channels_flag)

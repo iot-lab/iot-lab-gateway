@@ -2,6 +2,10 @@
 # The syntax of this file is documented at [0].
 #
 # [0] http://doc.mytestbed.net/doc/omf/OmfEc/Backward/AppDefinition.html
+#
+# To generate 'control_node_measures_oml.h' file use
+#     oml2-scaffold --oml control_node_measures.rb
+#
 
 defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |app|
 
@@ -20,6 +24,7 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
   app.defMeasurement("radio") do |mp|
     mp.defMetric('timestamp_s', :uint64)
     mp.defMetric('timestamp_us', :uint32)
+    mp.defMetric('channel', :uint32)
     mp.defMetric('rssi', :int32)
   end
 end

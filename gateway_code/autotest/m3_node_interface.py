@@ -110,9 +110,12 @@ class OpenNodeSerial(object):
         self.reader_thread.join()
         self.serial_fd.close()
 
-    def send_command(self, command_list):
+    def send_command(self, const_command_list):
         """ Send command and wait for answer """
         serial_data = []
+
+        # act on a copy of the list
+        command_list = const_command_list[:]
 
         # extract command
         command = command_list.pop(0)

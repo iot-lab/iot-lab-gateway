@@ -167,8 +167,8 @@ TEST(test_parse_cmd, radio_measure)
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_NE(0, ret);
 
-        // min to 2
-        strcpy(cmd, "config_radio_measure 15 1 1");
+        // min to 1
+        strcpy(cmd, "config_radio_measure 15 0 1");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_NE(0, ret);
 
