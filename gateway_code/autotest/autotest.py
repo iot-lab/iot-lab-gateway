@@ -6,7 +6,7 @@ auto tests implementation
 """
 
 import time
-import Queue
+import bisect
 
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from serial import SerialException
@@ -40,31 +40,17 @@ class AutoTestManager(object):
     """ Gateway and open node auto tests """
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
+
         self.on_serial = None
+        self.a8_connection = None
 
         self.ret_dict = None
 
-        self.a8_connection = None
+        self.cn_measures = []
 
-        self.keep_all_measures = False
-        self.last_measure = Queue.Queue(0)
-
-    def _measures_handler(self, measure):
-        """ Discard previous measure and add new one """
-        if not self.keep_all_measures:
-            try:
-                self.last_measure.get_nowait()  # discard old measure
-            except Queue.Empty:
-                pass
-        self.last_measure.put(measure)
-
-    def _get_measure(self, timeout=None):
-        """ Wait until a new measure is received """
-        try:
-            measure = self.last_measure.get(timeout=timeout)
-        except Queue.Empty:
-            measure = None
-        return measure
+    def _measures_handler(self, measure_str):
+        """ control node measures Handler """
+        self.cn_measures.append(measure_str.split(' '))
 
     @staticmethod
     def get_local_mac_addr():
@@ -82,8 +68,8 @@ class AutoTestManager(object):
 
         # configure Control Node
         ret_val += self.g_m.node_soft_reset('gwt')
-        self.g_m.cn_serial.start(_args=['-d'],
-                                 _measures_handler=self._measures_handler)
+        self.g_m.cn_serial.start(_measures_handler=self._measures_handler,
+                                 _args=['-d'])
         time.sleep(1)
 
         ret_val += self.g_m.reset_time()
@@ -559,34 +545,23 @@ class AutoTestManager(object):
         # pkt length = 125
         # one measure every ~0.01 seconds
         ret_val = 0
-        radio = Radio(mode="measure", channels=[channel],
-                      period=10, num_per_channel=0)
-        ret_val += self.g_m.protocol.config_radio(radio)
-
-        while not self.last_measure.empty():
-            _ = self.last_measure.get()
-
-        # send 10 radio packets and keep all radio measures
-
-        self.keep_all_measures = True
+        radio = Radio("measure", [channel], period=10, num_per_channel=0)
         cmd_on = ['radio_pkt', '3dBm', str(channel)]
+        del self.cn_measures[:]
+
+        # get RSSI while sending 10 packets length 125
+        ret_val += self.g_m.protocol.config_radio(radio)
         for _ in range(0, 10):
             _ = self.on_serial.send_command(cmd_on)
             time.sleep(0.5)
-
         ret_val += self.g_m.protocol.config_radio(None)
-        self.keep_all_measures = False
 
-        # extract rssi measures
         # ['measures_debug:', 'radio_measure',
-        #  '1378466517.186216', '11', '-91']
-        values = [-91]  # expect other values than (-91)
-        while not self.last_measure.empty():
-            val = self.last_measure.get().split(' ')
-            if val[1] == 'radio_measure':
-                values.append(int(val[4]))
+        #      '1378466517.186216', '11', '-91']
+        # -91 == no radio detected
+        values = [int(measure[4]) for measure in self.cn_measures] + [-91]
 
-        # check that values other than (0,0) were measured
+        # check that values other than -91 measured
         test_ok = 1 < len(set(values))
         ret_val += self._check(TST_OK(test_ok), 'rssi_measures', set(values))
 
@@ -599,28 +574,28 @@ class AutoTestManager(object):
     def test_consumption_dc(self):
         """ Try consumption for DC """
 
-        # one measure every ~0.1 seconds
         ret_val = 0
+
+        # one measure every ~0.1 seconds
+
         conso = Consumption(power_source='dc',
                             board_type=gateway_code.config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')
+
+        del self.cn_measures[:]
+        # store 2 secs of measures
         ret_val += self.g_m.protocol.config_consumption(conso)
+        time.sleep(2)  # get measures for 2 seconds
+        ret_val += self.g_m.protocol.config_consumption(None)
 
         values = []
-
         # measures_debug: consumption_measure
-        #     1378387028.906210:21.997924
-        #     0.257343 3.216250 0.080003
-        for _ in range(0, 10):
-            try:
-                val = self._get_measure(timeout=1).split(' ')
-            except AttributeError:
-                continue
-            if val[1] == 'consumption_measure':
-                values.append(tuple([float(meas) for meas in val[3:6]]))
-        ret_val += self.g_m.protocol.config_consumption(None)
+        #     1378387028.906210 0.257343 3.216250 0.080003
+        for measure in self.cn_measures:
+            if measure[1] == 'consumption_measure':
+                values.append(tuple([float(meas) for meas in measure[3:6]]))
 
         # TODO Validate value ranges (maybe with idle firmware)
 
@@ -650,30 +625,24 @@ class AutoTestManager(object):
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
 
+        # store 2 secs of measures
+        del self.cn_measures[:]
         ret_val += self.g_m.protocol.config_consumption(conso)
+        time.sleep(2)  # get measures for 2 seconds
+        ret_val += self.g_m.protocol.config_consumption(None)
 
         values = []
-
         # measures_debug: consumption_measure
-        #     1378387028.906210:21.997924
-        #     0.257343 3.216250 0.080003
-        val = None
-        for _ in range(0, 10):
-            try:
-                val = self._get_measure(timeout=1).split(' ')
-                if val[1] == 'consumption_measure':
-                    values.append(tuple([float(meas) for meas in val[3:6]]))
-            except AttributeError:
-                # 'NoneType' object has no attribute 'split'
-                # control_node_serial exited (it happened)
-                LOGGER.debug('consumption_measure val == %r', val)
+        #     1378387028.906210 0.257343 3.216250 0.080003
+        for measure in self.cn_measures:
+            if measure[1] == 'consumption_measure':
+                values.append(tuple([float(meas) for meas in measure[3:6]]))
 
         test_ok = 1 < len(set(values))
         ret_val += self._check(TST_OK(test_ok), 'consumption_batt', values)
 
         # TODO Validate value ranges (maybe with idle firmware)
         ret_val += self.g_m.protocol.config_consumption(None)
-
         return ret_val
 
     def test_leds_with_consumption(self):
@@ -688,34 +657,40 @@ class AutoTestManager(object):
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')
-        ret_val += self.g_m.protocol.config_consumption(conso)
 
-        values = []
-
-        # measures_debug: consumption_measure
-        #     1378387028.906210:21.997924
-        #     0.257343 3.216250 0.080003
-
+        del self.cn_measures[:]
+        leds_timestamps = []
         # get consumption for all leds mode:
         #     no leds, each led, all leds
+        ret_val += self.g_m.protocol.config_consumption(conso)
         for leds in ['0', '1', '2', '4', '7']:
             _ = self.on_serial.send_command(['leds_on', leds])
             time.sleep(0.5)
-            try:
-                val = self._get_measure(timeout=1).split(' ')
-                if val[1] == 'consumption_measure':
-                    values.append(float(val[3]))
-            except AttributeError:
-                values.append(float('NaN'))
+            leds_timestamps.append(time.time())
+            time.sleep(0.5)
             _ = self.on_serial.send_command(['leds_off', '7'])
-
         ret_val += self.g_m.protocol.config_consumption(None)
+        time.sleep(0.5)  # flush last values
+
+        # measures_debug: consumption_measure
+        #     1378387028.906210  0.257343 3.216250 0.080003
+        measures = [measure[2:] for measure in self.cn_measures if
+                    measure[1] == 'consumption_measure']
+        timestamps = [float(meas[0]) for meas in measures]
+
+        values = []
+        for led_time in leds_timestamps:
+            # get power consumption at led_time
+            index = bisect.bisect(timestamps, led_time)
+            try:
+                values.append(measures[index][1])
+            except IndexError:
+                values.append(float('NaN'))
 
         # check that consumption is higher with each led than with no leds on
-        value_0 = values.pop(0)
-        test_ok = all([value_0 < val for val in values])
+        test_ok = all([val > values[0] for val in values[1:]])
 
         ret_val += self._check(TST_OK(test_ok), 'leds_using_conso',
-                               (value_0, values))
+                               (values[0], values[1:]))
 
         return ret_val

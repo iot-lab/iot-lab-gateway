@@ -29,34 +29,6 @@ class TestProtocol(unittest.TestCase):
         self.assertTrue('message_1' in self.g_v.ret_dict['success'])
         self.assertTrue('message_2' in self.g_v.ret_dict['error'])
 
-    def test_measures_handler_functions(self):
-        """ test measures handler functions """
-
-        self.g_v.keep_all_measures = False
-        # no measure
-        ret_none = self.g_v._get_measure(timeout=0.0000001)
-        self.assertEquals(None, ret_none)
-
-        # one measure
-        self.g_v._measures_handler(0)
-        ret_zero = self.g_v._get_measure()
-        self.assertEquals(0, ret_zero)
-
-        # first measure dropped
-        self.g_v._measures_handler('removed')
-        self.g_v._measures_handler(1)
-        ret_one = self.g_v._get_measure()
-        self.assertEquals(1, ret_one)
-
-        self.g_v.keep_all_measures = True
-        # keep all measures
-        self.g_v._measures_handler(0)
-        self.g_v._measures_handler(1)
-        ret_zero = self.g_v._get_measure()
-        ret_one = self.g_v._get_measure()
-
-        self.assertEquals(0, ret_zero)
-        self.assertEquals(1, ret_one)
 
 class TestAutoTestsErrorCases(unittest.TestCase):
 
