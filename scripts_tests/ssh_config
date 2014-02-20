@@ -1,0 +1,11 @@
+Host fit2-dev
+  HostName fit2-dev.inrialpes.fr
+  Port     2222
+  User     root
+
+
+Host gateway-m3
+#gateway-m3-2 gateway-a8 open-a8 gateway-robot
+  User root
+  ProxyCommand ssh fit2-dev -W %h:%p
+
