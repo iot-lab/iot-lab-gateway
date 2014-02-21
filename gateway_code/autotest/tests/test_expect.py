@@ -49,8 +49,9 @@ class TestSerialExpect(unittest.TestCase):
         ret = self.expect.expect('ab.*45', 0.0)
         self.assertEquals('', ret)  # timeout
 
+
     def test_expect_on_multiple_reads(self):
-        self.read_ret = ['a234567890123456', 'b234567890123456', '123456c']
+        self.read_ret = ['a234567890123456', '', 'b234567890123456', '123456c']
         expected_ret = ''.join(self.read_ret)
 
         ret = self.expect.expect('a.*c')

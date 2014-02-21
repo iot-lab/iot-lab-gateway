@@ -20,7 +20,7 @@ class Protocol(object):
         command = command_list[0]
         answer = self.sender(command_list)
         answer_valid = ([command, 'ACK'] == answer)
-        return (0 if answer_valid else 1)   # 0 on success
+        return 0 if answer_valid else 1   # 0 on success
 
     def start_stop(self, command, alim):
         """

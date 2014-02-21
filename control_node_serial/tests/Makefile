@@ -49,8 +49,8 @@ gcovr:
 		echo ""; false ; }
 
 
-
-GCOVRFLAGS  = -b -r '../../../../' -e '.*/tests'
+# gcovr_root_dir/fit-dev/gateway_code_python/control_node_serial/tests
+GCOVRFLAGS  = -b --root '../../../../' -e '.*/tests'
 $(RESULTDIR)/c_code_coverage.xml: $(TEST_RESULTS)
 	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -x -o $@, "  GCOV  $@")
 	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -f'.*/gateway_code_python/', \

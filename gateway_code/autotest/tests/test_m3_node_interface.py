@@ -38,6 +38,11 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         self.on_interface.stop()
         self.serial.close.assert_called()
 
+    def test_start_with_serial_exception(self):
+        import serial
+        self.serial.flushInput.side_effect = serial.SerialException("ERROR_TEST")
+        ret = self.on_interface.start()
+        self.assertEquals((1, "ERROR_TEST"), ret)
 
     def test_send_command(self):
         cmd_ret = ['ANSWER', 'RETURN', 'VALUE']

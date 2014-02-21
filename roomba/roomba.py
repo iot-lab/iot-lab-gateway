@@ -147,7 +147,7 @@ def int_in_signed_bytes(integer):
     return((integer >> 8) & 0xFF, integer & 0xFF)
 
 
-class Roomba500:
+class Roomba500(object):
     """ the Roomba class is an abstraction of the iRobot Roomba500's
         ROI interface, including communication and a bit
         of processing of the strings passed back and forth
@@ -442,7 +442,7 @@ class Roomba500:
         self.change_mode('power')   # power off the robot
         time.sleep(0.1)
         self.ser.close()
-        print('The Roomba seems to have shutdown normally')
+        print 'The Roomba seems to have shutdown normally'
 
         return
 

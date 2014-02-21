@@ -260,7 +260,7 @@ class AutoTestManager(object):
         :param ret: 0 means success non zero means failure
         :return: 0 if `ret` == 0, a positive value otherwise
         """
-        if (0 == int(ret)):
+        if 0 == int(ret):
             self.ret_dict['success'].append(operation)
             LOGGER.debug('autotest: %r OK: %r', operation, log_message)
         else:
@@ -349,7 +349,7 @@ class AutoTestManager(object):
         _ = self.on_serial.send_command(['leds_blink', '7', '0'])
         _ = self.on_serial.send_command(['leds_off', '7'])
 
-        if (len(set(values)) == 1 and values[0] < 0.20):
+        if len(set(values)) == 1 and values[0] < 0.20:
             # test fails when run with low light, like at night
             # so hack to let it work
             LOGGER.warning("Got the same value which is '%f'", values[0])
