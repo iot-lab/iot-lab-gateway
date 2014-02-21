@@ -252,7 +252,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             for measure in measures:
                 # no power,  voltage in 3.3V, current not null
                 self.assertTrue(math.isnan(float(measure[1])))
-                self.assertTrue(3.0 <= float(measure[2]) <= 3.5)
+                self.assertTrue(2.8 <= float(measure[2]) <= 3.5)
                 self.assertNotEquals(0.0, float(measure[3]))
 
             # timestamps are in correct order
