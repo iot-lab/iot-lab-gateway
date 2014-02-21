@@ -13,6 +13,7 @@ import threading
 import struct
 import serial
 import Queue
+import time
 
 
 from gateway_code import common
@@ -157,7 +158,7 @@ class OpenNodeSerial(object):
         # wait answer
         common.empty_queue(self.msg_queue)
         try:
-            answer = self.msg_queue.get(timeout=10).split(' ')
+            answer = self.msg_queue.get(timeout=5).split(' ')
         except Queue.Empty:
             answer = None
         return answer
@@ -167,6 +168,9 @@ class OpenNodeSerial(object):
         read_str = ''
         while not self.stop_reader.is_set():
             read_str += self.serial_fd.readline()  # append waiting data
+            # issues without this or a print for test_gpio
+            # This is pure magic, really
+            time.sleep(0.1)
             if not read_str or read_str[-1] != '\n':  # timeout reached
                 continue
             # answer complete

@@ -423,13 +423,23 @@ class AutoTestManager(object):
         cmd = ['test_gpio', 'start']
         ret_val += self.g_m.protocol.send_cmd(cmd)
 
-        answer = self.on_serial.send_command(['test_gpio'])
-        if (answer is None) or (answer[0] != 'ACK'):
-            LOGGER.debug('test_gpio answer == %r', answer)
-            test_ok = False
-        else:
-            test_ok = (answer[:2] == ['ACK', 'GPIO'])
+        values = []
+        for _ in range(0, 5):
+            answer = self.on_serial.send_command(['get_magneto'])
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_magneto answer == %r', answer)
+            else:
+                measures = tuple([float(val) for val in answer[3:6]])
+                values.append(measures)
 
+            answer = self.on_serial.send_command(['test_gpio'])
+            if (answer is None) or (answer[0] != 'ACK'):
+                LOGGER.debug('test_gpio answer == %r', answer)
+                values.append(1)
+            else:
+                values.append(0)
+
+        test_ok = (0 in values)  # at least one success
         ret_val += self._check(TST_OK(test_ok), 'test_gpio_ON<->CN', answer)
 
         # cleanup
