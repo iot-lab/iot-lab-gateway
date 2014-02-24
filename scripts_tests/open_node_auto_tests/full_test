@@ -1,0 +1,53 @@
+leds_on 7
+leds_off 5
+leds_blink 7 65535
+
+# blinking leds during get_light
+leds_blink 7 2000
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+
+
+get_pressure
+get_pressure
+get_pressure
+get_pressure
+get_pressure
+
+get_gyro
+get_gyro
+get_gyro
+get_gyro
+get_gyro
+
+get_accelero
+get_accelero
+get_accelero
+get_accelero
+get_accelero
+
+get_magneto
+get_magneto
+get_magneto
+get_magneto
+get_magneto
+get_magneto
+
+get_time
+get_time
+
+test_flash
+
+test_i2c
+test_gpio_pps
+
+radio_pkt  3dBm   25
+radio_ping_pong  -1dBm  25
+
+

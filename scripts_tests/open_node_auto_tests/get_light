@@ -1,0 +1,17 @@
+leds_on 7
+leds_off 5
+leds_blink 7 2000 
+
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+get_light
+
+
