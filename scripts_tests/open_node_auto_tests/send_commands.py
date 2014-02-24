@@ -63,12 +63,6 @@ RADIO_POW_DICT = {
     '-17dBm': 13,
 }
 
-def _empty_queue(queue):
-    """
-    Remove all items in Queue
-    """
-    while not queue.empty():
-        answer = queue.get_nowait()
 
 class CommandSender(object):
 
@@ -127,7 +121,7 @@ def main(input_fd, tty_path):
 if __name__ == '__main__':
     print >> sys.stderr, ' '.join(sys.argv)
     if len(sys.argv) != 3:
-        print >> sys.stderr, "Usage: %s <TTY_FILE> <command_file>" % sys.argv[0]
+        print >> sys.stderr, "Usage: %s <tty> <command_file>" % sys.argv[0]
         print >> sys.stderr, "If command_file == - use stdin"
         exit(1)
 
