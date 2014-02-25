@@ -212,7 +212,7 @@ class Tests(_EmptyCommand):
         args = ['python', 'setup.py']
         try:
             ret = subprocess.call(args + ['nosetests', '--cover-html'])
-            _add_path_to_coverage_xml()
+            # _add_path_to_coverage_xml()
             subprocess.call(args + ['lint', '-o', 'pylint.out'])
             subprocess.call(args + ['pep8', '-o', 'pep8.out'])
             return ret

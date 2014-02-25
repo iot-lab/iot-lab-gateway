@@ -39,3 +39,7 @@ ssh -F $SSH_CONFIG   $HOSTNAME "\
     source /etc/profile; \
     make -C $DEST/gateway_code_python/control_node_serial realclean coverage"
 
+# Get results files
+rsync -e "ssh -F $SSH_CONFIG" -av \
+    --include='*/' --include='*xml' --include='*out' --exclude='*'  -av \
+    $HOSTNAME:$DEST $SRC_DIR/.. | grep -v "sender"
