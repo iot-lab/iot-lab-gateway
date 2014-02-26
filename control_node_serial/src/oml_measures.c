@@ -8,7 +8,6 @@
 
 int oml_measures_start(char *oml_config_file_path)
 {
-        //const char *argv[256] = {NULL};
         int result;
         const char *argv[] = {
                 "argv0",
@@ -35,7 +34,7 @@ int oml_measures_start(char *oml_config_file_path)
 }
 
 
-void oml_measures_consumption(uint64_t timestamp_s, uint32_t timestamp_us,
+void oml_measures_consumption(uint32_t timestamp_s, uint32_t timestamp_us,
                               double power, double voltage, double current)
 {
         oml_inject_consumption(g_oml_mps_control_node_measures->consumption,
@@ -43,7 +42,7 @@ void oml_measures_consumption(uint64_t timestamp_s, uint32_t timestamp_us,
                                power, voltage, current);
 }
 
-void oml_measures_radio(uint64_t timestamp_s, uint32_t timestamp_us,
+void oml_measures_radio(uint32_t timestamp_s, uint32_t timestamp_us,
                         uint32_t channel, int32_t rssi)
 {
         oml_inject_radio(g_oml_mps_control_node_measures->radio,

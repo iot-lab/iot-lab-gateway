@@ -20,14 +20,14 @@ int oml_measures_stop()
 
 static int consumption_mock_called = 0;
 static struct {
-        uint64_t timestamp_s;
+        uint32_t timestamp_s;
         uint32_t timestamp_us;
         double current;
         double voltage;
         double power;
 } consumption_call_args;
 
-void oml_measures_consumption(uint64_t timestamp_s, uint32_t timestamp_us,
+void oml_measures_consumption(uint32_t timestamp_s, uint32_t timestamp_us,
                 double power, double voltage, double current)
 {
         consumption_call_args.timestamp_s = timestamp_s;
@@ -39,12 +39,12 @@ void oml_measures_consumption(uint64_t timestamp_s, uint32_t timestamp_us,
 }
 static int radio_mock_called = 0;
 static struct {
-        uint64_t timestamp_s;
+        uint32_t timestamp_s;
         uint32_t timestamp_us;
         uint32_t channel;
         int32_t rssi;
 } radio_call_args;
-void oml_measures_radio(uint64_t timestamp_s, uint32_t timestamp_us,
+void oml_measures_radio(uint32_t timestamp_s, uint32_t timestamp_us,
                 uint32_t channel, int32_t rssi)
 {
         radio_call_args.timestamp_s = timestamp_s;

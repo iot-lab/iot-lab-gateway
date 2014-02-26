@@ -14,7 +14,7 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
   # Declare measurement points; generate OML injection helpers with
   #  oml2-scaffold --oml control_node_measures.rb
   app.defMeasurement("consumption") do |mp|
-    mp.defMetric('timestamp_s', :uint64)
+    mp.defMetric('timestamp_s', :uint32)
     mp.defMetric('timestamp_us', :uint32)
     mp.defMetric('power', :double)
     mp.defMetric('voltage', :double)

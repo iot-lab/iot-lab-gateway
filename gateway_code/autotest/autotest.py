@@ -279,9 +279,9 @@ class AutoTestManager(object):
         # get_time: ['ACK', 'CURRENT_TIME', '=', '122953', 'tick_32khz']
         answer = self.on_serial.send_command(['get_time'])
 
-        test_ok = (answer is not None)
-        test_ok &= ['ACK', 'CURRENT_TIME'] == answer[:2]
-        test_ok &= answer[3].isdigit()
+        test_ok = ((answer is not None) and
+                   ['ACK', 'CURRENT_TIME'] == answer[:2] and
+                   answer[3].isdigit())
 
         ret_val = self._check(TST_OK(test_ok), 'm3_comm_with_get_time', answer)
 
