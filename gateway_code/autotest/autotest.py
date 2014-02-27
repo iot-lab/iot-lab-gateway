@@ -563,7 +563,7 @@ class AutoTestManager(object):
         # pkt length = 125
         # one measure every ~0.01 seconds
         ret_val = 0
-        radio = Radio("measure", [channel], period=10, num_per_channel=0)
+        radio = Radio("rssi", [channel], period=10, num_per_channel=0)
         cmd_on = ['radio_pkt', '3dBm', str(channel)]
         del self.cn_measures[:]
 

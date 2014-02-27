@@ -94,7 +94,7 @@ class Protocol(object):
         if radio is None:
             return self._stop_radio()  # stop current mode
 
-        if 'measure' == radio.mode:
+        if 'rssi' == radio.mode:
             return self._config_radio_measure(radio)
 
         raise NotImplementedError("Uknown radio mode: %s", radio.mode)

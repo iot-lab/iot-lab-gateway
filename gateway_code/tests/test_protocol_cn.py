@@ -135,7 +135,7 @@ class TestProtocolRadio(unittest.TestCase):
 
     def test_config_radio_with_measure(self):
         """ Configure Radio with 'measure' mode """
-        radio = profile.Radio("measure", [17,15,11], 100, num_per_channel=10)
+        radio = profile.Radio("rssi", [17,15,11], 100, num_per_channel=10)
 
         self.protocol._config_radio_measure = mock.Mock()
         self.protocol._config_radio_measure.return_value = 0
@@ -161,7 +161,7 @@ class TestProtocolRadio(unittest.TestCase):
 
     def test_config_radio_with_invalid_mode(self):
         """ Configure radio with an non supported radio mode """
-        radio = profile.Radio("measure", [11], 10, num_per_channel=10)
+        radio = profile.Radio("rssi", [11], 10, num_per_channel=10)
         radio.mode = "invalid_mode"
 
         self.assertRaises(NotImplementedError,
@@ -170,7 +170,7 @@ class TestProtocolRadio(unittest.TestCase):
 
     def test_config_radio_error_during_config(self):
 
-        radio = profile.Radio("measure", [11], 10, num_per_channel=10)
+        radio = profile.Radio("rssi", [11], 10, num_per_channel=10)
 
         self.protocol._config_radio_measure = mock.Mock()
         self.protocol._config_radio_measure.return_value = 0xFF
@@ -186,7 +186,7 @@ class TestProtocolRadio(unittest.TestCase):
 
     def test_config_radio_measure(self):
 
-        radio = profile.Radio("measure", [17,15,11], 100, num_per_channel=10)
+        radio = profile.Radio("rssi", [17,15,11], 100, num_per_channel=10)
 
         self.sender.return_value = ['config_radio_measure', 'ACK']
         ret = self.protocol._config_radio_measure(radio)

@@ -3,7 +3,7 @@
     "power": "dc",
 
     "radio": {
-        "mode" : "measure",
+        "mode" : "rssi",
         "channels" : [15],
         "period" : 0,
         "num_per_channel" : 0

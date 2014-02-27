@@ -140,10 +140,10 @@ class Radio(_RADIO_TYPE):
         if self.period not in range(1, 2**16):
             raise ValueError
 
-        if self.mode == "measure":
+        if self.mode == "rssi":
             if self.num_per_channel is None:
                 raise ValueError
 
         # invalid measures types (at the end for coverage issue)
-        if self.mode not in ["measure"]:
+        if self.mode not in ["rssi"]:
             raise ValueError
