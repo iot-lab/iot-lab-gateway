@@ -10,17 +10,16 @@ import datetime
 
 from gateway_code import config
 from gateway_code.autotest import expect
-from subprocess import Popen, PIPE, STDOUT, CalledProcessError
+from subprocess import check_output, check_call, Popen
+from subprocess import STDOUT, CalledProcessError
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
 A8_TTY_PATH = '/tmp/tty_open_a8_m3'
 
-_SSH_OPTS = ('-l root ' +
-             '-o ConnectTimeout=5 ' +
-             '-o StrictHostKeyChecking=no ')
-
+# cannot specify static_files_path at import to allow testing
+_SSH_OPTS = ('-F  {static_files_path}/ssh_a8_config')
 SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "{cmd}"'
 SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 
@@ -90,9 +89,10 @@ class OpenA8Connection(object):
             # "Warning: Permanently added '192.168.1.6' (RSA)
             #  to the list of known hosts.\r\n"
             self.ssh_run('echo "ssh ok"')
-        except CalledProcessError:
-            raise A8ConnectionError("Could note ssh connect to openA8",
-                                    "open_a8_ssh_connection_failed")
+        except CalledProcessError as err:
+            raise A8ConnectionError(
+                "Could not ssh connect to openA8 %s" % str(err),
+                "open_a8_ssh_connection_failed")
 
         try:
             output = self.ssh_run('cat /tmp/boot_errors')
@@ -112,7 +112,8 @@ class OpenA8Connection(object):
         socat_cmd = SOCAT_CMD.format(port=port, tty=config_a8['tty'],
                                      baudrate=config_a8['baudrate'])
         remote_tty_cmd = 'killall socat; ' + socat_cmd
-        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=remote_tty_cmd)
+        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=remote_tty_cmd,
+                             static_files_path=config.STATIC_FILES_PATH)
         self.remote_tty = Popen(shlex.split(cmd))
         time.sleep(10)
 
@@ -152,13 +153,23 @@ class OpenA8Connection(object):
 
     def ssh_run(self, command):
         """ Run SSH command on A8 node """
-        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=command)
+        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=command,
+                             static_files_path=config.STATIC_FILES_PATH)
+        LOGGER.debug(cmd)
 
-        process = Popen(shlex.split(cmd), stdout=PIPE, stderr=STDOUT)
-        output = process.communicate()[0]
-        cleaned_output = ''.join([line for line in output.splitlines() if
-                                  'Warning: Permanently added' not in line])
-        if 0 != process.returncode:
-            raise CalledProcessError(returncode=process.returncode,
-                                     cmd=shlex.split(cmd))
+        output = check_output(shlex.split(cmd), stderr=STDOUT)
+        #output = process.communicate()[0]
+        cleaned_output = output
+        #cleaned_output = ''.join([line for line in output.splitlines() if
+        #                          'Warning: Permanently added' not in line])
+        # if 0 != process.returncode:
+        #     raise CalledProcessError(returncode=process.returncode,
+        #                              cmd=shlex.split(cmd))
         return cleaned_output
+
+    def scp(self, src, dest):
+        """ SCP scr to A8 node at dest """
+        cmd = SCP_CMD.format(ip_addr=self.ip_addr, path=src, remote_path=dest,
+                             static_files_path=config.STATIC_FILES_PATH)
+        LOGGER.debug(cmd)
+        check_call(shlex.split(cmd))

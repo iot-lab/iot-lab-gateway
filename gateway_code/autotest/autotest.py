@@ -114,30 +114,38 @@ class AutoTestManager(object):
 
             except SerialException as err:
                 ret_val += self._check(1, 'access_A8_serial_port', str(err))
+                raise FatalError('Setup Open Node failed')
             except open_a8_interface.A8ConnectionError as err:
-                ret_val += self._check(
-                    1, 'error_in_open_a8_init: %s' % err.err_msg, str(err))
-            else:
-                # save mac address
-                self.ret_dict['mac']['A8'] = self.a8_connection.get_mac_addr()
+                ret_val += self._check(1, 'error_in_open_a8_init: %s' %
+                                       err.err_msg, str(err))
+                raise FatalError('Setup Open Node failed')
 
-                # open A8 flash
-                try:
-                    self.a8_connection.ssh_run(
-                        'source /etc/profile; ' +
-                        '/usr/bin/flash_a8.sh ' +
-                        '/var/lib/gateway_code/a8_autotest.elf')
-                    time.sleep(5)
-                except CalledProcessError as err:
-                    ret_val += self._check(
-                        1, 'flash_a8.sh a8_autotests failed', str(err))
-                else:
-                    self.on_serial = m3_node_interface.\
-                        OpenNodeSerial()
-                    time.sleep(1)
-                    ret, err_msg = self.on_serial.start(
-                        tty=open_a8_interface.A8_TTY_PATH)
-                    ret_val += self._check(ret, 'open_A8_serial', err_msg)
+            # save mac address
+            self.ret_dict['mac']['A8'] = self.a8_connection.get_mac_addr()
+
+            # open A8 flash
+            try:
+                self.a8_connection.scp(
+                    gateway_code.config.FIRMWARES['a8_autotest'],
+                    '/tmp/a8_autotest.elf')
+            except CalledProcessError as err:
+                ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
+                raise FatalError('Setup Open Node failed')
+
+            try:
+                self.a8_connection.ssh_run(
+                    'source /etc/profile; ' +
+                    '/usr/bin/flash_a8.sh /tmp/a8_autotest.elf')
+            except CalledProcessError as err:
+                ret_val += self._check(1, 'Flash A8-M3 fail', str(err))
+                raise FatalError('Setup Open Node failed')
+
+            time.sleep(5)
+            self.on_serial = m3_node_interface.OpenNodeSerial()
+            time.sleep(1)
+            ret, err_msg = self.on_serial.start(
+                tty=open_a8_interface.A8_TTY_PATH)
+            ret_val += self._check(ret, 'open_A8_serial', err_msg)
 
         if 0 != ret_val:
             raise FatalError('Setup Open Node failed')
