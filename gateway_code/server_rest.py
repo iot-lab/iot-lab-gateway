@@ -194,17 +194,15 @@ class GatewayRest(object):
         channel_str = request.query.channel
         if channel_str == '':
             channel = None
-        elif channel_str.isdigit() and (11 <= int(channel_str) <= 26):
+        elif channel_str.isdigit() and int(channel_str) in range(11, 27):
             channel = int(channel_str)
         else:
             return {'ret': 1, 'success': [], 'errors': ['invalid_channel']}
 
         gps_str = request.query.gps
-        if gps_str == '':
-            gps = None
-        elif gps_str.isdigit():
-            gps = bool(int(gps_str))
-        else:
+        try:
+            gps = bool(gps_str and int(gps_str))  # check None or int
+        except ValueError:
             return {'ret': 1, 'success': [], 'errors': ['invalid_gps_option']}
 
         ret_dict = self.gateway_manager.auto_tests(channel, blink, gps)

@@ -1,0 +1,10 @@
+{
+    "profilename": "invalid_radio_channel_range_2.json",
+    "power": "dc",
+
+    "radio": {
+        "mode" : "super_mode_not_supported",
+        "channels" : [14],
+        "period" : 1024
+    }
+}

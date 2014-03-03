@@ -30,33 +30,23 @@ class Profile(_PROFILE_TYPE):
 
         profile_args = {}
 
-        # Extract 'string arguments' from dictionary 'as is'
-        #     dict comprehensions not allowed before Python 2.7
-        #     using dict.update with iterable on (key/value tuple)
+        # Extract 'string arguments' from dictionary 'as is' (Required entries)
         _str_args = ('profilename', 'power')
         try:
-            _str_args_list = [(arg, profile_dict[arg]) for arg in _str_args]
-            profile_args.update(_str_args_list)
+            profile_args = {arg: profile_dict[arg] for arg in _str_args}
         except KeyError as ex:
-            # these entries are required
             raise ValueError("Missing entry: %r" % ex.args[0])
 
         # add consumption (it needs power_source and board_type)
-        try:
-            if profile_dict['consumption'] is not None:
-                profile_args['consumption'] = Consumption(
-                    power_source=profile_dict['power'],  # add power source
-                    board_type=board_type,
-                    **profile_dict['consumption'])
-        except KeyError:
-            pass  # 'consumption' not in profile
+        if profile_dict.get('consumption') is not None:
+            profile_args['consumption'] = Consumption(
+                power_source=profile_dict['power'],
+                board_type=board_type,
+                **profile_dict['consumption'])
 
         # add radio
-        try:
-            if profile_dict['radio'] is not None:
-                profile_args['radio'] = Radio(**profile_dict['radio'])
-        except KeyError:
-            pass  # 'radio' not in profile
+        if profile_dict.get('radio') is not None:
+            profile_args['radio'] = Radio(**profile_dict['radio'])
 
         # then create the final Profile object
         _PROFILE_TYPE.__init__(self, **profile_args)
@@ -127,9 +117,7 @@ class Radio(_RADIO_TYPE):
         self._is_valid()
 
     def _is_valid(self):
-        """
-        raise ValueError if self is not a 'valid' configuration
-        """
+        """ raise ValueError if self is not a 'valid' configuration """
 
         if 0 == len(self.channels):
             raise ValueError

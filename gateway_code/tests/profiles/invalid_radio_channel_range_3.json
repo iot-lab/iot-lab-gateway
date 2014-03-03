@@ -1,0 +1,11 @@
+{
+    "profilename": "invalid_radio_channel_range_2.json",
+    "power": "dc",
+
+    "radio": {
+        "mode" : "rssi",
+        "channels" : [],
+        "period" : 1024,
+        "num_per_channel" : 0
+    }
+}

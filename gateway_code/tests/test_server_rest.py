@@ -199,12 +199,12 @@ class TestRestMethods(unittest.TestCase):
         self.request.query = mock.Mock(channel='', gps='')
         ret_dict = s_r.auto_tests(mode=None)
         self.assertEquals(0, ret_dict['ret'])
-        g_m.auto_tests.assert_called_with(None, False, None)
+        g_m.auto_tests.assert_called_with(None, False, False)
 
         self.request.query = mock.Mock(channel='22', gps='')
         ret_dict = s_r.auto_tests(mode='blink')
         self.assertEquals(0, ret_dict['ret'])
-        g_m.auto_tests.assert_called_with(22, True, None)
+        g_m.auto_tests.assert_called_with(22, True, False)
         self.assertEquals(0, ret_dict['ret'])
 
         # invalid calls
