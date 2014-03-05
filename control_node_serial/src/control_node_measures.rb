@@ -22,7 +22,7 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
   end
 
   app.defMeasurement("radio") do |mp|
-    mp.defMetric('timestamp_s', :uint64)
+    mp.defMetric('timestamp_s', :uint32)
     mp.defMetric('timestamp_us', :uint32)
     mp.defMetric('channel', :uint32)
     mp.defMetric('rssi', :int32)
