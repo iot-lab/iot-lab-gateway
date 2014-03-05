@@ -47,6 +47,8 @@ Run unit tests, pylint and pep8:
 
         python setup.py tests
 
+Note: unit tests require oml.mytestbed.net v2.11 installed.
+
 
 Run full integration tests (should be run on a gateway):
 
