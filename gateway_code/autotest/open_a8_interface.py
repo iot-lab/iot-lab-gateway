@@ -158,14 +158,7 @@ class OpenA8Connection(object):
         LOGGER.debug(cmd)
 
         output = check_output(shlex.split(cmd), stderr=STDOUT)
-        #output = process.communicate()[0]
-        cleaned_output = output
-        #cleaned_output = ''.join([line for line in output.splitlines() if
-        #                          'Warning: Permanently added' not in line])
-        # if 0 != process.returncode:
-        #     raise CalledProcessError(returncode=process.returncode,
-        #                              cmd=shlex.split(cmd))
-        return cleaned_output
+        return output
 
     def scp(self, src, dest):
         """ SCP scr to A8 node at dest """
