@@ -120,16 +120,16 @@ class GatewayCodeMock(unittest.TestCase):
 def _send_command_open_node(host, port, command):
     """ send a command to host/port and wait for an answer as a line """
     import socket
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.connect((host, port))
-    sock_file = sock.makefile('rw')
-    sock.settimeout(5.0)
 
     ret = None
     try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((host, port))
+        sock_file = sock.makefile('rw')
+        sock.settimeout(5.0)
         sock.send(command)
         ret = sock_file.readline()
-    except socket.timeout:
+    except (socket.timeout, IOError):
         ret = None
     finally:
         sock.close()
@@ -226,8 +226,13 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.app.reset_time()
 
         # echo firmware, should reply what was sent
-        ret = _send_command_open_node('localhost', 20000, msg)
-        self.assertEquals(ret, msg)
+        # do it multiple times to be sure
+        answers = []
+        for _ in range(0, 5):
+            ret = _send_command_open_node('localhost', 20000, msg)
+            answers.append(ret)
+            time.sleep(0.5)
+        self.assertIn(msg, answers)
 
         # open node reset and start stop
         ret = self.app.open_soft_reset()

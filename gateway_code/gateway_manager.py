@@ -111,8 +111,9 @@ class GatewayManager(object):
         # # # # # # # # # #
         ret = self.node_soft_reset('gwt')
         ret_val += ret
-        self.cn_serial.start(user=self.user, exp_id=self.exp_id)  # ret ?
-        time.sleep(1)  # wait control node Ready, reajust time later
+        time.sleep(1)  # wait CN started
+        ret = self.cn_serial.start(user=self.user, exp_id=self.exp_id)
+        ret_val += ret
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #

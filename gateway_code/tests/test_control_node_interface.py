@@ -4,12 +4,8 @@ import unittest
 import mock
 
 import os
-import threading
 import Queue
-from gateway_code import control_node_interface
 from gateway_code.control_node_interface import ControlNodeSerial
-
-import sys
 
 
 class TestControlNodeSerial(unittest.TestCase):
@@ -20,178 +16,142 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen = popen_class.return_value
 
         self.popen.terminate.side_effect = self._terminate
-        self.popen.poll.side_effect = self._poll
         self.popen.poll.return_value = None
 
-        self.popen.stderr.readline.side_effect = self._readline
-        self.popen.stderr.readline.return_value = ''
-
-        self.lock_readline = threading.Event()
-        self.read_line_called = threading.Event()
-
+        self.readline_ret_vals = Queue.Queue(0)
+        self.popen.stderr.readline.side_effect = self.readline_ret_vals.get
+        self.readline_ret_vals.put('cn_serial_ready\n')
 
         self.cn = ControlNodeSerial()
 
     def tearDown(self):
-        self.popen.stop()
         self.cn.stop()
+        self.popen.stop()
 
     def _terminate(self):
-        self.lock_readline.set()
-        pass
+        self.readline_ret_vals.put('')
 
-    def _poll(self):
-        return mock.DEFAULT
-
-    def _readline(self):
-        self.read_line_called.set()
-        self.lock_readline.wait()
-        self.lock_readline.clear()
-        return mock.DEFAULT
-
-
-    def test_normal_stop(self):
-        self.cn.start()
-        self.read_line_called.wait(5)  # wait return None in 2.6
-        self.assertTrue(self.read_line_called.is_set())
-        self.cn.stop()
-
-
-    def test_send_command(self):
-
-        self.popen.stderr.readline.return_value = 'start ACK'
-        self.popen.stdin.write.side_effect = \
-            (lambda *x: self.lock_readline.set())
-
-
-        self.cn.start()
-        self.read_line_called.wait()
-
-        ret = self.cn.send_command(['start', 'DC'])
-
-        self.popen.stderr.readline.return_value = ''
-        self.cn.stop()
-
-        self.assertEquals(['start', 'ACK'], ret)
-
-
-
-    def test_send_command_no_answer(self):
-        self.cn.start()
-        self.read_line_called.wait()
-        ret = self.cn.send_command(['start', 'DC'])
+    def test_normal_start_stop(self):
+        ret_start = self.cn.start()
+        self.assertEquals(0, ret_start)
+        self.popen.stderr.readline.assert_called()
 
         self.cn.stop()
-        self.assertEquals(None, ret)
+        self.popen.terminate.assert_called()
+        self.assertTrue(self.readline_ret_vals.empty())
 
-    def test_send_command_cn_interface_stoped(self):
-        ret = self.cn.send_command(['lala'])
-        self.assertEquals(None, ret)
+    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    def test_start_error_in_cn_serial(self, mock_logger):
 
+        # poll should return an error
+        self.popen.poll.return_value = 2
 
-
-    def test_answer_and_answer_with_queue_full(self):
-
-        self.lock_error = threading.Event()
-
-        self.ret_list = ['reset ACK', 'start ACK', '']
-        self.popen.stderr.readline.side_effect = (lambda: self.ret_list.pop(0))
-
-        with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
-                as mock_logger:
-            mock_logger.side_effect = (lambda *x: self.lock_error.set())
-
-            self.cn.start()
-            self.lock_error.wait(5)
-            self.assertTrue(self.lock_error.is_set())  # wait return None in 2.6
-            self.cn.stop()
-
-            mock_logger.assert_called_with('Control node answer queue full: %r', ['start', 'ACK'])
-
-    def test_stop_with_poll_not_none(self):
-
-        self.lock_error = threading.Event()
-        self.cn._handle_answer = mock.Mock()
-        self.popen.stderr.readline.return_value = 'non empty line'
-
-        with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
-                as mock_logger:
-            mock_logger.side_effect = (lambda *x: self.lock_error.set())
-
-            self.cn.start()
-            self.read_line_called.wait()
-            # started and waiting for data
-
-            self.popen.poll.return_value = 2
-            self.lock_readline.set()
-
-            self.lock_error.wait(5)
-            self.assertTrue(self.lock_error.is_set())  # wait return None in 2.6
-
-            self.cn.stop()
+        ret_start = self.cn.start()
+        self.assertNotEquals(0, ret_start)
+        mock_logger.assert_called_with(
+            'Control node serial reader thread ended prematurely')
+        self.cn.stop()
 
     def test_stop_before_start(self):
         self.cn.stop()
 
-    def test_stop_with_cn_interface_allready_stopped(self):
+    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    def test_stop_with_cn_interface_allready_stopped(self, mock_logger):
 
-        def terminate(*args, **kwargs):
-            self.lock_readline.set()
-            raise OSError()
-        self.popen.terminate.side_effect = terminate
+        # Simulate cn_interface stopped
+        self.readline_ret_vals.put('')
+        self.popen.stdin.write.side_effect = IOError()
+        self.popen.terminate.side_effect = OSError()
 
         self.cn.start()
-        self.popen.stdin.write.side_effect = IOError()
+
+        # try sending command
         ret = self.cn.send_command(['test', 'cmd'])
         self.assertEquals(None, ret)
+        mock_logger.assert_called_with(
+            'control_node_serial process is terminated')
 
-        self.read_line_called.wait()
-        self.lock_readline.set()
+        self.cn.stop()
+        mock_logger.assert_called_with(
+            'Control node process already terminated')
+
+#
+# Test command sending
+#
+    def test_send_command(self):
+        self.popen.stdin.write.side_effect = \
+            (lambda *x: self.readline_ret_vals.put('start ACK\n'))
+
+        self.cn.start()
+        ret = self.cn.send_command(['start', 'DC'])
+        self.assertEquals(['start', 'ACK'], ret)
         self.cn.stop()
 
-        self.popen.terminate.assert_called()
+    def test_send_command_no_answer(self):
+        self.cn.start()
+        ret = self.cn.send_command(['start', 'DC'])
+        self.assertIsNone(ret)
+        self.cn.stop()
 
+    def test_send_command_cn_interface_stoped(self):
+        ret = self.cn.send_command(['lala'])
+        self.assertIsNone(ret)
+
+    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    def test_answer_and_answer_with_queue_full(self, mock_logger):
+        # get two answers without sending command
+        self.readline_ret_vals.put('reset ACK\n')
+        self.readline_ret_vals.put('start ACK\n')
+
+        self.cn.start()
+        self.cn.stop()
+
+        mock_logger.assert_called_with('Control node answer queue full: %r',
+                                       ['start', 'ACK'])
+
+#
+# OML specific tests
+#
+    @mock.patch('gateway_code.config.MEASURES_PATH', '/tmp/{type}/{node_id}')
     def test_stop_and_oml_files_empty(self):
 
+        # setup
         # create measures_dir
         for measure_type in ('consumption', 'radio'):
             try:
                 os.mkdir('/tmp/%s/' % measure_type)
-            except OSError as err:
+            except OSError:
                 pass
 
-        with mock.patch('gateway_code.config.MEASURES_PATH',
-                        '/tmp/{type}/{node_id}.oml'):
-            self.cn.start(user='harter', exp_id=123)
-            self.read_line_called.wait()
+        # append data to radio
+        self.cn.start(user='harter', exp_id=123)
+        oml_files = self.cn.oml['files']
+        with open(oml_files['radio'], 'a') as _file:
+            _file.write('lalala')
+        self.cn.stop()
 
-            # append data to radio
-            with open(self.cn.oml_files['radio'], 'a') as _f:
-                 _f.write('lalala')
+        # radio exists, consumption should have been removed
+        os.remove(oml_files['radio'])
+        self.assertRaises(OSError, os.remove, oml_files['consumption'])
 
-            self.cn.stop()
-
-        # radio exists, consumption is removed
-        os.remove(self.cn.oml_files['radio'])
-        self.assertRaises(OSError, os.remove, self.cn.oml_files['consumption'])
-
+        # teardown
         # remove measures_dir
         for measure_type in ('consumption', 'radio'):
             try:
                 os.rmdir('/tmp/%s/' % measure_type)
-            except OSError as err:
+            except OSError:
                 self.fail()
 
+# _config_oml coverage tests
 
     def test_config_oml(self):
         # No user or expid
         ret = self.cn._config_oml(None, None)
         self.assertEquals([], ret)
 
-    def test_oml_folder_no_measure_folder(self):
-        with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
-                as mock_logger:
-            self.assertRaises(IOError, self.cn._config_oml, 'nothing_that_exists', 1)
+    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    def test_oml_folder_no_measure_folder(self, mock_logger):
+        self.assertRaises(IOError, self.cn._config_oml, 'invalid_user_name', 1)
         mock_logger.assert_called()
 
 
@@ -200,23 +160,20 @@ class TestHandleAnswer(unittest.TestCase):
     def setUp(self):
         self.cn = ControlNodeSerial()
 
-    def test_config_ack(self):
-        with mock.patch('gateway_code.control_node_interface.LOGGER.debug') \
-                as mock_logger:
-            self.cn._handle_answer('config_ack reset_time')
-            mock_logger.assert_called_with('config_ack %s', 'reset_time')
+    @mock.patch('gateway_code.control_node_interface.LOGGER.debug')
+    def test_config_ack(self, mock_logger):
+        self.cn._handle_answer('config_ack reset_time')
+        mock_logger.assert_called_with('config_ack %s', 'reset_time')
 
-    def test_error(self):
-        with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
-                as mock_logger:
-            self.cn._handle_answer('error 42')
-            mock_logger.assert_called_with('Control node error: %r', '42')
+    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    def test_error(self, mock_logger):
+        self.cn._handle_answer('error 42')
+        mock_logger.assert_called_with('Control node error: %r', '42')
 
-    def test_cn_serial_error(self):
-        with mock.patch('gateway_code.control_node_interface.LOGGER.error') \
-                as mock_logger:
-            self.cn._handle_answer('cn_serial_error: any error msg')
-            mock_logger.assert_called_with('cn_serial_error: any error msg')
+    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    def test_cn_serial_error(self, mock_logger):
+        self.cn._handle_answer('cn_serial_error: any error msg')
+        mock_logger.assert_called_with('cn_serial_error: any error msg')
 
     def test_measures_debug(self):
         self.cn.measures_handler = mock.Mock()

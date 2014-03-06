@@ -39,6 +39,9 @@ _OML_XML = '''
 </omlc>
 '''
 
+STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
+             stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+
 
 class ControlNodeSerial(object):
     """
@@ -53,8 +56,12 @@ class ControlNodeSerial(object):
         # handler to allow changing it in tests
         self.measures_handler = None
 
-        self.oml_files = {}
-        self.oml_config_file = None
+        self.cn_serial_ready = None
+
+        self.oml = {
+            'files': {},
+            'cfg_file': None
+        }
 
         # cleanup in case of error
         atexit.register(self.stop)
@@ -65,6 +72,8 @@ class ControlNodeSerial(object):
 
         Run `control node serial program` and handle its answers.
         """
+        # Reset Queue (== use a new one)
+        self.cn_serial_ready = Queue.Queue(0)
 
         # argument, or current value (for tests) or LOGGER.error
         self.measures_handler = _measures_handler or \
@@ -82,6 +91,9 @@ class ControlNodeSerial(object):
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
 
+        ret = self.cn_serial_ready.get()
+        return ret
+
     def _config_oml(self, user, exp_id):
         """ Create oml config files and folder
         if user and exp_id are given
@@ -90,45 +102,43 @@ class ControlNodeSerial(object):
         """
         if (user is None) or (exp_id is None):
             return []
-        subst_args = {
+        exp_desc = {
             'user': user,
             'exp_id': exp_id,
             'node_id': config.hostname()
             }
 
-        self.oml_files['consumption'] = \
-            config.MEASURES_PATH.format(type='consumption', **subst_args)
-        self.oml_files['radio'] = \
-            config.MEASURES_PATH.format(type='radio', **subst_args)
+        oml_files = {}
+        oml_files['consumption'] = config.MEASURES_PATH.format(
+            type='consumption', **exp_desc)
+        oml_files['radio'] = config.MEASURES_PATH.format(
+            type='radio', **exp_desc)
+
+        # XML oml config
+        exp_desc.update(oml_files)
+        oml_xml_str = _OML_XML.format(**exp_desc)
 
         # check that the directory exists
-        if not os.access(dirname(self.oml_files['consumption']), os.W_OK):
-            LOGGER.error('Cannot write in measures folder: %r',
-                         os.path.dirname(self.oml_files['consumption']))
-        if not os.access(dirname(self.oml_files['radio']), os.W_OK):
-            LOGGER.error('Cannot write in measures folder: %r',
-                         os.path.dirname(self.oml_files['radio']))
-            # following line will raise an exception
+        for oml_file in oml_files.itervalues():
+            oml_folder = dirname(oml_file)
+            if not os.access(oml_folder, os.W_OK):
+                LOGGER.error('Cannot write in measure folder: %r', oml_folder)
+                raise IOError
 
         # create empty measures files with 666 permissions (truncate if exists)
-        for measure_file_path in self.oml_files.itervalues():
+        for measure_file_path in oml_files.itervalues():
             open(measure_file_path, "w").close()
-            os.chmod(measure_file_path,
-                     stat.S_IRUSR | stat.S_IWUSR
-                     | stat.S_IRGRP | stat.S_IWGRP
-                     | stat.S_IROTH | stat.S_IWOTH)
+            os.chmod(measure_file_path, STAT_0666)
 
-        # create a config file with OML_XML config
-        oml_xml_str = _OML_XML.format(
-            radio=self.oml_files['radio'],
-            consumption=self.oml_files['consumption'],
-            **subst_args)
-        # create tmp file
-        self.oml_config_file = NamedTemporaryFile(suffix='--oml.config')
-        self.oml_config_file.write(oml_xml_str)
-        self.oml_config_file.flush()
+        # create a temporary config file with OML_XML config
+        oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
+        oml_cfg_file.write(oml_xml_str)
+        oml_cfg_file.flush()
 
-        return ['-c', self.oml_config_file.name]
+        self.oml['cfg_file'] = oml_cfg_file
+        self.oml['files'] = oml_files
+
+        return ['-c', oml_cfg_file.name]
 
     def stop(self):
         """ Stop control node interface.
@@ -139,16 +149,16 @@ class ControlNodeSerial(object):
             try:
                 self.cn_interface_process.terminate()
             except OSError:
-                pass
+                LOGGER.error('Control node process already terminated')
 
             self.reader_thread.join()
             self.cn_interface_process = None
 
         # cleanup oml
-        if self.oml_config_file is not None:
-            self.oml_config_file.close()
+        if self.oml['cfg_file'] is not None:
+            self.oml['cfg_file'].close()
 
-        for measure_file in self.oml_files.itervalues():
+        for measure_file in self.oml['files'].itervalues():
             try:
                 if os.path.getsize(measure_file) == 0:
                     os.unlink(measure_file)
@@ -172,6 +182,8 @@ class ControlNodeSerial(object):
             LOGGER.error(line)
         elif answer[0] == 'measures_debug:':  # measures output
             self.measures_handler(line)
+        elif answer[0] == 'cn_serial_ready':  # cn_serial interface ready
+            self.cn_serial_ready.put(0)
 
         else:  # control node answer to a command
             try:
@@ -185,12 +197,13 @@ class ControlNodeSerial(object):
         Reads and handle control node answers
         """
         while self.cn_interface_process.poll() is None:
-            line = self.cn_interface_process.stderr.readline().strip()
+            line = self.cn_interface_process.stderr.readline()
             if line == '':
                 break
-            self._handle_answer(line)
+            self._handle_answer(line.strip())
         else:
             LOGGER.error('Control node serial reader thread ended prematurely')
+            self.cn_serial_ready.put(1)  # in case of failure at startup
 
     def send_command(self, command_args):
         """ Send given command to control node and wait for an answer

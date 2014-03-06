@@ -414,6 +414,7 @@ static void *read_commands(void *attr)
         int ret;
 
         int n;
+        PRINT_MSG("cn_serial_ready\n");
         while ((n = getline(&line_buff, &buff_size, stdin)) != -1) {
                 DEBUG_PRINT("Command: %s: ", line_buff);
                 line_buff[n - 1] = '\0'; // remove new line
