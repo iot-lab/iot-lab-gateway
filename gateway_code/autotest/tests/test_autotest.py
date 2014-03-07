@@ -30,6 +30,27 @@ class TestProtocol(unittest.TestCase):
         self.assertTrue('message_2' in self.g_v.ret_dict['error'])
 
 
+    @mock.patch('gateway_code.autotest.autotest.LOGGER.debug')
+    def test_run_test(self, mock_debug):
+        self.g_v.on_serial = mock.Mock()
+
+        self.send_ret = []
+        self.g_v.on_serial.send_command.side_effect = \
+            lambda x: self.send_ret.pop(0)
+
+
+        self.send_ret.append(['ACK', 'COMMAND', '3.14'])
+        self.send_ret.append(None)
+        self.send_ret.append(['NACK', 'COMMAND', '1.414'])
+
+        values = self.g_v._run_test(3, ['test_command'], 'COMMAND',
+                                    lambda x: float(x[2]))
+
+        self.assertEquals([3.14], values)
+        mock_debug.assert_called_with('%s answer == %r', 'test_command',
+                                      ['NACK', 'COMMAND', '1.414'])
+
+
 class TestAutoTestsErrorCases(unittest.TestCase):
 
     def setUp(self):

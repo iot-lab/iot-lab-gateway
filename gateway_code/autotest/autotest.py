@@ -1,9 +1,7 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-"""
-auto tests implementation
-"""
+""" auto tests implementation """
 
 import time
 import bisect
@@ -276,6 +274,18 @@ class AutoTestManager(object):
             LOGGER.error('Autotest: %r: %r', operation, log_message)
         return abs(int(ret))
 
+    def _run_test(self, num, cmd, answer_start, parse_function):
+        """ Run a test 'num' times.
+        In case of success parse answer with 'parse_function' """
+        values = []
+        for _ in range(0, num):
+            answer = self.on_serial.send_command(cmd)
+            if (answer is None) or (answer[0:2] != ['ACK', answer_start]):
+                LOGGER.debug('%s answer == %r', cmd[0], answer)
+            else:
+                values.append(parse_function(answer))
+        return values
+
 #
 # Test implementation
 #
@@ -287,10 +297,9 @@ class AutoTestManager(object):
         # get_time: ['ACK', 'CURRENT_TIME', '=', '122953', 'tick_32khz']
         answer = self.on_serial.send_command(['get_time'])
 
-        test_ok = ((answer is not None) and
-                   ['ACK', 'CURRENT_TIME'] == answer[:2] and
-                   answer[3].isdigit())
-
+        values = self._run_test(5, ['get_time'], 'CURRENT_TIME',
+                                (lambda x: x[3].isdigit()))
+        test_ok = (any(values))
         ret_val = self._check(TST_OK(test_ok), 'm3_comm_with_get_time', answer)
 
         if 0 != ret_val:  # fatal Error
@@ -301,15 +310,17 @@ class AutoTestManager(object):
         And add the resulting UID to the global return dictionary
         """
         # get_uid: ['ACK', 'UID', '=', '05D8FF323632483343037109']
-        answer = self.on_serial.send_command(['get_uid'])
-        test_ok = (answer is not None) and (['ACK', 'UID'] == answer[:2])
+        values = self._run_test(1, ['get_uid'], 'UID', (lambda x: x[3]))
+        test_ok = len(values)
 
-        # return UID
-        uid_str = answer[3]
-        uid = ':'.join([uid_str[i:i+4] for i in range(0, len(uid_str), 4)])
-        self.ret_dict['open_node_m3_uid'] = uid
+        if test_ok:
+            uid_str = values[0]
+            # UID: split every 4 char
+            uid_split = [''.join(x) for x in zip(*[iter(uid_str)]*4)]
+            uid = ':'.join(uid_split)
+            self.ret_dict['open_node_m3_uid'] = uid
 
-        ret_val = self._check(TST_OK(test_ok), 'get_uid', answer)
+        ret_val = self._check(TST_OK(test_ok), 'get_uid', values)
         return ret_val
 #
 # sensors and flash
@@ -317,25 +328,15 @@ class AutoTestManager(object):
 
     def test_flash(self):
         """ test Flash """
-        answer = self.on_serial.send_command(['test_flash'])
-        if (answer is None) or (answer[0] != 'ACK'):
-            LOGGER.debug('test_flash answer == %r', answer)
-            test_ok = False
-        else:
-            test_ok = answer[:2] == ['ACK', 'TST_FLASH']
-        return self._check(TST_OK(test_ok), 'test_flash', answer)
+        values = self._run_test(1, ['test_flash'], 'TST_FLASH', (lambda x: x))
+        test_ok = len(values)
+        return self._check(TST_OK(test_ok), 'test_flash', values)
 
     def test_pressure(self):
         """ test pressure sensor """
         # ['ack', 'PRESSURE', '=', '9.944219E2', 'mbar']
-        values = []
-        for _ in range(0, 10):
-            answer = self.on_serial.send_command(['get_pressure'])
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_pressure answer == %r', answer)
-            else:
-                values.append(float(answer[3]))
-
+        values = self._run_test(10, ['get_pressure'], 'PRESSURE',
+                                (lambda x: float(x[3])))
         test_ok = 1 < len(set(values))
         return self._check(TST_OK(test_ok), 'test_pressure', values)
 
@@ -343,28 +344,23 @@ class AutoTestManager(object):
         """ test light sensor with leds"""
         # ['ACK', 'LIGHT', '=', '5.2001953E1', 'lux']
 
-        _ = self.on_serial.send_command(['leds_blink', '7', '2000'])
-
-        values = []
-        for _ in range(0, 10):
-            answer = self.on_serial.send_command(['get_light'])
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_light answer == %r', answer)
-            else:
-                values.append(float(answer[3]))
-            time.sleep(1)
-
-        _ = self.on_serial.send_command(['leds_blink', '7', '0'])
+        # get light with leds
+        _ = self.on_serial.send_command(['leds_on', '7'])
+        values_on = self._run_test(5, ['get_light'], 'LIGHT',
+                                   (lambda x: float(x[3])))
+        # get light without leds
         _ = self.on_serial.send_command(['leds_off', '7'])
+        values_off = self._run_test(5, ['get_light'], 'LIGHT',
+                                    (lambda x: float(x[3])))
+        values = values_on + values_off
+        test_ok = 1 < len(set(values))
 
-        if len(set(values)) == 1 and values[0] < 0.20:
-            # test fails when run with low light, like at night
-            # so hack to let it work
-            LOGGER.warning("Got the same value which is '%f'", values[0])
-            self.ret_dict['warning'] = {'get_light_value': values[0]}
-            test_ok = False
-        else:
-            test_ok = 1 < len(set(values))  # got different values
+        # if len(set(values)) == 1 and values[0] < 0.20:
+        #     # test fails when run with low light, like at night
+        #     # so hack to let it work
+        #     LOGGER.warning("Got the same value which is '%f'", values[0])
+        #     self.ret_dict['warning'] = {'get_light_value': values[0]}
+        #     test_ok = False
         return self._check(TST_OK(test_ok), 'get_light', values)
 
 #
@@ -385,20 +381,16 @@ class AutoTestManager(object):
 
         # start pps on open node
         answer = self.on_serial.send_command(['test_pps_start'])
-        test_ok = (answer is not None) and (['ACK', 'GPS_PPS_START'])
-        if not test_ok:
-            return self._check(TST_OK(test_ok), 'test_pps_start', answer)
+        if (answer is None) or (answer[:2] != ['ACK', 'GPS_PPS_START']):
+            return self._check(1, 'test_pps_start', answer[:2])
 
         # try to get pps for max 2 min
         end_time = time.time() + 120.0
         while time.time() < end_time:
             time.sleep(5)
             answer = self.on_serial.send_command(['test_pps_get'])
-            test_ok = (answer is not None)
-            test_ok &= ['ACK', 'GPS_PPS_GET'] == answer[:2]
-
-            if not test_ok:
-                return self._check(TST_OK(test_ok), 'test_pps_get', answer)
+            if (answer is None) or (answer[:2] != ['ACK', 'GPS_PPS_GET']):
+                return self._check(1, 'test_pps_get', answer)
 
             # get pps value
             pps_count = int(answer[3])
@@ -416,7 +408,6 @@ class AutoTestManager(object):
         ret_val = 0
         #ret_val += self._test_gps_serial()
         ret_val += self._test_pps_open_node()
-
         ret_val = self._check(ret_val, 'test_gps', ret_val)
         return ret_val
 
@@ -426,55 +417,29 @@ class AutoTestManager(object):
     def test_gpio(self):
         """ test GPIO connections """
         ret_val = 0
-
         # setup control node
-        cmd = ['test_gpio', 'start']
-        ret_val += self.g_m.protocol.send_cmd(cmd)
+        ret_val += self.g_m.protocol.send_cmd(['test_gpio', 'start'])
 
-        values = []
-        for _ in range(0, 5):
-            answer = self.on_serial.send_command(['get_magneto'])
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_magneto answer == %r', answer)
-            else:
-                measures = tuple([float(val) for val in answer[3:6]])
-                values.append(measures)
-
-            answer = self.on_serial.send_command(['test_gpio'])
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_gpio answer == %r', answer)
-                values.append(1)
-            else:
-                values.append(0)
-
-        test_ok = (0 in values)  # at least one success
-        ret_val += self._check(TST_OK(test_ok), 'test_gpio_ON<->CN', answer)
+        values = self._run_test(5, ['test_gpio'], 'GPIO', (lambda x: 0))
+        test_ok = len(values)
+        ret_val += self._check(TST_OK(test_ok), 'test_gpio_ON-CN', len(values))
 
         # cleanup
-        cmd = ['test_gpio', 'stop']
-        ret_val += self.g_m.protocol.send_cmd(cmd)
-
+        ret_val += self.g_m.protocol.send_cmd(['test_gpio', 'stop'])
         return ret_val
 
     def test_i2c(self):
         """ test i2c communication """
         ret_val = 0
-
         # setup control node
-        cmd = ['test_i2c', 'start']
-        ret_val += self.g_m.protocol.send_cmd(cmd)
+        ret_val += self.g_m.protocol.send_cmd(['test_i2c', 'start'])
 
-        answer = self.on_serial.send_command(['test_i2c'])
-        if (answer is None) or (answer[0] != 'ACK'):
-            LOGGER.debug('test_i2c answer == %r', answer)
-            test_ok = False
-        else:
-            test_ok = (answer[:2] == ['ACK', 'I2C2_CN'])
-        ret_val += self._check(TST_OK(test_ok), 'test_i2c_ON<->CN', answer)
+        values = self._run_test(1, ['test_i2c'], 'I2C2_CN', (lambda x: x))
+        test_ok = len(values)
+        ret_val += self._check(TST_OK(test_ok), 'test_i2c_ON<->CN', values)
 
         # cleanup
-        cmd = ['test_i2c', 'stop']
-        ret_val += self.g_m.protocol.send_cmd(cmd)
+        ret_val += self.g_m.protocol.send_cmd(['test_i2c', 'stop'])
 
         return ret_val
 
@@ -484,14 +449,11 @@ class AutoTestManager(object):
     def test_magneto(self):
         """ test magneto sensor """
         # ['ack', 'MAGNETO', '=', '4.328358E-2', '6.716418E-2', '-3.880597E-1']
-        values = []
-        for _ in range(0, 10):
-            answer = self.on_serial.send_command(['get_magneto'])
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_magneto answer == %r', answer)
-            else:
-                measures = tuple([float(val) for val in answer[3:6]])
-                values.append(measures)
+
+        values = self._run_test(
+            10, ['get_magneto'], 'MAGNETO',
+            (lambda x: tuple([float(val) for val in x[3:6]])))
+
         test_ok = 1 < len(set(values))  # got different values
         return self._check(TST_OK(test_ok), 'get_magneto', values)
 
@@ -499,14 +461,10 @@ class AutoTestManager(object):
         """ test gyro sensor """
         # ['ack', 'GYRO_ROTATION_SPEED', '=',
         #  '1.07625', '1.75', '5.2500002E-2', 'dps']
-        values = []
-        for _ in range(0, 10):
-            answer = self.on_serial.send_command(['get_gyro'])
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_gyro answer == %r', answer)
-            else:
-                measures = tuple([float(val) for val in answer[3:6]])
-                values.append(measures)
+
+        values = self._run_test(
+            10, ['get_gyro'], 'GYRO_ROTATION_SPEED',
+            (lambda x: tuple([float(val) for val in x[3:6]])))
 
         test_ok = 1 < len(set(values))  # got different values
         return self._check(TST_OK(test_ok), 'get_gyro', values)
@@ -514,14 +472,11 @@ class AutoTestManager(object):
     def test_accelero(self):
         """ test accelerator sensor """
         # ['ack', 'ACCELERATION', '=', '3.6E-2', '-1.56E-1', '1.0320001']
-        values = []
-        for _ in range(0, 10):
-            answer = self.on_serial.send_command(['get_accelero'])
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('test_accelero answer == %r', answer)
-            else:
-                measures = tuple([float(val) for val in answer[3:6]])
-                values.append(measures)
+
+        values = self._run_test(
+            10, ['get_accelero'], 'ACCELERATION',
+            (lambda x: tuple([float(val) for val in x[3:6]])))
+
         test_ok = 1 < len(set(values))  # got different values
         return self._check(TST_OK(test_ok), 'get_accelero', values)
 
@@ -538,19 +493,12 @@ class AutoTestManager(object):
         ret_val += self.g_m.protocol.send_cmd(cmd)
 
         # send 10 packets
-        values = []
-        for _ in range(0, 10):
-            cmd_on = ['radio_ping_pong', '3dBm', str(channel)]
-            answer = self.on_serial.send_command(cmd_on)
-            if (answer is None) or (answer[0] != 'ACK'):
-                LOGGER.debug('radio_ping_pong answer == %r', answer)
-            else:
-                values.append(TST_OK(answer[:2] == ['ACK', 'RADIO_PINGPONG']))
+        cmd_on = ['radio_ping_pong', '3dBm', str(channel)]
+        values = self._run_test(10, cmd_on, 'RADIO_PINGPONG', (lambda x: 0))
 
         # got at least one answer from control_node
         test_ok = (0 in values)  # at least one success
-        ret_val += self._check(
-            TST_OK(test_ok), 'radio_ping_pong_ON<->CN', values)
+        ret_val += self._check(TST_OK(test_ok), 'radio_ping_pong', values)
 
         # cleanup
         ret = self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
