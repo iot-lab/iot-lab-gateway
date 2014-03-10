@@ -30,7 +30,6 @@ from setuptools.command.build_ext import build_ext
 import sys
 from sys import stderr
 import os
-import re
 import subprocess
 
 from gateway_code import config
@@ -127,7 +126,7 @@ class Release(_EmptyCommand):
 
     def run(self):
         try:
-            subprocess.call(['python', 'setup.py', 'install'])
+            subprocess.check_call(['python', 'setup.py', 'install'])
         except subprocess.CalledProcessError as err:
             exit(err.returncode)
         self.post_install()
@@ -190,34 +189,15 @@ class Pep8(_EmptyCommand):
             pep8._main()  # pylint: disable=W0212
 
 
-def _add_path_to_coverage_xml():
-    """ Add source path in coverage report,
-    relativ to parent folder of git repository """
-    current_folder = os.path.abspath('.')
-    base_folder = os.path.abspath('../..') + '/'
-
-    add_path = re.sub(base_folder, '', current_folder)
-    match_path = os.path.basename(add_path)
-
-    args = ['sed', '-i']
-    args += ['/%s/ !s#filename="#&%s/#' % (match_path, add_path)]
-    args += ['coverage.xml']
-
-    subprocess.check_call(args)
-
-
 class Tests(_EmptyCommand):
     """ Run unit tests, pylint and pep8 """
     def run(self):
         args = ['python', 'setup.py']
-        try:
-            ret = subprocess.call(args + ['nosetests', '--cover-html'])
-            # _add_path_to_coverage_xml()
-            subprocess.call(args + ['lint', '-o', 'pylint.out'])
-            subprocess.call(args + ['pep8', '-o', 'pep8.out'])
-            return ret
-        except subprocess.CalledProcessError as err:
-            exit(err.returncode)
+        ret = subprocess.call(args + ['nosetests', '--cover-html'])
+        subprocess.call(args + ['lint', '-o', 'pylint.out'])
+        subprocess.call(args + ['pep8', '-o', 'pep8.out'])
+
+        return ret
 
 
 class TestsRoomba(_EmptyCommand):
@@ -228,7 +208,6 @@ class TestsRoomba(_EmptyCommand):
         args = ['python', 'setup.py']
         try:
             subprocess.check_call(args + ['nosetests', '-i=*robot/*'])
-            _add_path_to_coverage_xml()
         except subprocess.CalledProcessError as err:
             exit(err.returncode)
 
@@ -252,35 +231,18 @@ class IntegrationTests(Command):
         args = ['python', 'setup.py']
 
         env = os.environ.copy()
+        env['PATH'] = './control_node_serial/:' + env['PATH']
         if 'www-data' != env['USER']:
             stderr.write("ERR: Run Integration tests as 'www-data':\n")
             stderr.write("\nsu www-data -c 'python setup.py integration'\n")
             exit(1)
 
-        try:
-            self.cleanup_workspace()
+        ret = subprocess.call(args + ['nosetests', '-i=*integration/*']
+                              + self.nose_args, env=env)
 
-            env['PATH'] = './control_node_serial/:' + env['PATH']
-            ret = subprocess.call(
-                args + ['nosetests', '-i=*integration/*'] + self.nose_args,
-                env=env)
-            _add_path_to_coverage_xml()
-
-            subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
-            subprocess.call(args + ['pep8', '-o', 'pep8.out'])
-            return ret
-        except subprocess.CalledProcessError:
-            exit(1)
-
-    @staticmethod
-    def cleanup_workspace():
-        """ Remove old scripts output.  """
-        outfiles = ('coverage.xml', 'nosetests.xml', 'pylint.out', 'pep8.out')
-        for _file in outfiles:
-            try:
-                os.remove(_file)
-            except OSError:
-                pass
+        subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
+        subprocess.call(args + ['pep8', '-o', 'pep8.out'])
+        return ret
 
 
 setup(name='gateway_code',
