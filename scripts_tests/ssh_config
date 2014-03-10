@@ -4,8 +4,7 @@ Host fit2-dev
   User     root
 
 
-Host gateway-m3
-#gateway-m3-2 gateway-a8 open-a8 gateway-robot
+Host gateway-m3-ci gateway-a8-ci open-a8-ci   gateway-m3
   User root
   ProxyCommand ssh fit2-dev -W %h:%p
 

@@ -29,6 +29,8 @@ ssh -F $SSH_CONFIG   $HOSTNAME "chown -R www-data:www-data $DEST"
 # Run tests #
 #############
 
+killall python
+
 # run python tests
 ssh -F $SSH_CONFIG   $HOSTNAME "su www-data -c '\
     source /etc/profile; \
