@@ -179,6 +179,7 @@ class GatewayRest(object):
         :param mode: 'blink'
          Query string: 'channel' int 11-26
          Query string: 'gps' int 0-1
+         Query string: 'flash' int 0-1
 
         Mode:
          * 'blink': leds keep blinking
@@ -199,13 +200,19 @@ class GatewayRest(object):
         else:
             return {'ret': 1, 'success': [], 'errors': ['invalid_channel']}
 
-        gps_str = request.query.gps
         try:
+            gps_str = request.query.gps
             gps = bool(gps_str and int(gps_str))  # check None or int
         except ValueError:
             return {'ret': 1, 'success': [], 'errors': ['invalid_gps_option']}
+        try:
+            flash_str = request.query.flash
+            flash = bool(flash_str and int(flash_str))  # check None or int
+        except ValueError:
+            return {'ret': 1, 'success': [],
+                    'errors': ['invalid_flash_option']}
 
-        ret_dict = self.gateway_manager.auto_tests(channel, blink, gps)
+        ret_dict = self.gateway_manager.auto_tests(channel, blink, flash, gps)
         return ret_dict
 
 

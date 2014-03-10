@@ -316,9 +316,9 @@ class GatewayManager(object):
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
 
-    def auto_tests(self, channel, blink, gps):
+    def auto_tests(self, channel, blink, flash, gps):
         """
         Run Auto-tests on nodes and gateway
         """
         autotest_manager = autotest.AutoTestManager(self)
-        return autotest_manager.auto_tests(channel, blink, gps)
+        return autotest_manager.auto_tests(channel, blink, flash, gps)

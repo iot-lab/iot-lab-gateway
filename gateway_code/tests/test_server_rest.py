@@ -196,15 +196,15 @@ class TestRestMethods(unittest.TestCase):
                                        'mac':{'A8':'12:34:56:78:9A:BC'}
                                       }
 
-        self.request.query = mock.Mock(channel='', gps='')
+        self.request.query = mock.Mock(channel='', flash='', gps='')
         ret_dict = s_r.auto_tests(mode=None)
         self.assertEquals(0, ret_dict['ret'])
-        g_m.auto_tests.assert_called_with(None, False, False)
+        g_m.auto_tests.assert_called_with(None, False, False, False)
 
-        self.request.query = mock.Mock(channel='22', gps='')
+        self.request.query = mock.Mock(channel='22', flash='1', gps='')
         ret_dict = s_r.auto_tests(mode='blink')
         self.assertEquals(0, ret_dict['ret'])
-        g_m.auto_tests.assert_called_with(22, True, False)
+        g_m.auto_tests.assert_called_with(22, True, True, False)
         self.assertEquals(0, ret_dict['ret'])
 
         # invalid calls

@@ -33,6 +33,7 @@ ssh -F $SSH_CONFIG   $HOSTNAME "chown -R www-data:www-data $DEST"
 ssh -F $SSH_CONFIG   $HOSTNAME "su www-data -c '\
     source /etc/profile; \
     python $DEST/gateway_code_python/setup.py integration'"
+    #python $DEST/gateway_code_python/setup.py integration --stop'"
 
 # run control_node_serial tests
 ssh -F $SSH_CONFIG   $HOSTNAME "\

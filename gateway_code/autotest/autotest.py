@@ -178,7 +178,7 @@ class AutoTestManager(object):
 
         return self._check(ret_val, 'teardown', ret_val)
 
-    def auto_tests(self, channel=None, blink=False, gps=False):
+    def auto_tests(self, channel=None, blink=False, flash=False, gps=False):
         """
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
@@ -235,8 +235,9 @@ class AutoTestManager(object):
                 ret_val += self.test_leds_with_consumption()
                 # test m3 specific sensors
                 ret_val += self.test_pressure()
-                ret_val += self.test_flash()
                 ret_val += self.test_light()
+                if flash:
+                    ret_val += self.test_flash()
             if gps:
                 ret_val += self.test_gps()
 
@@ -586,16 +587,20 @@ class AutoTestManager(object):
 
         # configure consumption
         # one measure every ~0.1 seconds
-        conso = Consumption(power_source='battery',
-                            board_type=board_type,
+        conso = Consumption(power_source='battery', board_type=board_type,
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
-
-        # store 2 secs of measures
         del self.cn_measures[:]
         ret_val += self.g_m.protocol.config_consumption(conso)
-        time.sleep(2)  # get measures for 2 seconds
+
+        ret_val += self.g_m.open_power_stop(power='battery')
+        time.sleep(1)
+        ret_val += self.g_m.open_power_start(power='battery')
+        time.sleep(1)
+
+        # stop
         ret_val += self.g_m.protocol.config_consumption(None)
+        time.sleep(1)  # Flush last values
 
         values = []
         # measures_debug: consumption_measure

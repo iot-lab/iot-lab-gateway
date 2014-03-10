@@ -308,6 +308,7 @@ class TestAutoTests(GatewayCodeMock):
         self.request.query = mock.Mock()
         self.request.query.channel = '22'
         self.request.query.gps = ''
+        self.request.query.flash = ''
 
         # call using rest
         ret_dict = self.app.auto_tests(mode='blink')
@@ -320,8 +321,6 @@ class TestAutoTests(GatewayCodeMock):
         self.assertEquals([], errors)
         self.assertTrue('GWT' in mac_addresses)
         self.assertEquals(0, ret)
-
-        self.assertEquals(0, g_m.open_power_stop.call_count)
 
         # test that ON still on => should be blinking and answering
         if gateway_code.config.board_type() == 'M3':
@@ -337,11 +336,8 @@ class TestAutoTests(GatewayCodeMock):
 
         g_v = gateway_code.autotest.autotest.AutoTestManager(
             self.app.gateway_manager)
+
         # radio functions
-
-        #g_v.test_radio_ping_pong = mock.Mock()
-        #g_v.test_radio_with_rssi = mock.Mock()
-
         with patch.object(g_v, 'test_radio_ping_pong'):
             with patch.object(g_v, 'test_radio_with_rssi'):
                 ret_dict = g_v.auto_tests(channel=None, blink=False)
