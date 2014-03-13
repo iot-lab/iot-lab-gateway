@@ -6,5 +6,6 @@ Host fit2-dev
 
 Host gateway-m3-ci gateway-a8-ci open-a8-ci   gateway-m3
   User root
+  StrictHostKeyChecking no
   ProxyCommand ssh fit2-dev -W %h:%p
 
