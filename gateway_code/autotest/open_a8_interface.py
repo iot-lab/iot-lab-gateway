@@ -19,7 +19,7 @@ LOGGER = logging.getLogger('gateway_code')
 A8_TTY_PATH = '/tmp/tty_open_a8_m3'
 
 # cannot specify static_files_path at import to allow testing
-_SSH_OPTS = ('-F  {static_files_path}/ssh_a8_config')
+_SSH_OPTS = '-F   {static_files_path}/ssh_a8_config'
 SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "{cmd}"'
 SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 
@@ -114,6 +114,7 @@ class OpenA8Connection(object):
         remote_tty_cmd = 'killall socat; ' + socat_cmd
         cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=remote_tty_cmd,
                              static_files_path=config.STATIC_FILES_PATH)
+        LOGGER.debug(cmd)
         self.remote_tty = Popen(shlex.split(cmd))
         time.sleep(10)
 
