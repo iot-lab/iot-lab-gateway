@@ -223,7 +223,8 @@ class IntegrationTests(Command):
         self.stop = False
 
     def finalize_options(self):
-        self.nose_args = []
+        self.nose_args = ['nosetests', '-i=*integration/*',
+                          '--xcoverage-file=%s_coverage.xml' % os.uname()[1]]
         if self.stop:
             self.nose_args += ['--stop']
 
@@ -237,9 +238,7 @@ class IntegrationTests(Command):
             stderr.write("\nsu www-data -c 'python setup.py integration'\n")
             exit(1)
 
-        ret = subprocess.call(args + ['nosetests', '-i=*integration/*']
-                              + self.nose_args, env=env)
-
+        ret = subprocess.call(args + self.nose_args, env=env)
         subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
         subprocess.call(args + ['pep8', '-o', 'pep8.out'])
         return ret
