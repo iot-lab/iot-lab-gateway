@@ -2,8 +2,7 @@ build/
 dist/
 *.egg-info/
 .coverage
-coverage.xml
-nosetests.xml
+*.xml
 cover
 *.log
 *.out
