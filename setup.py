@@ -224,7 +224,8 @@ class IntegrationTests(Command):
 
     def finalize_options(self):
         self.nose_args = ['nosetests', '-i=*integration/*',
-                          '--xcoverage-file=%s_coverage.xml' % os.uname()[1]]
+                          '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
+                          '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
         if self.stop:
             self.nose_args += ['--stop']
 
