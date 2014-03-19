@@ -1,3 +1,6 @@
+[MASTER]
+persistent = no
+
 [REPORTS]
 
 # output-format = parseable
