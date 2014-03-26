@@ -194,9 +194,9 @@ class AutoTestManager(object):
                                           'unkown type')
                 raise FatalError('Unkown board_type')
 
-            ##
-            ## Tests using Battery
-            ##
+            #
+            # Tests using Battery
+            #
             # dc -> battery: A8 reboot
             # battery -> dc: No reboot
             # A8 may not work with new batteries (not enough power)
@@ -208,9 +208,9 @@ class AutoTestManager(object):
             self.check_get_time()
             self.get_uid()
 
-            ##
-            ## Other tests, run on DC
-            ##
+            #
+            # Other tests, run on DC
+            #
             ret = self.g_m.open_power_start(power='dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
@@ -407,7 +407,7 @@ class AutoTestManager(object):
     def test_gps(self):
         """ Test the gps """
         ret_val = 0
-        #ret_val += self._test_gps_serial()
+        # ret_val += self._test_gps_serial()
         ret_val += self._test_pps_open_node()
         ret_val = self._check(ret_val, 'test_gps', ret_val)
         return ret_val

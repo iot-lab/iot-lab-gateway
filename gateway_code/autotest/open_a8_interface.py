@@ -104,7 +104,7 @@ class OpenA8Connection(object):
 
         # test if config OK for OPEN A8 m3
         output = self.ssh_run('ftdi-devices-list')
-        if not 'A8-M3' in output:
+        if 'A8-M3' not in output:
             raise A8ConnectionError("Open A8 doesn't have M3 configured",
                                     "Open_A8_m3_ftdi_not_configured")
 

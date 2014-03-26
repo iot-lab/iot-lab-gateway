@@ -22,14 +22,14 @@ SPOT = chr(134)     # Spot automatic mode
 CLEAN = chr(135)    # Clean automatic mode
 MAX = chr(136)      # Max clean automatic mode
 DRIVE = chr(137)    # + 4 bytes : vel-high/low,radius-high/low
-#MOTORS = chr(138)  # + 1 byte : motors-state   not used in turtlebot
+# MOTORS = chr(138)  # + 1 byte : motors-state   not used in turtlebot
 LEDS = chr(139)     # + 3 bytes : leds-state,power-color,power-intensity
 SONG = chr(140)     # + 2N+2 bytes: song-num, song-lenght:N=number of notes
 PLAY = chr(141)     # + 1 byte : song-num
 SENSORS = chr(142)  # + 1 byte : packet
 FORCESEEKINGDOCK = chr(143)  # Dock automatique mode
-#PWMMOTORS =chr(144)  # + 3 bytes : main brush, side brush, vaccuum
-                      # not used in turtlebot
+# not used in turtlebot
+# PWMMOTORS = chr(144)  # + 3 bytes : main brush, side brush, vaccuum
 DRIVEDIRECT = chr(145)  # + 4 bytes : right-vel-high/low,left-vel-high/low
 PWMDRIVE = chr(146)     # + 4 bytes :right-pwm-high/low,left-pwm-hight/low
 STREAM = chr(148)       # periodic stream of sensors
@@ -46,8 +46,8 @@ CLIFF_FRONT_RIGHT = 11
 CLIFF_RIGHT = 12
 VIRTUAL_WALL = 13
 OVERCURRENTS = 14
-#DIRT_DETECT = 15 unused in turtlebot
-#16 : unused byte
+# DIRT_DETECT = 15 unused in turtlebot
+# 16 : unused byte
 INFRARED = 17
 BUTTONS = 18
 DISTANCE = 19
@@ -63,8 +63,8 @@ CLIFF_LEFT_SIGNAL = 28
 CLIFF_FRONT_LEFT_SIGNAL = 29
 CLIFF_FRONT_RIGHT_SIGNAL = 30
 CLIFF_RIGHT_SIGNAL = 31
-#32 : used only on Create
-#33 : used only on Create
+# 32 : used only on Create
+# 33 : used only on Create
 CHARGING_SOURCES_AVAILABLE = 34
 OI_MODE = 35
 SONG_NUMBER = 36
@@ -74,8 +74,7 @@ REQUESTED_VELOCITY = 39
 REQUESTED_RADIUS = 40
 REQUESTED_RIGHT_VELOCITY = 41
 REQUESTED_LEFT_VELOCITY = 42
-LEFT_ENCODER = 43   # left and Right encodeur are inverted
-                    #  in datasheet (not here)
+LEFT_ENCODER = 43  # left and Right encodeur inverted in datasheet (not here)
 RIGHT_ENCODER = 44
 LIGHT_BUMPER = 45
 LIGHT_BUMP_LEFT_SIGNAL = 46
@@ -88,8 +87,8 @@ INFRARED_LEFT = 52
 INFRARED_RIGHT = 53
 LEFT_MOTOR_CURRENT = 54
 RIGHT_MOTOT_CURRENT = 55
-#MAIN_BRUSH_MOTOR_CURRENT = 56 unused in turtlebot
-#SIDE_BRUSH_MOTOR_CURRENT = 57 unused in turtlebot
+# MAIN_BRUSH_MOTOR_CURRENT = 56 unused in turtlebot
+# SIDE_BRUSH_MOTOR_CURRENT = 57 unused in turtlebot
 STASIS = 58
 
 # others just for easy access to particular parts of the data
@@ -248,161 +247,161 @@ class Roomba500(object):
         # need error checking or sanity checking or something!
 
         self.sensorl = [None,
-                        #1
+                        # 1
                         None,
-                        #2
+                        # 2
                         None,
-                        #3
+                        # 3
                         None,
-                        #4
+                        # 4
                         None,
-                        #5
+                        # 5
                         None,
-                        #6
+                        # 6
                         None,
-                        #BUMPS_WHEELDROPS = 7
+                        # BUMPS_WHEELDROPS = 7
                         ord(rep[0]),
-                        #WALL = 8
+                        # WALL = 8
                         ord(rep[1]) & 0x01,
-                        #CLIFF_LEFT = 9
+                        # CLIFF_LEFT = 9
                         ord(rep[2]) & 0x01,
-                        #CLIFF_FRONT_LEFT = 10
+                        # CLIFF_FRONT_LEFT = 10
                         ord(rep[3]) & 0x01,
-                        #CLIFF_FRONT_RIGHT = 11
+                        # CLIFF_FRONT_RIGHT = 11
                         ord(rep[4]) & 0x01,
-                        #CLIFF_RIGHT = 12
+                        # CLIFF_RIGHT = 12
                         ord(rep[5]) & 0x01,
-                        #VIRTUAL_WALL = 13
+                        # VIRTUAL_WALL = 13
                         ord(rep[6]) & 0x01,
-                        #OVERCURRENTS = 14
+                        # OVERCURRENTS = 14
                         ord(rep[7]),
-                        #15
+                        # 15
                         None,
-                        #16
+                        # 16
                         None,
-                        #INFRARED = 17
+                        # INFRARED = 17
                         ord(rep[10]),
-                        #BUTTONS = 18
+                        # BUTTONS = 18
                         ord(rep[11]),
-                        #DISTANCE = 19
+                        # DISTANCE = 19
                         two_bytes_signed_int(ord(rep[12]), ord(rep[13])),
-                        #ANGLE = 20
+                        # ANGLE = 20
                         two_bytes_signed_int(ord(rep[14]), ord(rep[15])),
-                        #CHARGING_STATE = 21
+                        # CHARGING_STATE = 21
                         ord(rep[16]),
-                        #VOLTAGE = 22
+                        # VOLTAGE = 22
                         two_bytes_unsigned_int(ord(rep[17]), ord(rep[18])),
-                        #CURRENT = 23
+                        # CURRENT = 23
                         two_bytes_signed_int(ord(rep[19]), ord(rep[20])),
-                        #BATTERY_TEMP = 24
+                        # BATTERY_TEMP = 24
                         ord(rep[21]),
-                        #BATTERY_CHARGE = 25
+                        # BATTERY_CHARGE = 25
                         two_bytes_unsigned_int(ord(rep[22]), ord(rep[23])),
-                        #BATTERY_CAPACITY = 26
+                        # BATTERY_CAPACITY = 26
                         two_bytes_unsigned_int(ord(rep[24]), ord(rep[25])),
-                        #WALL_SIGNAL = 27
+                        # WALL_SIGNAL = 27
                         two_bytes_unsigned_int(ord(rep[26]), ord(rep[27])),
-                        #CLIFF_LEFT_SIGNAL = 28
+                        # CLIFF_LEFT_SIGNAL = 28
                         two_bytes_unsigned_int(ord(rep[28]), ord(rep[29])),
-                        #CLIFF_FRONT_LEFT_SIGNAL = 29
+                        # CLIFF_FRONT_LEFT_SIGNAL = 29
                         two_bytes_unsigned_int(ord(rep[30]), ord(rep[31])),
-                        #CLIFF_FRONT_RIGHT_SIGNAL = 30
+                        # CLIFF_FRONT_RIGHT_SIGNAL = 30
                         two_bytes_unsigned_int(ord(rep[32]), ord(rep[33])),
-                        #CLIFF_RIGHT_SIGNAL = 31
+                        # CLIFF_RIGHT_SIGNAL = 31
                         two_bytes_unsigned_int(ord(rep[34]), ord(rep[35])),
-                        #32
+                        # 32
                         None,
-                        #33: 2 bytes
+                        # 33: 2 bytes
                         None,
-                        #CHARGING_SOURCES_AVAILABLE = 34
+                        # CHARGING_SOURCES_AVAILABLE = 34
                         ord(rep[39]),
-                        #OI_MODE = 35
+                        # OI_MODE = 35
                         ord(rep[40]),
-                        #SONG_NUMBER = 36
+                        # SONG_NUMBER = 36
                         ord(rep[41]),
-                        #SONG_PLAYING = 37
+                        # SONG_PLAYING = 37
                         ord(rep[42]) & 0x01,
-                        #NUM_STREAM_PACKETS = 38
+                        # NUM_STREAM_PACKETS = 38
                         ord(rep[43]),
-                        #REQUESTED_VELOCITY = 39
+                        # REQUESTED_VELOCITY = 39
                         two_bytes_signed_int(ord(rep[44]), ord(rep[45])),
-                        #REQUESTED_RADIUS = 40
+                        # REQUESTED_RADIUS = 40
                         two_bytes_signed_int(ord(rep[46]), ord(rep[47])),
-                        #REQUESTED_RIGHT_VELOCITY = 41
+                        # REQUESTED_RIGHT_VELOCITY = 41
                         two_bytes_signed_int(ord(rep[48]), ord(rep[49])),
-                        #REQUESTED_LEFT_VELOCITY = 42
+                        # REQUESTED_LEFT_VELOCITY = 42
                         two_bytes_signed_int(ord(rep[50]), ord(rep[51])),
-                        #LEFT_ENCODER = 43
+                        # LEFT_ENCODER = 43
                         two_bytes_unsigned_int(ord(rep[52]), ord(rep[53])),
-                        #RIGHT_ENCODER = 44
+                        # RIGHT_ENCODER = 44
                         two_bytes_unsigned_int(ord(rep[54]), ord(rep[55])),
-                        #LIGHT_BUMPER = 45
+                        # LIGHT_BUMPER = 45
                         ord(rep[56]),
-                        #LIGHT_BUMP_LEFT_SIGNAL = 46
+                        # LIGHT_BUMP_LEFT_SIGNAL = 46
                         two_bytes_unsigned_int(ord(rep[57]), ord(rep[58])),
-                        #LIGHT_BUMP_FRONT_LEFT_SIGNAL = 47
+                        # LIGHT_BUMP_FRONT_LEFT_SIGNAL = 47
                         two_bytes_unsigned_int(ord(rep[59]), ord(rep[60])),
-                        #LIGHT_BUMP_CENTER_LEFT_SIGNAL = 48
+                        # LIGHT_BUMP_CENTER_LEFT_SIGNAL = 48
                         two_bytes_unsigned_int(ord(rep[61]), ord(rep[62])),
-                        #LIGHT_BUMP_CENTER_RIGHT_SIGNAL = 49
+                        # LIGHT_BUMP_CENTER_RIGHT_SIGNAL = 49
                         two_bytes_unsigned_int(ord(rep[63]), ord(rep[64])),
-                        #LIGHT_BUMP_FRONT_RIGHT_SIGNAL = 50
+                        # LIGHT_BUMP_FRONT_RIGHT_SIGNAL = 50
                         two_bytes_unsigned_int(ord(rep[65]), ord(rep[66])),
-                        #LIGHT_BUMP_RIGHT_SIGNAL = 51
+                        # LIGHT_BUMP_RIGHT_SIGNAL = 51
                         two_bytes_unsigned_int(ord(rep[67]), ord(rep[68])),
-                        #INFRARED_LEFT = 52
+                        # INFRARED_LEFT = 52
                         ord(rep[69]),
-                        #INFRARED_RIGHT = 53
+                        # INFRARED_RIGHT = 53
                         ord(rep[70]),
-                        #LEFT_MOTOR_CURRENT = 54
+                        # LEFT_MOTOR_CURRENT = 54
                         two_bytes_signed_int(ord(rep[71]), ord(rep[72])),
-                        #RIGHT_MOTOT_CURRENT = 55
+                        # RIGHT_MOTOT_CURRENT = 55
                         two_bytes_signed_int(ord(rep[73]), ord(rep[74])),
-                        #MAIN_BRUSH_MOTOR_CURRENT = 56 unused in turtlebot
+                        # MAIN_BRUSH_MOTOR_CURRENT = 56 unused in turtlebot
                         None,
-                        #SIDE_BRUSH_MOTOR_CURRENT = 57 unused in turtlebot
+                        # SIDE_BRUSH_MOTOR_CURRENT = 57 unused in turtlebot
                         None,
-                        #STASIS = 58
+                        # STASIS = 58
                         ord(rep[79]) & 0x01,
-                        #LEFT_BUMP = 59
+                        # LEFT_BUMP = 59
                         (ord(rep[0]) >> 1) & 0x01,
-                        #RIGHT_BUMP = 60
+                        # RIGHT_BUMP = 60
                         (ord(rep[0]) >> 0) & 0x01,
-                        #LEFT_WHEEL_DROP = 61
+                        # LEFT_WHEEL_DROP = 61
                         (ord(rep[0]) >> 3) & 0x01,
-                        #RIGHT_WHEEL_DROP = 62
+                        # RIGHT_WHEEL_DROP = 62
                         (ord(rep[0]) >> 2) & 0x01,
-                        #HOME_BASE = 63
+                        # HOME_BASE = 63
                         (ord(rep[39]) >> 1) & 0x01,
-                        #INTERNAL_CHARGER = 64
+                        # INTERNAL_CHARGER = 64
                         (ord(rep[39]) >> 0) & 0x01,
-                        #LIGHT_BUMP_LEFT = 65
+                        # LIGHT_BUMP_LEFT = 65
                         (ord(rep[56]) >> 0) & 0x01,
-                        #LIGHT_BUMP_FRONT_LEFT = 66
+                        # LIGHT_BUMP_FRONT_LEFT = 66
                         (ord(rep[56]) >> 1) & 0x01,
-                        #LIGHT_BUMP_CENTER_LEFT = 67
+                        # LIGHT_BUMP_CENTER_LEFT = 67
                         (ord(rep[56]) >> 2) & 0x01,
-                        #LIGHT_BUMP_CENTER_RIGHT = 68
+                        # LIGHT_BUMP_CENTER_RIGHT = 68
                         (ord(rep[56]) >> 3) & 0x01,
-                        #LIGHT_BUMP_FRONT_RIGHT = 69
+                        # LIGHT_BUMP_FRONT_RIGHT = 69
                         (ord(rep[56]) >> 4) & 0x01,
-                        #LIGHT_BUMP_RIGHT = 70
+                        # LIGHT_BUMP_RIGHT = 70
                         (ord(rep[56]) >> 5) & 0x01,
-                        #LEFT_WHEEL_OVERCURRENT = 71
+                        # LEFT_WHEEL_OVERCURRENT = 71
                         (ord(rep[7]) >> 4) & 0x01,
-                        #RIGHT_WHEEL_OVERCURRENT = 72
+                        # RIGHT_WHEEL_OVERCURRENT = 72
                         (ord(rep[7]) >> 3) & 0x01,
-                        #DOCK = 73
+                        # DOCK = 73
                         (ord(rep[11]) >> 2) & 0x01,
-                        #SPOT = 74
+                        # SPOT = 74
                         (ord(rep[11]) >> 1) & 0x01,
-                        #CLEAN = 75
+                        # CLEAN = 75
                         (ord(rep[11]) >> 0) & 0x01,
-                        #POS_X = 76
+                        # POS_X = 76
                         None,
-                        #POS_Y = 77
+                        # POS_Y = 77
                         None,
-                        #POS_Z = 78
+                        # POS_Z = 78
                         None]
 
         return self.sensorl
