@@ -364,19 +364,31 @@ class TestInvalidCases(GatewayCodeMock):
             except OSError:
                 pass
 
+        stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
+
         with mock.patch('gateway_code.config.MEASURES_PATH',
                         '/tmp/{type}/{node_id}.oml'):
-            ret = self.app.exp_start(123, 'harter')
-            self.assertEquals(ret, {'ret': 0})
-            ret = self.app.exp_start(123, 'harter')  # cannot start started exp
-            self.assertNotEquals(ret, {'ret': 0})
+            with mock.patch.object(self.app.gateway_manager, 'exp_stop',
+                                   stop_mock):
 
-            # stop exp
-            ret = self.app.exp_stop()
-            self.assertEquals(ret, {'ret': 0})
+                ret = self.app.exp_start(12, 'harter')
+                self.assertEquals(ret, {'ret': 0})
+                self.assertEquals(self.app.gateway_manager.exp_id, 12)
+                self.assertEquals(stop_mock.call_count, 0)
 
-            ret = self.app.exp_stop()  # cannot stop stoped exp
-            self.assertNotEquals(ret, {'ret': 0})
+                # replace current experiment
+                ret = self.app.exp_start(123, 'harter')
+                self.assertEquals(ret, {'ret': 0})
+                self.assertEquals(self.app.gateway_manager.exp_id, 123)
+                self.assertEquals(stop_mock.call_count, 1)
+
+                # stop exp
+                ret = self.app.exp_stop()
+                self.assertEquals(ret, {'ret': 0})
+
+                # exp already stoped no error
+                ret = self.app.exp_stop()
+                self.assertEquals(ret, {'ret': 0})
 
         # remove measures_dir
         for measure_type in ('consumption', 'radio'):

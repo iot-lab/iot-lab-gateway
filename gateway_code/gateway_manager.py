@@ -88,8 +88,8 @@ class GatewayManager(object):
         """
 
         if self.experiment_is_running:
-            LOGGER.warning('Experiment already running')
-            return 1
+            LOGGER.warning('Experiment running. Stop previous experiment')
+            self.exp_stop()
 
         self.exp_id = exp_id
         self.user = user
@@ -169,9 +169,8 @@ class GatewayManager(object):
 
         """
         if not self.experiment_is_running:
-            ret = 1
-            LOGGER.warning('No experiment running')
-            return ret
+            LOGGER.warning("No experiment running. Don't stop")
+            return 0
         ret_val = 0
 
         # # # # # # # # # # # # # # # #
