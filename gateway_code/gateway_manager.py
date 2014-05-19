@@ -7,6 +7,7 @@ manager script
 """
 
 from gateway_code import config
+from gateway_code import common
 from gateway_code import openocd_cmd
 from gateway_code.profile import Profile
 from gateway_code.serial_redirection import SerialRedirection
@@ -14,6 +15,7 @@ from gateway_code.autotest import autotest
 
 from gateway_code import control_node_interface, protocol_cn
 
+import os
 import time
 
 import gateway_code.gateway_logging
@@ -143,7 +145,7 @@ class GatewayManager(object):
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
 
-        if config.robot_type() == 'roomba':
+        if config.robot_type() == 'roomba':  # pragma: no cover
             LOGGER.info("I'm a roomba")
             LOGGER.info("Running Start Roomba")
 
@@ -186,7 +188,7 @@ class GatewayManager(object):
         ret = self.protocol.green_led_on()
         ret_val += ret
 
-        if config.robot_type() == 'roomba':
+        if config.robot_type() == 'roomba':  # pragma: no cover
             LOGGER.info("I'm a roomba")
             LOGGER.info("Running stop Roomba")
 
@@ -218,6 +220,26 @@ class GatewayManager(object):
         self.experiment_is_running = False
 
         return ret_val
+
+    @staticmethod
+    def _start_a8(a8_tty, timeout=0):
+        """ Procedure to call at a8 startup
+        It runs sanity checks and start debug features """
+        # Test if open a8 tty correctly appeared
+        if not common.wait_cond(timeout, True, os.path.exists, a8_tty):
+            LOGGER.error('Error Open A8 tty not visible: %s', a8_tty)
+            return 1
+        return 0
+
+    @staticmethod
+    def _stop_a8(a8_tty, timeout=0):
+        """ Procedure to call at a8 stop
+        It runs sanity checks and stop debug features """
+        # Test if open a8 tty correctly disappeared
+        if not common.wait_cond(timeout, False, os.path.exists, a8_tty):
+            LOGGER.error('Error Open A8 tty still exist: %s', a8_tty)
+            return 1
+        return 0
 
     def exp_update_profile(self, profile=None):
         """

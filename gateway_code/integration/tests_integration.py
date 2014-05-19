@@ -15,10 +15,6 @@ import unittest
 import gateway_code
 # pylint: disable=C0103,R0904
 
-
-
-# pylint: disable=C0103,R0904
-
 # Bottle FileUpload class stub
 FileUpload = recordtype.recordtype(
     'FileUpload', ['file', 'name', 'filename', ('headers', None)])
@@ -351,7 +347,7 @@ class TestAutoTests(GatewayCodeMock):
 class TestInvalidCases(GatewayCodeMock):
     """ Invalid calls """
 
-    def tests_invalid_calls(self):
+    def tests_non_regular_calls(self):
         """
         Test start calls when not needed
             * start when started

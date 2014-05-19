@@ -29,3 +29,12 @@ class TestA8StartStop(unittest.TestCase):
         g_m.node_flash = mock.Mock(return_value=1)
         self.assertRaises(StandardError, g_m.setup)
 
+    def test_start_stop_a8(self):
+        """ Test running the _start_a8 _stop_a8 functions """
+        g_m = gateway_manager.GatewayManager()
+
+        self.assertEquals(0, g_m._start_a8('/dev/null'))
+        self.assertNotEquals(0, g_m._start_a8('no_tty_file'))
+
+        self.assertNotEquals(0, g_m._stop_a8('/dev/null'))
+        self.assertEquals(0, g_m._stop_a8('no_tty_file'))
