@@ -218,6 +218,13 @@ class TestRestMethods(unittest.TestCase):
         ret_dict = s_r.auto_tests()
         self.assertNotEquals(0, ret_dict['ret'])
 
+        self.request.query = mock.Mock(channel='11', gps='true')
+        ret_dict = s_r.auto_tests()
+        self.assertNotEquals(0, ret_dict['ret'])
+        self.request.query = mock.Mock(channel='11', gps=None, flash='false')
+        ret_dict = s_r.auto_tests()
+        self.assertNotEquals(0, ret_dict['ret'])
+
 
 # Patch to find idle.elf
 # Patch to find control_node.elf at start
