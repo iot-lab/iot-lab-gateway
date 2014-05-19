@@ -367,15 +367,6 @@ class AutoTestManager(object):
 #
 # Test GPS
 #
-    def _test_gps_serial(self):
-        """ Test the gps via serial port """
-        # TODO Roger
-        # wait that GPS is ready or timeout
-        time.sleep(60)
-        ret = 0
-        ret_val = self._check(ret, 'wait_gps_serial', "TODO TODO")
-        return ret_val
-
     def _test_pps_open_node(self):
         """ Test the pps on open A8 m3 node"""
         ret_val = 0
@@ -564,7 +555,7 @@ class AutoTestManager(object):
             if measure[1] == 'consumption_measure':
                 values.append(tuple([float(meas) for meas in measure[3:6]]))
 
-        # TODO Validate value ranges (maybe with idle firmware)
+        # Value ranges may be validated with an Idle firmware
 
         test_ok = 1 < len(set(values))
         ret_val += self._check(TST_OK(test_ok), 'consumption_dc', values)
@@ -612,7 +603,8 @@ class AutoTestManager(object):
         test_ok = 1 < len(set(values))
         ret_val += self._check(TST_OK(test_ok), 'consumption_batt', values)
 
-        # TODO Validate value ranges (maybe with idle firmware)
+        # Value ranges may be validated with an Idle firmware
+
         ret_val += self.g_m.protocol.config_consumption(None)
         return ret_val
 

@@ -6,7 +6,7 @@ setup.py deployement script
 
 Install all the `gateway code` on a gateway
 
-        python setup.py release
+    python setup.py release
 
 It runs the `install` command and the `post_install` procedure.
 
@@ -167,8 +167,9 @@ class Lint(Command):
     def run(self):
         from pylint import lint
         lint_args = self.report_opt
-        lint_args += ['--rcfile=pylint.rc', 'gateway_code/', 'roomba/',
-                      'setup.py']
+        lint_args += ['--rcfile=pylint.rc', 'gateway_code/', 'setup.py']
+                      #'roomba/'
+
 
         with _Tee(self.outfile, 'w'):
             lint.Run(lint_args, exit=False)
