@@ -26,11 +26,14 @@ def empty_queue(queue):
 
 
 def wait_cond(timeout, value, fct, *args, **kwargs):
-    """ Wait at max `timeout` for `fct(*args, **kwargs)` to return `value` """
+    """ Wait at max `timeout` for `fct(*args, **kwargs)` to return `value`
+    :return: True if fct has returned `value` before timeout False otherwise.
+    :rtype: bool
+    """
     time_ref = time.time()
     while True:
         if value == fct(*args, **kwargs):
-            return 0
+            return True
         if time.time() > (time_ref + timeout):
-            return 1
+            return False
         time.sleep(0.1)
