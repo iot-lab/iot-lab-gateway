@@ -4,6 +4,7 @@ import unittest
 import mock
 
 import os
+import shutil
 import Queue
 from gateway_code.control_node_interface import ControlNodeSerial
 
@@ -118,6 +119,7 @@ class TestControlNodeSerial(unittest.TestCase):
         # setup
         # create measures_dir
         for measure_type in ('consumption', 'radio'):
+            shutil.rmtree('/tmp/%s/' % measure_type, ignore_errors=True)
             try:
                 os.mkdir('/tmp/%s/' % measure_type)
             except OSError:

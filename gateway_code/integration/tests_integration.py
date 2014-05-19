@@ -290,6 +290,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             self.fail('File should exist %r' % self.radio_path)
 
 
+
 class TestAutoTests(GatewayCodeMock):
     """ Try running autotests on node """
 
@@ -344,55 +345,87 @@ class TestAutoTests(GatewayCodeMock):
                 self.assertEquals(0, g_v.test_radio_with_rssi.call_count)
 
 
-class TestInvalidCases(GatewayCodeMock):
-    """ Invalid calls """
+class TestUncommonCasesGatewayManager(GatewayCodeMock):
+    """ Uncommon cases """
 
-    def tests_non_regular_calls(self):
-        """
-        Test start calls when not needed
-            * start when started
-            * stop when stopped
-        """
-
+    def setUp(self):
         # create measures_dir
+        self.measures_path_patcher = patch('gateway_code.config.MEASURES_PATH',
+                                           '/tmp/{type}/{node_id}.oml')
+        self.measures_path_patcher.start()
         for measure_type in ('consumption', 'radio'):
             try:
                 os.mkdir('/tmp/%s/' % measure_type)
             except OSError:
                 pass
 
-        stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
 
-        with mock.patch('gateway_code.config.MEASURES_PATH',
-                        '/tmp/{type}/{node_id}.oml'):
-            with mock.patch.object(self.app.gateway_manager, 'exp_stop',
-                                   stop_mock):
-
-                ret = self.app.exp_start(12, 'harter')
-                self.assertEquals(ret, {'ret': 0})
-                self.assertEquals(self.app.gateway_manager.exp_id, 12)
-                self.assertEquals(stop_mock.call_count, 0)
-
-                # replace current experiment
-                ret = self.app.exp_start(123, 'harter')
-                self.assertEquals(ret, {'ret': 0})
-                self.assertEquals(self.app.gateway_manager.exp_id, 123)
-                self.assertEquals(stop_mock.call_count, 1)
-
-                # stop exp
-                ret = self.app.exp_stop()
-                self.assertEquals(ret, {'ret': 0})
-
-                # exp already stoped no error
-                ret = self.app.exp_stop()
-                self.assertEquals(ret, {'ret': 0})
-
+    def tearDown(self):
+        self.measures_path_patcher.stop()
         # remove measures_dir
         for measure_type in ('consumption', 'radio'):
-            try:
-                os.rmdir('/tmp/%s/' % measure_type)
-            except OSError:
-                self.fail()
+            shutil.rmtree('/tmp/%s/' % measure_type, ignore_errors=True)
+
+    def tests_non_regular_start_stop_calls(self):
+        """ Test start calls when not needed
+            * start when started
+            * stop when stopped
+        """
+        stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
+        with patch.object(self.app.gateway_manager, 'exp_stop', stop_mock):
+
+            ret = self.app.gateway_manager.exp_start(12, 'harter')
+            self.assertEquals(ret, 0)
+            self.assertEquals(self.app.gateway_manager.exp_id, 12)
+            self.assertEquals(stop_mock.call_count, 0)
+
+            # replace current experiment
+            ret = self.app.gateway_manager.exp_start(12, 'harter')
+            self.assertEquals(ret, 0)
+            self.assertEquals(self.app.gateway_manager.exp_id, 12)
+            self.assertEquals(stop_mock.call_count, 1)
+
+            # stop exp
+            ret = self.app.gateway_manager.exp_stop()
+            self.assertEquals(ret, 0)
+
+            # exp already stoped no error
+            ret = self.app.gateway_manager.exp_stop()
+            self.assertEquals(ret, 0)
+
+    def tests_invalid_tty_state_at_start_stop_for_A8(self):
+        """  Test start/stop calls where A8 tty is in invalid state
+        Test a start call where tty is not visible
+        Followed by a stop call that will have it's tty not disappeared
+        """
+
+        if 'A8' != gateway_code.config.board_type():
+            return
+
+        with patch.object(self.app.gateway_manager, 'open_power_start',
+                          mock.Mock(return_value=0)):
+            ret = self.app.gateway_manager.exp_start(12, 'harter')
+            self.assertNotEquals(ret, 0)
+        ret = self.app.gateway_manager.exp_stop()
+        self.assertEquals(ret, 0)
+
+
+        ret = self.app.gateway_manager.exp_start(12, 'harter')
+        self.assertEquals(ret, 0)
+        with patch.object(self.app.gateway_manager, 'open_power_stop',
+                          mock.Mock(return_value=0)):
+            ret = self.app.gateway_manager.exp_stop()
+            self.assertNotEquals(ret, 0)
+
+        # real cleanup
+        ret = self.app.gateway_manager.exp_start(12, 'harter')
+        self.assertEquals(ret, 0)
+        ret = self.app.gateway_manager.exp_stop()
+        self.assertEquals(ret, 0)
+
+
+class TestInvalidCases(GatewayCodeMock):
+    """ Invalid calls """
 
     def tests_invalid_profile_at_start(self):
         """ Run experiments with invalid profiles """

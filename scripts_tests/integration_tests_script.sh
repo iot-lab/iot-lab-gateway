@@ -29,11 +29,13 @@ ssh -F $SSH_CONFIG   $HOSTNAME "chown -R www-data:www-data $DEST"
 # Run tests #
 #############
 
-killall python
 
 # run python tests
 ssh -F $SSH_CONFIG   $HOSTNAME "su www-data -c '\
     source /etc/profile; \
+    killall python; \
+    killall socat; \
+    killall control_node_serial_interface; \
     python $DEST/gateway_code_python/setup.py integration'"
     #python $DEST/gateway_code_python/setup.py integration --stop'"
 

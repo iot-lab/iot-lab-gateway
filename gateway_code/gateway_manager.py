@@ -141,7 +141,8 @@ class GatewayManager(object):
             # ret = self.gdb_server.start()
             # ret_val += ret
         elif config.board_type() == 'A8':
-            pass
+            ret = self._start_a8(config.OPEN_A8_CFG['tty'], timeout=5)
+            ret_val += ret
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
 
@@ -207,6 +208,9 @@ class GatewayManager(object):
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
         ret = self.open_power_stop(power='dc')
+        ret_val += ret
+
+        ret = self._stop_a8(config.OPEN_A8_CFG['tty'], timeout=5)
         ret_val += ret
 
         # # # # # # # # # # # # # # # # # # #
