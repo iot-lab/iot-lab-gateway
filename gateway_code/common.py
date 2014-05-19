@@ -31,6 +31,6 @@ def wait_cond(timeout, value, fct, *args, **kwargs):
     while True:
         if value == fct(*args, **kwargs):
             return 0
-
         if time.time() > (time_ref + timeout):
             return 1
+        time.sleep(0.1)
