@@ -266,4 +266,4 @@ setup(name='gateway_code',
                 'test_roomba': TestsRoomba},
       install_requires=INSTALL_REQUIRES,
       setup_requires=TESTS_REQUIRES + INSTALL_REQUIRES,
-      )
+     )

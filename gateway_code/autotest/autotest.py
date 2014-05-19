@@ -191,7 +191,7 @@ class AutoTestManager(object):
 
             if board_type not in ['M3', 'A8']:
                 ret_val += self._check(1, 'board_type: %s' % board_type,
-                                          'unkown type')
+                                       'unkown type')
                 raise FatalError('Unkown board_type')
 
             #
