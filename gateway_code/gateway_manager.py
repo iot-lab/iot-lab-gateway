@@ -40,23 +40,24 @@ class GatewayManager(object):
         self.user = None
         self.experiment_is_running = False
         self.profile = None
-
         self.open_node_state = "stop"
 
-        # logger and board type
-        gateway_code.gateway_logging.init_logger(log_folder)
-        self.robot = config.robot_type()
+        gateway_code.gateway_logging.init_logger(log_folder)  # logger config
 
-        # Setup control node
-        ret = self.node_flash('gwt', config.FIRMWARES['control_node'])
-        if ret != 0:  # pragma: no cover
-            raise StandardError("Control node flash failed: {ret:%d, '%s')",
-                                ret, config.FIRMWARES['control_node'])
         self.cn_serial = control_node_interface.ControlNodeSerial()
         self.protocol = protocol_cn.Protocol(self.cn_serial.send_command)
 
         # open node interraction
         self.serial_redirection = SerialRedirection('m3')
+
+    def setup(self):
+        """ Run commands that might crash
+        Must be run before running other commands """
+        # Setup control node
+        ret = self.node_flash('gwt', config.FIRMWARES['control_node'])
+        if ret != 0:
+            raise StandardError("Control node flash failed: {ret:%d, '%s')",
+                                ret, config.FIRMWARES['control_node'])
 
     def exp_start(self, exp_id, user,
                   firmware_path=None, profile=None):
@@ -142,7 +143,7 @@ class GatewayManager(object):
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
 
-        if self.robot == 'roomba':
+        if config.robot_type() == 'roomba':
             LOGGER.info("I'm a roomba")
             LOGGER.info("Running Start Roomba")
 
@@ -185,7 +186,7 @@ class GatewayManager(object):
         ret = self.protocol.green_led_on()
         ret_val += ret
 
-        if self.robot == 'roomba':
+        if config.robot_type() == 'roomba':
             LOGGER.info("I'm a roomba")
             LOGGER.info("Running stop Roomba")
 

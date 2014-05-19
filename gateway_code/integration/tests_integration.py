@@ -56,8 +56,9 @@ class GatewayCodeMock(unittest.TestCase):
             ['-d'])  # print measures
         cls.cn_interface_patcher.start()
 
-        cls.app = gateway_code.server_rest.GatewayRest(
-            gateway_code.server_rest.GatewayManager('.'))
+        g_m = gateway_code.server_rest.GatewayManager('.')
+        g_m.setup()
+        cls.app = gateway_code.server_rest.GatewayRest(g_m)
 
         cls.files = {}
         # default files

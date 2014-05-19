@@ -248,5 +248,8 @@ def _main(args):
 
     host, port, log_folder = _parse_arguments(args[1:])
 
-    _ = GatewayRest(GatewayManager(log_folder))
+    g_m = GatewayManager(log_folder)
+    g_m.setup()
+
+    _ = GatewayRest(g_m)
     bottle.run(host=host, port=port, server='paste')
