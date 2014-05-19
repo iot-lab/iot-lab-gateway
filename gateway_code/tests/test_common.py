@@ -1,44 +1,27 @@
 # -*- coding:utf-8 -*-
 
 import unittest
-import mock
-import Queue
+import time
 
 from gateway_code import common
 
 
-class TestEmptyQueue(unittest.TestCase):
+class TestWaitCond(unittest.TestCase):
 
-    def test_empty_queue_one_element(self):
+    def test_wait_cond_no_timeout(self):
+        """ Test wait_cond """
 
-        queue = Queue.Queue(1)
-        common.empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-        queue.put('TEST')
-        common.empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-    def test_empty_queue_multiple_elemements(self):
-
-        queue = Queue.Queue(5)
-        common.empty_queue(queue)
-        self.assertTrue(queue.empty())
+        self.assertEquals(0, common.wait_cond(0, True, lambda: True))
+        self.assertEquals(1, common.wait_cond(0, True, lambda: False))
 
 
-        queue.put('1')
-        queue.put('2')
-        common.empty_queue(queue)
-        self.assertTrue(queue.empty())
+    def test_wait_cond_with_timeout(self):
 
+        t_ref = time.time()
+        self.assertEquals(0, common.wait_cond(10., True, lambda: True))
+        self.assertGreater(10, time.time() - t_ref)
 
-        queue.put('1')
-        queue.put('2')
-        queue.put('3')
-        queue.put('4')
-        queue.put('5')
-        common.empty_queue(queue)
-        self.assertTrue(queue.empty())
-
-
+        t_ref = time.time()
+        self.assertEquals(1, common.wait_cond(0.5, True, lambda: False))
+        self.assertLessEqual(0.5, time.time() - t_ref)
 
