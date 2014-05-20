@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-"""
-Open A8 interface
-"""
+""" Open A8 interface """
+
 import shlex
 import time
 import datetime
@@ -54,7 +53,7 @@ class OpenA8Connection(object):
 
     def wait_boot_and_get_ip_address(self):
         """ Wait until open node is booted and get its ip address"""
-        a8_serial = expect.SerialExpect(verbose=True, **config.OPEN_A8_CFG)
+        a8_serial = expect.SerialExpect(logger=LOGGER, **config.OPEN_A8_CFG)
 
         LOGGER.debug("Time before boot %s", datetime.datetime.now())
         # boot timeout 2 minutes (seen 50 seconds for a boot in tests)
@@ -111,7 +110,7 @@ class OpenA8Connection(object):
         # remote TTY
         socat_cmd = SOCAT_CMD.format(port=port, tty=config_a8['tty'],
                                      baudrate=config_a8['baudrate'])
-        remote_tty_cmd = 'killall socat; ' + socat_cmd
+        remote_tty_cmd = 'killall socat 2>/dev/null; ' + socat_cmd
         cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=remote_tty_cmd,
                              static_files_path=config.STATIC_FILES_PATH)
         LOGGER.debug(cmd)

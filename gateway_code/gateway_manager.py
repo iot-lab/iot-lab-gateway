@@ -2,21 +2,23 @@
 # -*- coding:utf-8 -*-
 
 
-"""
-manager script
-"""
+""" Gateway manager """
+
+from threading import Thread
+import os
+import time
+import serial
 
 from gateway_code import config
 from gateway_code import common
 from gateway_code import openocd_cmd
 from gateway_code.profile import Profile
 from gateway_code.serial_redirection import SerialRedirection
-from gateway_code.autotest import autotest
+from gateway_code.autotest import autotest, expect
+
 
 from gateway_code import control_node_interface, protocol_cn
 
-import os
-import time
 
 import gateway_code.gateway_logging
 import logging
@@ -51,6 +53,8 @@ class GatewayManager(object):
 
         # open node interraction
         self.serial_redirection = SerialRedirection('m3')
+
+        self._a8_expect = None
 
     def setup(self):
         """ Run commands that might crash
@@ -141,8 +145,11 @@ class GatewayManager(object):
             # ret = self.gdb_server.start()
             # ret_val += ret
         elif config.board_type() == 'A8':
-            ret = self._start_a8(config.OPEN_A8_CFG['tty'], timeout=5)
+            ret = self._debug_start_a8_tty(config.OPEN_A8_CFG['tty'],
+                                           timeout=5)
             ret_val += ret
+            # Timeout 5 minutes for boot
+            self._debug_a8_boot_start(5*60, config.OPEN_A8_CFG)
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
 
@@ -204,14 +211,15 @@ class GatewayManager(object):
             ret = self.node_flash('m3', config.FIRMWARES['idle'])
             ret_val += ret
         elif config.board_type() == 'A8':
-            pass
+            self._debug_a8_boot_stop_thread()
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
         ret = self.open_power_stop(power='dc')
         ret_val += ret
 
-        ret = self._stop_a8(config.OPEN_A8_CFG['tty'], timeout=5)
-        ret_val += ret
+        if config.board_type() == 'A8':
+            ret = self._debug_stop_a8_tty(config.OPEN_A8_CFG['tty'], timeout=5)
+            ret_val += ret
 
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
@@ -226,7 +234,7 @@ class GatewayManager(object):
         return ret_val
 
     @staticmethod
-    def _start_a8(a8_tty, timeout=0):
+    def _debug_start_a8_tty(a8_tty, timeout=0):
         """ Procedure to call at a8 startup
         It runs sanity checks and start debug features """
         # Test if open a8 tty correctly appeared
@@ -236,7 +244,7 @@ class GatewayManager(object):
         return 0
 
     @staticmethod
-    def _stop_a8(a8_tty, timeout=0):
+    def _debug_stop_a8_tty(a8_tty, timeout=0):
         """ Procedure to call at a8 stop
         It runs sanity checks and stop debug features """
         # Test if open a8 tty correctly disappeared
@@ -245,10 +253,37 @@ class GatewayManager(object):
             return 1
         return 0
 
+    def _debug_a8_boot_start(self, timeout, open_a8_cfg):
+        """ A8 boot debug thread start """
+        a8_debug_thread = Thread(target=self._debug_a8_boot_start_thread,
+                                 args=(timeout, open_a8_cfg))
+        a8_debug_thread.daemon = True
+        a8_debug_thread.start()
+
+    def _debug_a8_boot_start_thread(self, timeout, open_a8_cfg):
+        """ Monitor A8 tty to check if node booted """
+        try:
+            self._a8_expect = expect.SerialExpect(logger=LOGGER, **open_a8_cfg)
+        except serial.SerialException:
+            LOGGER.error("Error while opening %s", open_a8_cfg['tty'])
+            return
+
+        ret = self._a8_expect.expect(' login: ', timeout=timeout)
+
+        if not ret:
+            LOGGER.error("Boot A8 failed in time: %ds", timeout)
+        else:
+            LOGGER.info("Boot A8 Succeeded in time: %ds", timeout)
+
+    def _debug_a8_boot_stop_thread(self):
+        """ Stop the debug thread """
+        try:
+            self._a8_expect.serial_fd.close()
+        except AttributeError:
+            pass
+
     def exp_update_profile(self, profile=None):
-        """
-        Update the control node profile
-        """
+        """ Update the control node profile """
         if profile is not None:
             self.profile = profile
         LOGGER.debug('Update profile')

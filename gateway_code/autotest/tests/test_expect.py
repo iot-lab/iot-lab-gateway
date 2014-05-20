@@ -85,14 +85,13 @@ class TestSerialExpect(unittest.TestCase):
         expect_mock.assert_called_with('(a)|(b)|(c)', float('+inf'))
 
     def test_verb(self):
-        from cStringIO import StringIO
-        stdout = StringIO()
-        self.expect = expect.SerialExpect('TTY', 1234, verbose=True)
+        logger = mock.Mock()
+        self.expect = expect.SerialExpect('TTY', 1234, logger=logger)
 
-        with mock.patch('sys.stdout', stdout):
-            self.read_ret = ['abcd']
-            ret = self.expect.expect('a.*d')
-        self.assertEquals('abcd', stdout.getvalue())
+        self.read_ret = ['abcd']
+        ret = self.expect.expect('a.*d')
+
+        logger.debug.assertCalledWith('abcd')
 
 
 

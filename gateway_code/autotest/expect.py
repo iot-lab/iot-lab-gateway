@@ -10,21 +10,22 @@ Author: Gaëtan Harter gaetan.harter@inria.fr
 
 import re
 import time
-import datetime
-import sys
 import serial
 
 
 class SerialExpect(object):
     """ Simple Expect implementation for serial """
 
-    def __init__(self, tty, baudrate, verbose=False):
+    def __init__(self, tty, baudrate, logger=None):
         self.serial_fd = serial.Serial(tty, baudrate, timeout=0.1)
         self.serial_fd.flushInput()
-        self.verb = verbose
+        self.logger = logger
 
     def __del__(self):
-        self.serial_fd.close()
+        try:
+            self.serial_fd.close()
+        except AttributeError:
+            pass
 
     def send(self, data):
         """ Write given data to serial with newline"""
@@ -48,10 +49,14 @@ class SerialExpect(object):
         end_time = time.time() + timeout
 
         buff = ''
+        print_buff = ''
         regexp = re.compile(pattern)
         while True:
             # get new data
-            read_bytes = self.serial_fd.read(size=16)  # timeout 0.1
+            try:
+                read_bytes = self.serial_fd.read(size=16)  # timeout 0.1
+            except serial.SerialException:
+                return ''
 
             if end_time <= time.time():
                 # last read_bytes may not be printed but don't care
@@ -66,14 +71,25 @@ class SerialExpect(object):
             buff = buff.split('\n')[-1] + read_bytes
 
             # print each line with timestamp on front
-            if self.verb:
-                timestamp = datetime.datetime.now().time()
-                line = read_bytes.replace('\n', '\n%s: ' % timestamp)
-                sys.stdout.write(line)
-                sys.stdout.flush()
+            if self.logger is not None:
+                print_buff += read_bytes
+                lines = print_buff.splitlines()
+
+                # keep last line in buffer if not newline terminated
+                if print_buff[-1] not in '\r\n':
+                    print_buff = lines.pop(-1)
+                else:
+                    print_buff = ''
+
+                # print all lines
+                for line in lines:
+                    self.logger.debug(line)
 
             match = regexp.search(buff)
             if match:
+                # print last lines in case
+                if self.logger is not None:
+                    self.logger.debug(print_buff)
                 return match.group(0)
 
             # continue
