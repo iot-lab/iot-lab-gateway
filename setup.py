@@ -235,12 +235,9 @@ class IntegrationTests(Command):
 
     def run(self):
         args = ['python', 'setup.py']
-
         run_setup(sys.argv[0], self.tests_args)
-
         subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
         subprocess.call(args + ['pep8', '-o', 'pep8.out'])
-        return ret
 
 class OnlyIntegrationTests(Command):
     """ Run unit tests and integration tests.  Should be run on a gateway """
