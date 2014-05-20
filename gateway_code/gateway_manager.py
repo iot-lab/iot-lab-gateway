@@ -148,8 +148,9 @@ class GatewayManager(object):
             ret = self._debug_start_a8_tty(config.OPEN_A8_CFG['tty'],
                                            timeout=5)
             ret_val += ret
-            # Timeout 5 minutes for boot
-            self._debug_a8_boot_start(5*60, config.OPEN_A8_CFG)
+            if ret == 0:
+                # Timeout 5 minutes for boot
+                self._debug_a8_boot_start(5*60, config.OPEN_A8_CFG)
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
 
