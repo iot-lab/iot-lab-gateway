@@ -175,25 +175,43 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.cn_measures.append(measure_str.split(' '))
 
     @patch('gateway_code.control_node_interface.LOGGER.error')
-    def tests_multiple_complete_experiment(self, m_error):
-        """ Test 3 complete experiment (loooong test) """
+    def tests_complete_experiments(self, m_error):
+        """ Test complete experiment (loooong test) (3 for M3, 1 for A8)"""
         self.app.gateway_manager.cn_serial.measures_handler = \
             self._measures_handler
 
-        for _ in range(0, 3):
+        if 'M3' == gateway_code.config.board_type():
+            for _ in range(0, 3):
 
-            m_error.reset_mock()
-            self.cn_measures = []
-            self._rewind_files()
+                m_error.reset_mock()
+                self.cn_measures = []
+                self._rewind_files()
 
-            # start
-            self.request.files = {
-                'firmware': self.files['idle'],
-                'profile': self.files['profile']
-                }
-
-            if 'M3' == gateway_code.config.board_type():
+                # start
+                self.request.files = {
+                    'firmware': self.files['idle'],
+                    'profile': self.files['profile']
+                    }
                 self._run_one_experiment_m3(m_error)
+
+        elif 'A8' == gateway_code.config.board_type():
+                m_error.reset_mock()
+                self.request.files = {}
+                self._run_one_experiment_a8(m_error)
+
+    def _run_one_experiment_a8(self, m_error):
+        """ Run an experiment for A8 nodes """
+
+        # Run an experiment that does nothing but wait
+        ret = self.app.exp_start(
+            self.exp_conf['exp_id'], self.exp_conf['user'])
+        self.assertEquals(ret, {'ret': 0})
+
+        # waiting One minute to try to have complete boot log on debug output
+        time.sleep(60)  # maybe do something here later
+
+        ret = self.app.exp_stop()
+        self.assertEquals(ret, {'ret': 0})
 
     def _run_one_experiment_m3(self, m_error):
         """ Run an experiment """
