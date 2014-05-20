@@ -26,6 +26,7 @@ Pylint and pep8 checker:
 
 from setuptools import setup, Command, Extension
 from setuptools.command.build_ext import build_ext
+from setuptools.sandbox import run_setup
 
 import sys
 from sys import stderr
@@ -59,7 +60,11 @@ TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
 
 # unload 'gateway_code.config' module
 # either it's not included in the coverage report...
-del sys.modules['gateway_code.config']
+try:
+    del sys.modules['gateway_code.config']
+except KeyError:
+    pass
+
 
 
 class _Tee(object):
@@ -224,12 +229,32 @@ class IntegrationTests(Command):
         self.stop = False
 
     def finalize_options(self):
+        self.tests_args = ['run_integration_tests']
+        if self.stop:
+            self.tests_args += ['--stop']
+
+    def run(self):
+        args = ['python', 'setup.py']
+
+        run_setup(sys.argv[0], self.tests_args)
+
+        subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
+        subprocess.call(args + ['pep8', '-o', 'pep8.out'])
+        return ret
+
+class OnlyIntegrationTests(Command):
+    """ Run unit tests and integration tests.  Should be run on a gateway """
+    user_options = [('stop', None, "Stop tests after a failed test")]
+
+    def initialize_options(self):
+        self.stop = False
+
+    def finalize_options(self):
         self.nose_args = ['nosetests', '-i=*integration/*',
                           '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
                           '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
         if self.stop:
             self.nose_args += ['--stop']
-
     def run(self):
         args = ['python', 'setup.py']
 
@@ -241,9 +266,8 @@ class IntegrationTests(Command):
             exit(1)
 
         ret = subprocess.call(args + self.nose_args, env=env)
-        subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
-        subprocess.call(args + ['pep8', '-o', 'pep8.out'])
         return ret
+
 
 
 setup(name='gateway_code',
@@ -264,6 +288,7 @@ setup(name='gateway_code',
                 'pep8': Pep8,
                 'tests': Tests,
                 'integration': IntegrationTests,
+                'run_integration_tests': OnlyIntegrationTests,
                 'test_roomba': TestsRoomba},
       install_requires=INSTALL_REQUIRES,
       setup_requires=TESTS_REQUIRES + INSTALL_REQUIRES,

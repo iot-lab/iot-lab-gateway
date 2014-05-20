@@ -1,50 +1,99 @@
 #! /bin/bash
 
-if [[ ( $# != 1 ) && ( $# != 2 ) ]]
-then
-    echo "Usage: $0 <hostname> [ssh_config_file]" >&2
-    exit 1
-fi
-
-
-if [[ $# == 2 ]]
-then
-    SSH_CONFIG="$(readlink -e $2)"
-else
-    SSH_CONFIG="$(readlink -e ~/.ssh/config)"
-fi
-HOSTNAME="$1"
-
 SRC_DIR="$(readlink -e $(dirname $0)/..)"
 DEST="/tmp/fit-dev/"
 
+# options
 
-set -x
+verbose=0
+SSH_OPT=''
+tests_only=0
+GATEWAY_HOSTNAME=
+
+usage()
+{
+    cat << EOF
+Usage: ${0##*/} [-hv] [-t] [-F CONFFILE] <GATEWAY_HOSTNAME>
+Run the integrations tests on GATEWAY_HOSTNAME.
+    -F CONFFILE ssh configfile see option '-F' in 'man ssh' for details
+    -t          run only python tests
+    -h          display this help and exit
+    -v          verbose mode
+EOF
+}
+
+parse_arguments()
+{
+    local OPTIND=1
+    while getopts "hvF:t" opt; do
+        case "$opt" in
+            F) SSH_OPT="-F $(readlink -e $OPTARG)"
+                ;;
+            h) usage
+                exit 0
+                ;;
+            v) verbose=1
+                ;;
+            t) tests_only=1
+                ;;
+            '?')
+                usage >&2
+                exit 1
+                ;;
+        esac
+    done
+    shift "$((OPTIND-1))"  # shift off the options and optional --
+    if [[ $# != 1 ]]; then
+        echo "No GATEWAY_HOSTNAME provided" >&2
+        usage >&2
+        exit 1
+    fi
+    GATEWAY_HOSTNAME="$1"
+}
+
+parse_arguments $@
+
+if [[ 1 -eq $verbose ]]; then
+    echo "Verbose output"
+    echo "GATEWAY_HOSTNAME: ${GATEWAY_HOSTNAME}"
+    echo "SSH_OPT: ${SSH_OPT}"
+    echo "tests_only: ${tests_only}"
+    set -x
+fi
 
 # update gateway_code_python to host with www-data:www-data as owner
-rsync -e "ssh -F $SSH_CONFIG" -av --delete   $SRC_DIR   $HOSTNAME:$DEST
-ssh -F $SSH_CONFIG   $HOSTNAME "chown -R www-data:www-data $DEST"
+rsync -e "ssh ${SSH_OPT}" -av --delete   ${SRC_DIR}   ${GATEWAY_HOSTNAME}:${DEST}
+ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "chown -R www-data:www-data ${DEST}"
 
-#############
-# Run tests #
-#############
+if [[ 1 -eq ${tests_only} ]]; then
+    # Run only python tests
+    ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "su www-data -c '\
+        source /etc/profile; \
+        killall python; \
+        killall socat; \
+        killall control_node_serial_interface; \
+        python ${DEST}/gateway_code_python/setup.py run_integration_tests --stop'"
+else
+    # Run all tests, python, style checker, C code tests
 
+    ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "su www-data -c '\
+        source /etc/profile; \
+        killall python; \
+        killall socat; \
+        killall control_node_serial_interface; \
+        python ${DEST}/gateway_code_python/setup.py integration'"
 
-# run python tests
-ssh -F $SSH_CONFIG   $HOSTNAME "su www-data -c '\
-    source /etc/profile; \
-    killall python; \
-    killall socat; \
-    killall control_node_serial_interface; \
-    python $DEST/gateway_code_python/setup.py integration'"
-    #python $DEST/gateway_code_python/setup.py integration --stop'"
+    # run control_node_serial tests
+    ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "\
+        source /etc/profile; \
+        make -C ${DEST}/gateway_code_python/control_node_serial realclean coverage"
+fi
 
-# run control_node_serial tests
-ssh -F $SSH_CONFIG   $HOSTNAME "\
-    source /etc/profile; \
-    make -C $DEST/gateway_code_python/control_node_serial realclean coverage"
-
+#
 # Get results files
-rsync -e "ssh -F $SSH_CONFIG" -av \
+#
+rsync -e "ssh ${SSH_OPT}" -av \
     --include='*/' --include='*xml' --include='*out' --exclude='*'  -av \
-    $HOSTNAME:$DEST $SRC_DIR/.. | grep -v "sender"
+    ${GATEWAY_HOSTNAME}:${DEST} ${SRC_DIR}/.. | grep -v "sender"
+
+exit 0
