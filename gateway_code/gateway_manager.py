@@ -7,7 +7,6 @@
 from threading import Thread
 import os
 import time
-import serial
 
 from gateway_code import config
 from gateway_code import common
@@ -263,12 +262,7 @@ class GatewayManager(object):
 
     def _debug_a8_boot_start_thread(self, timeout, open_a8_cfg):
         """ Monitor A8 tty to check if node booted """
-        try:
-            self._a8_expect = expect.SerialExpect(logger=LOGGER, **open_a8_cfg)
-        except serial.SerialException:
-            LOGGER.error("Error while opening %s", open_a8_cfg['tty'])
-            return
-
+        self._a8_expect = expect.SerialExpect(logger=LOGGER, **open_a8_cfg)
         ret = self._a8_expect.expect(' login: ', timeout=timeout)
 
         if not ret:
