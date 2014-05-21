@@ -4,7 +4,7 @@
 
 """ Gateway manager """
 
-from threading import Thread
+from threading import Thread, RLock
 import os
 import time
 
@@ -45,6 +45,8 @@ class GatewayManager(object):
         self.profile = None
         self.open_node_state = "stop"
 
+        self.rlock = RLock()
+
         gateway_code.gateway_logging.init_logger(log_folder)  # logger config
 
         self.cn_serial = control_node_interface.ControlNodeSerial()
@@ -64,6 +66,7 @@ class GatewayManager(object):
             raise StandardError("Control node flash failed: {ret:%d, '%s')",
                                 ret, config.FIRMWARES['control_node'])
 
+    @common.syncronous('rlock')
     def exp_start(self, exp_id, user,
                   firmware_path=None, profile=None):
         """
@@ -159,6 +162,7 @@ class GatewayManager(object):
 
         return ret_val
 
+    @common.syncronous('rlock')
     def exp_stop(self):
         """
         Stop the current running experiment
@@ -277,6 +281,7 @@ class GatewayManager(object):
         except AttributeError:
             pass
 
+    @common.syncronous('rlock')
     def exp_update_profile(self, profile=None):
         """ Update the control node profile """
         if profile is not None:
@@ -296,6 +301,7 @@ class GatewayManager(object):
             LOGGER.error('Profile update failed')
         return ret
 
+    @common.syncronous('rlock')
     def reset_time(self):
         """
         Reset control node time and update absolute time reference
@@ -308,6 +314,7 @@ class GatewayManager(object):
             LOGGER.error('Reset time failed')
         return ret
 
+    @common.syncronous('rlock')
     def open_power_start(self, power=None):
         """ Power on the open node """
         LOGGER.debug('Open power start')
@@ -323,6 +330,7 @@ class GatewayManager(object):
             self.open_node_state = "start"
         return ret
 
+    @common.syncronous('rlock')
     def open_power_stop(self, power=None):
         """ Power off the open node """
         LOGGER.debug('Open power stop')
@@ -338,8 +346,9 @@ class GatewayManager(object):
             self.open_node_state = "stop"
         return ret
 
-    @staticmethod
-    def node_soft_reset(node):
+    @common.syncronous('rlock')       # uses `self`
+    def node_soft_reset(self, node):  # pylint: disable=R0201
+
         """
         Reset the given node using reset pin
 
@@ -355,8 +364,8 @@ class GatewayManager(object):
 
         return ret
 
-    @staticmethod
-    def node_flash(node, firmware_path):
+    @common.syncronous('rlock')                 # uses `self`
+    def node_flash(self, node, firmware_path):  # pylint: disable=R0201
         """
         Flash the given firmware on the given node
 
@@ -372,6 +381,7 @@ class GatewayManager(object):
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)
         return ret
 
+    @common.syncronous('rlock')
     def auto_tests(self, channel, blink, flash, gps):
         """
         Run Auto-tests on nodes and gateway
