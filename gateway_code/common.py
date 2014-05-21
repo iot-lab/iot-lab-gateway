@@ -37,3 +37,26 @@ def wait_cond(timeout, value, fct, *args, **kwargs):
         if time.time() > (time_ref + timeout):
             return False
         time.sleep(0.1)
+
+
+# http://code.activestate.com/recipes/\
+#     577105-synchronization-decorator-for-class-methods/
+# About the `functools.wrap` http://stackoverflow.com/a/309000/395687
+from functools import wraps
+
+
+def syncronous(tlockname):
+    """A decorator to place an instance based lock around a method """
+    def _synched(func):
+        """ _decorated """
+        @wraps(func)
+        def _synchronizer(self, *args, **kwargs):
+            """ _decorator """
+            tlock = self.__getattribute__(tlockname)
+            tlock.acquire()
+            try:
+                return func(self, *args, **kwargs)
+            finally:
+                tlock.release()
+        return _synchronizer
+    return _synched
