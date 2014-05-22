@@ -59,7 +59,7 @@ class OpenA8Connection(object):
         # boot timeout 2 minutes (seen 50 seconds for a boot in tests)
         ret = a8_serial.expect(' login: ', timeout=120)
         LOGGER.debug("Time after boot %s", datetime.datetime.now())
-        if not ret:
+        if not ret:  # pragma: no cover
             raise A8ConnectionError("Open node didn't booted: %r" % ret,
                                     'boot_timeout')
 
@@ -68,7 +68,7 @@ class OpenA8Connection(object):
 
         a8_serial.send(IP_CMD)
         ip_address = a8_serial.expect(r'\d+\.\d+\.\d+.\d+', timeout=10)
-        if not ret:
+        if not ret:  # pragma: no cover
             raise A8ConnectionError("Invalid Ip address",
                                     "invalid_ip:%r" % ip_address)
         a8_serial.send('exit')
@@ -88,7 +88,7 @@ class OpenA8Connection(object):
             # "Warning: Permanently added '192.168.1.6' (RSA)
             #  to the list of known hosts.\r\n"
             self.ssh_run('echo "ssh ok"')
-        except CalledProcessError as err:
+        except CalledProcessError as err:  # pragma: no cover
             raise A8ConnectionError(
                 "Could not ssh connect to openA8 %s" % str(err),
                 "open_a8_ssh_connection_failed")
@@ -98,12 +98,12 @@ class OpenA8Connection(object):
         except CalledProcessError:
             pass  # file does not exist, don't care
         else:
-            if len(output):
+            if len(output):  # pragma: no cover
                 raise A8ConnectionError("Open A8 FTDI config failed", output)
 
         # test if config OK for OPEN A8 m3
         output = self.ssh_run('ftdi-devices-list')
-        if 'A8-M3' not in output:
+        if 'A8-M3' not in output:  # pragma: no cover
             raise A8ConnectionError("Open A8 doesn't have M3 configured",
                                     "Open_A8_m3_ftdi_not_configured")
 
@@ -125,7 +125,7 @@ class OpenA8Connection(object):
         time.sleep(2)
 
         if (self.local_tty.poll() is not None or
-                self.remote_tty.poll() is not None):
+                self.remote_tty.poll() is not None):  # pragma: no cover
             self.remote_tty.terminate()
             self.local_tty.terminate()
             raise A8ConnectionError("Socat commands shut down too early",
@@ -140,9 +140,9 @@ class OpenA8Connection(object):
             self.local_tty.wait()
         except CalledProcessError:
             # Open node A8 unreachable
-            if self.remote_tty is not None:
+            if self.remote_tty is not None:  # pragma: no cover
                 self.remote_tty.terminate()
-            if self.local_tty is not None:
+            if self.local_tty is not None:  # pragma: no cover
                 self.local_tty.terminate()
 
     def get_mac_addr(self):

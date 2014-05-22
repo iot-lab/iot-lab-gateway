@@ -97,6 +97,8 @@ class GatewayManager(object):
         4) Experiment Started
 
         """
+        if config.board_type() not in ('M3', 'A8'):
+            raise NotImplementedError('Board type not managed')
 
         if self.experiment_is_running:
             LOGGER.warning('Experiment running. Stop previous experiment')
@@ -148,7 +150,9 @@ class GatewayManager(object):
             ret_val += ret
             # ret = self.gdb_server.start()
             # ret_val += ret
-        elif config.board_type() == 'A8':
+        else:  # pragma: no cover
+            pass
+        if config.board_type() == 'A8':
             ret = self._debug_start_a8_tty(config.OPEN_A8_CFG['tty'],
                                            timeout=5)
             ret_val += ret
@@ -156,7 +160,7 @@ class GatewayManager(object):
                 # Timeout 5 minutes for boot
                 self._debug_a8_boot_start(5*60, config.OPEN_A8_CFG)
         else:  # pragma: no cover
-            raise NotImplementedError('Board type not managed')
+            pass
 
         if config.robot_type() == 'roomba':  # pragma: no cover
             LOGGER.info("I'm a roomba")

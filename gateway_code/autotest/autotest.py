@@ -76,7 +76,7 @@ class AutoTestManager(object):
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
         ret_val = self._check(ret_val, 'setup_cn_connection', ret_val)
-        if 0 != ret_val:
+        if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup control node failed')
 
     def _setup_open_node_connection(self):
@@ -98,8 +98,10 @@ class AutoTestManager(object):
             self.on_serial = m3_node_interface.OpenNodeSerial()
             ret, err_msg = self.on_serial.start()
             ret_val += self._check(ret, 'open_M3_serial', err_msg)
+        else:  # pragma: no cover
+            pass
 
-        elif board_type == 'A8':
+        if board_type == 'A8':
             try:
                 # wait nodes booting
                 self.a8_connection = open_a8_interface.OpenA8Connection()
@@ -110,10 +112,11 @@ class AutoTestManager(object):
                 LOGGER.debug("Wait that open A8 node starts")
                 self.a8_connection.start()
 
-            except SerialException as err:
+            except SerialException as err:  # pragma: no cover
                 ret_val += self._check(1, 'access_A8_serial_port', str(err))
                 raise FatalError('Setup Open Node failed')
-            except open_a8_interface.A8ConnectionError as err:
+            except open_a8_interface.A8ConnectionError \
+                    as err:  # pragma: no cover
                 ret_val += self._check(1, 'error_in_open_a8_init: %s' %
                                        err.err_msg, str(err))
                 raise FatalError('Setup Open Node failed')
@@ -126,7 +129,7 @@ class AutoTestManager(object):
                 self.a8_connection.scp(
                     gateway_code.config.FIRMWARES['a8_autotest'],
                     '/tmp/a8_autotest.elf')
-            except CalledProcessError as err:
+            except CalledProcessError as err:  # pragma: no cover
                 ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
                 raise FatalError('Setup Open Node failed')
 
@@ -134,7 +137,7 @@ class AutoTestManager(object):
                 self.a8_connection.ssh_run(
                     'source /etc/profile; ' +
                     '/usr/bin/flash_a8.sh /tmp/a8_autotest.elf')
-            except CalledProcessError as err:
+            except CalledProcessError as err:  # pragma: no cover
                 ret_val += self._check(1, 'Flash A8-M3 fail', str(err))
                 raise FatalError('Setup Open Node failed')
 
@@ -144,8 +147,10 @@ class AutoTestManager(object):
             ret, err_msg = self.on_serial.start(
                 tty=open_a8_interface.A8_TTY_PATH)
             ret_val += self._check(ret, 'open_A8_serial', err_msg)
+        else:  # pragma: no cover
+            pass
 
-        if 0 != ret_val:
+        if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
 
     def teardown(self, blink):
@@ -158,8 +163,8 @@ class AutoTestManager(object):
 
         try:
             self.on_serial.stop()
-        except AttributeError:  # access attribute on NoneType
-            ret_val += 1
+        except AttributeError:  # pragma: no cover
+            ret_val += 1   # access NoneType attribute
         finally:
             self.on_serial = None
 
@@ -175,6 +180,8 @@ class AutoTestManager(object):
         if self.a8_connection is not None:
             self.a8_connection.stop()
             LOGGER.debug("a8_connection_stopped")
+        else:  # pragma: no cover
+            pass
 
         return self._check(ret_val, 'teardown', ret_val)
 
@@ -238,8 +245,14 @@ class AutoTestManager(object):
                 ret_val += self.test_light()
                 if flash:
                     ret_val += self.test_flash()
+                else:  # pragma: no cover
+                    pass
+            else:  # pragma: no cover
+                pass
             if gps:
                 ret_val += self.test_gps()
+            else:  # pragma: no cover
+                pass
 
             # set_leds
             _ = self.on_serial.send_command(['leds_off', '7'])
@@ -305,6 +318,8 @@ class AutoTestManager(object):
 
         if 0 != ret_val:  # fatal Error
             raise FatalError("get_time failed. Can't communicate with M3 node")
+        else:  # pragma: no cover
+            pass
 
     def get_uid(self):
         """ runs the 'get_uid' command
@@ -320,6 +335,8 @@ class AutoTestManager(object):
             uid_split = [''.join(x) for x in zip(*[iter(uid_str)]*4)]
             uid = ':'.join(uid_split)
             self.ret_dict['open_node_m3_uid'] = uid
+        else:  # pragma: no cover
+            pass
 
         ret_val = self._check(TST_OK(test_ok), 'get_uid', values)
         return ret_val
@@ -647,7 +664,7 @@ class AutoTestManager(object):
             index = bisect.bisect(timestamps, led_time)
             try:
                 values.append(measures[index][1])
-            except IndexError:
+            except IndexError:  # pragma: no cover
                 values.append(float('NaN'))
 
         # check that consumption is higher with each led than with no leds on
