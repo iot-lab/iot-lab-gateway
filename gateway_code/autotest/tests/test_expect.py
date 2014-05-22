@@ -6,6 +6,7 @@ import Queue
 import time
 
 from gateway_code.autotest import expect
+import serial
 
 
 class TestSerialExpect(unittest.TestCase):
@@ -84,15 +85,22 @@ class TestSerialExpect(unittest.TestCase):
         self.expect.expect_list(['a', 'b', 'c'])
         expect_mock.assert_called_with('(a)|(b)|(c)', float('+inf'))
 
-    def test_verb(self):
+    def test_read_a_closed_serial(self):
+        self.serial.read = mock.Mock(side_effect=serial.SerialException(
+            "FD already closed"))
+        ret = self.expect.expect('a.*d')
+        self.assertEquals('', ret)
+
+
+    def test_verbose_mode(self):
         logger = mock.Mock()
+        logger.debug = mock.Mock(side_effet=ValueError(""))
         self.expect = expect.SerialExpect('TTY', 1234, logger=logger)
 
-        self.read_ret = ['abcd']
+        self.read_ret = ['123\n456', '789\n', 'abcd']
         ret = self.expect.expect('a.*d')
+        self.assertEquals(ret, 'abcd')
 
-        logger.debug.assertCalledWith('abcd')
-
-
-
-
+        logger.debug.assert_any_call('123')
+        logger.debug.assert_any_call('456789')
+        logger.debug.assert_called_with('abcd')

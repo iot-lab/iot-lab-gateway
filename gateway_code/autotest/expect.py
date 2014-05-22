@@ -22,10 +22,7 @@ class SerialExpect(object):
         self.logger = logger
 
     def __del__(self):
-        try:
-            self.serial_fd.close()
-        except AttributeError:
-            pass
+        self.serial_fd.close()
 
     def send(self, data):
         """ Write given data to serial with newline"""
