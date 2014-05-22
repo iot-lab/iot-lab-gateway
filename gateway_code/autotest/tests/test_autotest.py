@@ -79,3 +79,9 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['setup', 'teardown'], ret_dict['error'])
 
+
+class TestAutotestFatalError(unittest.TestCase):
+    def test_fatal_error(self):
+        error = autotest.FatalError("error_value")
+        self.assertEquals("'error_value'", str(error))
+
