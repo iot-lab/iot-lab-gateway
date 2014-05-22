@@ -55,6 +55,7 @@ class GatewayRest(object):
 
         :param expid: experiment id
         :param username: username of the experiment owner
+        Query string: 'timeout' int
         """
         expid = int(expid)
         LOGGER.info('Start experiment: %s-%i', username, expid)
@@ -62,6 +63,11 @@ class GatewayRest(object):
         firmware_path = None
         firmware_file = None
         profile = None
+
+        try:
+            timeout = max(0, int(request.query.timeout))
+        except ValueError:
+            timeout = 0
 
         # verify passed files as request
         try:
@@ -87,7 +93,7 @@ class GatewayRest(object):
             pass  # no files in multipart request
 
         ret = self.gateway_manager.exp_start(
-            expid, username, firmware_path, profile)
+            expid, username, firmware_path, profile, timeout)
 
         # cleanup of temp file
         if firmware_file is not None:

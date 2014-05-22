@@ -86,12 +86,32 @@ class TestRestMethods(unittest.TestCase):
 
         # nothing in files
         self.request.files = {}
+        self.request.query = mock.Mock(timeout='')
         ret_dict = s_r.exp_start('123', 'username')
 
         # validate
-        g_m.exp_start.assert_called_with(123, 'username', None, None)
+        g_m.exp_start.assert_called_with(123, 'username', None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
 
+
+    def test_exp_start_valid_duration(self):
+        g_m = mock.Mock()
+        s_r = server_rest.GatewayRest(g_m)
+        g_m.exp_start.return_value = 0
+        self.request.files = {}
+
+        self.request.query = mock.Mock(timeout='12')
+        ret_dict = s_r.exp_start('123', 'username')
+        g_m.exp_start.assert_called_with(123, 'username', None, None, 12)
+
+        # invalid data
+        self.request.query = mock.Mock(timeout='ten_minutes')
+        ret_dict = s_r.exp_start('123', 'username')
+        g_m.exp_start.assert_called_with(123, 'username', None, None, 0)
+
+        self.request.query = mock.Mock(timeout='-1')
+        ret_dict = s_r.exp_start('123', 'username')
+        g_m.exp_start.assert_called_with(123, 'username', None, None, 0)
 
     def test_exp_start_multipart_without_files(self):
         g_m = mock.Mock()
@@ -100,10 +120,11 @@ class TestRestMethods(unittest.TestCase):
 
         self.request.files = mock.Mock()
         self.request.files.__contains__ = mock.Mock(side_effect=ValueError())
+        self.request.query = mock.Mock(timeout='')
         ret_dict = s_r.exp_start('123', 'username')
 
         # validate
-        g_m.exp_start.assert_called_with(123, 'username', None, None)
+        g_m.exp_start.assert_called_with(123, 'username', None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
 
 

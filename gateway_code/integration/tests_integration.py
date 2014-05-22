@@ -100,6 +100,7 @@ class GatewayCodeMock(unittest.TestCase):
 
         self.request_patcher = patch('gateway_code.server_rest.request')
         self.request = self.request_patcher.start()
+        self.request.query = mock.Mock(timeout='0')  # no timeout by default
 
         self._rewind_files()
 
@@ -152,6 +153,9 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         self.cn_measures = []
 
+        # no timeout
+        self.request.query = mock.Mock(timeout='')
+
         measure_path = gateway_code.config.MEASURES_PATH
         self.radio_path = measure_path.format(type='radio', **self.exp_conf)
         self.conso_path = measure_path.format(
@@ -167,7 +171,10 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         super(TestComplexExperimentRunning, self).tearDown()
         # remove exp folder
         # ...../exp_id/consumption/node_name.oml
-        shutil.rmtree(os.path.dirname(os.path.dirname(self.conso_path)))
+        try:
+            shutil.rmtree(os.path.dirname(os.path.dirname(self.conso_path)))
+        except OSError:
+            pass
 
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
@@ -203,8 +210,8 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         """ Run an experiment for A8 nodes """
 
         # Run an experiment that does nothing but wait
-        ret = self.app.exp_start(
-            self.exp_conf['exp_id'], self.exp_conf['user'])
+        # should keep the same user as it's the only one setup
+        ret = self.app.exp_start(123, self.exp_conf['user'])
         self.assertEquals(ret, {'ret': 0})
 
         # waiting One minute to try to have complete boot log on debug output
@@ -307,6 +314,74 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         except IOError:
             self.fail('File should exist %r' % self.radio_path)
 
+
+    def tests_experiment_timeout(self):
+        """ Test two experiments with a timeout """
+        self._rewind_files()
+        self.request.files = {}
+
+        # Create measures folder
+        for exp_id in ['1234', '2345']:
+            _exp_conf = dict(self.exp_conf)
+            _exp_conf['exp_id'] = exp_id
+            measure_path = gateway_code.config.MEASURES_PATH
+            radio_path = measure_path.format(type='radio', **_exp_conf)
+            conso_path = measure_path.format(type='consumption', **_exp_conf)
+            for measure_file in (conso_path, radio_path):
+                try:
+                    os.makedirs(os.path.dirname(measure_file))
+                except os.error:
+                    pass
+
+
+        # Stop after timeout
+        self.request.query = mock.Mock(timeout='5')
+        ret = self.app.exp_start('1234', self.exp_conf['user'])
+        self.assertEquals(ret, {'ret': 0})
+        time.sleep(10)   # Ensure that timeout occured
+        self.app.gateway_manager.rlock.acquire()  # wait calls ended
+        self.app.gateway_manager.rlock.release()
+        # experiment should be stopped
+        self.assertFalse(self.app.gateway_manager.experiment_is_running)
+
+
+        # Stop remove timeout
+        self.request.query = mock.Mock(timeout='5')
+        ret = self.app.exp_start('1234', self.exp_conf['user'])
+        self.assertEquals(ret, {'ret': 0})
+        self.request.query = mock.Mock(timeout='0')
+        ret = self.app.exp_start('2345', self.exp_conf['user'])
+        self.assertEquals(ret, {'ret': 0})
+        time.sleep(10)   # Ensure that timeout could have occured
+        self.app.gateway_manager.rlock.acquire()  # wait calls ended
+        self.app.gateway_manager.rlock.release()
+        # experiment should be stopped
+        self.assertTrue(self.app.gateway_manager.experiment_is_running)
+        ret = self.app.exp_stop()
+
+
+        # Simulate strange case where timeout is called when another experiment
+        # is already running
+        self.request.query = mock.Mock(timeout='5')
+        ret = self.app.exp_start('1234', self.exp_conf['user'])
+        self.assertEquals(ret, {'ret': 0})
+
+        self.app.gateway_manager.exp_id = '2345'  # 'change' experiment
+        time.sleep(10)   # Ensure that timeout could have occured
+        self.app.gateway_manager.rlock.acquire()  # wait calls ended
+        self.app.gateway_manager.rlock.release()
+        self.assertTrue(self.app.gateway_manager.experiment_is_running)
+
+        self.app.gateway_manager.exp_id = '1234'  # recover experiment
+        ret = self.app.exp_stop()
+
+
+        # Cleanup measures folder
+        for exp_id in ['1234', '1235']:
+            try:
+                shutil.rmtree(os.path.dirname(os.path.dirname(conso_path)))
+            except OSError:
+                pass
 
 
 class TestAutoTests(GatewayCodeMock):

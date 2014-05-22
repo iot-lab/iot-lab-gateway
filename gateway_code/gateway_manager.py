@@ -4,7 +4,7 @@
 
 """ Gateway manager """
 
-from threading import Thread, RLock
+from threading import Thread, RLock, Timer
 import os
 import time
 
@@ -46,6 +46,7 @@ class GatewayManager(object):
         self.open_node_state = "stop"
 
         self.rlock = RLock()
+        self.timeout_timer = None
 
         gateway_code.gateway_logging.init_logger(log_folder)  # logger config
 
@@ -66,9 +67,10 @@ class GatewayManager(object):
             raise StandardError("Control node flash failed: {ret:%d, '%s')",
                                 ret, config.FIRMWARES['control_node'])
 
+    # R0913 too many arguments 6/5
     @common.syncronous('rlock')
-    def exp_start(self, exp_id, user,
-                  firmware_path=None, profile=None):
+    def exp_start(self, exp_id, user,  # pylint: disable=R0913
+                  firmware_path=None, profile=None, timeout=0):
         """
         Start an experiment
 
@@ -160,7 +162,23 @@ class GatewayManager(object):
             LOGGER.info("I'm a roomba")
             LOGGER.info("Running Start Roomba")
 
+        if timeout != 0:
+            LOGGER.debug("Setting timeout to: %d", timeout)
+            self.timeout_timer = Timer(timeout, self._timeout_exp_stop,
+                                       args=(exp_id, user))
+            self.timeout_timer.start()
         return ret_val
+
+    @common.syncronous('rlock')
+    def _timeout_exp_stop(self, exp_id, user):
+        """ Run exp_stop after timeout.
+
+        Should stop only if experiment is the same as the experiment
+        that started the timer """
+        LOGGER.debug("Timeout experiment: %r %r", user, exp_id)
+        if self.exp_id == exp_id and self.user == user:
+            LOGGER.debug("Still running. Stop exp")
+            self.exp_stop()
 
     @common.syncronous('rlock')
     def exp_stop(self):
@@ -187,6 +205,8 @@ class GatewayManager(object):
             LOGGER.warning("No experiment running. Don't stop")
             return 0
         ret_val = 0
+        if self.timeout_timer is not None:
+            self.timeout_timer.cancel()
 
         # # # # # # # # # # # # # # # #
         # Cleanup Control node config #
