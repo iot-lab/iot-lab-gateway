@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <math.h>
 
+#include "time_ref.h"
 #include "common.h"
 #include "constants.h"
 #include "oml_measures.h"
@@ -16,7 +17,7 @@
 
 
 struct power_vals {
-        uint32_t time_us; // TODO RENAME
+        uint32_t time_us;
         float val[3];
 };
 
@@ -28,7 +29,6 @@ struct radio_measure_vals {
 
 static struct _measure_handler_state {
         int print_measures;
-        struct timeval time_ref;
         struct {
                 int is_valid;
                 int p;
@@ -42,14 +42,10 @@ static struct _measure_handler_state {
 
 
 static void calculate_time_extended(struct timeval *total_time,
-                const struct timeval *time_ref,
                 uint32_t pkt_timeref_s, uint32_t time_us)
 {
-        total_time->tv_sec  = time_ref->tv_sec;
-        total_time->tv_usec = time_ref->tv_usec;
-
-        total_time->tv_sec  += pkt_timeref_s;
-        total_time->tv_usec += time_us;
+        total_time->tv_sec  = pkt_timeref_s;
+        total_time->tv_usec = time_us;
 
         // correct if tv_usec is > 1second
         total_time->tv_sec += (total_time->tv_usec / 1000000);
@@ -59,7 +55,6 @@ static void calculate_time_extended(struct timeval *total_time,
 
 void measures_handler_start(int print_measures, char *oml_config_file_path)
 {
-        timerclear(&mh_state.time_ref);
         mh_state.power.is_valid = 0;
         mh_state.print_measures = print_measures;
         mh_state.has_oml = (NULL != oml_config_file_path);
@@ -114,8 +109,8 @@ static void handle_pw_pkt(unsigned char *data, size_t len)
 
                 memcpy(&pw_vals, current_data_ptr, values_len);
                 current_data_ptr += values_len;
-                calculate_time_extended(&timestamp, &mh_state.time_ref,
-                                pkt_timeref_s, pw_vals.time_us);
+                calculate_time_extended(&timestamp, pkt_timeref_s,
+                        pw_vals.time_us);
 
 
                 if (mh_state.power.p)
@@ -168,8 +163,8 @@ static void handle_radio_measure_pkt(unsigned char *data, size_t len)
                 memcpy(&radio_vals, current_data_ptr, values_len);
                 current_data_ptr += values_len;
 
-                calculate_time_extended(&timestamp, &mh_state.time_ref,
-                                pkt_timeref_s, radio_vals.time_us);
+                calculate_time_extended(&timestamp, pkt_timeref_s,
+                        radio_vals.time_us);
 
                 if (mh_state.has_oml) {
                         oml_measures_radio(
@@ -190,12 +185,16 @@ static void handle_ack_pkt(unsigned char *data, size_t len)
         (void)len;
         uint8_t ack_type = data[1];
         uint8_t config   = data[2];
+        struct timeval time_ack, time_diff;
 
 
         switch (ack_type) {
-                case RESET_TIME:
-                        PRINT_MSG("config_ack reset_time\n");
-                        gettimeofday(&mh_state.time_ref, NULL); // update time reference
+                case SET_TIME:
+                        gettimeofday(&time_ack, NULL);
+                        timeval_substract(&time_diff, &time_ack, &set_time_ref);
+                        PRINT_MSG("config_ack set_time %lu.%06lu\n",
+                                time_diff.tv_sec, time_diff.tv_usec);
+                        timerclear(&set_time_ref);
                         break;
                 case CONFIG_CONSUMPTION:
                         PRINT_MSG("config_ack config_consumption_measure\n");

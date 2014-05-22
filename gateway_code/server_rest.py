@@ -116,12 +116,12 @@ class GatewayRest(object):
             LOGGER.error('Stop experiment errors: ret: %d', ret)
         return {'ret': ret}
 
-    def reset_time(self):
+    def set_time(self):
         """
         Reset Control node time and update time reference
         """
         LOGGER.info('Reset Time')
-        ret = self.gateway_manager.reset_time()
+        ret = self.gateway_manager.set_time()
         return {'ret': ret}
 
     def _flash(self, node):

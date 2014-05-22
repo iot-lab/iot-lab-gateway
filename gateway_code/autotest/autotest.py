@@ -70,7 +70,7 @@ class AutoTestManager(object):
                                  _args=['-d'])
         time.sleep(1)
 
-        ret_val += self.g_m.reset_time()
+        ret_val += self.g_m.set_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
@@ -651,6 +651,9 @@ class AutoTestManager(object):
             _ = self.on_serial.send_command(['leds_off', '7'])
         ret_val += self.g_m.protocol.config_consumption(None)
         time.sleep(0.5)  # flush last values
+
+        for measure in self.cn_measures:
+            LOGGER.debug(measure)
 
         # measures_debug: consumption_measure
         #     1378387028.906210  0.257343 3.216250 0.080003

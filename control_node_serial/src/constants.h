@@ -12,7 +12,7 @@ enum frame_type {
         OPEN_NODE_STOP       = 0x10,
         OPEN_NODE_START      = 0x11,
 
-        RESET_TIME           = 0x20,
+        SET_TIME             = 0x20,
 
         /* LED management */
         GREEN_LED_ON         = 0x35,

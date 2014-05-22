@@ -93,16 +93,16 @@ class TestProtocol(unittest.TestCase):
         self.sender.assert_called_with(['stop', 'battery'])
         self.assertEquals(1, ret)
 
-    def test_reset_time(self):
+    def test_set_time(self):
 
-        self.sender.return_value = ['reset_time', 'ACK']
-        ret = self.protocol.reset_time()
-        self.sender.assert_called_with(['reset_time'])
+        self.sender.return_value = ['set_time', 'ACK']
+        ret = self.protocol.set_time()
+        self.sender.assert_called_with(['set_time'])
         self.assertEquals(0, ret)
 
-        self.sender.return_value = ['reset_time', 'NACK']
-        ret = self.protocol.reset_time()
-        self.sender.assert_called_with(['reset_time'])
+        self.sender.return_value = ['set_time', 'NACK']
+        ret = self.protocol.set_time()
+        self.sender.assert_called_with(['set_time'])
         self.assertEquals(1, ret)
 
     def test_led_control(self):

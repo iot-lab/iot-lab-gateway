@@ -1,3 +1,6 @@
+
+set_time
+set_time
 config_consumption_measure stop
 start dc
 

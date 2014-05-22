@@ -4,6 +4,6 @@ dist/
 .coverage
 *.xml
 cover
-*.log
+*.log*
 *.out
 *.egg

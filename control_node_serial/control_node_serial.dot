@@ -19,7 +19,7 @@ digraph g {
 
 
     "measures_handler" [
-        label = "<f0> measures_handler | <f1> config_ack_pkt:\nreset_time \nconfig_pw \nconfig_radio | <f2> power_pkt \| radio_pkt"
+        label = "<f0> measures_handler | <f1> config_ack_pkt:\nset_time \nconfig_pw \nconfig_radio | <f2> power_pkt \| radio_pkt"
     ];
 
 

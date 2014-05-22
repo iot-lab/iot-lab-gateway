@@ -61,6 +61,8 @@ if [[ 1 -eq $verbose ]]; then
     set -x
 fi
 
+date
+
 # update gateway_code_python to host with www-data:www-data as owner
 rsync -e "ssh ${SSH_OPT}" -av --delete   ${SRC_DIR}   ${GATEWAY_HOSTNAME}:${DEST}
 ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "chown -R www-data:www-data ${DEST}"

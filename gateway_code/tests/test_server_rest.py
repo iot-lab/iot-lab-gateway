@@ -141,12 +141,12 @@ class TestRestMethods(unittest.TestCase):
         self.assertEquals(1, ret_dict['ret'])
 
 
-    def test_reset_time(self):
+    def test_set_time(self):
         g_m = mock.Mock()
         s_r = server_rest.GatewayRest(g_m)
 
-        g_m.reset_time.return_value = 0
-        ret_dict = s_r.reset_time()
+        g_m.set_time.return_value = 0
+        ret_dict = s_r.set_time()
         self.assertEquals(0, ret_dict['ret'])
 
 

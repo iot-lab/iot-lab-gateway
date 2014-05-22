@@ -33,14 +33,14 @@ class Protocol(object):
         cmd = [command, alim]
         return self.send_cmd(cmd)
 
-    def reset_time(self):
+    def set_time(self):
         """
         Reset time on control node
 
         Also updates our time reference in the C code
         """
-        # reset_time
-        cmd = ['reset_time']
+        # set_time
+        cmd = ['set_time']
         return self.send_cmd(cmd)
 
     def green_led_blink(self):
@@ -50,7 +50,6 @@ class Protocol(object):
 
     def green_led_on(self):
         """ Set green led on """
-        # reset_time
         cmd = ['green_led_on']
         return self.send_cmd(cmd)
 

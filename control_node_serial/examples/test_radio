@@ -1,6 +1,6 @@
 
 
-reset_time
+set_time
 
 config_radio_measure 11,25 1 2
 

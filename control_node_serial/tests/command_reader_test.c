@@ -12,6 +12,7 @@ void mock_exit(int status);
 
 
 #include "command_reader.c"
+struct timeval set_time_ref;
 
 
 /* Mock EXTERNAL dependency functions
@@ -27,14 +28,22 @@ void mock_exit(int status);
 TEST(test_parse_cmd, simple_commands)
 {
         int ret;
+        uint32_t time_s;
         struct command_buffer cmd_buff;
         char cmd[256];
+        struct timeval time_now;
+        gettimeofday(&time_now, NULL);
 
-        strcpy(cmd, "reset_time");
+        strcpy(cmd, "set_time");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
-        ASSERT_EQ(1, cmd_buff.u.s.len);
-        ASSERT_EQ(RESET_TIME, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(9, cmd_buff.u.s.len);
+        ASSERT_EQ(SET_TIME, cmd_buff.u.s.payload[0]);
+
+        // check time stored in the packet is correct
+        memcpy(&time_s, &cmd_buff.u.s.payload[1], sizeof(uint32_t));
+        ASSERT_TRUE(time_s <= time_now.tv_sec);
+        ASSERT_TRUE(time_s + 2 >= time_now.tv_sec);
 
         strcpy(cmd, "start dc");
         ret = parse_cmd(cmd, &cmd_buff);
@@ -309,11 +318,11 @@ TEST(test_write_answer, valid_answers)
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("error 42\n", print_buff);
 
-        data[0] = RESET_TIME;
+        data[0] = SET_TIME;
         data[1] = ACK;
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
-        ASSERT_STREQ("reset_time ACK\n", print_buff);
+        ASSERT_STREQ("set_time ACK\n", print_buff);
 
         data[0] = CONFIG_CONSUMPTION;
         data[1] = NACK;

@@ -224,6 +224,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         """ Run an experiment """
 
         msg = 'HELLO WORLD\n'
+        t_before_start = time.time()
 
         #
         # Run an experiment
@@ -244,8 +245,8 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.assertEquals(ret, {'ret': 0})
         time.sleep(1)
 
-        # test reset_time
-        self.app.reset_time()
+        # test set_time during experiment
+        self.app.set_time()
 
         # echo firmware, should reply what was sent
         # do it multiple times to be sure
@@ -298,7 +299,9 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             self.assertNotEquals(0.0, meas[3])
 
         # check timestamps are sorted in correct order
-        timestamps = [args[0] for args in measures]
+        timestamps = ([t_before_start] + [args[0] for args in measures] +
+                      [time.time()])
+
         self.assertTrue(
             all([a < b for a, b in zip(timestamps, timestamps[1:])]))
 

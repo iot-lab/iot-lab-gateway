@@ -2,7 +2,7 @@ start dc
 start battery
 stop dc
 stop battery
-reset_time
+set_time
 
 start dc
 

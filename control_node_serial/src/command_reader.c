@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include "common.h"
 
+#include "time_ref.h"
 #include "command_reader.h"
 #include "constants.h"
 #include "utils.h"
@@ -100,7 +101,7 @@ struct dict_entry commands_d[] = {
 
         {"start",      OPEN_NODE_START},
         {"stop",       OPEN_NODE_STOP},
-        {"reset_time", RESET_TIME},
+        {"set_time",   SET_TIME},
 
         {"green_led_on",    GREEN_LED_ON},
         {"green_led_blink", GREEN_LED_BLINK},
@@ -186,8 +187,10 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         /*
          * add command arguments
          */
-        if (strcmp(command, "reset_time") == 0) {
-                ;
+        if (strcmp(command, "set_time") == 0) {
+                gettimeofday(&set_time_ref, NULL);
+                append_data(cmd_buff, &set_time_ref.tv_sec,  sizeof(uint32_t));
+                append_data(cmd_buff, &set_time_ref.tv_usec, sizeof(uint32_t));
 
         } else if ((strcmp(command, "start") == 0) || \
                    (strcmp(command, "stop") == 0)) {

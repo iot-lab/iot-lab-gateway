@@ -101,7 +101,7 @@ class TestControlNodeSerial(unittest.TestCase):
     @mock.patch('gateway_code.control_node_interface.LOGGER.error')
     def test_answer_and_answer_with_queue_full(self, mock_logger):
         # get two answers without sending command
-        self.readline_ret_vals.put('reset ACK\n')
+        self.readline_ret_vals.put('set ACK\n')
         self.readline_ret_vals.put('start ACK\n')
 
         self.cn.start()
@@ -162,10 +162,13 @@ class TestHandleAnswer(unittest.TestCase):
     def setUp(self):
         self.cn = ControlNodeSerial()
 
+    @mock.patch('gateway_code.control_node_interface.LOGGER.info')
     @mock.patch('gateway_code.control_node_interface.LOGGER.debug')
-    def test_config_ack(self, mock_logger):
-        self.cn._handle_answer('config_ack reset_time')
-        mock_logger.assert_called_with('config_ack %s', 'reset_time')
+    def test_config_ack(self, mock_logger, mock_logger_info):
+        self.cn._handle_answer('config_ack set_time 0.123456')
+        mock_logger.assert_called_with('config_ack %s', 'set_time')
+        mock_logger_info.assert_called_with(
+            'Control Node set time delay: %d us', 123456)
 
     @mock.patch('gateway_code.control_node_interface.LOGGER.error')
     def test_error(self, mock_logger):

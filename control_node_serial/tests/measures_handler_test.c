@@ -4,6 +4,7 @@
 #include "mock_fprintf.h"  // include before other includes
 
 #include "measures_handler.c"
+#include "time_ref.c"
 
 #define OML_CONFIG_PATH "utils/oml_measures_config.xml"
 
@@ -301,19 +302,17 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
 
 
 // handle_ack_pkt
-TEST(handle_ack_pkt, reset_time)
+TEST(handle_ack_pkt, set_time)
 {
         unsigned char data[8];
-        data[1] = RESET_TIME;
+        data[1] = SET_TIME;
         data[2] = 0; // unused
+        gettimeofday(&set_time_ref, NULL);
+        handle_ack_pkt(data, 3);  // nothing done maybe remove me?
 
-        ASSERT_EQ(mh_state.time_ref.tv_sec, 0);
-        ASSERT_EQ(mh_state.time_ref.tv_usec, 0);
+        ASSERT_EQ(0, set_time_ref.tv_sec);
+        ASSERT_EQ(0, set_time_ref.tv_usec);
 
-        handle_ack_pkt(data, 3);
-
-        ASSERT_NE(mh_state.time_ref.tv_sec, 0);
-        ASSERT_NE(mh_state.time_ref.tv_usec, 0);
 }
 
 TEST(handle_ack_pkt, power_poll_ack)
@@ -372,28 +371,21 @@ TEST(handle_ack_pkt, invalid_msgs)
 
 TEST(calculate_time, overflow_on_usec_sum)
 {
-        struct timeval time_final, time_ref;
+        struct timeval time_final;
         unsigned int cn_time;
 
-        // sum of control node u_seconds and time_ref u_seconds
-        // is bigger than 1 second, so it should be seen in 'seconds'
-        time_ref.tv_sec = 0;
-        time_ref.tv_usec = 999999;
-        calculate_time_extended(&time_final, &time_ref, 0, 1);
-        ASSERT_EQ(1, time_final.tv_sec);
+        calculate_time_extended(&time_final, 1, 1500000);
+        ASSERT_EQ(2, time_final.tv_sec);
+        ASSERT_EQ(500000, time_final.tv_usec);
 }
 
 
 // init_measures_handler
 TEST(init_measures_handler, test)
 {
-        mh_state.time_ref.tv_sec = 0xDEAD;
-        mh_state.time_ref.tv_usec = 0xBEEF;
         mh_state.power.is_valid = 42;
         start_called = 0;
         measures_handler_start(0, OML_CONFIG_PATH);
-        ASSERT_EQ(0, mh_state.time_ref.tv_sec);
-        ASSERT_EQ(0, mh_state.time_ref.tv_usec);
         ASSERT_EQ(0, mh_state.power.is_valid);
         measures_handler_stop();
         ASSERT_EQ(1, start_called);

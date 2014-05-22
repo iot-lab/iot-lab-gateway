@@ -135,7 +135,7 @@ class GatewayManager(object):
         ret_val += ret
         ret = self.open_power_start(power='dc')
         ret_val += ret
-        ret = self.reset_time()
+        ret = self.set_time()
         ret_val += ret
         ret = self.exp_update_profile()
         ret_val += ret
@@ -326,14 +326,14 @@ class GatewayManager(object):
         return ret
 
     @common.syncronous('rlock')
-    def reset_time(self):
+    def set_time(self):
         """
         Reset control node time and update absolute time reference
 
         Updating time reference is propagated to measures handler
         """
         LOGGER.debug('Reset control node time')
-        ret = self.protocol.reset_time()
+        ret = self.protocol.set_time()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Reset time failed')
         return ret

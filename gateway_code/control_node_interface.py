@@ -172,8 +172,11 @@ class ControlNodeSerial(object):
           * For command answers, send it to command sender
         """
         answer = line.split(' ')
-        if answer[0] == 'config_ack':  # ack reset_time/measures
+        if answer[0] == 'config_ack':  # ack set_time/measures
             LOGGER.debug('config_ack %s', answer[1])
+            if answer[1] == 'set_time':
+                LOGGER.info('Control Node set time delay: %d us',
+                            int(1000000 * float(answer[2])))
         elif answer[0] == 'error':  # control node error
             LOGGER.error('Control node error: %r', answer[1])
 
