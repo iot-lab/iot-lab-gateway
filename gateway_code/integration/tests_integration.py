@@ -449,6 +449,10 @@ class TestUncommonCasesGatewayManager(GatewayCodeMock):
         self.measures_path_patcher = patch('gateway_code.config.MEASURES_PATH',
                                            '/tmp/{type}/{node_id}.oml')
         self.measures_path_patcher.start()
+        self.user_log_path_patcher = patch('gateway_code.config.USER_LOG_PATH',
+                                           '/tmp/{node_id}.oml')
+        self.user_log_path_patcher.start()
+
         for measure_type in ('consumption', 'radio'):
             try:
                 os.mkdir('/tmp/%s/' % measure_type)
@@ -458,6 +462,7 @@ class TestUncommonCasesGatewayManager(GatewayCodeMock):
 
     def tearDown(self):
         self.measures_path_patcher.stop()
+        self.user_log_path_patcher.stop()
         # remove measures_dir
         for measure_type in ('consumption', 'radio'):
             shutil.rmtree('/tmp/%s/' % measure_type, ignore_errors=True)
@@ -523,6 +528,7 @@ class TestUncommonCasesGatewayManager(GatewayCodeMock):
 class TestInvalidCases(GatewayCodeMock):
     """ Invalid calls """
 
+    @patch('gateway_code.config.USER_LOG_PATH', '/tmp/{node_id}.oml')
     def tests_invalid_profile_at_start(self):
         """ Run experiments with invalid profiles """
 

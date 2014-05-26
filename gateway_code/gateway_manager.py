@@ -44,6 +44,7 @@ class GatewayManager(object):
         self.experiment_is_running = False
         self.profile = None
         self.open_node_state = "stop"
+        self.user_log_handler = None
 
         self.rlock = RLock()
         self.timeout_timer = None
@@ -101,11 +102,19 @@ class GatewayManager(object):
             raise NotImplementedError('Board type not managed')
 
         if self.experiment_is_running:
-            LOGGER.warning('Experiment running. Stop previous experiment')
+            LOGGER.debug('Experiment running. Stop previous experiment')
             self.exp_stop()
 
         self.exp_id = exp_id
         self.user = user
+        # add folder name for user_log when handled on the server
+        self.user_log_handler = gateway_code.gateway_logging.user_logger(
+            config.USER_LOG_PATH.format(user=user, exp_id=exp_id,
+                                        node_id=config.hostname()))
+        LOGGER.addHandler(self.user_log_handler)
+        # Rest server already printed log, but not for the user
+        LOGGER.info('Start experiment: %s-%i', user, exp_id)
+
         firmware_path = firmware_path or config.FIRMWARES['idle']
         try:
             _prof = profile or config.default_profile()
@@ -242,6 +251,8 @@ class GatewayManager(object):
         self.user = None
         self.exp_id = None
         self.experiment_is_running = False
+
+        LOGGER.removeHandler(self.user_log_handler)
 
         return ret_val
 
