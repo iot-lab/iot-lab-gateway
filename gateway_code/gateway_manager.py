@@ -122,34 +122,25 @@ class GatewayManager(object):
         # # # # # # # # # #
         # Prepare Gateway #
         # # # # # # # # # #
-        ret = self.node_soft_reset('gwt')
-        ret_val += ret
+        ret_val += self.node_soft_reset('gwt')
         time.sleep(1)  # wait CN started
-        ret = self.cn_serial.start(user=self.user, exp_id=self.exp_id)
-        ret_val += ret
+        ret_val += self.cn_serial.start(user=self.user, exp_id=self.exp_id)
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #
         # # # # # # # # # # # # #
-        ret = self.protocol.green_led_blink()
-        ret_val += ret
-        ret = self.open_power_start(power='dc')
-        ret_val += ret
-        ret = self.set_time()
-        ret_val += ret
-        ret = self.exp_update_profile()
-        ret_val += ret
+        ret_val += self.protocol.green_led_blink()
+        ret_val += self.open_power_start(power='dc')
+        ret_val += self.set_time()
+        ret_val += self.exp_update_profile()
 
         # # # # # # # # # # #
         # Prepare Open Node #
         # # # # # # # # # # #
         if config.board_type() == 'M3':
-            ret = self.node_flash('m3', firmware_path)
-            ret_val += ret
-            ret = self.serial_redirection.start()
-            ret_val += ret
-            # ret = self.gdb_server.start()
-            # ret_val += ret
+            ret_val += self.node_flash('m3', firmware_path)
+            ret_val += self.serial_redirection.start()
+            # ret_val += self.gdb_server.start()
         else:  # pragma: no cover
             pass
         if config.board_type() == 'A8':
@@ -217,12 +208,9 @@ class GatewayManager(object):
         # # # # # # # # # # # # # # # #
 
         self.profile = Profile(config.default_profile(), config.board_type())
-        ret = self.exp_update_profile()
-        ret_val += ret
-        ret = self.open_power_start(power='dc')
-        ret_val += ret
-        ret = self.protocol.green_led_on()
-        ret_val += ret
+        ret_val += self.exp_update_profile()
+        ret_val += self.open_power_start(power='dc')
+        ret_val += self.protocol.green_led_on()
 
         if config.robot_type() == 'roomba':  # pragma: no cover
             LOGGER.info("I'm a roomba")
@@ -232,22 +220,18 @@ class GatewayManager(object):
         # Cleanup open node #
         # # # # # # # # # # #
         if config.board_type() == 'M3':
-            # ret = self.gdb_server.stop()
-            # ret_val += ret
-            ret = self.serial_redirection.stop()
-            ret_val += ret
-            ret = self.node_flash('m3', config.FIRMWARES['idle'])
-            ret_val += ret
+            # ret_val += self.gdb_server.stop()
+            ret_val += self.serial_redirection.stop()
+            ret_val += self.node_flash('m3', config.FIRMWARES['idle'])
         elif config.board_type() == 'A8':
             self._debug_a8_boot_stop_thread()
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
-        ret = self.open_power_stop(power='dc')
-        ret_val += ret
+        ret_val += self.open_power_stop(power='dc')
 
         if config.board_type() == 'A8':
-            ret = self._debug_stop_a8_tty(config.OPEN_A8_CFG['tty'], timeout=5)
-            ret_val += ret
+            ret_val += self._debug_stop_a8_tty(config.OPEN_A8_CFG['tty'],
+                                               timeout=5)
 
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
