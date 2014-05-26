@@ -10,6 +10,10 @@ Common static configuration for the application and `OpenOCD`
 :NODES_CFG: Per node OpenOCD and serial configuration
 """
 
+import stat
+STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
+             stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+
 STATIC_FILES_PATH = '/var/lib/gateway_code/'
 GATEWAY_CONFIG_PATH = '/var/local/config/'
 

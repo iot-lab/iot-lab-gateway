@@ -11,7 +11,6 @@ import Queue
 import threading
 import os
 from os.path import dirname
-import stat
 
 from tempfile import NamedTemporaryFile
 
@@ -38,9 +37,6 @@ _OML_XML = '''
   </collect>
 </omlc>
 '''
-
-STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
-             stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
 
 
 class ControlNodeSerial(object):
@@ -128,7 +124,7 @@ class ControlNodeSerial(object):
         # create empty measures files with 666 permissions (truncate if exists)
         for measure_file_path in oml_files.itervalues():
             open(measure_file_path, "w").close()
-            os.chmod(measure_file_path, STAT_0666)
+            os.chmod(measure_file_path, config.STAT_0666)
 
         # create a temporary config file with OML_XML config
         oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
