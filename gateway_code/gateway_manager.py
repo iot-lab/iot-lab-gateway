@@ -107,7 +107,6 @@ class GatewayManager(object):
 
         self.exp_id = exp_id
         self.user = user
-        # add folder name for user_log when handled on the server
         self.user_log_handler = gateway_code.gateway_logging.user_logger(
             config.USER_LOG_PATH.format(user=user, exp_id=exp_id,
                                         node_id=config.hostname()))

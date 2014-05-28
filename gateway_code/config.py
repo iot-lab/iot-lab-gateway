@@ -51,8 +51,7 @@ _BOARD_CONFIG = {}
 
 EXP_FILES_DIR = '/iotlab/users/{user}/.iot-lab/{exp_id}/'
 MEASURES_PATH = EXP_FILES_DIR + '{type}/{node_id}.oml'
-# add {type} later when log folder will be created on the server
-USER_LOG_PATH = EXP_FILES_DIR + '{node_id}.log'
+USER_LOG_PATH = EXP_FILES_DIR + 'log/{node_id}.log'
 
 
 def hostname():

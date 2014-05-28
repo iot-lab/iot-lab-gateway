@@ -160,7 +160,9 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.radio_path = measure_path.format(type='radio', **self.exp_conf)
         self.conso_path = measure_path.format(
             type='consumption', **self.exp_conf)
-        for measure_file in (self.conso_path, self.radio_path):
+        self.log_path = gateway_code.config.USER_LOG_PATH.format(
+            **self.exp_conf)
+        for measure_file in (self.conso_path, self.radio_path, self.log_path):
             try:
                 folder_path = os.path.dirname(measure_file)
                 os.makedirs(folder_path)
@@ -330,7 +332,8 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             measure_path = gateway_code.config.MEASURES_PATH
             radio_path = measure_path.format(type='radio', **_exp_conf)
             conso_path = measure_path.format(type='consumption', **_exp_conf)
-            for measure_file in (conso_path, radio_path):
+            log_path = gateway_code.config.USER_LOG_PATH.format(**_exp_conf)
+            for measure_file in (conso_path, radio_path, log_path):
                 try:
                     os.makedirs(os.path.dirname(measure_file))
                 except os.error:
