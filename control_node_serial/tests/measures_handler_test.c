@@ -64,7 +64,7 @@ void oml_measures_radio(uint32_t timestamp_s, uint32_t timestamp_us,
 // handle_measure_pkt
 TEST(handle_measure_pkt, test_different_packets)
 {
-        unsigned char data[64];
+        unsigned char data[64] = {0};
         int ret;
         data[0] = ACK_FRAME;
         ret = handle_measure_pkt(data, 0);
@@ -304,7 +304,7 @@ TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
 // handle_ack_pkt
 TEST(handle_ack_pkt, set_time)
 {
-        unsigned char data[8];
+        unsigned char data[3] = {0};
         data[1] = SET_TIME;
         data[2] = 0; // unused
         gettimeofday(&set_time_ref, NULL);

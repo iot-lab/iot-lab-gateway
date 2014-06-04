@@ -159,7 +159,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         char *command = NULL;
         char *arg = NULL;
 
-        char *arguments;
+        char *arguments = NULL;
 
         uint8_t frame_type = 0;
         uint8_t val        = 0;
@@ -212,7 +212,7 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 char pw_src[8];
                 int p, v, c;
                 char period[8], average[8];
-                uint8_t state;
+                uint8_t state = 0;
 
                 int count = sscanf(arguments,
                         "%8s"

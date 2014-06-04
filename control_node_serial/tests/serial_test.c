@@ -81,7 +81,7 @@ TEST(configure_tty, all_error_cases)
 {
         int ret;
         // error on open
-        ret = configure_tty(NULL);
+        ret = configure_tty("invalid_file_path");
         ASSERT_EQ(-1, ret);
 
 

@@ -409,8 +409,8 @@ TEST(test_write_answer, invalid_answers)
 TEST(test_parse_cmd, invalid_commands)
 {
         int ret;
-        struct command_buffer cmd_buff;
-        char cmd[256];
+        struct command_buffer cmd_buff = {0};
+        char cmd[256] = {0};
 
         strcpy(cmd, "");
         ret = parse_cmd(cmd, &cmd_buff);
