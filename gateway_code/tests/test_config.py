@@ -15,6 +15,11 @@ STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
 from gateway_code import config
 
 
+class TestGetHostname(unittest.TestCase):
+    def test_get_hosname(self):
+        self.assertNotEquals('', config.hostname())
+
+
 class TestDefaultProfile(unittest.TestCase):
 
     def test_default_profile(self):
@@ -53,8 +58,6 @@ class TestsBoardAndRobotType(unittest.TestCase):
     def test_board_type_not_found(self):
         self.open_mock.side_effect = IOError()
         self.assertRaises(IOError, config.board_type)
-
-
 
     def test_robot_type(self):
 

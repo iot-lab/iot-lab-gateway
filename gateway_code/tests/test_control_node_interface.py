@@ -110,51 +110,23 @@ class TestControlNodeSerial(unittest.TestCase):
         mock_logger.assert_called_with('Control node answer queue full: %r',
                                        ['start', 'ACK'])
 
-#
-# OML specific tests
-#
-    @mock.patch('gateway_code.config.MEASURES_PATH', '/tmp/{type}/{node_id}')
-    def test_stop_and_oml_files_empty(self):
-
-        # setup
-        # create measures_dir
-        for measure_type in ('consumption', 'radio'):
-            shutil.rmtree('/tmp/%s/' % measure_type, ignore_errors=True)
-            try:
-                os.mkdir('/tmp/%s/' % measure_type)
-            except OSError:
-                pass
-
-        # append data to radio
-        self.cn.start(user='harter', exp_id=123)
-        oml_files = self.cn.oml['files']
-        with open(oml_files['radio'], 'a') as _file:
-            _file.write('lalala')
-        self.cn.stop()
-
-        # radio exists, consumption should have been removed
-        os.remove(oml_files['radio'])
-        self.assertRaises(OSError, os.remove, oml_files['consumption'])
-
-        # teardown
-        # remove measures_dir
-        for measure_type in ('consumption', 'radio'):
-            try:
-                os.rmdir('/tmp/%s/' % measure_type)
-            except OSError:
-                self.fail()
-
 # _config_oml coverage tests
 
-    def test_config_oml(self):
-        # No user or expid
-        ret = self.cn._config_oml(None, None)
+    def test_empty_config_oml(self):
+        # No experiment description
+        ret = self.cn._config_oml(None)
         self.assertEquals([], ret)
 
-    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
-    def test_oml_folder_no_measure_folder(self, mock_logger):
-        self.assertRaises(IOError, self.cn._config_oml, 'invalid_user_name', 1)
-        mock_logger.assert_called()
+    def test_config_oml(self):
+        exp_desc = {'user': 'harter',
+                    'exp_id': '1234',
+                    'exp_files': {'consumption': '/tmp/consumption',
+                                  'radio': '/tmp/radio'}
+                    }
+
+        self.cn.start(exp_desc=exp_desc)
+        self.assertIsNotNone(self.cn.oml_cfg_file)
+        self.cn.stop()
 
 
 class TestHandleAnswer(unittest.TestCase):
@@ -169,6 +141,9 @@ class TestHandleAnswer(unittest.TestCase):
         mock_logger.assert_called_with('config_ack %s', 'set_time')
         mock_logger_info.assert_called_with(
             'Control Node set time delay: %d us', 123456)
+
+        self.cn._handle_answer('config_ack anything')
+        mock_logger.assert_called_with('config_ack %s', 'anything')
 
     @mock.patch('gateway_code.control_node_interface.LOGGER.error')
     def test_error(self, mock_logger):

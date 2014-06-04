@@ -84,6 +84,7 @@ class GatewayCodeMock(unittest.TestCase):
             file=open(CURRENT_DIR + 'invalid_profile_2.json', 'rb'),
             name='profile', filename='invalid_profile_2.json')
 
+
     @classmethod
     def tearDownClass(cls):
         for file_obj in cls.files.itervalues():
@@ -139,49 +140,40 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
     def setUp(self):
         super(TestComplexExperimentRunning, self).setUp()
-        self.exp_conf = {
-            'user': 'harter',
-            'exp_id': 123,
-            'node_id': gateway_code.config.hostname()
-            }
-        self.request.files = {'firmware': self.files['control_node']}
-        ret = self.app.admin_control_flash()
-        self.assertEquals(ret, {'ret': 0})
-
-        ret = self.app.admin_control_soft_reset()
-        self.assertEquals(ret, {'ret': 0})
-
         self.cn_measures = []
 
         # no timeout
         self.request.query = mock.Mock(timeout='')
 
-        measure_path = gateway_code.config.MEASURES_PATH
-        self.radio_path = measure_path.format(type='radio', **self.exp_conf)
-        self.conso_path = measure_path.format(
-            type='consumption', **self.exp_conf)
-        self.log_path = gateway_code.config.USER_LOG_PATH.format(
-            **self.exp_conf)
-        for measure_file in (self.conso_path, self.radio_path, self.log_path):
-            try:
-                folder_path = os.path.dirname(measure_file)
-                os.makedirs(folder_path)
-            except os.error:
-                pass
+        # config experiment and create folder
+        self.exp_conf = { 'user': 'harter', 'exp_id': 123 }
+        self.app.gateway_manager._create_user_exp_folders(
+            gateway_code.config.EXP_FILES_DIR.format(**self.exp_conf),
+            gateway_code.config.hostname()
+        )
+
 
     def tearDown(self):
         super(TestComplexExperimentRunning, self).tearDown()
-        # remove exp folder
-        # ...../exp_id/consumption/node_name.oml
-        try:
-            shutil.rmtree(os.path.dirname(os.path.dirname(self.conso_path)))
-        except OSError:
-            pass
+        self.app.gateway_manager._destroy_user_exp_folders(
+            gateway_code.config.EXP_FILES_DIR.format(**self.exp_conf)
+        )
+
+    def test_admin_commands(self):
+
+        # flash Control Node
+        self.request.files = {'firmware': self.files['control_node']}
+        ret = self.app.admin_control_flash()
+        self.assertEquals(ret, {'ret': 0})
+        ret = self.app.admin_control_soft_reset()
+        self.assertEquals(ret, {'ret': 0})
+
 
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
         gateway_code.control_node_interface.LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
+
 
     @patch('gateway_code.control_node_interface.LOGGER.error')
     def tests_complete_experiments(self, m_error):
@@ -213,7 +205,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # Run an experiment that does nothing but wait
         # should keep the same user as it's the only one setup
-        ret = self.app.exp_start(123, self.exp_conf['user'])
+        ret = self.app.exp_start(**self.exp_conf['user'])
         self.assertEquals(ret, {'ret': 0})
 
         # waiting One minute to try to have complete boot log on debug output
@@ -231,10 +223,10 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         #
         # Run an experiment
         #
-        ret = self.app.exp_start(
-            self.exp_conf['exp_id'], self.exp_conf['user'])
-
+        ret = self.app.exp_start(**self.exp_conf)
         self.assertEquals(ret, {'ret': 0})
+        exp_files = self.app.gateway_manager.exp_desc['exp_files'].copy()
+
         time.sleep(1)
 
         # idle firmware, should be no reply
@@ -278,7 +270,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         # Got no error during tests (use assertEquals for printing result)
         self.assertEquals([], m_error.call_args_list)
 
-        # flash firmware should fail
+        # reset firmware should fail
         # logger error will be called
         ret = self.app.open_soft_reset()
         self.assertNotEquals(ret, {'ret': 0})
@@ -287,9 +279,9 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         #
         # Validate measures consumption
         #
-        # filter consumption meausures
         measures = []
         for meas in self.cn_measures:
+            # filter consumption meausures
             if 'consumption_measure' != meas[1]:
                 continue
             measures.append(tuple([float(val) for val in meas[2:6]]))
@@ -303,7 +295,6 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         # check timestamps are sorted in correct order
         timestamps = ([t_before_start] + [args[0] for args in measures] +
                       [time.time()])
-
         self.assertTrue(
             all([a < b for a, b in zip(timestamps, timestamps[1:])]))
 
@@ -311,13 +302,13 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         # Test OML Files
         #
         # radio file is already removed
-        self.assertRaises(IOError, open, self.radio_path)
+        self.assertRaises(IOError, open, exp_files['radio'])
         # conso file exists
         try:
-            open(self.conso_path).close()
-            os.remove(self.conso_path)
+            open(exp_files['consumption']).close()
+            os.remove(exp_files['consumption'])
         except IOError:
-            self.fail('File should exist %r' % self.radio_path)
+            self.fail('File should exist %r' % exp_files['consumption'])
 
 
     def tests_experiment_timeout(self):
@@ -327,17 +318,11 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # Create measures folder
         for exp_id in ['1234', '2345']:
-            _exp_conf = dict(self.exp_conf)
-            _exp_conf['exp_id'] = exp_id
-            measure_path = gateway_code.config.MEASURES_PATH
-            radio_path = measure_path.format(type='radio', **_exp_conf)
-            conso_path = measure_path.format(type='consumption', **_exp_conf)
-            log_path = gateway_code.config.USER_LOG_PATH.format(**_exp_conf)
-            for measure_file in (conso_path, radio_path, log_path):
-                try:
-                    os.makedirs(os.path.dirname(measure_file))
-                except os.error:
-                    pass
+            exp_conf = {'user': self.exp_conf['user'], 'exp_id': exp_id}
+            self.app.gateway_manager._create_user_exp_folders(
+                gateway_code.config.EXP_FILES_DIR.format(**exp_conf),
+                gateway_code.config.hostname()
+            )
 
 
         # Stop after timeout
@@ -372,22 +357,77 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         ret = self.app.exp_start('1234', self.exp_conf['user'])
         self.assertEquals(ret, {'ret': 0})
 
-        self.app.gateway_manager.exp_id = '2345'  # 'change' experiment
+        self.app.gateway_manager.exp_desc['exp_id'] = '2345'  # 'change' experiment
         time.sleep(10)   # Ensure that timeout could have occured
         self.app.gateway_manager.rlock.acquire()  # wait calls ended
         self.app.gateway_manager.rlock.release()
         self.assertTrue(self.app.gateway_manager.experiment_is_running)
 
-        self.app.gateway_manager.exp_id = '1234'  # recover experiment
+        self.app.gateway_manager.exp_desc['exp_id'] = '1234'  # recover experiment
         ret = self.app.exp_stop()
 
 
         # Cleanup measures folder
-        for exp_id in ['1234', '1235']:
-            try:
-                shutil.rmtree(os.path.dirname(os.path.dirname(conso_path)))
-            except OSError:
-                pass
+        for exp_id in ['1234', '2345']:
+            exp_conf = {'user': self.exp_conf['user'], 'exp_id': exp_id}
+            self.app.gateway_manager._destroy_user_exp_folders(
+                gateway_code.config.EXP_FILES_DIR.format(**exp_conf)
+            )
+
+
+    def tests_non_regular_start_stop_calls(self):
+        """ Test start calls when not needed
+            * start when started
+            * stop when stopped
+        """
+        stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
+        with patch.object(self.app.gateway_manager, 'exp_stop', stop_mock):
+
+            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
+            self.assertEquals(ret, 0)
+            self.assertEquals(stop_mock.call_count, 0)
+
+            # replace current experiment
+            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
+            self.assertEquals(ret, 0)
+            self.assertEquals(stop_mock.call_count, 1)
+
+            # stop exp
+            ret = self.app.gateway_manager.exp_stop()
+            self.assertEquals(ret, 0)
+
+            # exp already stoped no error
+            ret = self.app.gateway_manager.exp_stop()
+            self.assertEquals(ret, 0)
+
+
+    def tests_invalid_tty_state_at_start_stop_for_A8(self):
+        """  Test start/stop calls where A8 tty is in invalid state
+        Test a start call where tty is not visible
+        Followed by a stop call that will have it's tty not disappeared
+        """
+
+        if 'A8' != gateway_code.config.board_type():
+            return
+
+        # Disable stop open A8
+        self.app.gateway_manager.exp_start(**self.exp_conf)
+        with patch.object(self.app.gateway_manager, 'open_power_stop',
+                          mock.Mock(return_value=0)):
+            # detect Error on stop
+            ret = self.app.gateway_manager.exp_stop()
+            self.assertNotEquals(ret, 0)
+
+        # Disable start open A8
+        with patch.object(self.app.gateway_manager, 'open_power_start',
+                          mock.Mock(return_value=0)):
+            # detect error on start
+            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
+            self.assertNotEquals(ret, 0)
+
+        # stop and cleanup
+        ret = self.app.gateway_manager.exp_stop()
+        self.assertEquals(ret, 0)
 
 
 class TestAutoTests(GatewayCodeMock):
@@ -470,68 +510,10 @@ class TestUncommonCasesGatewayManager(GatewayCodeMock):
         for measure_type in ('consumption', 'radio'):
             shutil.rmtree('/tmp/%s/' % measure_type, ignore_errors=True)
 
-    def tests_non_regular_start_stop_calls(self):
-        """ Test start calls when not needed
-            * start when started
-            * stop when stopped
-        """
-        stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
-        with patch.object(self.app.gateway_manager, 'exp_stop', stop_mock):
-
-            ret = self.app.gateway_manager.exp_start(12, 'harter')
-            self.assertEquals(ret, 0)
-            self.assertEquals(self.app.gateway_manager.exp_id, 12)
-            self.assertEquals(stop_mock.call_count, 0)
-
-            # replace current experiment
-            ret = self.app.gateway_manager.exp_start(12, 'harter')
-            self.assertEquals(ret, 0)
-            self.assertEquals(self.app.gateway_manager.exp_id, 12)
-            self.assertEquals(stop_mock.call_count, 1)
-
-            # stop exp
-            ret = self.app.gateway_manager.exp_stop()
-            self.assertEquals(ret, 0)
-
-            # exp already stoped no error
-            ret = self.app.gateway_manager.exp_stop()
-            self.assertEquals(ret, 0)
-
-    def tests_invalid_tty_state_at_start_stop_for_A8(self):
-        """  Test start/stop calls where A8 tty is in invalid state
-        Test a start call where tty is not visible
-        Followed by a stop call that will have it's tty not disappeared
-        """
-
-        if 'A8' != gateway_code.config.board_type():
-            return
-
-        with patch.object(self.app.gateway_manager, 'open_power_start',
-                          mock.Mock(return_value=0)):
-            ret = self.app.gateway_manager.exp_start(12, 'harter')
-            self.assertNotEquals(ret, 0)
-        ret = self.app.gateway_manager.exp_stop()
-        self.assertEquals(ret, 0)
-
-
-        ret = self.app.gateway_manager.exp_start(12, 'harter')
-        self.assertEquals(ret, 0)
-        with patch.object(self.app.gateway_manager, 'open_power_stop',
-                          mock.Mock(return_value=0)):
-            ret = self.app.gateway_manager.exp_stop()
-            self.assertNotEquals(ret, 0)
-
-        # real cleanup
-        ret = self.app.gateway_manager.exp_start(12, 'harter')
-        self.assertEquals(ret, 0)
-        ret = self.app.gateway_manager.exp_stop()
-        self.assertEquals(ret, 0)
-
 
 class TestInvalidCases(GatewayCodeMock):
     """ Invalid calls """
 
-    @patch('gateway_code.config.USER_LOG_PATH', '/tmp/{node_id}.oml')
     def tests_invalid_profile_at_start(self):
         """ Run experiments with invalid profiles """
 

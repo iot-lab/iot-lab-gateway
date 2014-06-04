@@ -17,13 +17,9 @@ from gateway_code.autotest import autotest, expect
 
 
 from gateway_code import control_node_interface, protocol_cn
+from gateway_code import gateway_logging
 
-
-import gateway_code.gateway_logging
-import logging
-
-
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = gateway_logging.LOGGER
 
 
 # Disable: I0011 - 'locally disabling warning'
@@ -39,8 +35,11 @@ class GatewayManager(object):
     def __init__(self, log_folder='.'):
 
         # current experiment infos
-        self.exp_id = None
-        self.user = None
+        self.exp_desc = {
+            'exp_id': None,
+            'user': None,
+            'exp_files': {}
+        }
         self.experiment_is_running = False
         self.profile = None
         self.open_node_state = "stop"
@@ -49,7 +48,7 @@ class GatewayManager(object):
         self.rlock = RLock()
         self.timeout_timer = None
 
-        gateway_code.gateway_logging.init_logger(log_folder)  # logger config
+        gateway_logging.init_logger(log_folder)  # logger config
 
         self.cn_serial = control_node_interface.ControlNodeSerial()
         self.protocol = protocol_cn.Protocol(self.cn_serial.send_command)
@@ -105,16 +104,6 @@ class GatewayManager(object):
             LOGGER.debug('Experiment running. Stop previous experiment')
             self.exp_stop()
 
-        self.exp_id = exp_id
-        self.user = user
-        self.user_log_handler = gateway_code.gateway_logging.user_logger(
-            config.USER_LOG_PATH.format(user=user, exp_id=exp_id,
-                                        node_id=config.hostname()))
-        LOGGER.addHandler(self.user_log_handler)
-        # Rest server already printed log, but not for the user
-        LOGGER.info('Start experiment: %s-%i', user, exp_id)
-
-        firmware_path = firmware_path or config.FIRMWARES['idle']
         try:
             _prof = profile or config.default_profile()
             self.profile = Profile(_prof, config.board_type())
@@ -124,15 +113,28 @@ class GatewayManager(object):
 
         self.experiment_is_running = True
 
-        ret_val = 0
+        self.exp_desc['exp_id'] = exp_id
+        self.exp_desc['user'] = user
+        self._create_user_exp_files(
+            config.EXP_FILES_DIR.format(**self.exp_desc), config.hostname())
+        self.user_log_handler = gateway_logging.user_logger(
+            self.exp_desc['exp_files']['log'])
+        LOGGER.addHandler(self.user_log_handler)
+
+        # Rest server already printed log, but not for the user
+        LOGGER.info('Start experiment: %s-%i', user, exp_id)
+
+        firmware_path = firmware_path or config.FIRMWARES['idle']
+
         # start steps described in docstring
+        ret_val = 0
 
         # # # # # # # # # #
         # Prepare Gateway #
         # # # # # # # # # #
         ret_val += self.node_soft_reset('gwt')
         time.sleep(1)  # wait CN started
-        ret_val += self.cn_serial.start(user=self.user, exp_id=self.exp_id)
+        ret_val += self.cn_serial.start(exp_desc=self.exp_desc)
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #
@@ -179,7 +181,7 @@ class GatewayManager(object):
         Should stop only if experiment is the same as the experiment
         that started the timer """
         LOGGER.debug("Timeout experiment: %r %r", user, exp_id)
-        if self.exp_id == exp_id and self.user == user:
+        if self.exp_desc['exp_id'] == exp_id and self.exp_desc['user'] == user:
             LOGGER.debug("Still running. Stop exp")
             self.exp_stop()
 
@@ -246,9 +248,12 @@ class GatewayManager(object):
         # # # # # # # # # # # # # # # # # # #
         self.cn_serial.stop()
 
+        # Remove empty user experiment files
+        self._cleanup_user_exp_files()
+
         # Reset configuration
-        self.user = None
-        self.exp_id = None
+        self.exp_desc['exp_id'] = None
+        self.exp_desc['user'] = None
         self.experiment_is_running = False
 
         LOGGER.removeHandler(self.user_log_handler)
@@ -406,3 +411,57 @@ class GatewayManager(object):
         """
         autotest_manager = autotest.AutoTestManager(self)
         return autotest_manager.auto_tests(channel, blink, flash, gps)
+
+#
+# Experiment files and folder management methods
+#
+
+    @staticmethod
+    def _create_user_exp_folders(exp_files_dir, node_id):
+        """ Create a user experiment folders
+
+        On turtelbots nodes, the folders can't be created by exp handler
+        Also useful for integration tests
+        """
+        for exp_file_dir in config.EXP_FILES.iterkeys():
+            try:
+                os.makedirs(exp_files_dir + exp_file_dir)
+            except OSError:
+                pass
+
+    @staticmethod
+    def _destroy_user_exp_folders(exp_files_dir):
+        """ Destroy a user experiment folder
+
+        Used in integration tests.
+        Implemented here after the '_create' method for completeness """
+
+        import shutil
+        try:
+            shutil.rmtree(exp_files_dir)
+        except OSError:
+            pass
+
+    def _create_user_exp_files(self, exp_files_dir, node_id):
+        """ Create user experiment files with 0666 permissions """
+        for key, exp_file in config.EXP_FILES.iteritems():
+            # calculate file_path and store it in exp_description
+            file_path = exp_files_dir + exp_file.format(node_id=node_id)
+            self.exp_desc['exp_files'][key] = file_path
+            try:
+                # create empty file with 0666 permission
+                open(file_path, "w").close()
+                os.chmod(file_path, config.STAT_0666)
+            except OSError as err:
+                LOGGER.error('Cannot write exp file: %r', file_path)
+                raise err
+
+    def _cleanup_user_exp_files(self):
+        """ Delete empty user experiment files """
+        for exp_file in self.exp_desc['exp_files'].itervalues():
+            try:
+                if os.path.getsize(exp_file) == 0:
+                    os.unlink(exp_file)
+            except OSError:
+                pass
+        self.exp_desc['exp_files'] = {}

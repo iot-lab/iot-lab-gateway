@@ -14,6 +14,8 @@ from gateway_code import config
 LOGLEVEL = logging.DEBUG
 FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
+LOGGER = logging.getLogger('gateway_code')
+
 
 def init_logger(log_folder):
     """ Create global logger and handlers
@@ -21,7 +23,7 @@ def init_logger(log_folder):
     :param log_folder: log destination folder
     """
 
-    logger = logging.getLogger('gateway_code')
+    logger = LOGGER
     logger.setLevel(LOGLEVEL)
 
     if logger.handlers != []:

@@ -32,7 +32,7 @@ class GatewayRest(object):
         """
         Declare the REST supported methods depending on board config
         """
-        bottle.route('/exp/start/<expid:int>/<username>',
+        bottle.route('/exp/start/<exp_id:int>/<user>',
                      'POST')(self.exp_start)
         bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
         bottle.route('/open/start', 'PUT')(self.open_start)
@@ -49,16 +49,16 @@ class GatewayRest(object):
         else:  # pragma: no cover
             pass  # handle A8 nodes here
 
-    def exp_start(self, expid, username):
+    def exp_start(self, exp_id, user):
         """
         Start an experiment
 
-        :param expid: experiment id
-        :param username: username of the experiment owner
+        :param exp_id: experiment id
+        :param user: user of the experiment owner
         Query string: 'timeout' int
         """
-        expid = int(expid)
-        LOGGER.info('Start experiment: %s-%i', username, expid)
+        exp_id = int(exp_id)
+        LOGGER.info('Start experiment: %s-%i', user, exp_id)
 
         firmware_path = None
         firmware_file = None
@@ -93,7 +93,7 @@ class GatewayRest(object):
             pass  # no files in multipart request
 
         ret = self.gateway_manager.exp_start(
-            expid, username, firmware_path, profile, timeout)
+            exp_id, user, firmware_path, profile, timeout)
 
         # cleanup of temp file
         if firmware_file is not None:

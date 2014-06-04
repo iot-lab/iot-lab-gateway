@@ -9,8 +9,6 @@ import subprocess
 from subprocess import PIPE
 import Queue
 import threading
-import os
-from os.path import dirname
 
 from tempfile import NamedTemporaryFile
 
@@ -27,7 +25,7 @@ LOGGER = logging.getLogger('gateway_code')
 CONTROL_NODE_INTERFACE_ARGS = []
 
 
-_OML_XML = '''
+OML_XML = '''
 <omlc id='{node_id}' exp_id='{exp_id}'>
   <collect url='file:{consumption}' encoding='text'>
     <stream name="consumption" mp="consumption" samples='1' />
@@ -54,16 +52,12 @@ class ControlNodeSerial(object):
 
         self.cn_serial_ready = None
 
-        self.oml = {
-            'files': {},
-            'cfg_file': None
-        }
+        self.oml_cfg_file = None
 
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, user=None, exp_id=None, _args=None,
-              _measures_handler=None):
+    def start(self, exp_desc=None, _args=None, _measures_handler=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
@@ -77,7 +71,7 @@ class ControlNodeSerial(object):
 
         args = [config.CONTROL_NODE_SERIAL_INTERFACE]
         args += ['-t', config.NODES_CFG['gwt']['tty']]
-        args += self._config_oml(user, exp_id)
+        args += self._config_oml(exp_desc)
 
         # add arguments, used by tests
         args += _args or CONTROL_NODE_INTERFACE_ARGS
@@ -90,76 +84,52 @@ class ControlNodeSerial(object):
         ret = self.cn_serial_ready.get()
         return ret
 
-    def _config_oml(self, user, exp_id):
+    def _config_oml(self, exp_desc):
         """ Create oml config files and folder
         if user and exp_id are given
 
         Returns the list of parameter to give to the serial interface
         """
-        if (user is None) or (exp_id is None):
+        # empty description for autotests
+        if exp_desc is None:
             return []
-        exp_desc = {
-            'user': user,
-            'exp_id': exp_id,
-            'node_id': config.hostname()
-            }
 
-        oml_files = {}
-        oml_files['consumption'] = config.MEASURES_PATH.format(
-            type='consumption', **exp_desc)
-        oml_files['radio'] = config.MEASURES_PATH.format(
-            type='radio', **exp_desc)
+        # Get configuration. Get each value to ensure they are all present
+        oml_cfg = {}
+        oml_cfg['user'] = exp_desc['user']
+        oml_cfg['exp_id'] = exp_desc['exp_id']
+        oml_cfg['node_id'] = config.hostname()
+        oml_cfg['consumption'] = exp_desc['exp_files']['consumption']
+        oml_cfg['radio'] = exp_desc['exp_files']['radio']
 
-        # XML oml config
-        exp_desc.update(oml_files)
-        oml_xml_str = _OML_XML.format(**exp_desc)
+        # Save xml configuration in a temporary file
+        oml_xml_cfg = OML_XML.format(**oml_cfg)
+        self.oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
+        self.oml_cfg_file.write(oml_xml_cfg)
+        self.oml_cfg_file.flush()
 
-        # check that the directory exists
-        for oml_file in oml_files.itervalues():
-            oml_folder = dirname(oml_file)
-            if not os.access(oml_folder, os.W_OK):
-                LOGGER.error('Cannot write in measure folder: %r', oml_folder)
-                raise IOError
-
-        # create empty measures files with 666 permissions (truncate if exists)
-        for measure_file_path in oml_files.itervalues():
-            open(measure_file_path, "w").close()
-            os.chmod(measure_file_path, config.STAT_0666)
-
-        # create a temporary config file with OML_XML config
-        oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
-        oml_cfg_file.write(oml_xml_str)
-        oml_cfg_file.flush()
-
-        self.oml['cfg_file'] = oml_cfg_file
-        self.oml['files'] = oml_files
-
-        return ['-c', oml_cfg_file.name]
+        return ['-c', self.oml_cfg_file.name]
 
     def stop(self):
         """ Stop control node interface.
 
         Stop `control node serial program` and answers handler.
         """
+
         if self.cn_interface_process is not None:
             try:
                 self.cn_interface_process.terminate()
             except OSError:
                 LOGGER.error('Control node process already terminated')
-
+        if self.reader_thread is not None:
             self.reader_thread.join()
-            self.cn_interface_process = None
+
+        # remove cn_interface_process after reader_thread is joined
+        self.cn_interface_process = None
 
         # cleanup oml
-        if self.oml['cfg_file'] is not None:
-            self.oml['cfg_file'].close()
-
-        for measure_file in self.oml['files'].itervalues():
-            try:
-                if os.path.getsize(measure_file) == 0:
-                    os.unlink(measure_file)
-            except OSError:
-                pass
+        if self.oml_cfg_file is not None:
+            self.oml_cfg_file.close()
 
     def _handle_answer(self, line):
         """Handle control node answers
