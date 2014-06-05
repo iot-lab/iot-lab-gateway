@@ -456,7 +456,7 @@ class GatewayManager(object):
                 # create empty file with 0666 permission
                 open(file_path, "w").close()
                 os.chmod(file_path, config.STAT_0666)
-            except OSError as err:
+            except IOError as err:
                 LOGGER.error('Cannot write exp file: %r', file_path)
                 raise err
 
