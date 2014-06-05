@@ -204,7 +204,7 @@ TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
         data_size = sizeof(unsigned int) + 2*sizeof(float);
         mh_state.power.raw_values_len = data_size;
         data[1] = 1;
-        handle_pw_pkt(data, 2 + data[1] * data_size);
+        handle_pw_pkt(data, 2 + 4 + data[1] * data_size);
         measures_handler_stop();
 
         ASSERT_EQ(0, consumption_mock_called);

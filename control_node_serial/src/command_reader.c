@@ -341,12 +341,15 @@ static uint32_t parse_channels_list(char *channels_list)
 {
         uint32_t channels_flag = 0;
         char *chan;
+        int channel;
 
         chan = strtok(channels_list, ",");
         while (chan != NULL) {
                 // channel 11 in bit num 11
                 // channel 26 in bit num 26
-                channels_flag |= 1 << atoi(chan);
+                channel = atoi(chan);
+                if (channel >= 11 && channel <= 26)
+                    channels_flag |= 1 << channel;
 
                 chan = strtok(NULL, ",");
         }

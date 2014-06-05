@@ -78,7 +78,8 @@ TEST(test_parse_cmd, consumption)
          */
         int ret;
         struct command_buffer cmd_buff;
-        char cmd[256];
+        char cmd[256] = {0};
+
 
         strcpy(cmd, "config_consumption_measure stop");
         ret = parse_cmd(cmd, &cmd_buff);
@@ -115,6 +116,22 @@ TEST(test_parse_cmd, consumption)
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_NE(payload_1_2, cmd_buff.u.s.payload[3] << 8 | cmd_buff.u.s.payload[2]);
+
+        strcpy(cmd, "config_consumption_measure");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+
+        strcpy(cmd, "config_consumption_measure start invalid_args");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+
+        strcpy(cmd, "config_consumption_measure inval_cmd");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+
+        strcpy(cmd, "config_consumption_measure inval 3.3V p 1 v 1 c 1 -p 8244 -a 1024");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
 }
 
 TEST(test_parse_cmd, radio_stop)
@@ -185,6 +202,11 @@ TEST(test_parse_cmd, radio_measure)
         strcpy(cmd, "config_radio_measure 15 65536 1");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_NE(0, ret);
+
+        // invalid channel list
+        strcpy(cmd, "config_radio_measure 10,27 1 1");
+        ret = parse_cmd(cmd, &cmd_buff);
+        //ASSERT_NE(0, ret);
 }
 
 
@@ -207,6 +229,16 @@ TEST(test_parse_cmd, test_commands)
         ASSERT_EQ(4, cmd_buff.u.s.len);
         ASSERT_EQ(TEST_RADIO_PING_PONG, cmd_buff.u.s.payload[0]);
         ASSERT_EQ(STOP, cmd_buff.u.s.payload[1]);
+
+        strcpy(cmd, "test_radio_ping_pong start 10 3.0");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+        strcpy(cmd, "test_radio_ping_pong start 27 3.0");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+        strcpy(cmd, "test_radio_ping_pong start");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
 
 
         /* gpio */

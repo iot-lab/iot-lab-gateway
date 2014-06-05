@@ -7,7 +7,7 @@ OMLFLAGS     = -Wl,-rpath,/usr/local/lib -loml2
 
 GTEST_DIR    = utils/gtest
 CFLAGS      += -I$(GTEST_DIR)/include -I$(SRCDIR) $(COV)
-CFLAGS      += $(CFLAGSOPT) -ftrapv
+CFLAGS      += $(CFLAGSOPT) -ftrapv -g
 CFLAGS      += -Wno-aggregate-return -Wno-write-strings
 CPPFLAGS    += $(CFLAGS)
 CXXFLAGS    += -g -Wall -Wextra -pthread $(LDFLAGS)
