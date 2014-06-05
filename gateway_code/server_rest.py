@@ -49,12 +49,12 @@ class GatewayRest(object):
         else:  # pragma: no cover
             pass  # handle A8 nodes here
 
-    def exp_start(self, exp_id, user):
+    def exp_start(self, user, exp_id):
         """
         Start an experiment
 
-        :param exp_id: experiment id
         :param user: user of the experiment owner
+        :param exp_id: experiment id
         Query string: 'timeout' int
         """
         exp_id = int(exp_id)
@@ -93,7 +93,7 @@ class GatewayRest(object):
             pass  # no files in multipart request
 
         ret = self.gateway_manager.exp_start(
-            exp_id, user, firmware_path, profile, timeout)
+            user, exp_id, firmware_path, profile, timeout)
 
         # cleanup of temp file
         if firmware_file is not None:

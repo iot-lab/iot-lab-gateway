@@ -28,6 +28,8 @@ MOCK_FIRMWARES = {
     'a8_autotest': STATIC_DIR + 'a8_autotest.elf'
     }
 
+USER = 'harter'
+
 
 class GatewayCodeMock(unittest.TestCase):
     """ gateway_code mock for integration tests  """
@@ -146,17 +148,16 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.request.query = mock.Mock(timeout='')
 
         # config experiment and create folder
-        self.exp_conf = { 'user': 'harter', 'exp_id': 123 }
+        self.exp_conf = {'user': USER, 'exp_id': 123}
         self.app.gateway_manager._create_user_exp_folders(
-            gateway_code.config.EXP_FILES_DIR.format(**self.exp_conf),
-            gateway_code.config.hostname()
+            self.exp_conf['user'], self.exp_conf['exp_id']
         )
 
 
     def tearDown(self):
         super(TestComplexExperimentRunning, self).tearDown()
         self.app.gateway_manager._destroy_user_exp_folders(
-            gateway_code.config.EXP_FILES_DIR.format(**self.exp_conf)
+            self.exp_conf['user'], self.exp_conf['exp_id']
         )
 
     def test_admin_commands(self):
@@ -205,7 +206,8 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # Run an experiment that does nothing but wait
         # should keep the same user as it's the only one setup
-        ret = self.app.exp_start(**self.exp_conf['user'])
+        ret = self.app.exp_start(self.exp_conf['user'],
+                                 self.exp_conf['exp_id'])
         self.assertEquals(ret, {'ret': 0})
 
         # waiting One minute to try to have complete boot log on debug output
@@ -223,7 +225,8 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         #
         # Run an experiment
         #
-        ret = self.app.exp_start(**self.exp_conf)
+        ret = self.app.exp_start(self.exp_conf['user'],
+                                 self.exp_conf['exp_id'])
         self.assertEquals(ret, {'ret': 0})
         exp_files = self.app.gateway_manager.exp_desc['exp_files'].copy()
 
@@ -318,16 +321,11 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # Create measures folder
         for exp_id in ['1234', '2345']:
-            exp_conf = {'user': self.exp_conf['user'], 'exp_id': exp_id}
-            self.app.gateway_manager._create_user_exp_folders(
-                gateway_code.config.EXP_FILES_DIR.format(**exp_conf),
-                gateway_code.config.hostname()
-            )
-
+            self.app.gateway_manager._create_user_exp_folders(USER, exp_id)
 
         # Stop after timeout
         self.request.query = mock.Mock(timeout='5')
-        ret = self.app.exp_start('1234', self.exp_conf['user'])
+        ret = self.app.exp_start(USER, '1234')
         self.assertEquals(ret, {'ret': 0})
         time.sleep(10)   # Ensure that timeout occured
         self.app.gateway_manager.rlock.acquire()  # wait calls ended
@@ -338,10 +336,10 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # Stop remove timeout
         self.request.query = mock.Mock(timeout='5')
-        ret = self.app.exp_start('1234', self.exp_conf['user'])
+        ret = self.app.exp_start(USER, '1234')
         self.assertEquals(ret, {'ret': 0})
         self.request.query = mock.Mock(timeout='0')
-        ret = self.app.exp_start('2345', self.exp_conf['user'])
+        ret = self.app.exp_start(USER, '2345')
         self.assertEquals(ret, {'ret': 0})
         time.sleep(10)   # Ensure that timeout could have occured
         self.app.gateway_manager.rlock.acquire()  # wait calls ended
@@ -354,7 +352,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         # Simulate strange case where timeout is called when another experiment
         # is already running
         self.request.query = mock.Mock(timeout='5')
-        ret = self.app.exp_start('1234', self.exp_conf['user'])
+        ret = self.app.exp_start(USER, '1234')
         self.assertEquals(ret, {'ret': 0})
 
         self.app.gateway_manager.exp_desc['exp_id'] = '2345'  # 'change' experiment
@@ -369,10 +367,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # Cleanup measures folder
         for exp_id in ['1234', '2345']:
-            exp_conf = {'user': self.exp_conf['user'], 'exp_id': exp_id}
-            self.app.gateway_manager._destroy_user_exp_folders(
-                gateway_code.config.EXP_FILES_DIR.format(**exp_conf)
-            )
+            self.app.gateway_manager._destroy_user_exp_folders(USER, exp_id)
 
 
     def tests_non_regular_start_stop_calls(self):
@@ -383,12 +378,14 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
         with patch.object(self.app.gateway_manager, 'exp_stop', stop_mock):
 
-            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
+            ret = self.app.gateway_manager.exp_start(self.exp_conf['user'],
+                                                     self.exp_conf['exp_id'])
             self.assertEquals(ret, 0)
             self.assertEquals(stop_mock.call_count, 0)
 
             # replace current experiment
-            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
+            ret = self.app.gateway_manager.exp_start(self.exp_conf['user'],
+                                                     self.exp_conf['exp_id'])
             self.assertEquals(ret, 0)
             self.assertEquals(stop_mock.call_count, 1)
 
@@ -411,18 +408,20 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             return
 
         # Disable stop open A8
-        self.app.gateway_manager.exp_start(**self.exp_conf)
+        self.app.gateway_manager.exp_start(self.exp_conf['user'],
+                                           self.exp_conf['exp_id'])
         with patch.object(self.app.gateway_manager, 'open_power_stop',
-                          mock.Mock(return_value=0)):
+                          self.app.gateway_manager.open_power_start):
             # detect Error on stop
             ret = self.app.gateway_manager.exp_stop()
             self.assertNotEquals(ret, 0)
 
         # Disable start open A8
         with patch.object(self.app.gateway_manager, 'open_power_start',
-                          mock.Mock(return_value=0)):
+                          self.app.gateway_manager.open_power_stop):
             # detect error on start
-            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
+            ret = self.app.gateway_manager.exp_start(self.exp_conf['user'],
+                                                     self.exp_conf['exp_id'])
             self.assertNotEquals(ret, 0)
 
         # stop and cleanup
@@ -518,11 +517,11 @@ class TestInvalidCases(GatewayCodeMock):
         """ Run experiments with invalid profiles """
 
         self.request.files = {'profile': self.files['invalid_profile']}
-        ret = self.app.exp_start(123, 'harter')
+        ret = self.app.exp_start(USER, 123)
         self.assertNotEquals(ret, {'ret': 0})
 
         self.request.files = {'profile': self.files['invalid_profile_2']}
-        ret = self.app.exp_start(123, 'harter')
+        ret = self.app.exp_start(USER, 123)
         self.assertNotEquals(ret, {'ret': 0})
 
     def tests_invalid_files(self):

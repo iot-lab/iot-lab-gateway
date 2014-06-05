@@ -58,12 +58,12 @@ class TestRestMethods(unittest.TestCase):
         g_m.exp_start.return_value = 0
 
         self.request.files = {'firmware': idle, 'profile': default_profile}
-        ret_dict = s_r.exp_start('123', 'user')
+        ret_dict = s_r.exp_start('user', '123')
         self.assertEquals(0, ret_dict['ret'])
 
         # validate arguments
         call_args = g_m.exp_start.call_args[0]
-        self.assertEquals((123, 'user'), call_args[0:2])
+        self.assertEquals(('user', 123), call_args[0:2])
         self.assertTrue(idle.filename in call_args[2])
         self.assertEquals(profile_dict, call_args[3])
 
@@ -75,7 +75,7 @@ class TestRestMethods(unittest.TestCase):
         s_r = server_rest.GatewayRest(None)
 
         self.request.files = {'profile': profile}
-        ret_dict = s_r.exp_start('123', 'user')
+        ret_dict = s_r.exp_start('user', '123')
         self.assertNotEquals(0, ret_dict['ret'])
 
 
@@ -87,10 +87,10 @@ class TestRestMethods(unittest.TestCase):
         # nothing in files
         self.request.files = {}
         self.request.query = mock.Mock(timeout='')
-        ret_dict = s_r.exp_start('123', 'user')
+        ret_dict = s_r.exp_start('user', '123')
 
         # validate
-        g_m.exp_start.assert_called_with(123, 'user', None, None, 0)
+        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
 
 
@@ -101,17 +101,17 @@ class TestRestMethods(unittest.TestCase):
         self.request.files = {}
 
         self.request.query = mock.Mock(timeout='12')
-        ret_dict = s_r.exp_start('123', 'user')
-        g_m.exp_start.assert_called_with(123, 'user', None, None, 12)
+        ret_dict = s_r.exp_start('user', '123')
+        g_m.exp_start.assert_called_with('user', 123, None, None, 12)
 
         # invalid data
         self.request.query = mock.Mock(timeout='ten_minutes')
-        ret_dict = s_r.exp_start('123', 'user')
-        g_m.exp_start.assert_called_with(123, 'user', None, None, 0)
+        ret_dict = s_r.exp_start('user', '123')
+        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
         self.request.query = mock.Mock(timeout='-1')
-        ret_dict = s_r.exp_start('123', 'user')
-        g_m.exp_start.assert_called_with(123, 'user', None, None, 0)
+        ret_dict = s_r.exp_start('user', '123')
+        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
     def test_exp_start_multipart_without_files(self):
         g_m = mock.Mock()
@@ -121,10 +121,10 @@ class TestRestMethods(unittest.TestCase):
         self.request.files = mock.Mock()
         self.request.files.__contains__ = mock.Mock(side_effect=ValueError())
         self.request.query = mock.Mock(timeout='')
-        ret_dict = s_r.exp_start('123', 'user')
+        ret_dict = s_r.exp_start('user', '123')
 
         # validate
-        g_m.exp_start.assert_called_with(123, 'user', None, None, 0)
+        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
 
 

@@ -69,7 +69,7 @@ class GatewayManager(object):
 
     # R0913 too many arguments 6/5
     @common.syncronous('rlock')
-    def exp_start(self, exp_id, user,  # pylint: disable=R0913
+    def exp_start(self, user, exp_id,  # pylint: disable=R0913
                   firmware_path=None, profile=None, timeout=0):
         """
         Start an experiment
@@ -115,8 +115,7 @@ class GatewayManager(object):
 
         self.exp_desc['exp_id'] = exp_id
         self.exp_desc['user'] = user
-        self._create_user_exp_files(
-            config.EXP_FILES_DIR.format(**self.exp_desc), config.hostname())
+        self._create_user_exp_files(user=user, exp_id=exp_id)
         self.user_log_handler = gateway_logging.user_logger(
             self.exp_desc['exp_files']['log'])
         LOGGER.addHandler(self.user_log_handler)
@@ -417,33 +416,38 @@ class GatewayManager(object):
 #
 
     @staticmethod
-    def _create_user_exp_folders(exp_files_dir, node_id):
+    def _create_user_exp_folders(user, exp_id):
         """ Create a user experiment folders
 
         On turtelbots nodes, the folders can't be created by exp handler
         Also useful for integration tests
         """
-        for exp_file_dir in config.EXP_FILES.iterkeys():
+        exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
+        for file_dir in config.EXP_FILES.iterkeys():
             try:
-                os.makedirs(exp_files_dir + exp_file_dir)
+                os.makedirs(exp_files_dir + file_dir)
             except OSError:
                 pass
 
     @staticmethod
-    def _destroy_user_exp_folders(exp_files_dir):
+    def _destroy_user_exp_folders(user, exp_id):
         """ Destroy a user experiment folder
 
         Used in integration tests.
         Implemented here after the '_create' method for completeness """
-
+        exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
         import shutil
         try:
             shutil.rmtree(exp_files_dir)
         except OSError:
             pass
 
-    def _create_user_exp_files(self, exp_files_dir, node_id):
+    def _create_user_exp_files(self, user, exp_id):
         """ Create user experiment files with 0666 permissions """
+
+        exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
+        node_id = config.hostname()
+
         for key, exp_file in config.EXP_FILES.iteritems():
             # calculate file_path and store it in exp_description
             file_path = exp_files_dir + exp_file.format(node_id=node_id)
