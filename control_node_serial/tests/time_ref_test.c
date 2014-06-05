@@ -34,17 +34,4 @@ TEST(test_timeval_substract, test_all_cases)
     ASSERT_GE(0, ret);
     ASSERT_EQ(10, result.tv_sec);
     ASSERT_EQ(0, result.tv_usec);
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
