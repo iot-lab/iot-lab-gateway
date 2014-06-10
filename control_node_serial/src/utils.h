@@ -32,5 +32,4 @@ struct dict_entry {
 int get_val(char *key, struct dict_entry dict[], uint8_t *val);
 int get_key(uint8_t val, struct dict_entry dict[], char **key);
 
-
 #endif // UTILS_H

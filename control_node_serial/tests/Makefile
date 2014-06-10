@@ -6,7 +6,8 @@ COV          = -fprofile-arcs -ftest-coverage
 OMLFLAGS     = -Wl,-rpath,/usr/local/lib -loml2
 
 GTEST_DIR    = utils/gtest
-CFLAGS      += -I$(GTEST_DIR)/include -I$(SRCDIR) $(COV)
+CMOCKA_DIR   = utils/cmocka-0.4.1
+CFLAGS      += -I$(GTEST_DIR)/include -I$(CMOCKA_DIR)/include -I$(SRCDIR) $(COV)
 CFLAGS      += $(CFLAGSOPT) -ftrapv -g
 CFLAGS      += -Wno-aggregate-return -Wno-write-strings
 CPPFLAGS    += $(CFLAGS)
@@ -24,6 +25,8 @@ SRCS         = $(wildcard $(SRCDIR)/*.c)
 SRCTESTS     = $(sort $(wildcard *.c) empty_test.c)
 TESTS        = $(SRCTESTS:%.c=$(BINDIR)/%)
 TEST_RESULTS = $(SRCTESTS:%.c=$(RESULTDIR)/%.xml)
+
+CMOCKA_OBJS = $(OBJDIR)/cmocka.o
 
 
 all: $(DIRS) empty_test.c $(TESTS)
@@ -60,7 +63,7 @@ $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
 	$(call quiet-cmd, ./$^ --gtest_output=xml:$@, "  $^")
 
 
-$(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a
+$(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a $(CMOCKA_OBJS)
 	$(call quiet-cmd, $(CXX) -lgcov $(CPPFLAGS) $^ $(CXXFLAGS) $(OMLFLAGS) -o $@, \
 		"  CXX   $@")
 
@@ -82,6 +85,8 @@ clean:
 realclean: clean
 	rm -rf $(RESULTDIR) empty_test.c
 
+$(CMOCKA_OBJS) : $(OBJDIR)/%.o: $(CMOCKA_DIR)/src/%.c
+	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
 
 GTEST_HEADERS  = $(GTEST_DIR)/include/gtest/*.h
 GTEST_HEADERS += $(GTEST_DIR)/include/gtest/internal/*.h

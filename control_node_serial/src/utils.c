@@ -37,8 +37,3 @@ int get_key(uint8_t val, struct dict_entry dict[], char **key)
         return -1;
 }
 
-
-
-
-
-
