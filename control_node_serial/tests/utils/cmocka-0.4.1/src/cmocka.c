@@ -337,7 +337,7 @@ static void set_source_location(
 
 
 /* Create function results and expected parameter lists. */
-void initialize_testing(const char *test_name) {
+static void initialize_testing(const char *test_name) {
 	(void)test_name;
     list_initialize(&global_function_result_map_head);
     initialize_source_location(&global_last_mock_value_location);
@@ -2061,4 +2061,15 @@ int _run_group_tests(const UnitTest * const tests, const size_t number_of_tests)
     fail_if_blocks_allocated(check_point, "run_group_tests");
 
     return (int)total_failed;
+}
+
+void setup_test(const char *test_name)
+{
+    initialize_testing(test_name);
+}
+
+void teardown_test(const char *test_name)
+{
+    fail_if_leftover_values(test_name);
+    teardown_testing(test_name);
 }

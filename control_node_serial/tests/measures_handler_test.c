@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <cmocka.h>
 
 #include <math.h>
 #include "mock_fprintf.h"  // include before other includes
@@ -19,49 +20,34 @@ int oml_measures_stop()
         return 0;
 }
 
-static int consumption_mock_called = 0;
-static struct {
-        uint32_t timestamp_s;
-        uint32_t timestamp_us;
-        double current;
-        double voltage;
-        double power;
-} consumption_call_args;
+#define APPEND_TO_ARRAY(data, index, src, val_size) \
+        do {\
+                memcpy(&(data)[(index)], (src), (val_size)); \
+                index += (val_size); \
+        } while(0)
+
 
 void oml_measures_consumption(uint32_t timestamp_s, uint32_t timestamp_us,
                 double power, double voltage, double current)
 {
-        consumption_call_args.timestamp_s = timestamp_s;
-        consumption_call_args.timestamp_us = timestamp_us;
-        consumption_call_args.current = current;
-        consumption_call_args.voltage = voltage;
-        consumption_call_args.power = power;
-        consumption_mock_called +=1;
+        count_call();
+        check_expected(timestamp_s);
+        check_expected(timestamp_us);
+        check_expected(power);
+        check_expected(voltage);
+        check_expected(current);
 }
-static int radio_mock_called = 0;
-static struct {
-        uint32_t timestamp_s;
-        uint32_t timestamp_us;
-        uint32_t channel;
-        int32_t rssi;
-} radio_call_args;
 void oml_measures_radio(uint32_t timestamp_s, uint32_t timestamp_us,
                 uint32_t channel, int32_t rssi)
 {
-        radio_call_args.timestamp_s = timestamp_s;
-        radio_call_args.timestamp_us = timestamp_us;
-        radio_call_args.channel = channel;
-        radio_call_args.rssi = rssi;
-        radio_mock_called +=1;
+        count_call();
+        check_expected(timestamp_s);
+        check_expected(timestamp_us);
+        check_expected(channel);
+        check_expected(rssi);
 }
 
 
-/*
- * Mock exit, mocking directly cause
- *     warning: 'noreturn' function does return [enabled by default]
- */
-
-// handle_measure_pkt
 TEST(handle_measure_pkt, test_different_packets)
 {
         unsigned char data[64] = {0};
@@ -85,219 +71,245 @@ TEST(handle_measure_pkt, test_different_packets)
 }
 
 
-// handle_pw_pkt
-TEST(handle_pw_pkt, coverage_for_pw_pkt_different_configuration)
+
+
+void test_measure_handler(uint8_t *buf, struct timeval *time)
 {
-        unsigned char data[256];
+        count_call();
+        check_expected(buf);
+        check_expected(time);
+}
 
-        struct power_vals power;
-        size_t data_size;
+class test_handle_oml_measure : public ::testing::Test {
+        protected:
+                virtual void SetUp() {
+                        setup_test("test_handle_oml_measure");
+                        memset(print_buff, '\0', sizeof(print_buff));
+                }
+                virtual void TearDown() {
+                        teardown_test("test_handle_oml_measure");
+                }
+};
 
-        consumption_mock_called = 0;
+TEST_F(test_handle_oml_measure, handle_multiple_values)
+{
+        uint8_t data[256];
+        int index = 0;
+
+        uint32_t time_s;
+        uint32_t time_us;
+        struct timeval expected_time;
+
+        uint8_t val;
 
         measures_handler_start(0, OML_CONFIG_PATH);
-        mh_state.power.power_source = (char) PW_SRC_3_3V;
-        mh_state.power.is_valid = 1;
-        mh_state.power.p = 1;
-        mh_state.power.v = 1;
-        mh_state.power.c = 1;
-        data_size = sizeof(unsigned int) + 3*sizeof(float);
-        mh_state.power.raw_values_len = data_size;
 
+        index = 0;
+        data[index++] = 42; // measure type
+        data[index++] = 0;
+        time_s = 15;
+        APPEND_TO_ARRAY(data, index, &time_s, sizeof(time_s));
+
+        /* measure 1 */
+        data[1]++;
+        time_us = 0;
+        val = 42;
+        APPEND_TO_ARRAY(data, index, &time_us, sizeof(time_s));
+        APPEND_TO_ARRAY(data, index, &val, sizeof(val));
+
+        val = 42;
+        expect_memory(test_measure_handler, buf, &val, sizeof(val));
+        expected_time.tv_sec = 15;
+        expected_time.tv_usec = 0;
+        expect_memory(test_measure_handler, time, &expected_time,
+                        sizeof(expected_time));
+
+        /* measure 2 */
+        data[1]++;
+        time_us = 1000042;
+        val = 0x42;
+        APPEND_TO_ARRAY(data, index, &time_us, sizeof(time_s));
+        APPEND_TO_ARRAY(data, index, &val, sizeof(val));
+
+        val = 0x42;
+        expect_memory(test_measure_handler, buf, &val, sizeof(val));
+        expected_time.tv_sec  = 16;
+        expected_time.tv_usec = 42;
+        expect_memory(test_measure_handler, time, &expected_time,
+                        sizeof(expected_time));
+
+        // called two times
+        expect_calls(test_measure_handler, 2);
+
+        uint8_t value;
+        handle_oml_measure(data, index, &value, sizeof(uint8_t),
+                        test_measure_handler, "test");
+
+        measures_handler_stop();
+}
+
+TEST_F(test_handle_oml_measure, handle_consumption_packet)
+{
+
+        uint8_t data[256];
         int index = 0;
+        struct consumption_measure power;
+        size_t meas_size;
+
+        uint32_t time_s;
+        uint32_t time_us;
+
+
+        /* header and time reference (s) */
+        index = 0;
         data[index++] = ((char)CONSUMPTION_FRAME);
         data[index++] = 0;
-
-        uint32_t t_ref_s = 15;
-        memcpy(&data[index], &t_ref_s, sizeof(uint32_t));
-        index += sizeof(uint32_t);
-
-        power.time_us = (unsigned int) 0;
+        time_s = 15;
+        APPEND_TO_ARRAY(data, index, &time_s, sizeof(time_s));
+        /* measure 1 */
+        data[1]++;
+        time_us = 1000042;
+        APPEND_TO_ARRAY(data, index, &time_us, sizeof(time_us));
         power.val[0] = 1.0;
         power.val[1] = 2.0;
         power.val[2] = 3.0;
-        memcpy(&data[index], &power, data_size);
-        index += data_size;
+        APPEND_TO_ARRAY(data, index, &power, 3 * sizeof(float));
 
 
-        // num == 1
-        data[1] = 1;
-        handle_pw_pkt(data, index);
-        ASSERT_EQ(1, consumption_mock_called);
-        ASSERT_EQ(15, consumption_call_args.timestamp_s);
-        ASSERT_EQ(0, consumption_call_args.timestamp_us);
-        ASSERT_EQ(1.0, consumption_call_args.power);
-        ASSERT_EQ(2.0, consumption_call_args.voltage);
-        ASSERT_EQ(3.0, consumption_call_args.current);
+        /*
+         * Run test with one packet
+         */
+        measures_handler_start(0, OML_CONFIG_PATH);
+        config_consumption(PW_SRC_3_3V, 1, 1, 1);
+        meas_size = mh_state.consumption.meas_len;
 
-        // num == 2
-        data[1] = 2;
-        power.time_us = (unsigned int) 1000042;
-        power.val[0] = 4.0;
-        power.val[1] = 5.0;
-        power.val[2] = 6.0;
-        memcpy(&data[index], &power, data_size);
-        index += data_size;
-        consumption_mock_called = 0;
+        expect_value(oml_measures_consumption, timestamp_s, 16);
+        expect_value(oml_measures_consumption, timestamp_us, 42);
+        expect_value(oml_measures_consumption, power,   1.0);
+        expect_value(oml_measures_consumption, voltage, 2.0);
+        expect_value(oml_measures_consumption, current, 3.0);
 
-        handle_pw_pkt(data, index);
-        ASSERT_EQ(2, consumption_mock_called);
-        ASSERT_EQ(16, consumption_call_args.timestamp_s);
-        ASSERT_EQ(42, consumption_call_args.timestamp_us);
-        ASSERT_EQ(4.0, consumption_call_args.power);
-        ASSERT_EQ(5.0, consumption_call_args.voltage);
-        ASSERT_EQ(6.0, consumption_call_args.current);
+        expect_calls(oml_measures_consumption, 1);
 
+        handle_measure_pkt(data, index);
         measures_handler_stop();
 
 
-
-        consumption_mock_called = 0;
-        measures_handler_start(1, OML_CONFIG_PATH); // print_measures == true for coverage
+        /*
+         * cases with non complete values
+         */
+        // print_measures == true for coverage
+        measures_handler_start(1, OML_CONFIG_PATH);
         // P + C
-        mh_state.power.power_source = (char) PW_SRC_3_3V;
-        mh_state.power.is_valid = 1;
-        mh_state.power.p = 1;
-        mh_state.power.v = 0;
-        mh_state.power.c = 1;
-        data_size = sizeof(unsigned int) + 2*sizeof(float);
-        mh_state.power.raw_values_len = data_size;
+        config_consumption(PW_SRC_3_3V, 1, 0, 1);
+        meas_size = mh_state.consumption.meas_len;
 
-        data[1] = 1;
-        handle_pw_pkt(data, 2 + 4 + data[1] * data_size);
-        ASSERT_EQ(1, consumption_mock_called);
-        ASSERT_EQ(15, consumption_call_args.timestamp_s);
-        ASSERT_EQ(0, consumption_call_args.timestamp_us);
-        ASSERT_EQ(1.0, consumption_call_args.power);
-        ASSERT_TRUE(isnan(consumption_call_args.voltage));
-        ASSERT_EQ(2.0, consumption_call_args.current);
+        expect_value(oml_measures_consumption, timestamp_s, 16);
+        expect_value(oml_measures_consumption, timestamp_us, 42);
+        expect_value(oml_measures_consumption, power,   1.0);
+        expect_any(oml_measures_consumption, voltage);  // NAN can't be checked
+        expect_value(oml_measures_consumption, current, 2.0);
+
+        expect_calls(oml_measures_consumption, 1);
+        handle_measure_pkt(data, 2 + 4 + data[1] * (4 + meas_size ));
 
 
+        // V
+        config_consumption(PW_SRC_3_3V, 0, 1, 0);
+        meas_size = mh_state.consumption.meas_len;
 
-        // only V
-        mh_state.power.p = 0;
-        mh_state.power.v = 1;
-        mh_state.power.c = 0;
-        data_size = sizeof(unsigned int) + 2*sizeof(float);
-        mh_state.power.raw_values_len = data_size;
-        data[1] = 1;
-        handle_pw_pkt(data, 2 + 4 + data[1] * data_size);
-        ASSERT_EQ(2, consumption_mock_called);
+        expect_value(oml_measures_consumption, timestamp_s, 16);
+        expect_value(oml_measures_consumption, timestamp_us, 42);
+        expect_any(oml_measures_consumption, power);  // NAN can't be checked
+        expect_value(oml_measures_consumption, voltage, 1.0);
+        expect_any(oml_measures_consumption, current);
+        expect_calls(oml_measures_consumption, 1);
 
-        ASSERT_EQ(15, consumption_call_args.timestamp_s);
-        ASSERT_EQ(0, consumption_call_args.timestamp_us);
-        ASSERT_TRUE(isnan(consumption_call_args.power));
-        ASSERT_EQ(1.0, consumption_call_args.voltage);
-        ASSERT_TRUE(isnan(consumption_call_args.current));
+        handle_measure_pkt(data, 2 + 4 + data[1] * (4 + meas_size ));
 
         measures_handler_stop();
+
 
         // No OML
-        consumption_mock_called = 0;
         measures_handler_start(0, NULL);
-        // P + C
-        mh_state.power.power_source = (char) PW_SRC_3_3V;
-        mh_state.power.is_valid = 1;
-        mh_state.power.p = 1;
-        mh_state.power.v = 0;
-        mh_state.power.c = 1;
-        data_size = sizeof(unsigned int) + 2*sizeof(float);
-        mh_state.power.raw_values_len = data_size;
-        data[1] = 1;
-        handle_pw_pkt(data, 2 + 4 + data[1] * data_size);
-        measures_handler_stop();
+        config_consumption(PW_SRC_3_3V, 1, 0, 1);
+        meas_size = mh_state.consumption.meas_len;
 
-        ASSERT_EQ(0, consumption_mock_called);
+        expect_calls(oml_measures_consumption, 0); // no calls
+        handle_measure_pkt(data, 2 + 4 + data[1] * (4 + meas_size ));
+
+        measures_handler_stop();
 }
 
-TEST(handle_pw_pkt, invalid_calls)
+
+TEST_F(test_handle_oml_measure, handle_invalid_consumption_packet)
 {
         unsigned char data[64];
 
         // measure packet when not configured
-        measures_handler_start(0, OML_CONFIG_PATH);
-        handle_pw_pkt(data, 0);
+        measures_handler_start(0, NULL);
+        config_consumption(PW_SRC_3_3V, 1, 1, 1);
+
+        data[0] = ((char)CONSUMPTION_FRAME);
+        data[1] = 1; // num_measures
+        int len = 42; // should be 2 + 4 + 1*(4 + meas_size)
+        handle_measure_pkt(data, len);
         ASSERT_STREQ("cn_serial_error: "
-                        "Got PW measure without being configured\n",
+                        "Invalid consumption pkt len: 42 != expected 22\n",
                         print_buff);
 
-        // invalid packet length received
-        mh_state.power.raw_values_len = 4 + 3*4;
-        mh_state.power.is_valid = 1;
-        data[1] = 1; // num_measures
-        int len = 10; // 4 + 1*4 + 2
-        handle_pw_pkt(data, len);
-        ASSERT_STREQ("cn_serial_error: "
-                        "Invalid consumption pkt len: 10 != expected 22\n",
-                        print_buff);
         measures_handler_stop();
 }
 
-
 // handle_radio_measure_pkt
-TEST(handle_radio_measure_pkt, coverage_for_pw_pkt_different_configuration)
+TEST_F(test_handle_oml_measure, handle_radio_packet)
 {
-        unsigned char data[256];
-        struct radio_measure_vals radio;
-        size_t data_size = 6;
 
-        measures_handler_start(0, OML_CONFIG_PATH);
-        memset(print_buff, '\0', sizeof(print_buff));
-
+        uint8_t data[256];
         int index = 0;
+        struct radio_measure radio;
+        size_t meas_size = sizeof(radio);  // channel rssi
+
+        uint32_t time_s;
+        uint32_t time_us;
+
+
+        /* header and time reference (s) */
+        index = 0;
         data[index++] = ((char)RADIO_MEAS_FRAME);
-        data[index++] = 1;  // measure_count
+        data[index++] = 0;
+        time_s = 15;
+        APPEND_TO_ARRAY(data, index, &time_s, sizeof(time_s));
+        /* measure 1 */
+        data[1]++;
+        time_us = 42;
+        APPEND_TO_ARRAY(data, index, &time_us, sizeof(time_us));
 
-        uint32_t t_ref_s = 15;
-        memcpy(&data[index], &t_ref_s, sizeof(uint32_t));
-        index += sizeof(uint32_t);
-
-        // first value
-        radio.time_us = (unsigned int) 0;
         radio.channel = 21;
         radio.rssi = -42;
-        memcpy(&data[index], &radio, data_size);
-        index += data_size;
+        APPEND_TO_ARRAY(data, index, &radio, meas_size);
 
 
-        // num == 1
-        radio_mock_called = 0;
-        data[1] = 1;
-        handle_radio_measure_pkt(data, 2 + 4 + data[1] * data_size);
-        ASSERT_EQ(1, radio_mock_called);
+        // With oml
+        measures_handler_start(0, OML_CONFIG_PATH);
 
-        ASSERT_EQ(15, radio_call_args.timestamp_s);
-        ASSERT_EQ(0, radio_call_args.timestamp_us);
-        ASSERT_EQ(21, radio_call_args.channel);
-        ASSERT_EQ(-42, radio_call_args.rssi);
+        expect_value(oml_measures_radio, timestamp_s, 15);
+        expect_value(oml_measures_radio, timestamp_us, 42);
+        expect_value(oml_measures_radio, channel, 21);
+        expect_value(oml_measures_radio, rssi, -42);
+
+        expect_calls(oml_measures_radio, 1);
+
+        handle_measure_pkt(data, index);
         measures_handler_stop();
 
-        // num == 2
-        radio.time_us = (unsigned int) 1000000;
-        radio.channel = 25;
-        radio.rssi = 42;
-        memcpy(&data[index], &radio, data_size);
-        index += data_size;
-        radio_mock_called = 0;
-        measures_handler_start(1, OML_CONFIG_PATH); // print_measures == true for coverage
-        data[1] = 2;
 
-        handle_radio_measure_pkt(data, 2 + 4 + data[1] * data_size);
-        ASSERT_EQ(2, radio_mock_called);
+        // with print and no OML // print not tested
+        measures_handler_start(1, NULL);
+        expect_calls(oml_measures_radio, 0);
+        handle_measure_pkt(data, index);
 
-        ASSERT_EQ(16, radio_call_args.timestamp_s);
-        ASSERT_EQ(0, radio_call_args.timestamp_us);
-        ASSERT_EQ(25, radio_call_args.channel);
-        ASSERT_EQ(42, radio_call_args.rssi);
         measures_handler_stop();
-
-        // NO OML
-        radio_mock_called = 0;
-        measures_handler_start(0, NULL);
-        handle_radio_measure_pkt(data, 2 + 4 + data[1] * data_size);
-        measures_handler_stop();
-        ASSERT_EQ(0, radio_mock_called);
-
 }
 
 
@@ -328,10 +340,9 @@ TEST(handle_ack_pkt, power_poll_ack)
         data[2] |= MEASURE_CURRENT;
         handle_ack_pkt(data, 3);
 
-        ASSERT_TRUE(mh_state.power.is_valid);
-        ASSERT_EQ(1, mh_state.power.p);
-        ASSERT_EQ(0, mh_state.power.v);
-        ASSERT_EQ(1, mh_state.power.c);
+        ASSERT_EQ(1, mh_state.consumption.p);
+        ASSERT_EQ(0, mh_state.consumption.v);
+        ASSERT_EQ(1, mh_state.consumption.c);
 
         // V
         data[2]  = 0;
@@ -339,10 +350,9 @@ TEST(handle_ack_pkt, power_poll_ack)
         data[2] |= MEASURE_VOLTAGE;
         handle_ack_pkt(data, 3);
 
-        ASSERT_TRUE(mh_state.power.is_valid);
-        ASSERT_EQ(0, mh_state.power.p);
-        ASSERT_EQ(1, mh_state.power.v);
-        ASSERT_EQ(0, mh_state.power.c);
+        ASSERT_EQ(0, mh_state.consumption.p);
+        ASSERT_EQ(1, mh_state.consumption.v);
+        ASSERT_EQ(0, mh_state.consumption.c);
 
         measures_handler_stop();
 }
@@ -383,10 +393,8 @@ TEST(calculate_time, overflow_on_usec_sum)
 // init_measures_handler
 TEST(init_measures_handler, test)
 {
-        mh_state.power.is_valid = 42;
         start_called = 0;
         measures_handler_start(0, OML_CONFIG_PATH);
-        ASSERT_EQ(0, mh_state.power.is_valid);
         measures_handler_stop();
         ASSERT_EQ(1, start_called);
 

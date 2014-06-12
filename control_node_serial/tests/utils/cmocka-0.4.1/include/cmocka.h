@@ -18,6 +18,8 @@
 
 // added by Gaëtan Harter
 #include <setjmp.h>
+//
+
 
 #ifdef _WIN32
 # ifdef _MSC_VER
@@ -37,6 +39,20 @@ int __stdcall IsDebuggerPresent();
 #  endif  /* _MSC_VER < 1500 */
 # endif /* _MSC_VER */
 #endif  /* _WIN32 */
+
+// Added by Gaëtan
+void setup_test(const char *test_name);
+void teardown_test(const char *test_name);
+#define count_call() _check_expected(__func__, "_call_count", __FILE__, __LINE__, 0)
+
+#define expect_calls(test_fct, num)                   \
+    do {                                              \
+        for (unsigned int _i = 0; _i < num; _i++) {   \
+            expect_any(test_fct, _call_count); \
+        }                                             \
+    } while(0)
+
+
 
 /*
  * These headers or their equivalents should be included prior to including

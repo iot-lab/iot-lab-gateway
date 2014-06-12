@@ -85,7 +85,7 @@ clean:
 realclean: clean
 	rm -rf $(RESULTDIR) empty_test.c
 
-$(CMOCKA_OBJS) : $(OBJDIR)/%.o: $(CMOCKA_DIR)/src/%.c
+$(CMOCKA_OBJS) : $(OBJDIR)/%.o: $(CMOCKA_DIR)/src/%.c $(CMOCKA_DIR)/include/%.h
 	$(call quiet-cmd, $(CXX) -c $(COV) $(CFLAGS) $< -o $@, "  CXX   $@")
 
 GTEST_HEADERS  = $(GTEST_DIR)/include/gtest/*.h
