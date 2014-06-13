@@ -240,6 +240,10 @@ TEST(test_parse_cmd, test_commands)
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_NE(0, ret);
 
+        strcpy(cmd, "test_radio_ping_pong invalid");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+
 
         /* gpio */
         strcpy(cmd, "test_gpio start");

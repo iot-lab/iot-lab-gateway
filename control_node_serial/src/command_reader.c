@@ -175,12 +175,8 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
         command = strtok_r(line_buff, " ", &arguments);
         if (!command)
                 return 1;  //empty lines
-        if (get_val(command, commands_d, &frame_type))
-                return 1;  // error in command
-
-
-
         /* Put command */
+        got_error |= get_val(command, commands_d, &frame_type);
         append_data(cmd_buff, &frame_type, sizeof(uint8_t));
 
 
@@ -227,14 +223,16 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 got_error |= get_val(start_stop, state_d, &state);
                 append_data(cmd_buff, &state, sizeof(uint8_t));
 
-
-                if (STOP == state) {
+                switch ((enum mode)state) {
+                case STOP:
                         // config has all zero
                         aux = 0;
                         append_data(cmd_buff, &aux, sizeof(uint8_t));
                         append_data(cmd_buff, &aux, sizeof(uint8_t));
-
-                } else if ((START == state) && (count == 7)) {
+                        break;
+                case START:
+                        if (count != 7)
+                            return 1;
 
                         // source | measures
                         got_error |= get_val(pw_src, power_source_d, &val);
@@ -251,9 +249,10 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                         got_error |= get_val(average, average_d, &val);
                         aux |= val;
                         append_data(cmd_buff, &aux, sizeof(uint8_t));
-
-                } else {
-                        got_error |= 1;
+                        break;
+                default:
+                        got_error = 1;
+                        break;
                 }
         } else if (strcmp(command, "config_radio_stop") == 0) {
                 ;
@@ -296,19 +295,25 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
                 got_error |= get_val(start_stop, state_d, &state);
                 append_data(cmd_buff, &state, sizeof(uint8_t));
 
-                if (STOP == state) {
+                switch ((enum mode) state) {
+                case STOP:
                         aux = 0;  // config has all zero
                         append_data(cmd_buff, &aux, sizeof(uint8_t));
                         append_data(cmd_buff, &aux, sizeof(uint8_t));
-                } else if ((START == state) && (count == 3)) {
+                        break;
+                case START:
+                        if (count != 3)
+                                return 1;
                         got_error |= get_val(tx_power, radio_power_d, &val);
                         if (channel < 11 || channel > 26)
                                 got_error = 1;
 
                         append_data(cmd_buff, &channel, sizeof(uint8_t));
                         append_data(cmd_buff, &val, sizeof(uint8_t));
-                } else {
+                        break;
+                default:
                         got_error = 1;
+                        break;
                 }
 
         // leds control and no args commands

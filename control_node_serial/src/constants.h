@@ -68,7 +68,7 @@ enum alimentation {
         DC      = 0x1,
 };
 
-enum {
+enum mode {
         STOP  = 0x0,
         START = 0x1,
 };

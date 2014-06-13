@@ -2,6 +2,7 @@
 #include <cmocka.h>
 
 #include <math.h>
+#include "mock.h"
 #include "mock_fprintf.h"  // include before other includes
 
 #include "measures_handler.c"
@@ -71,8 +72,6 @@ TEST(handle_measure_pkt, test_different_packets)
 }
 
 
-
-
 void test_measure_handler(uint8_t *buf, struct timeval *time)
 {
         count_call();
@@ -80,17 +79,7 @@ void test_measure_handler(uint8_t *buf, struct timeval *time)
         check_expected(time);
 }
 
-class test_handle_oml_measure : public ::testing::Test {
-        protected:
-                virtual void SetUp() {
-                        setup_test("test_handle_oml_measure");
-                        memset(print_buff, '\0', sizeof(print_buff));
-                }
-                virtual void TearDown() {
-                        teardown_test("test_handle_oml_measure");
-                }
-};
-
+class test_handle_oml_measure : public ::mock_tests {};
 TEST_F(test_handle_oml_measure, handle_multiple_values)
 {
         uint8_t data[256];
@@ -159,7 +148,6 @@ TEST_F(test_handle_oml_measure, handle_consumption_packet)
         uint32_t time_s;
         uint32_t time_us;
 
-
         /* header and time reference (s) */
         index = 0;
         data[index++] = ((char)CONSUMPTION_FRAME);
@@ -174,7 +162,6 @@ TEST_F(test_handle_oml_measure, handle_consumption_packet)
         power.val[1] = 2.0;
         power.val[2] = 3.0;
         APPEND_TO_ARRAY(data, index, &power, 3 * sizeof(float));
-
 
         /*
          * Run test with one packet
@@ -194,7 +181,6 @@ TEST_F(test_handle_oml_measure, handle_consumption_packet)
         handle_measure_pkt(data, index);
         measures_handler_stop();
 
-
         /*
          * cases with non complete values
          */
@@ -212,7 +198,6 @@ TEST_F(test_handle_oml_measure, handle_consumption_packet)
 
         expect_calls(oml_measures_consumption, 1);
         handle_measure_pkt(data, 2 + 4 + data[1] * (4 + meas_size ));
-
 
         // V
         config_consumption(PW_SRC_3_3V, 0, 1, 0);

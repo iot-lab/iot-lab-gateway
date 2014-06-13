@@ -19,6 +19,7 @@ int get_val(char *key, struct dict_entry dict[], uint8_t *val)
                 }
                 i++;
         }
+        *val = 0xFF;
         return -1;
 }
 
@@ -34,6 +35,7 @@ int get_key(uint8_t val, struct dict_entry dict[], char **key)
                 }
                 i++;
         }
+        *key = NULL;
         return -1;
 }
 
