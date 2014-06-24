@@ -115,6 +115,11 @@ class GatewayManager(object):
 
         self.exp_desc['exp_id'] = exp_id
         self.exp_desc['user'] = user
+
+        if config.robot_type() == 'turtlebot':  # pragma: no cover
+            LOGGER.info("I'm a Turtlebot")
+            self._create_user_exp_folders(user, exp_id)
+
         self._create_user_exp_files(user=user, exp_id=exp_id)
         self.user_log_handler = gateway_logging.user_logger(
             self.exp_desc['exp_files']['log'])
@@ -161,10 +166,6 @@ class GatewayManager(object):
                 self._debug_a8_boot_start(5*60, config.OPEN_A8_CFG)
         else:  # pragma: no cover
             pass
-
-        if config.robot_type() == 'roomba':  # pragma: no cover
-            LOGGER.info("I'm a roomba")
-            LOGGER.info("Running Start Roomba")
 
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
