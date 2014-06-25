@@ -18,13 +18,12 @@ from gateway_code import server_rest
 
 import os
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR  = CURRENT_DIR + '/static/' # using the 'static' symbolic link
+STATIC_DIR = CURRENT_DIR + '/static/'  # using the 'static' symbolic link
 
 
 # Bottle FileUpload class stub
-FileUpload = recordtype.recordtype('FileUpload', \
-        ['file', 'name', 'filename', ('headers', None)])
-
+FileUpload = recordtype.recordtype(
+    'FileUpload', ['file', 'name', 'filename', ('headers', None)])
 
 
 class TestRestMethods(unittest.TestCase):
@@ -41,17 +40,16 @@ class TestRestMethods(unittest.TestCase):
         self.request_patcher.stop()
         self.board_patcher.stop()
 
-
     def test_exp_start_with_file_and_profile(self):
-        idle = FileUpload(file = StringIO('empty_firmware'),
-                name = 'firmware', filename = 'idle.elf')
+        idle = FileUpload(file=StringIO('empty_firmware'),
+                          name='firmware', filename='idle.elf')
 
         profile_str = '{ "profilename": "_default_profile", "power": "dc" }'
         profile_dict = {u'profilename': u'_default_profile', u'power': u'dc'}
 
-        default_profile = FileUpload(\
-                file = StringIO(profile_str),
-                name = 'profile', filename = 'default_profile.json')
+        default_profile = FileUpload(
+            file=StringIO(profile_str),
+            name='profile', filename='default_profile.json')
 
         g_m = mock.Mock()
         s_r = server_rest.GatewayRest(g_m)
@@ -63,21 +61,20 @@ class TestRestMethods(unittest.TestCase):
 
         # validate arguments
         call_args = g_m.exp_start.call_args[0]
-        self.assertEquals(('user', 123), call_args[0:2])
+        self.assertEquals(('user', 123), call_args[0: 2])
         self.assertTrue(idle.filename in call_args[2])
         self.assertEquals(profile_dict, call_args[3])
 
     def test_exp_start_invalid_profile(self):
 
         profile = FileUpload(file=StringIO('not a valid profile json, }'),
-            name='profile', filename='default_profile.json')
+                             name='profile', filename='default_profile.json')
 
         s_r = server_rest.GatewayRest(None)
 
         self.request.files = {'profile': profile}
         ret_dict = s_r.exp_start('user', '123')
         self.assertNotEquals(0, ret_dict['ret'])
-
 
     def test_exp_start_no_files(self):
         g_m = mock.Mock()
@@ -92,7 +89,6 @@ class TestRestMethods(unittest.TestCase):
         # validate
         g_m.exp_start.assert_called_with('user', 123, None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
-
 
     def test_exp_start_valid_duration(self):
         g_m = mock.Mock()
@@ -127,7 +123,6 @@ class TestRestMethods(unittest.TestCase):
         g_m.exp_start.assert_called_with('user', 123, None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
 
-
     def test_exp_stop(self):
         g_m = mock.Mock()
         s_r = server_rest.GatewayRest(g_m)
@@ -140,7 +135,6 @@ class TestRestMethods(unittest.TestCase):
         ret_dict = s_r.exp_stop()
         self.assertEquals(1, ret_dict['ret'])
 
-
     def test_set_time(self):
         g_m = mock.Mock()
         s_r = server_rest.GatewayRest(g_m)
@@ -149,10 +143,9 @@ class TestRestMethods(unittest.TestCase):
         ret_dict = s_r.set_time()
         self.assertEquals(0, ret_dict['ret'])
 
-
     def test_flash_function(self):
-        idle = FileUpload(file = StringIO('empty_firmware'),
-                name = 'firmware', filename = 'idle.elf')
+        idle = FileUpload(file=StringIO('empty_firmware'),
+                          name='firmware', filename='idle.elf')
 
         g_m = mock.Mock()
         s_r = server_rest.GatewayRest(g_m)
@@ -170,8 +163,6 @@ class TestRestMethods(unittest.TestCase):
         call_args = g_m.node_flash.call_args[0]
         self.assertEquals('gwt', call_args[0])
         self.assertTrue(idle.filename in call_args[1])
-
-
 
     def test_generic_flash_wrappers(self):
         g_m = mock.Mock()
@@ -212,10 +203,10 @@ class TestRestMethods(unittest.TestCase):
     def auto_tests(self):
         g_m = mock.Mock()
         s_r = server_rest.GatewayRest(g_m)
-        g_m.auto_tests.return_value = {'ret':0,
-                                       'error':[], 'success':['test_ok'],
-                                       'mac':{'A8':'12:34:56:78:9A:BC'}
-                                      }
+        g_m.auto_tests.return_value = {'ret': 0,
+                                       'error': [], 'success': ['test_ok'],
+                                       'mac': {'A8': '12: 34: 56: 78: 9A: BC'}
+                                       }
 
         self.request.query = mock.Mock(channel='', flash='', gps='')
         ret_dict = s_r.auto_tests(mode=None)
@@ -254,6 +245,8 @@ MOCK_FIRMWARES = {
     'idle': STATIC_DIR + 'idle.elf',
     'control_node': STATIC_DIR + 'control_node.elf',
     }
+
+
 @patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
 @patch('gateway_code.gateway_manager.config.FIRMWARES', MOCK_FIRMWARES)
 @patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
@@ -271,4 +264,3 @@ class TestServerRestMain(unittest.TestCase):
 
         args = ['server_rest.py', 'localhost', '8080']
         gateway_code.server_rest._main(args)
-

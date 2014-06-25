@@ -13,6 +13,7 @@ from mock import patch
 from gateway_code import gateway_manager
 from gateway_code import config
 
+
 class TestA8StartStop(unittest.TestCase):
 
     def test_setup(self):
@@ -41,7 +42,6 @@ class TestA8StartStop(unittest.TestCase):
         self.assertNotEquals(0, g_m._debug_stop_a8_tty('/dev/null'))
         self.assertEquals(0, g_m._debug_stop_a8_tty('no_tty_file'))
 
-
     def test_create_and_cleanup_user_exp_files(self):
         """ Create files and clean them"""
         with patch('gateway_code.gateway_manager.config.EXP_FILES_DIR',
@@ -69,7 +69,7 @@ class TestA8StartStop(unittest.TestCase):
         g_m.exp_desc['exp_files']['non_empty_file'] = "test_file_2"
         open("test_file", 'w').close()
         with open('test_file_2', 'w') as test_file:
-            test_file.write('test\n');
+            test_file.write('test\n')
 
         g_m._cleanup_user_exp_files()
 

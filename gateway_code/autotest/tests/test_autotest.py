@@ -9,7 +9,6 @@ from gateway_code.autotest import autotest
 
 class TestProtocol(unittest.TestCase):
 
-
     def setUp(self):
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
@@ -17,7 +16,8 @@ class TestProtocol(unittest.TestCase):
     @mock.patch('gateway_code.autotest.autotest.LOGGER')
     def test__check(self, mock_logger):
 
-        self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}
+        self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
+                             'mac': {}}
 
         # test validate
         ret_1 = self.g_v._check(0, 'message_1', ['1', '2'])
@@ -29,7 +29,6 @@ class TestProtocol(unittest.TestCase):
         self.assertTrue('message_1' in self.g_v.ret_dict['success'])
         self.assertTrue('message_2' in self.g_v.ret_dict['error'])
 
-
     @mock.patch('gateway_code.autotest.autotest.LOGGER.debug')
     def test_run_test(self, mock_debug):
         self.g_v.on_serial = mock.Mock()
@@ -37,7 +36,6 @@ class TestProtocol(unittest.TestCase):
         self.send_ret = []
         self.g_v.on_serial.send_command.side_effect = \
             lambda x: self.send_ret.pop(0)
-
 
         self.send_ret.append(['ACK', 'COMMAND', '3.14'])
         self.send_ret.append(None)
@@ -58,10 +56,10 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
     @mock.patch('gateway_code.config.board_type', lambda: 'M3')
-    #@mock.patch('gateway_code.autotest.config.board_type', lambda: 'M3')
     def test_fail_on_setup_control_node(self):
         def setup(*args, **kwargs):
-            self.g_v.ret_dict = {'ret': None, 'success':[], 'error':[], 'mac':{}}
+            self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
+                                 'mac': {}}
             self.g_v.ret_dict['error'].append('setup')
             raise autotest.FatalError('Setup failed')
 
@@ -84,4 +82,3 @@ class TestAutotestFatalError(unittest.TestCase):
     def test_fatal_error(self):
         error = autotest.FatalError("error_value")
         self.assertEquals("'error_value'", str(error))
-

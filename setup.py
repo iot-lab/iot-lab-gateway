@@ -66,7 +66,6 @@ except KeyError:
     pass
 
 
-
 class _Tee(object):
     """
     File object which mimic 'tee' linux command behaviour
@@ -173,8 +172,7 @@ class Lint(Command):
         from pylint import lint
         lint_args = self.report_opt
         lint_args += ['--rcfile=pylint.rc', 'gateway_code/', 'setup.py']
-                      #'roomba/'
-
+        # 'roomba/'
 
         with _Tee(self.outfile, 'w'):
             lint.Run(lint_args, exit=False)
@@ -190,7 +188,11 @@ class Pep8(_EmptyCommand):
 
     def run(self):
         import pep8
-        sys.argv = ['./pep8.py', 'gateway_code/', 'roomba/']
+
+        sys.argv = ['./pep8.py', 'setup.py', 'gateway_code/', 'roomba/']
+        # scripts don't have .py extension so list them one by one
+        sys.argv += ['bin/scripts/' + f for f in os.listdir('bin/scripts')]
+
         with _Tee(self.outfile, 'w'):
             pep8._main()  # pylint: disable=W0212
 
@@ -239,6 +241,7 @@ class IntegrationTests(Command):
         subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
         subprocess.call(args + ['pep8', '-o', 'pep8.out'])
 
+
 class OnlyIntegrationTests(Command):
     """ Run unit tests and integration tests.  Should be run on a gateway """
     user_options = [('stop', None, "Stop tests after a failed test")]
@@ -252,6 +255,7 @@ class OnlyIntegrationTests(Command):
                           '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
         if self.stop:
             self.nose_args += ['--stop']
+
     def run(self):
         args = ['python', 'setup.py']
 
@@ -264,8 +268,6 @@ class OnlyIntegrationTests(Command):
 
         ret = subprocess.call(args + self.nose_args, env=env)
         return ret
-
-
 
 setup(name='gateway_code',
       version='0.3',
@@ -288,5 +290,4 @@ setup(name='gateway_code',
                 'run_integration_tests': OnlyIntegrationTests,
                 'test_roomba': TestsRoomba},
       install_requires=INSTALL_REQUIRES,
-      setup_requires=TESTS_REQUIRES + INSTALL_REQUIRES,
-     )
+      setup_requires=TESTS_REQUIRES + INSTALL_REQUIRES)

@@ -3,7 +3,6 @@
 import unittest
 import mock
 
-
 import threading
 import Queue
 from gateway_code.autotest import m3_node_interface
@@ -40,12 +39,14 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
 
     def test_start_with_serial_exception(self):
         import serial
-        self.serial.flushInput.side_effect = serial.SerialException("ERROR_TEST")
+        self.serial.flushInput.side_effect = \
+            serial.SerialException("ERROR_TEST")
         ret = self.on_interface.start()
         self.assertEquals((1, "ERROR_TEST"), ret)
 
     def test_send_command(self):
         cmd_ret = ['ANSWER', 'RETURN', 'VALUE']
+
         def _mock_serial_send_cmd(_serial_data):
             return cmd_ret
         self.on_interface._serial_send_cmd = mock.Mock()
@@ -86,7 +87,6 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
                           ['blabla'])
         self.assertEquals(0, self.on_interface._serial_send_cmd.call_count)
 
-
     @mock.patch('Queue.Queue')
     def test_serial_send_cmd(self, mock_queue_class):
         mock_queue = mock_queue_class.return_value
@@ -106,12 +106,12 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
 
         self.on_interface.stop()
 
-
     @mock.patch('Queue.Queue')
     def test_serial_reader(self, mock_queue_class):
         mock_queue = mock_queue_class.return_value
 
         readline_ret_list = ['begin of ', 'complete answer\n']
+
         def readline_mock(*args, **kwargs):
             if len(readline_ret_list) == 0:
                 self.readline_called.set()
@@ -130,5 +130,3 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         self.on_interface.stop()
 
         mock_queue.put.assert_called_with('begin of complete answer')
-
-

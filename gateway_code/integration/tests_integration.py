@@ -86,7 +86,6 @@ class GatewayCodeMock(unittest.TestCase):
             file=open(CURRENT_DIR + 'invalid_profile_2.json', 'rb'),
             name='profile', filename='invalid_profile_2.json')
 
-
     @classmethod
     def tearDownClass(cls):
         for file_obj in cls.files.itervalues():
@@ -117,6 +116,7 @@ class GatewayCodeMock(unittest.TestCase):
     def tearDown(self):
         self.request_patcher.stop()
         self.app.exp_stop()  # just in case, post error cleanup
+
 
 def _send_command_open_node(host, port, command):
     """ send a command to host/port and wait for an answer as a line """
@@ -153,7 +153,6 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             self.exp_conf['user'], self.exp_conf['exp_id']
         )
 
-
     def tearDown(self):
         super(TestComplexExperimentRunning, self).tearDown()
         self.app.gateway_manager._destroy_user_exp_folders(
@@ -169,12 +168,10 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         ret = self.app.admin_control_soft_reset()
         self.assertEquals(ret, {'ret': 0})
 
-
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
         gateway_code.control_node_interface.LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
-
 
     @patch('gateway_code.control_node_interface.LOGGER.error')
     def tests_complete_experiments(self, m_error):
@@ -313,7 +310,6 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         except IOError:
             self.fail('File should exist %r' % exp_files['consumption'])
 
-
     def tests_experiment_timeout(self):
         """ Test two experiments with a timeout """
         self._rewind_files()
@@ -333,7 +329,6 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         # experiment should be stopped
         self.assertFalse(self.app.gateway_manager.experiment_is_running)
 
-
         # Stop remove timeout
         self.request.query = mock.Mock(timeout='5')
         ret = self.app.exp_start(USER, '1234')
@@ -348,27 +343,26 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.assertTrue(self.app.gateway_manager.experiment_is_running)
         ret = self.app.exp_stop()
 
-
         # Simulate strange case where timeout is called when another experiment
         # is already running
         self.request.query = mock.Mock(timeout='5')
         ret = self.app.exp_start(USER, '1234')
         self.assertEquals(ret, {'ret': 0})
 
-        self.app.gateway_manager.exp_desc['exp_id'] = '2345'  # 'change' experiment
+        # 'change' experiment
+        self.app.gateway_manager.exp_desc['exp_id'] = '2345'
         time.sleep(10)   # Ensure that timeout could have occured
         self.app.gateway_manager.rlock.acquire()  # wait calls ended
         self.app.gateway_manager.rlock.release()
         self.assertTrue(self.app.gateway_manager.experiment_is_running)
 
-        self.app.gateway_manager.exp_desc['exp_id'] = '1234'  # recover experiment
+        # Cleanup experiment
+        self.app.gateway_manager.exp_desc['exp_id'] = '1234'
         ret = self.app.exp_stop()
-
 
         # Cleanup measures folder
         for exp_id in ['1234', '2345']:
             self.app.gateway_manager._destroy_user_exp_folders(USER, exp_id)
-
 
     def tests_non_regular_start_stop_calls(self):
         """ Test start calls when not needed
@@ -396,7 +390,6 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             # exp already stoped no error
             ret = self.app.gateway_manager.exp_stop()
             self.assertEquals(ret, 0)
-
 
     def tests_invalid_tty_state_at_start_stop_for_A8(self):
         """  Test start/stop calls where A8 tty is in invalid state
@@ -501,7 +494,6 @@ class TestUncommonCasesGatewayManager(GatewayCodeMock):
             except OSError:
                 pass
 
-
     def tearDown(self):
         self.measures_path_patcher.stop()
         self.user_log_path_patcher.stop()
@@ -534,4 +526,3 @@ class TestInvalidCases(GatewayCodeMock):
         self.request.files = {'profile': self.files['profile']}
         ret = self.app.open_flash()
         self.assertNotEquals(ret, {'ret': 0})
-

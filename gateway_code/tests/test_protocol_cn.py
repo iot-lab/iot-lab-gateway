@@ -8,20 +8,14 @@ from gateway_code import protocol_cn
 from gateway_code import profile
 
 
-
 class TestProtocol(unittest.TestCase):
-
 
     def setUp(self):
         self.protocol = protocol_cn.Protocol(self._sender_wrapper)
         self.sender = mock.Mock()
 
-
-
     def _sender_wrapper(self, command_list):
         return self.sender(command_list)
-
-
 
     def test_consumption_start(self):
 
@@ -36,11 +30,10 @@ class TestProtocol(unittest.TestCase):
                                           voltage=True,
                                           current=True)
         ret = self.protocol.config_consumption(consumption)
+        self.assertEquals(0, ret)
         self.sender.assert_called_with(['config_consumption_measure', 'start',
                                         '3.3V', 'p', '1', 'v', '1', 'c', '1',
                                         '-p', '140us', '-a', '1'])
-        self.assertEquals(0, ret)
-
 
         # consumption without all elements
         consumption = profile.Consumption(power_source='battery',
@@ -49,12 +42,10 @@ class TestProtocol(unittest.TestCase):
                                           average='1024',
                                           power=True)
         ret = self.protocol.config_consumption(consumption)
+        self.assertEquals(0, ret)
         self.sender.assert_called_with(['config_consumption_measure', 'start',
                                         'BATT', 'p', '1', 'v', '0', 'c', '0',
                                         '-p', '8244us', '-a', '1024'])
-        self.assertEquals(0, ret)
-
-
 
     def test_consumption_stop(self):
 
@@ -79,7 +70,6 @@ class TestProtocol(unittest.TestCase):
         ret = self.protocol.start_stop('start', 'dc')
         self.sender.assert_called_with(['start', 'dc'])
         self.assertEquals(0, ret)
-
 
         # return NACK
         self.sender.return_value = ['start', 'ACK']
@@ -120,22 +110,16 @@ class TestProtocol(unittest.TestCase):
 
 class TestProtocolRadio(unittest.TestCase):
 
-
     def setUp(self):
         self.protocol = protocol_cn.Protocol(self._sender_wrapper)
-        #self.stop_cmd_mock = mock.Mock()
-        #self.protocol._stop_radio = self.stop_cmd_mock
-
         self.sender = mock.Mock()
 
     def _sender_wrapper(self, command_list):
         return self.sender(command_list)
 
-
-
     def test_config_radio_with_measure(self):
         """ Configure Radio with 'measure' mode """
-        radio = profile.Radio("rssi", [17,15,11], 100, num_per_channel=10)
+        radio = profile.Radio("rssi", [17, 15, 11], 100, num_per_channel=10)
 
         self.protocol._config_radio_measure = mock.Mock()
         self.protocol._config_radio_measure.return_value = 0
@@ -167,7 +151,6 @@ class TestProtocolRadio(unittest.TestCase):
         self.assertRaises(NotImplementedError,
                           self.protocol.config_radio, radio)
 
-
     def test_config_radio_error_during_config(self):
 
         radio = profile.Radio("rssi", [11], 10, num_per_channel=10)
@@ -183,18 +166,15 @@ class TestProtocolRadio(unittest.TestCase):
         self.assertEquals(0, self.protocol._stop_radio.call_count)
         self.assertEquals(1, self.protocol._config_radio_measure.call_count)
 
-
     def test_config_radio_measure(self):
 
-        radio = profile.Radio("rssi", [17,15,11], 100, num_per_channel=10)
+        radio = profile.Radio("rssi", [17, 15, 11], 100, num_per_channel=10)
 
         self.sender.return_value = ['config_radio_measure', 'ACK']
         ret = self.protocol._config_radio_measure(radio)
         self.sender.assert_called_with(['config_radio_measure', '11,15,17',
                                         '100', '10'])
         self.assertEquals(0, ret)
-
-
 
     def test__stop_radio(self):
 
@@ -204,4 +184,3 @@ class TestProtocolRadio(unittest.TestCase):
 
         self.sender.assert_called_with(['config_radio_stop'])
         self.assertEquals(0, ret)
-

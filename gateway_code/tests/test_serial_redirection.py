@@ -10,12 +10,11 @@ import threading
 from gateway_code.serial_redirection import SerialRedirection
 from gateway_code import serial_redirection
 
-_SerialRedirection_str = 'gateway_code.serial_redirection.' + \
-        '_SerialRedirectionThread'
+_SerialRedirection_str = ('gateway_code.serial_redirection.' +
+                          '_SerialRedirectionThread')
 
 
-captured_err = StringIO()
-@mock.patch('sys.stderr', captured_err)
+@mock.patch('sys.stderr', StringIO())
 class TestMainFunction(unittest.TestCase):
 
     def setUp(self):
@@ -25,7 +24,7 @@ class TestMainFunction(unittest.TestCase):
 
         self.popen.communicate.side_effect = self._communicate
         self.popen.communicate.return_value = ("OUT", "ERR")
-        self.popen.terminate.side_effect   = self._terminate
+        self.popen.terminate.side_effect = self._terminate
         self.popen.returncode = 0
 
         self.unlock_communicate = threading.Event()
@@ -36,7 +35,7 @@ class TestMainFunction(unittest.TestCase):
     def tearDown(self):
         self.popen.stop()
         if self.redirect is not None:
-            self.redirect.stop() # last chance cleanup
+            self.redirect.stop()  # last chance cleanup
 
     def _communicate(self):
         self.communicate_called.set()
@@ -47,14 +46,13 @@ class TestMainFunction(unittest.TestCase):
     def _terminate(self):
         self.unlock_communicate.set()
 
-
     def test_simple_start(self):
 
         redirection = SerialRedirection('m3')
 
-        self.assertEquals(redirection.stop(),  1) # cannot stop before start
+        self.assertEquals(redirection.stop(),  1)  # cannot stop before start
         self.assertEquals(redirection.start(), 0)
-        self.assertEquals(redirection.start(), 1) # only one start
+        self.assertEquals(redirection.start(), 1)  # only one start
 
         self.communicate_called.wait()
 
@@ -62,8 +60,6 @@ class TestMainFunction(unittest.TestCase):
 
         self.assertTrue(self.popen.communicate.call_count >= 1)
         self.assertTrue(self.popen.terminate.call_count >= 1)
-
-
 
     def test_program_error(self):
         """
@@ -84,14 +80,14 @@ class TestMainFunction(unittest.TestCase):
             self.communicate_called.wait()
             self.redirection.stop()
 
-            mock_logger.assert_called_with('Open node serial redirection exit: %d', 42)
-
+            mock_logger.assert_called_with(
+                'Open node serial redirection exit: %d', 42)
 
     def test_simple_case(self):
         def wait_mock():
             """ 'wait' will call the ctrl+c handler has if a ctrl+c was got """
             import signal
-            handler = signal.getsignal(signal.SIGINT) # get ctrl+c handler
+            handler = signal.getsignal(signal.SIGINT)  # get ctrl+c handler
             handler(None, None)
 
         with mock.patch('gateway_code.serial_redirection.Event') as mock_event:
@@ -101,17 +97,15 @@ class TestMainFunction(unittest.TestCase):
             serial_redirection._main(['serial_redirection.py', 'm3'])
             self.assertEquals(event.wait.call_count, 1)
 
-
-
     @mock.patch('gateway_code.serial_redirection.SerialRedirection')
     def test_error_with_start_redirection(self, mock_serial_class):
         # start SerialRedirection fail
         (mock_serial_class.return_value).start.return_value = 1
-        self.assertRaises(SystemExit, \
-                serial_redirection._main, ['serial_redirection.py', 'm3'])
+        self.assertRaises(SystemExit,
+                          serial_redirection._main,
+                          ['serial_redirection.py', 'm3'])
 
 
-from gateway_code.serial_redirection import _SerialRedirectionThread
 class TestSerialRedirectionAndThread(unittest.TestCase):
 
     def setUp(self):
@@ -121,7 +115,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
 
         self.popen.communicate.side_effect = self._communicate
         self.popen.communicate.return_value = ("OUT", "ERR")
-        self.popen.terminate.side_effect   = self._terminate
+        self.popen.terminate.side_effect = self._terminate
         self.popen.returncode = 0
 
         self.unlock_communicate = threading.Event()
@@ -132,7 +126,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
     def tearDown(self):
         self.popen.stop()
         if self.redirect is not None:
-            self.redirect.stop() # last chance cleanup
+            self.redirect.stop()  # last chance cleanup
 
     def _communicate(self):
         self.communicate_called.set()
@@ -142,8 +136,6 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
 
     def _terminate(self):
         self.unlock_communicate.set()
-
-
 
     def test_terminate_on_non_started_process(self):
         """
@@ -164,7 +156,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
             return mock.DEFAULT
 
         def communicate():
-            self.popen_class.side_effect  = None
+            self.popen_class.side_effect = None
             return self._communicate()
 
         self.popen_class.side_effect = blocking_popen
@@ -173,12 +165,10 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         self.redirect = serial_redirection._SerialRedirectionThread('tty', 42)
         self.redirect.start()
 
-        signal.signal(signal.SIGALRM, (lambda a,b: unlock_popen.set()))
-        signal.alarm(1) # alarm will release popen
+        signal.signal(signal.SIGALRM, (lambda a, b: unlock_popen.set()))
+        signal.alarm(1)  # alarm will release popen
         self.redirect.stop()
         signal.alarm(0)          # Disable the alarm
-
-
 
     def test_process_allready_terminated_os_error(self):
         #
@@ -200,7 +190,6 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         self.redirect.stop()
 
 
-
 @mock.patch(_SerialRedirection_str)
 class TestSerialRedirectionInit(unittest.TestCase):
     """ Test the SerialRedirection class init """
@@ -216,15 +205,15 @@ class TestSerialRedirectionInit(unittest.TestCase):
         self.assertRaises(ValueError, SerialRedirection, 'INVALID_NODE')
 
 
-captured_err = StringIO()
-@mock.patch('sys.stderr', captured_err)
+@mock.patch('sys.stderr', StringIO())
 class TestParseArguments(unittest.TestCase):
     def test_command_line_calls(self):
         from gateway_code import config
         # valid
         for node in config.NODES:
-            self.assertEquals(serial_redirection._parse_arguments([node]), node)
+            self.assertEquals(serial_redirection._parse_arguments([node]),
+                              node)
         # invalid calls
         args = ['INEXISTANT_NODE']
-        self.assertRaises(SystemExit, serial_redirection._parse_arguments, args)
-
+        self.assertRaises(SystemExit,
+                          serial_redirection._parse_arguments, args)

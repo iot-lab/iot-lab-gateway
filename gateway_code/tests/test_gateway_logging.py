@@ -5,6 +5,7 @@ import logging
 from gateway_code import gateway_logging, config
 import os
 
+
 class TestGatewayLogging(unittest.TestCase):
 
     def test_multiple_calls(self):
@@ -17,16 +18,13 @@ class TestGatewayLogging(unittest.TestCase):
 
         self.assertEquals(handlers_one, handlers_two)
 
-
     def test_user_logger(self):
 
         logger = logging.getLogger(__name__)
 
         log_file = 'test_log_file.log'
         log_handler = gateway_logging.user_logger(log_file)
-
         logger.addHandler(log_handler)
-
 
         for i in range(0, 100):
             logger.info('Test log %d', i)
@@ -38,5 +36,3 @@ class TestGatewayLogging(unittest.TestCase):
         self.assertNotEquals(0, os.stat(log_file).st_size)
 
         os.remove(log_file)
-
-

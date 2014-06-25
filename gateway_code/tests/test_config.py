@@ -1,10 +1,8 @@
 #! /usr/bin/env python
-#-*- coding:utf-8 -*-
-
+# -*- coding:utf-8 -*-
 
 import mock
 import unittest
-
 
 from cStringIO import StringIO
 
@@ -42,7 +40,6 @@ class TestsBoardAndRobotType(unittest.TestCase):
 
     def tearDown(self):
         self.open_mock_patcher.stop()
-
 
     def test_board_type(self):
 
