@@ -6,7 +6,7 @@ DEST="/tmp/fit-dev/"
 # options
 
 verbose=0
-SSH_OPT=''
+SSH_OPT='-o StrictHostKeyChecking=no'
 tests_only=0
 GATEWAY_HOSTNAME=
 
@@ -27,7 +27,7 @@ parse_arguments()
     local OPTIND=1
     while getopts "hvF:t" opt; do
         case "$opt" in
-            F) SSH_OPT="-F $(readlink -e $OPTARG)"
+            F) SSH_OPT="${SSH_OPT} -F $(readlink -e $OPTARG)"
                 ;;
             h) usage
                 exit 0

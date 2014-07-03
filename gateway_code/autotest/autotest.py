@@ -103,6 +103,9 @@ class AutoTestManager(object):
 
         if board_type == 'A8':
             try:
+                ret_val += self.g_m._debug_start_a8_tty(
+                    gateway_code.config.OPEN_A8_CFG['tty'], timeout=20)
+
                 # wait nodes booting
                 self.a8_connection = open_a8_interface.OpenA8Connection()
 

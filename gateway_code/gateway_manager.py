@@ -158,8 +158,9 @@ class GatewayManager(object):
         else:  # pragma: no cover
             pass
         if config.board_type() == 'A8':
+            # 15 secs was not always enough
             ret = self._debug_start_a8_tty(config.OPEN_A8_CFG['tty'],
-                                           timeout=5)
+                                           timeout=20)
             ret_val += ret
             if ret == 0:
                 # Timeout 5 minutes for boot

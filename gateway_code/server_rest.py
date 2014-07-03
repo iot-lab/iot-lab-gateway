@@ -39,8 +39,8 @@ class GatewayRest(object):
         bottle.route('/open/stop', 'PUT')(self.open_stop)
 
         # query_string: channel=int[11:26]
-        bottle.route('/status', 'PUT')(self.auto_tests)
-        bottle.route('/status/<mode>', 'PUT')(self.auto_tests)
+        bottle.route('/autotest', 'PUT')(self.auto_tests)
+        bottle.route('/autotest/<mode>', 'PUT')(self.auto_tests)
 
         # node specific commands
         if self.board_type == 'M3':
