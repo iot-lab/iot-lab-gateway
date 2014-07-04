@@ -5,15 +5,20 @@ Unit tests for gateway-manager
 Complement the 'integration' tests
 """
 
+import os
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
+
 import unittest
 import mock
 import os
 from mock import patch
 
 from gateway_code import gateway_manager
-from gateway_code import config
 
 
+@patch('gateway_code.config.board_type', (lambda: 'M3'))
+@patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
 class TestA8StartStop(unittest.TestCase):
 
     def test_setup(self):
@@ -33,14 +38,14 @@ class TestA8StartStop(unittest.TestCase):
         self.assertRaises(StandardError, g_m.setup)
 
     def test_start_stop_a8_tty(self):
-        """ Test running _debug_start_a8_tty and _debyg_stop_a8_tty fcs """
+        """ Test running wait_tty_a8 and _wait_no_tty_a8 fcs """
         g_m = gateway_manager.GatewayManager()
 
-        self.assertEquals(0, g_m._debug_start_a8_tty('/dev/null'))
-        self.assertNotEquals(0, g_m._debug_start_a8_tty('no_tty_file'))
+        self.assertEquals(0, g_m.wait_tty_a8('/dev/null'))
+        self.assertNotEquals(0, g_m.wait_tty_a8('no_tty_file'))
 
-        self.assertNotEquals(0, g_m._debug_stop_a8_tty('/dev/null'))
-        self.assertEquals(0, g_m._debug_stop_a8_tty('no_tty_file'))
+        self.assertNotEquals(0, g_m._wait_no_tty_a8('/dev/null'))
+        self.assertEquals(0, g_m._wait_no_tty_a8('no_tty_file'))
 
     def test_create_and_cleanup_user_exp_files(self):
         """ Create files and clean them"""

@@ -1,0 +1,11 @@
+{
+    "profilename": "radio_sniffer_3",
+    "power": "dc",
+
+    "radio": {
+        "mode" : "sniffer",
+        "channels" : [11],
+        "period" : 0,
+        "payload" : false
+    }
+}

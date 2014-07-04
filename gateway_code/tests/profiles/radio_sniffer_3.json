@@ -1,0 +1,9 @@
+{
+    "profilename": "radio_sniffer_3_default_values",
+    "power": "dc",
+
+    "radio": {
+        "mode" : "sniffer",
+        "channels" : [11]
+    }
+}

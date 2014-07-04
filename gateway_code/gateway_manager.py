@@ -31,8 +31,20 @@ class GatewayManager(object):
 
     Manages experiments, open node and control node
     """
+    board_type = None
+    default_profile = None
 
     def __init__(self, log_folder='.'):
+
+        _board_type = config.board_type()
+        if _board_type not in ('M3', 'A8'):
+            raise ValueError('Board type not managed %r' % _board_type)
+
+        # Init class arguments when creating gateway_manager
+        # Allows mocking config.board_type in tests
+        GatewayManager.board_type = _board_type
+        GatewayManager.default_profile = Profile(board_type=_board_type,
+                                                 **config.default_profile())
 
         # current experiment infos
         self.exp_desc = {
@@ -41,7 +53,7 @@ class GatewayManager(object):
             'exp_files': {}
         }
         self.experiment_is_running = False
-        self.profile = None
+        self.profile = self.default_profile
         self.open_node_state = "stop"
         self.user_log_handler = None
 
@@ -97,18 +109,15 @@ class GatewayManager(object):
         4) Experiment Started
 
         """
-        if config.board_type() not in ('M3', 'A8'):
-            raise NotImplementedError('Board type not managed')
-
         if self.experiment_is_running:
             LOGGER.debug('Experiment running. Stop previous experiment')
             self.exp_stop()
 
         try:
-            _prof = profile or config.default_profile()
-            self.profile = Profile(_prof, config.board_type())
-        except ValueError:
-            LOGGER.error('Invalid profile')
+            if profile is not None:
+                self.profile = Profile(board_type=self.board_type, **profile)
+        except (ValueError, TypeError) as err:
+            LOGGER.error('Invalid profile: %r', err)
             return 1
 
         self.experiment_is_running = True
@@ -151,16 +160,13 @@ class GatewayManager(object):
         # # # # # # # # # # #
         # Prepare Open Node #
         # # # # # # # # # # #
-        if config.board_type() == 'M3':
+        if self.board_type == 'M3':
             ret_val += self.node_flash('m3', firmware_path)
             ret_val += self.serial_redirection.start()
             # ret_val += self.gdb_server.start()
-        else:  # pragma: no cover
-            pass
-        if config.board_type() == 'A8':
+        elif self.board_type == 'A8':
             # 15 secs was not always enough
-            ret = self._debug_start_a8_tty(config.OPEN_A8_CFG['tty'],
-                                           timeout=20)
+            ret = self.wait_tty_a8(config.OPEN_A8_CFG['tty'], timeout=20)
             ret_val += ret
             if ret == 0:
                 # Timeout 5 minutes for boot
@@ -218,7 +224,7 @@ class GatewayManager(object):
         # Cleanup Control node config #
         # # # # # # # # # # # # # # # #
 
-        self.profile = Profile(config.default_profile(), config.board_type())
+        self.profile = self.default_profile
         ret_val += self.exp_update_profile()
         ret_val += self.open_power_start(power='dc')
         ret_val += self.protocol.green_led_on()
@@ -230,19 +236,19 @@ class GatewayManager(object):
         # # # # # # # # # # #
         # Cleanup open node #
         # # # # # # # # # # #
-        if config.board_type() == 'M3':
+        if self.board_type == 'M3':
             # ret_val += self.gdb_server.stop()
             ret_val += self.serial_redirection.stop()
             ret_val += self.node_flash('m3', config.FIRMWARES['idle'])
-        elif config.board_type() == 'A8':
+        elif self.board_type == 'A8':
             self._debug_a8_boot_stop_thread()
         else:  # pragma: no cover
             raise NotImplementedError('Board type not managed')
         ret_val += self.open_power_stop(power='dc')
 
-        if config.board_type() == 'A8':
-            ret_val += self._debug_stop_a8_tty(config.OPEN_A8_CFG['tty'],
-                                               timeout=5)
+        if self.board_type == 'A8':
+            ret_val += self._wait_no_tty_a8(config.OPEN_A8_CFG['tty'],
+                                            timeout=5)
 
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
@@ -262,7 +268,7 @@ class GatewayManager(object):
         return ret_val
 
     @staticmethod
-    def _debug_start_a8_tty(a8_tty, timeout=0):
+    def wait_tty_a8(a8_tty, timeout=0):
         """ Procedure to call at a8 startup
         It runs sanity checks and start debug features """
         # Test if open a8 tty correctly appeared
@@ -272,7 +278,7 @@ class GatewayManager(object):
         return 0
 
     @staticmethod
-    def _debug_stop_a8_tty(a8_tty, timeout=0):
+    def _wait_no_tty_a8(a8_tty, timeout=0):
         """ Procedure to call at a8 stop
         It runs sanity checks and stop debug features """
         # Test if open a8 tty correctly disappeared
@@ -306,10 +312,8 @@ class GatewayManager(object):
             pass
 
     @common.syncronous('rlock')
-    def exp_update_profile(self, profile=None):
+    def exp_update_profile(self):
         """ Update the control node profile """
-        if profile is not None:
-            self.profile = profile
         LOGGER.debug('Update profile')
 
         ret = 0

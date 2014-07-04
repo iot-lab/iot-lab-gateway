@@ -24,7 +24,8 @@ class TestsSimpleProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.Profile(profile_dict, 'M3')
+                ret = gateway_code.profile.Profile(board_type='M3',
+                                                   **profile_dict)
                 self.assertTrue(ret.consumption is None, str(ret))
 
     def test_invalid_profiles(self):
@@ -35,8 +36,8 @@ class TestsSimpleProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(ValueError, gateway_code.profile.Profile,
-                                  profile_dict, 'M3')
+                self.assertRaises(Exception, gateway_code.profile.Profile,
+                                  board_type='M3', **profile_dict)
 
 
 class TestsConsumptionProfile(unittest.TestCase):
@@ -49,7 +50,8 @@ class TestsConsumptionProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.Profile(profile_dict, 'M3')
+                ret = gateway_code.profile.Profile(board_type='M3',
+                                                   **profile_dict)
                 self.assertTrue(ret.consumption is not None, str(ret))
 
     def test_invalid_profiles_consumption(self):
@@ -59,8 +61,8 @@ class TestsConsumptionProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(ValueError, gateway_code.profile.Profile,
-                                  profile_dict, 'M3')
+                self.assertRaises(Exception, gateway_code.profile.Profile,
+                                  board_type='M3', **profile_dict)
 
 
 class TestsRadioProfile(unittest.TestCase):
@@ -73,7 +75,8 @@ class TestsRadioProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.Profile(profile_dict, 'M3')
+                ret = gateway_code.profile.Profile(board_type='M3',
+                                                   **profile_dict)
                 self.assertTrue(ret.radio is not None, str(ret))
 
     def test_invalid_radio_profiles(self):
@@ -83,8 +86,8 @@ class TestsRadioProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(ValueError, gateway_code.profile.Profile,
-                                  profile_dict, 'M3')
+                self.assertRaises(Exception, gateway_code.profile.Profile,
+                                  board_type='M3', **profile_dict)
 
 
 class TestsMixedProfile(unittest.TestCase):
@@ -96,6 +99,7 @@ class TestsMixedProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.Profile(profile_dict, 'M3')
+                ret = gateway_code.profile.Profile(board_type='M3',
+                                                   **profile_dict)
                 self.assertTrue(ret.radio is not None, str(ret))
                 self.assertTrue(ret.consumption is not None, str(ret))

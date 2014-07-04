@@ -103,7 +103,7 @@ class AutoTestManager(object):
 
         if board_type == 'A8':
             try:
-                ret_val += self.g_m._debug_start_a8_tty(
+                ret_val += self.g_m.wait_tty_a8(
                     gateway_code.config.OPEN_A8_CFG['tty'], timeout=20)
 
                 # wait nodes booting
@@ -556,7 +556,7 @@ class AutoTestManager(object):
 
         # one measure every ~0.1 seconds
 
-        conso = Consumption(power_source='dc',
+        conso = Consumption(source='dc',
                             board_type=gateway_code.config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
@@ -598,7 +598,7 @@ class AutoTestManager(object):
 
         # configure consumption
         # one measure every ~0.1 seconds
-        conso = Consumption(power_source='battery', board_type=board_type,
+        conso = Consumption(source='battery', board_type=board_type,
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         del self.cn_measures[:]
@@ -635,7 +635,7 @@ class AutoTestManager(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption(power_source='dc',
+        conso = Consumption(source='dc',
                             board_type=gateway_code.config.board_type(),
                             period='1100', average='64',
                             power=True, voltage=True, current=True)

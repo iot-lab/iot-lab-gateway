@@ -1,0 +1,10 @@
+{
+    "profilename": "invalid_radio_sniffer_2",
+    "power": "dc",
+
+    "radio": {
+        "mode" : "sniffer",
+        "channels" : [15],
+        "period" : 1000
+    }
+}
