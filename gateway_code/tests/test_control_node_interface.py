@@ -121,7 +121,10 @@ class TestControlNodeSerial(unittest.TestCase):
         exp_desc = {'user': 'harter',
                     'exp_id': '1234',
                     'exp_files': {'consumption': '/tmp/consumption',
-                                  'radio': '/tmp/radio'}
+                                  'radio': '/tmp/radio',
+                                  'event': '/tmp/event',
+                                  'sniffer': '/tmp/sniffer',
+                                  'log': '/tmp/log'}
                     }
 
         self.cn.start(exp_desc=exp_desc)

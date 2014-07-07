@@ -34,11 +34,7 @@ class Protocol(object):
         return self.send_cmd(cmd)
 
     def set_time(self):
-        """
-        Reset time on control node
-
-        Also updates our time reference in the C code
-        """
+        """ Set unix time on control node """
         # set_time
         cmd = ['set_time']
         return self.send_cmd(cmd)
@@ -95,6 +91,8 @@ class Protocol(object):
 
         if 'rssi' == radio.mode:
             return self._config_radio_measure(radio)
+        elif 'sniffer' == radio.mode:
+            return self._config_radio_sniffer(radio)
 
         raise NotImplementedError("Uknown radio mode: %s", radio.mode)
 
@@ -112,6 +110,20 @@ class Protocol(object):
         cmd.append(','.join(str(x) for x in sorted_channels))
         cmd.append(str(radio.period))
         cmd.append(str(radio.num_per_channel))
+
+        ret = self.send_cmd(cmd)
+        return ret
+
+    def _config_radio_sniffer(self, radio):
+        """ Configure radio sniffer """
+        # config_radio_sniffer
+        #     <channel,list,comma,separated>
+        #     <period>
+        sorted_channels = sorted(list(set(radio.channels)))
+
+        cmd = ['config_radio_sniffer']
+        cmd.append(','.join(str(x) for x in sorted_channels))
+        cmd.append(str(radio.period))
 
         ret = self.send_cmd(cmd)
         return ret

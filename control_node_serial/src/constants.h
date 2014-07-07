@@ -22,9 +22,9 @@ enum frame_type {
         /* Control node measure/noise config */
         CONFIG_RADIO_STOP    = 0xC0,
         CONFIG_RADIO_MEAS    = 0xC1,
+        CONFIG_RADIO_SNIFFER = 0xC3,
         /*
          * CONFIG_RADIO_NOISE   = 0xC2,
-         * CONFIG_RADIO_SNIFFER = 0xC3,
          * CONFIG_RADIO_INJECTION = 0xC4,
          *
          * CONFIG_SENSOR        = 0xC9,
@@ -41,9 +41,10 @@ enum frame_type {
 
         // Measures
         RADIO_MEAS_FRAME     = 0xF1,
+        RADIO_SNIFFER_FRAME  = 0xF3,
         CONSUMPTION_FRAME    = 0xFC,
 
-        ERROR_FRAME          = 0xEE,  // log messages
+        LOGGER_FRAME         = 0xEE,  // log messages
 
 
         /*
@@ -160,6 +161,17 @@ enum radio_tx_power {
         POWER_3dBm,
         UNUSED_PHY_POWER_4dBm,
         UNUSED_PHY_POWER_5dBm,
+};
+
+
+/* logger level, copied from python logger ones */
+enum cn_logger_levels {
+        LOGGER_CRITICAL = 50,
+        LOGGER_ERROR    = 40,
+        LOGGER_WARNING  = 30,
+        LOGGER_INFO     = 20,
+        LOGGER_DEBUG    = 10,
+        LOGGER_NOTSET   = 0,
 };
 
 #endif // CONSTANTS_H

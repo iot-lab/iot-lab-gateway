@@ -52,6 +52,8 @@ _BOARD_CONFIG = {}
 EXP_FILES_DIR = '/iotlab/users/{user}/.iot-lab/{exp_id}/'
 EXP_FILES = {'consumption': 'consumption/{node_id}.oml',
              'radio': 'radio/{node_id}.oml',
+             'event': 'event/{node_id}.oml',
+             'sniffer': 'sniffer/{node_id}.oml',
              'log': 'log/{node_id}.log'}
 
 

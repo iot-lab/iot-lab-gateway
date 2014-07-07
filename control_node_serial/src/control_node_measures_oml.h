@@ -19,6 +19,8 @@ extern "C" {
 typedef struct {
   OmlMP* consumption;
   OmlMP* radio;
+  OmlMP* sniffer;
+  OmlMP* event;
 
 } oml_mps_t;
 
@@ -46,6 +48,25 @@ static OmlMPDef oml_radio_def[] = {
   {NULL, (OmlValueT)0}
 };
 
+static OmlMPDef oml_sniffer_def[] = {
+  {"timestamp_s", OML_UINT32_VALUE},
+  {"timestamp_us", OML_UINT32_VALUE},
+  {"crc_ok", OML_BOOL_VALUE},
+  {"channel", OML_UINT32_VALUE},
+  {"rssi", OML_INT32_VALUE},
+  {"lqi", OML_UINT32_VALUE},
+  {"length", OML_UINT32_VALUE},
+  {NULL, (OmlValueT)0}
+};
+
+static OmlMPDef oml_event_def[] = {
+  {"timestamp_s", OML_UINT32_VALUE},
+  {"timestamp_us", OML_UINT32_VALUE},
+  {"value", OML_UINT32_VALUE},
+  {"name", OML_STRING_VALUE},
+  {NULL, (OmlValueT)0}
+};
+
 static oml_mps_t g_oml_mps_storage;
 oml_mps_t* g_oml_mps_control_node_measures = &g_oml_mps_storage;
 
@@ -54,6 +75,8 @@ oml_register_mps()
 {
   g_oml_mps_control_node_measures->consumption = omlc_add_mp("consumption", oml_consumption_def);
   g_oml_mps_control_node_measures->radio = omlc_add_mp("radio", oml_radio_def);
+  g_oml_mps_control_node_measures->sniffer = omlc_add_mp("sniffer", oml_sniffer_def);
+  g_oml_mps_control_node_measures->event = omlc_add_mp("event", oml_event_def);
 
 }
 
@@ -98,6 +121,42 @@ oml_inject_radio(OmlMP* mp, uint32_t timestamp_s, uint32_t timestamp_us, uint32_
 
   omlc_inject(mp, v);
 
+}
+
+static inline void
+oml_inject_sniffer(OmlMP* mp, uint32_t timestamp_s, uint32_t timestamp_us, uint8_t crc_ok, uint32_t channel, int32_t rssi, uint32_t lqi, uint32_t length)
+{
+  OmlValueU v[7];
+
+  omlc_zero_array(v, 7);
+
+  omlc_set_uint32(v[0], timestamp_s);
+  omlc_set_uint32(v[1], timestamp_us);
+  omlc_set_bool(v[2], crc_ok);
+  omlc_set_uint32(v[3], channel);
+  omlc_set_int32(v[4], rssi);
+  omlc_set_uint32(v[5], lqi);
+  omlc_set_uint32(v[6], length);
+
+  omlc_inject(mp, v);
+
+}
+
+static inline void
+oml_inject_event(OmlMP* mp, uint32_t timestamp_s, uint32_t timestamp_us, uint32_t value, const char* name)
+{
+  OmlValueU v[4];
+
+  omlc_zero_array(v, 4);
+
+  omlc_set_uint32(v[0], timestamp_s);
+  omlc_set_uint32(v[1], timestamp_us);
+  omlc_set_uint32(v[2], value);
+  omlc_set_string(v[3], name);
+
+  omlc_inject(mp, v);
+
+  omlc_reset_string(v[3]);
 }
 
 

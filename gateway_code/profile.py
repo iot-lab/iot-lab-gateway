@@ -61,8 +61,7 @@ class Consumption(object):
 class Radio(object):
     """ Radio monitoring configuration """
 
-    def __init__(self, mode, channels, period=None, num_per_channel=None,
-                 payload=None):
+    def __init__(self, mode, channels, period=None, num_per_channel=None):
         # power=None, pkt_size=None
 
         self.mode = mode
@@ -71,9 +70,6 @@ class Radio(object):
 
         # RSSI + Injection
         self.num_per_channel = num_per_channel
-
-        # Sniffer
-        self.payload = payload
 
         # Noise + Injection
         # self.power = None

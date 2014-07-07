@@ -5,7 +5,6 @@
     "radio": {
         "mode" : "sniffer",
         "channels" : [11],
-        "period" : 0,
-        "payload" : false
+        "period" : 0
     }
 }

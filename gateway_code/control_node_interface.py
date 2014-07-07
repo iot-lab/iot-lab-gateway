@@ -33,6 +33,12 @@ OML_XML = '''
   <collect url='file:{radio}' encoding='text'>
     <stream name="radio" mp="radio" samples='1' />
   </collect>
+  <collect url='file:{event}' encoding='text'>
+    <stream name="event" mp="event" samples='1' />
+  </collect>
+  <collect url='file:{sniffer}' encoding='text'>
+    <stream name="sniffer" mp="sniffer" samples='1' />
+  </collect>
 </omlc>
 '''
 
@@ -94,13 +100,11 @@ class ControlNodeSerial(object):
         if exp_desc is None:
             return []
 
-        # Get configuration. Get each value to ensure they are all present
-        oml_cfg = {}
+        # Extract configuration
+        oml_cfg = exp_desc['exp_files'].copy()
         oml_cfg['user'] = exp_desc['user']
         oml_cfg['exp_id'] = exp_desc['exp_id']
         oml_cfg['node_id'] = config.hostname()
-        oml_cfg['consumption'] = exp_desc['exp_files']['consumption']
-        oml_cfg['radio'] = exp_desc['exp_files']['radio']
 
         # Save xml configuration in a temporary file
         oml_xml_cfg = OML_XML.format(**oml_cfg)

@@ -131,6 +131,20 @@ class TestProtocolRadio(unittest.TestCase):
         self.assertEquals(0, self.protocol._stop_radio.call_count)
         self.assertEquals(1, self.protocol._config_radio_measure.call_count)
 
+    def test_config_radio_with_sniffer(self):
+        """ Configure Radio with 'measure' mode """
+        radio = profile.Radio("sniffer", [17], 0)
+
+        self.protocol._config_radio_sniffer = mock.Mock()
+        self.protocol._config_radio_sniffer.return_value = 0
+        self.protocol._stop_radio = mock.Mock()
+        self.protocol._stop_radio.return_value = 0
+
+        ret = self.protocol.config_radio(radio)
+        self.assertEquals(0, ret)
+        self.assertEquals(0, self.protocol._stop_radio.call_count)
+        self.assertEquals(1, self.protocol._config_radio_sniffer.call_count)
+
     def test_config_radio_with_none(self):
         """ Configure radio with None Radio profile """
 
@@ -174,6 +188,15 @@ class TestProtocolRadio(unittest.TestCase):
         ret = self.protocol._config_radio_measure(radio)
         self.sender.assert_called_with(['config_radio_measure', '11,15,17',
                                         '100', '10'])
+        self.assertEquals(0, ret)
+
+    def test_config_radio_sniffer(self):
+        radio = profile.Radio("sniffer", [17, 15, 11], 100)
+
+        self.sender.return_value = ['config_radio_sniffer', 'ACK']
+        ret = self.protocol._config_radio_sniffer(radio)
+        self.sender.assert_called_with(['config_radio_sniffer', '11,15,17',
+                                        '100'])
         self.assertEquals(0, ret)
 
     def test__stop_radio(self):

@@ -19,6 +19,8 @@
 #include "constants.h"
 #include "utils.h"
 
+#include "command_parser.h"
+
 
 struct command_buffer {
         union {
@@ -97,7 +99,7 @@ struct dict_entry ack_d[] = {
 };
 
 struct dict_entry commands_d[] = {
-        {"error",      ERROR_FRAME},
+        {"error",      LOGGER_FRAME},
 
         {"start",      OPEN_NODE_START},
         {"stop",       OPEN_NODE_STOP},
@@ -109,8 +111,8 @@ struct dict_entry commands_d[] = {
 
         {"config_radio_stop",    CONFIG_RADIO_STOP},
         {"config_radio_measure", CONFIG_RADIO_MEAS},
+        {"config_radio_sniffer", CONFIG_RADIO_SNIFFER},
         //{"config_radio_noise",   CONFIG_RADIO_NOISE},
-        //{"config_radio_sniffer", CONFIG_SNIFFER},
 
         //{"config_fake_sensor", CONFIG_SENSOR},
 
@@ -154,186 +156,270 @@ int command_reader_start(int serial_fd)
 }
 
 
+static int cmd_no_args(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str == "%s" */
+        (void)cmd_str;
+        (void)cmd_buff;
+        (void)command;
+        return 0;
+}
+
+static int cmd_set_time(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str == "%s" */
+        (void)cmd_str;
+        (void)command;
+
+        gettimeofday(&set_time_ref, NULL);
+        append_data(cmd_buff, &set_time_ref.tv_sec,  sizeof(uint32_t));
+        append_data(cmd_buff, &set_time_ref.tv_usec, sizeof(uint32_t));
+        return 0;
+}
+
+static int cmd_alim(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str == "<start|stop> <dc|battery>" */
+        int ret = 0;
+        uint8_t val;
+        char arg[32];
+
+        sscanf(cmd_str, command->fmt, arg);
+        // <dc|battery>
+        ret |= get_val(arg, alim_d, &val);
+        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
+        return ret;
+}
+
+
+static int cmd_start_stop_args(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str == "%s <start|stop>" */
+
+        int ret = 0;
+        uint8_t val;
+        char arg[32];
+
+        sscanf(cmd_str, command->fmt, arg);
+        // <start|stop>
+        ret |= get_val(arg, state_d, &val);
+        cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
+        return ret;
+}
+
+static int cmd_consumption(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str ==
+         * "config_consumption_measure stop"
+         * "config_consumption_measure %8s %8s p %i v %i c %i -p %8s -a %8s"
+         */
+
+        int ret = 0;
+        uint8_t val;
+
+        char start_stop[8];
+        char pw_src[8];
+        int p, v, c;
+        char period[8], average[8];
+        uint8_t state = 0;
+
+        sscanf(cmd_str, command->fmt, start_stop, pw_src, &p, &v, &c,
+                        period, average);
+        /*
+         * 1B: start/stop
+         * 1B: source | measures
+         * 1B: period | average
+         */
+
+        // start/stop
+        if (get_val(start_stop, state_d, &state))
+                return 1;
+        append_data(cmd_buff, &state, sizeof(uint8_t));
+
+        uint8_t config_0, config_1;
+        if (state == START) {
+                // source | measures
+                ret |= get_val(pw_src, power_source_d, &val);
+                config_0  = val;
+                config_0 |= (!!p * MEASURE_POWER);
+                config_0 |= (!!v * MEASURE_VOLTAGE);
+                config_0 |= (!!c * MEASURE_CURRENT);
+
+                // period | average
+                config_1  = 0;
+                ret      |= get_val(period, periods_d, &val);
+                config_1 |= val;
+                ret      |= get_val(average, average_d, &val);
+                config_1 |= val;
+        } else { // state == STOP
+                config_0 = 0;
+                config_1 = 0;
+        }
+        append_data(cmd_buff, &config_0, sizeof(uint8_t));
+        append_data(cmd_buff, &config_1, sizeof(uint8_t));
+
+        return ret;
+}
+
+
+static int cmd_radio_measure(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str ==
+         * "config_radio_measure <channels_list> <period> <num_per_channel>"
+         */
+
+        int ret = 0;
+        char channels_list[256] = {'\0'};
+        unsigned int period, num_per_channel;
+
+        sscanf(cmd_str, command->fmt, channels_list, &period, &num_per_channel);
+
+        uint32_t channels_flag = parse_channels_list(channels_list);
+        ret |= (0 == channels_flag);
+        ret |= ((period & 0xFFFF) == 0);  // non zero and hold on 16bit
+        ret |= (num_per_channel > 0xFF);
+
+        append_data(cmd_buff, &channels_flag, sizeof(uint32_t));
+        append_data(cmd_buff, &period, sizeof(uint16_t));
+        append_data(cmd_buff, &num_per_channel, sizeof(uint8_t));
+        return ret;
+}
+
+static int cmd_radio_sniffer(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str ==
+         * "config_radio_measure <channels_list> <period>"
+         */
+
+        int ret = 0;
+        char channels_list[256] = {'\0'};
+        unsigned int period;
+
+        sscanf(cmd_str, command->fmt, channels_list, &period);
+
+        uint32_t channels_flag = parse_channels_list(channels_list);
+        ret |= (0 == channels_flag);
+
+        if (channels_flag & (channels_flag -1)) {
+                // not a power of two => several channels
+                ret |= ((period & 0xFFFF) == 0);  // non zero and hold on 16bit
+        } else {
+                // power of two => only one channel
+                ret |= (period != 0);
+        }
+
+        append_data(cmd_buff, &channels_flag, sizeof(uint32_t));
+        append_data(cmd_buff, &period, sizeof(uint16_t));
+        return ret;
+}
+
+
+static int cmd_radio_pp(char *cmd_str, struct command_buffer *cmd_buff,
+                struct command_description *command)
+{
+        /* cmd_str ==
+         * "test_radio_ping_pong stop"
+         * "test_radio_ping_pong start <channel> <tx_power>
+         */
+
+        int ret = 0;
+        uint8_t state;
+        char start_stop[8];
+        char tx_power[8];
+        unsigned int channel;
+
+        sscanf(cmd_str, command->fmt, start_stop, &channel, tx_power);
+
+        // <start|stop>
+        ret |= get_val(start_stop, state_d, &state);
+        append_data(cmd_buff, &state, sizeof(uint8_t));
+
+        // <channel> <tx_power>
+        uint8_t aux = 0;
+        if (state == START) {
+                ret |= (channel < 11 || channel > 26);
+                append_data(cmd_buff, &channel, sizeof(uint8_t));
+                ret |= get_val(tx_power, radio_power_d, &aux);
+                append_data(cmd_buff, &aux, sizeof(uint8_t));
+        } else {  // state == STOP
+                append_data(cmd_buff, &aux, sizeof(uint8_t));
+                append_data(cmd_buff, &aux, sizeof(uint8_t));
+        }
+        return ret;
+}
+
+struct command_description commands[] = {
+        {"start %8s",
+         "start", 1, (command_fct_t)cmd_alim},
+        {"stop %8s",
+         "stop",  1, (command_fct_t)cmd_alim},
+
+        {"config_consumption_measure %8s %8s p %i v %i c %i -p %8s -a %8s",
+         "config_consumption_measure", 7, (command_fct_t)cmd_consumption},
+        {"config_consumption_measure %8s",
+         "config_consumption_measure", 1, (command_fct_t)cmd_consumption},
+
+        {"config_radio_measure %256s %i %i",
+         "config_radio_measure", 3, (command_fct_t)cmd_radio_measure},
+        {"config_radio_sniffer %256s %i",
+         "config_radio_sniffer", 2, (command_fct_t)cmd_radio_sniffer},
+        {"config_radio_stop",
+         "config_radio_stop", 0, (command_fct_t)cmd_no_args},
+
+        {"green_led_on",
+         "green_led_on", 0, (command_fct_t)cmd_no_args},
+        {"green_led_blink",
+         "green_led_blink", 0, (command_fct_t)cmd_no_args},
+        {"set_time",
+         "set_time", 0, (command_fct_t)cmd_set_time},
+
+        {"test_gpio %8s",
+         "test_gpio", 1, (command_fct_t)cmd_start_stop_args},
+        {"test_i2c %8s",
+         "test_i2c", 1, (command_fct_t)cmd_start_stop_args},
+
+        {"test_pps %8s",
+         "test_pps", 1, (command_fct_t)cmd_start_stop_args},
+        {"test_got_pps",
+         "test_got_pps", 0, (command_fct_t)cmd_no_args},
+
+        {"test_radio_ping_pong %8s %i %8s",
+         "test_radio_ping_pong", 3, (command_fct_t)cmd_radio_pp},
+        {"test_radio_ping_pong %8s",
+         "test_radio_ping_pong", 1, (command_fct_t)cmd_radio_pp},
+
+        {NULL, NULL, 0, NULL}
+};
+
 static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 {
-        char *command = NULL;
-        char *arg = NULL;
+        struct command_description *cmd = NULL;
+        uint8_t cmd_type;
+        int ret = 0;
 
-        char *arguments = NULL;
+        cmd = command_parse(line_buff, commands);
+        if (cmd == NULL)
+                return 1;
 
-        uint8_t frame_type = 0;
-        uint8_t val        = 0;
-        uint8_t aux        = 0;
-        int got_error      = 0;
-
-
+        // Init command buffer
         cmd_buff->u.s.sync = SYNC_BYTE;
         cmd_buff->u.s.len  = 0;
         memset(&cmd_buff->u.s.payload, 0, sizeof(cmd_buff->u.s.payload));
 
+        // Add command
+        ret |= get_val(cmd->cmd_str, commands_d, &cmd_type);
+        append_data(cmd_buff, &cmd_type, sizeof(uint8_t));
 
-        command = strtok_r(line_buff, " ", &arguments);
-        if (!command)
-                return 1;  //empty lines
-        /* Put command */
-        got_error |= get_val(command, commands_d, &frame_type);
-        append_data(cmd_buff, &frame_type, sizeof(uint8_t));
-
-
-        /*
-         * add command arguments
-         */
-        if (strcmp(command, "set_time") == 0) {
-                gettimeofday(&set_time_ref, NULL);
-                append_data(cmd_buff, &set_time_ref.tv_sec,  sizeof(uint32_t));
-                append_data(cmd_buff, &set_time_ref.tv_usec, sizeof(uint32_t));
-
-        } else if ((strcmp(command, "start") == 0) || \
-                   (strcmp(command, "stop") == 0)) {
-                /*
-                 * 1B: DC/BATTERY
-                 */
-                // only one argument 'dc' or 'battery
-                arg = strtok_r(NULL, " ", &arguments);
-                got_error |= get_val(arg, alim_d, &val);
-                append_data(cmd_buff, &val, sizeof(uint8_t));
-
-        } else if (strcmp(command, "config_consumption_measure") == 0) {
-                /*
-                 * 1B: start/stop
-                 * 1B: source | measures
-                 * 1B: period | average
-                 */
-                char start_stop[8];
-                char pw_src[8];
-                int p, v, c;
-                char period[8], average[8];
-                uint8_t state = 0;
-
-                int count = sscanf(arguments,
-                        "%8s"
-                        "%8s p %i v %i c %i -p %8s -a %8s",  // for start
-                        start_stop,
-                        pw_src, &p, &v, &c, period, average);
-
-                if (count < 1)
-                        return 1;
-
-                /* start/stop */
-                got_error |= get_val(start_stop, state_d, &state);
-                append_data(cmd_buff, &state, sizeof(uint8_t));
-
-                switch ((enum mode)state) {
-                case STOP:
-                        // config has all zero
-                        aux = 0;
-                        append_data(cmd_buff, &aux, sizeof(uint8_t));
-                        append_data(cmd_buff, &aux, sizeof(uint8_t));
-                        break;
-                case START:
-                        if (count != 7)
-                            return 1;
-
-                        // source | measures
-                        got_error |= get_val(pw_src, power_source_d, &val);
-                        aux  = val;
-                        aux |= (!!p * MEASURE_POWER);
-                        aux |= (!!v * MEASURE_VOLTAGE);
-                        aux |= (!!c * MEASURE_CURRENT);
-                        append_data(cmd_buff, &aux, sizeof(uint8_t));
-
-                        // period | average
-                        aux = 0;
-                        got_error |= get_val(period, periods_d, &val);
-                        aux |= val;
-                        got_error |= get_val(average, average_d, &val);
-                        aux |= val;
-                        append_data(cmd_buff, &aux, sizeof(uint8_t));
-                        break;
-                default:
-                        got_error = 1;
-                        break;
-                }
-        } else if (strcmp(command, "config_radio_stop") == 0) {
-                ;
-
-        } else if (strcmp(command, "config_radio_measure") == 0) {
-                char channels_list[256] = {'\0'};
-                unsigned int period, num_per_channel;
-
-                int count = sscanf(arguments, "%256s %i %i",
-                        channels_list, &period, &num_per_channel);
-
-                if (3 != count)
-                        return 1;
-                if ((period & 0xFFFF) == 0)  // non zero and hold on 16bit
-                        return 2;
-                uint32_t channels_flag = parse_channels_list(channels_list);
-                if (0 == channels_flag)
-                        return 3;  // no channel given
-
-                append_data(cmd_buff, &channels_flag, sizeof(uint32_t));
-                append_data(cmd_buff, &period, sizeof(uint16_t));
-                append_data(cmd_buff, &num_per_channel, sizeof(uint8_t));
-
-        } else if (strcmp(command, "test_radio_ping_pong") == 0) {
-
-                uint8_t state;
-                char start_stop[8];
-                char tx_power[8];
-                unsigned int channel;
-
-                int count = sscanf(arguments,
-                        "%8s"
-                        "%i %8s",  // for start
-                        start_stop,
-                        &channel, tx_power);
-
-                /* start/stop */
-                if (count < 1)
-                        return 1;
-                got_error |= get_val(start_stop, state_d, &state);
-                append_data(cmd_buff, &state, sizeof(uint8_t));
-
-                switch ((enum mode) state) {
-                case STOP:
-                        aux = 0;  // config has all zero
-                        append_data(cmd_buff, &aux, sizeof(uint8_t));
-                        append_data(cmd_buff, &aux, sizeof(uint8_t));
-                        break;
-                case START:
-                        if (count != 3)
-                                return 1;
-                        got_error |= get_val(tx_power, radio_power_d, &val);
-                        if (channel < 11 || channel > 26)
-                                got_error = 1;
-
-                        append_data(cmd_buff, &channel, sizeof(uint8_t));
-                        append_data(cmd_buff, &val, sizeof(uint8_t));
-                        break;
-                default:
-                        got_error = 1;
-                        break;
-                }
-
-        // leds control and no args commands
-        } else if ((strcmp(command, "green_led_on") == 0) || \
-                   (strcmp(command, "green_led_blink") == 0) || \
-                   (strcmp(command, "test_got_pps") == 0)) {
-                ;
-        /* Tests commands (start stop)*/
-        } else if ((strcmp(command, "test_gpio") == 0) || \
-                   (strcmp(command, "test_i2c") == 0) || \
-                   (strcmp(command, "test_pps") == 0)) {
-                // start stop
-                arg = strtok_r(NULL, " ", &arguments);
-                got_error |= get_val(arg, state_d, &val);
-                cmd_buff->u.s.payload[cmd_buff->u.s.len++] = val;
-        }  // error case allready handled
-
-        return got_error;
+        // Call command args handler
+        return ret | cmd->command(line_buff, cmd_buff, cmd);
 }
-
 
 static void append_data(struct command_buffer *cmd_buff, void *data,
                 size_t size)
@@ -354,7 +440,7 @@ static uint32_t parse_channels_list(char *channels_list)
                 // channel 26 in bit num 26
                 channel = atoi(chan);
                 if (channel >= 11 && channel <= 26)
-                    channels_flag |= 1 << channel;
+                        channels_flag |= 1 << channel;
 
                 chan = strtok(NULL, ",");
         }
@@ -377,7 +463,7 @@ int write_answer(unsigned char *data, size_t len)
         type = data[0];
 
         got_error = 0;
-        if (type == ERROR_FRAME) {
+        if (type == LOGGER_FRAME) {
                 /*
                  * I'm only printing the error number and not what it means
                  * It's done on purpose as I don't want to add it for the moment
@@ -408,8 +494,6 @@ int write_answer(unsigned char *data, size_t len)
                 }
                 PRINT_MSG("%s %s\n", cmd, arg);
         }
-
-
         return 0;
 }
 

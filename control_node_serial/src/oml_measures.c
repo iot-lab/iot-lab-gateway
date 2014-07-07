@@ -46,9 +46,25 @@ void oml_measures_radio(uint32_t timestamp_s, uint32_t timestamp_us,
                         uint32_t channel, int32_t rssi)
 {
         oml_inject_radio(g_oml_mps_control_node_measures->radio,
-                         timestamp_s, timestamp_us, channel, rssi);
+                         timestamp_s, timestamp_us,
+                         channel, rssi);
 }
 
+void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
+                          uint32_t channel, uint8_t crc_ok,
+                          int32_t rssi, uint32_t lqi, uint32_t length)
+{
+    oml_inject_sniffer(g_oml_mps_control_node_measures->sniffer,
+                       timestamp_s, timestamp_us,
+                       channel, crc_ok, rssi, lqi, length);
+}
+void oml_measures_event(uint32_t timestamp_s, uint32_t timestamp_us,
+                        uint32_t value, const char* name)
+{
+    oml_inject_event(g_oml_mps_control_node_measures->event,
+                     timestamp_s, timestamp_us,
+                     value, name);
+}
 
 int oml_measures_stop(void)
 {

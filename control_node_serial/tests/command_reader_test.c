@@ -12,6 +12,7 @@ void mock_exit(int status);
 
 
 #include "command_reader.c"
+#include "command_parser.c"  // MAYBE REMOVE LATER
 struct timeval set_time_ref;
 
 
@@ -136,10 +137,6 @@ TEST(test_parse_cmd, consumption)
 
 TEST(test_parse_cmd, radio_stop)
 {
-        /*
-         * Sending multiple config_consumption_measure commands
-         * and checking that the configuration is different each time
-         */
         int ret;
         char cmd[256];
         struct command_buffer cmd_buff;
@@ -153,10 +150,6 @@ TEST(test_parse_cmd, radio_stop)
 
 TEST(test_parse_cmd, radio_measure)
 {
-        /*
-         * Sending multiple config_consumption_measure commands
-         * and checking that the configuration is different each time
-         */
         int ret;
         struct command_buffer cmd_buff;
         char cmd[256];
@@ -207,6 +200,36 @@ TEST(test_parse_cmd, radio_measure)
         strcpy(cmd, "config_radio_measure 10,27 1 1");
         ret = parse_cmd(cmd, &cmd_buff);
         //ASSERT_NE(0, ret);
+}
+
+TEST(test_parse_cmd, radio_sniffer)
+{
+        int ret;
+        struct command_buffer cmd_buff;
+        char cmd[256];
+
+        strcpy(cmd, "config_radio_sniffer 11 0");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(7, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_RADIO_SNIFFER, cmd_buff.u.s.payload[0]);
+        // CHAN
+        ASSERT_EQ(0, cmd_buff.u.s.payload[1]);
+        ASSERT_EQ(1 << 11-8, cmd_buff.u.s.payload[2]);
+        ASSERT_EQ(0, cmd_buff.u.s.payload[3]);
+        ASSERT_EQ(0, cmd_buff.u.s.payload[4]);
+        // PERIOD
+        ASSERT_EQ(0, cmd_buff.u.s.payload[5]);
+        ASSERT_EQ(0, cmd_buff.u.s.payload[6]);
+
+
+        strcpy(cmd, "config_radio_sniffer 16,17,18 256");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(7, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_RADIO_SNIFFER, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(7, cmd_buff.u.s.payload[3]);
+        ASSERT_EQ(1, cmd_buff.u.s.payload[6]);
 }
 
 
@@ -348,7 +371,7 @@ TEST(test_write_answer, valid_answers)
         unsigned char data[2];
         int ret;
 
-        data[0] = ERROR_FRAME;
+        data[0] = LOGGER_FRAME;
         data[1] = 42;
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
