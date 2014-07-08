@@ -51,8 +51,8 @@ static OmlMPDef oml_radio_def[] = {
 static OmlMPDef oml_sniffer_def[] = {
   {"timestamp_s", OML_UINT32_VALUE},
   {"timestamp_us", OML_UINT32_VALUE},
-  {"crc_ok", OML_BOOL_VALUE},
   {"channel", OML_UINT32_VALUE},
+  {"crc_ok", OML_BOOL_VALUE},
   {"rssi", OML_INT32_VALUE},
   {"lqi", OML_UINT32_VALUE},
   {"length", OML_UINT32_VALUE},
@@ -124,7 +124,7 @@ oml_inject_radio(OmlMP* mp, uint32_t timestamp_s, uint32_t timestamp_us, uint32_
 }
 
 static inline void
-oml_inject_sniffer(OmlMP* mp, uint32_t timestamp_s, uint32_t timestamp_us, uint8_t crc_ok, uint32_t channel, int32_t rssi, uint32_t lqi, uint32_t length)
+oml_inject_sniffer(OmlMP* mp, uint32_t timestamp_s, uint32_t timestamp_us, uint32_t channel, uint8_t crc_ok, int32_t rssi, uint32_t lqi, uint32_t length)
 {
   OmlValueU v[7];
 
@@ -132,8 +132,8 @@ oml_inject_sniffer(OmlMP* mp, uint32_t timestamp_s, uint32_t timestamp_us, uint8
 
   omlc_set_uint32(v[0], timestamp_s);
   omlc_set_uint32(v[1], timestamp_us);
-  omlc_set_bool(v[2], crc_ok);
-  omlc_set_uint32(v[3], channel);
+  omlc_set_uint32(v[2], channel);
+  omlc_set_bool(v[3], crc_ok);
   omlc_set_int32(v[4], rssi);
   omlc_set_uint32(v[5], lqi);
   omlc_set_uint32(v[6], length);

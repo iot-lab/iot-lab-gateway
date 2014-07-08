@@ -10,14 +10,15 @@
 
 #define OML_CONFIG_PATH "utils/oml_measures_config.xml"
 
-static int start_called = 0;
 int oml_measures_start(char *oml_config_file_path)
 {
-        start_called += 1;
+        count_call();
+        check_expected(oml_config_file_path);
         return 0;
 }
 int oml_measures_stop()
 {
+        count_call();
         return 0;
 }
 
@@ -48,6 +49,20 @@ void oml_measures_radio(uint32_t timestamp_s, uint32_t timestamp_us,
         check_expected(rssi);
 }
 
+void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
+                          uint32_t channel, uint8_t crc_ok,
+                          int32_t rssi, uint32_t lqi,
+                          uint32_t length)
+{
+        count_call();
+        check_expected(timestamp_s);
+        check_expected(timestamp_us);
+        check_expected(channel);
+        check_expected(crc_ok);
+        check_expected(rssi);
+        check_expected(lqi);
+        check_expected(length);
+}
 
 TEST(handle_measure_pkt, test_different_packets)
 {
@@ -62,6 +77,10 @@ TEST(handle_measure_pkt, test_different_packets)
         ASSERT_EQ(ret, 0);
 
         data[0] = RADIO_MEAS_FRAME;
+        ret = handle_measure_pkt(data, 0);
+        ASSERT_EQ(ret, 0);
+
+        data[0] = RADIO_SNIFFER_FRAME;
         ret = handle_measure_pkt(data, 0);
         ASSERT_EQ(ret, 0);
 
@@ -91,7 +110,9 @@ TEST_F(test_handle_oml_measure, handle_multiple_values)
 
         uint8_t val;
 
-        measures_handler_start(0, OML_CONFIG_PATH);
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
+        measures_handler_start(0, NULL);
 
         index = 0;
         data[index++] = 42; // measure type
@@ -134,6 +155,7 @@ TEST_F(test_handle_oml_measure, handle_multiple_values)
         handle_oml_measure(data, index, &value, sizeof(uint8_t),
                         test_measure_handler, "test");
 
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
 }
 
@@ -166,7 +188,9 @@ TEST_F(test_handle_oml_measure, handle_consumption_packet)
         /*
          * Run test with one packet
          */
-        measures_handler_start(0, OML_CONFIG_PATH);
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
+        measures_handler_start(0, NULL);
         config_consumption(PW_SRC_3_3V, 1, 1, 1);
         meas_size = mh_state.consumption.meas_len;
 
@@ -179,13 +203,17 @@ TEST_F(test_handle_oml_measure, handle_consumption_packet)
         expect_calls(oml_measures_consumption, 1);
 
         handle_measure_pkt(data, index);
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
+
 
         /*
          * cases with non complete values
          */
         // print_measures == true for coverage
-        measures_handler_start(1, OML_CONFIG_PATH);
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
+        measures_handler_start(1, NULL);
         // P + C
         config_consumption(PW_SRC_3_3V, 1, 0, 1);
         meas_size = mh_state.consumption.meas_len;
@@ -212,18 +240,9 @@ TEST_F(test_handle_oml_measure, handle_consumption_packet)
 
         handle_measure_pkt(data, 2 + 4 + data[1] * (4 + meas_size ));
 
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
 
-
-        // No OML
-        measures_handler_start(0, NULL);
-        config_consumption(PW_SRC_3_3V, 1, 0, 1);
-        meas_size = mh_state.consumption.meas_len;
-
-        expect_calls(oml_measures_consumption, 0); // no calls
-        handle_measure_pkt(data, 2 + 4 + data[1] * (4 + meas_size ));
-
-        measures_handler_stop();
 }
 
 
@@ -232,6 +251,8 @@ TEST_F(test_handle_oml_measure, handle_invalid_consumption_packet)
         unsigned char data[64];
 
         // measure packet when not configured
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
         measures_handler_start(0, NULL);
         config_consumption(PW_SRC_3_3V, 1, 1, 1);
 
@@ -243,6 +264,7 @@ TEST_F(test_handle_oml_measure, handle_invalid_consumption_packet)
                         "Invalid consumption pkt len: 42 != expected 22\n",
                         print_buff);
 
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
 }
 
@@ -276,7 +298,9 @@ TEST_F(test_handle_oml_measure, handle_radio_packet)
 
 
         // With oml
-        measures_handler_start(0, OML_CONFIG_PATH);
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
+        measures_handler_start(0, NULL);
 
         expect_value(oml_measures_radio, timestamp_s, 15);
         expect_value(oml_measures_radio, timestamp_us, 42);
@@ -286,14 +310,119 @@ TEST_F(test_handle_oml_measure, handle_radio_packet)
         expect_calls(oml_measures_radio, 1);
 
         handle_measure_pkt(data, index);
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
 
 
         // with print and no OML // print not tested
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
         measures_handler_start(1, NULL);
-        expect_calls(oml_measures_radio, 0);
+
+        expect_calls(oml_measures_radio, 1);
+        expect_value(oml_measures_radio, timestamp_s, 15);
+        expect_value(oml_measures_radio, timestamp_us, 42);
+        expect_value(oml_measures_radio, channel, 21);
+        expect_value(oml_measures_radio, rssi, -42);
         handle_measure_pkt(data, index);
 
+        expect_calls(oml_measures_stop, 1);
+        measures_handler_stop();
+}
+
+TEST_F(test_handle_oml_measure, handle_radio_sniffer)
+{
+
+        uint8_t data[256];
+        int index = 0;
+        struct radio_measure radio;
+        size_t meas_size = sizeof(radio);  // channel rssi
+
+        struct timeval timestamp = {42, 999999};
+        uint8_t channel = 11;
+        uint8_t crc_ok = 1;
+        int8_t rssi = -91;
+        uint8_t lqi = 254;
+        uint8_t pkt_len = 118;
+
+
+        index = 0;
+        data[index++] = ((char)RADIO_SNIFFER_FRAME);
+        APPEND_TO_ARRAY(data, index, &timestamp, sizeof(timestamp));
+        APPEND_TO_ARRAY(data, index, &channel,   sizeof(channel));
+        crc_ok = 0;
+        APPEND_TO_ARRAY(data, index, &crc_ok,    sizeof(crc_ok));
+
+        // only crc_ok false
+        expect_value(oml_measures_sniffer, timestamp_s, timestamp.tv_sec);
+        expect_value(oml_measures_sniffer, timestamp_us, timestamp.tv_usec);
+        expect_value(oml_measures_sniffer, channel, channel);
+        expect_value(oml_measures_sniffer, crc_ok, crc_ok);
+        expect_any(oml_measures_sniffer, rssi);
+        expect_any(oml_measures_sniffer, lqi);
+        expect_any(oml_measures_sniffer, length);
+
+        // invalid len
+        expect_calls(oml_measures_sniffer, 0);
+        handle_radio_sniffer(data, index -1);
+
+        // valid len
+        expect_calls(oml_measures_sniffer, 1);
+        handle_radio_sniffer(data, index);
+
+
+
+        // With crc_ok
+        crc_ok = 1;
+        data[index -1] = crc_ok;
+
+        APPEND_TO_ARRAY(data, index, &rssi,      sizeof(rssi));
+        APPEND_TO_ARRAY(data, index, &lqi,       sizeof(lqi));
+        APPEND_TO_ARRAY(data, index, &pkt_len,   sizeof(pkt_len));
+
+        // could not read pkt_len
+        expect_calls(oml_measures_sniffer, 0);
+        handle_radio_sniffer(data, index -1);
+
+
+        // Complete packet
+        index += pkt_len;
+
+        expect_value(oml_measures_sniffer, timestamp_s, timestamp.tv_sec);
+        expect_value(oml_measures_sniffer, timestamp_us, timestamp.tv_usec);
+        expect_value(oml_measures_sniffer, channel, channel);
+        expect_value(oml_measures_sniffer, crc_ok, crc_ok);
+        expect_value(oml_measures_sniffer, rssi, rssi);
+        expect_value(oml_measures_sniffer, lqi, lqi);
+        expect_value(oml_measures_sniffer, length, pkt_len);
+
+        expect_calls(oml_measures_sniffer, 0);
+        handle_radio_sniffer(data, index -1);
+
+        expect_calls(oml_measures_sniffer, 1);
+        handle_radio_sniffer(data, index);
+        expect_calls(oml_measures_stop, 1);
+        measures_handler_stop();
+
+
+        // with print and no OML // print not tested
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
+        measures_handler_start(1, NULL);
+
+
+
+#if 0
+
+        expect_calls(oml_measures_radio, 1);
+        expect_value(oml_measures_radio, timestamp_s, 15);
+        expect_value(oml_measures_radio, timestamp_us, 42);
+        expect_value(oml_measures_radio, channel, 21);
+        expect_value(oml_measures_radio, rssi, -42);
+        handle_measure_pkt(data, index);
+#endif
+
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
 }
 
@@ -316,7 +445,9 @@ TEST(handle_ack_pkt, power_poll_ack)
 {
         unsigned char data[8];
         data[1] = CONFIG_CONSUMPTION;
-        measures_handler_start(0, OML_CONFIG_PATH);
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
+        measures_handler_start(0, NULL);
 
         // PC
         data[2]  = 0;
@@ -339,6 +470,7 @@ TEST(handle_ack_pkt, power_poll_ack)
         ASSERT_EQ(1, mh_state.consumption.v);
         ASSERT_EQ(0, mh_state.consumption.c);
 
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
 }
 
@@ -378,14 +510,15 @@ TEST(calculate_time, overflow_on_usec_sum)
 // init_measures_handler
 TEST(init_measures_handler, test)
 {
-        start_called = 0;
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, OML_CONFIG_PATH);
         measures_handler_start(0, OML_CONFIG_PATH);
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
-        ASSERT_EQ(1, start_called);
 
-        // cover case init not called
-        start_called = 0;
+        expect_calls(oml_measures_start, 1);
+        expect_value(oml_measures_start, oml_config_file_path, NULL);
         measures_handler_start(0, NULL);
+        expect_calls(oml_measures_stop, 1);
         measures_handler_stop();
-        ASSERT_EQ(0, start_called);
 }

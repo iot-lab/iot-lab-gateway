@@ -1,11 +1,10 @@
-Host fit2-dev
-  HostName fit2-dev.inrialpes.fr
+Host fit3-dev
+  HostName fit3-dev.inrialpes.fr
   Port     2222
   User     root
 
-
-Host gateway-m3-ci gateway-a8-ci open-a8-ci   gateway-m3
+Host gateway-m3-ci gateway-a8-ci open-a8-ci
   User root
   StrictHostKeyChecking no
-  ProxyCommand ssh fit2-dev -W %h:%p
+  ProxyCommand ssh fit3-dev -W %h:%p
 

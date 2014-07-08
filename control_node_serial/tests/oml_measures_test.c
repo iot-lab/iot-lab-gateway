@@ -55,6 +55,8 @@ static int file_size(char *file_path)
 #define OML_CONFIG_PATH "utils/oml_measures_config.xml"
 #define CONSUMPTION_FILE "/tmp/consumption.oml"
 #define RADIO_FILE "/tmp/radio.oml"
+#define EVENT_FILE "/tmp/event.oml"
+#define SNIFF_FILE "/tmp/sniffer.oml"
 
 
 
@@ -93,12 +95,17 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
         oml_measures_radio(42, 70, 11, -20);
         oml_measures_consumption(43, 69, 12.34, 3.3, 40.72);
         oml_measures_radio(43, 70, 26, -20);
+        oml_measures_sniffer(42, 0,  11, 1, -91, 255, 42);
+        oml_measures_event(42, 0,    65535, "test");
+        oml_measures_event(42, 0,    65535, NULL);
+        oml_measures_event(42, 0,    65535, "");
+
 
         /* write many values to ensure that oml writes them to disk
          * before calling close
          *
-         * On gateways, after close the file are still not written to disk
-         * that's why I write a tousand of them
+         * On gateways, after closing, the files are still not written to disk
+         * that's why I write a thousand of them
          */
         for (int i = 0; i < 10000; i++) {
                 oml_measures_consumption(0, 0, 0.0, NAN, 0.0);
@@ -115,7 +122,31 @@ TEST(test_oml_measures, init_and_stop_with_measures_print)
 
         unlink(CONSUMPTION_FILE);
         unlink(RADIO_FILE);
+        unlink(SNIFF_FILE);
+        unlink(EVENT_FILE);
 }
+
+TEST(test_oml_measures, init_and_stop_without_oml_and_print_measures)
+{
+        omlc_init_do_mock = 0;
+        omlc_start_do_mock = 1;
+
+        int ret_init;
+        int ret_stop;
+        ret_init = oml_measures_start(NULL);
+
+        // add measures
+        oml_measures_consumption(42, 69, 12.34, 3.3, 40.72);
+        oml_measures_radio(42, 70, 11, -20);
+        oml_measures_sniffer(42, 0,  11, 1, -91, 255, 42);
+        oml_measures_event(42, 0,    65535, "test");
+
+        ret_stop = oml_measures_stop();
+
+        ASSERT_EQ(0, ret_init);
+        ASSERT_EQ(0, ret_stop);
+}
+
 
 TEST(test_oml_measures, init_and_stop_error_cases)
 {

@@ -31,8 +31,8 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
   app.defMeasurement("sniffer") do |mp|
     mp.defMetric('timestamp_s', :uint32)
     mp.defMetric('timestamp_us', :uint32)
-    mp.defMetric('crc_ok', :boolean)
     mp.defMetric('channel', :uint32)
+    mp.defMetric('crc_ok', :boolean)
     mp.defMetric('rssi', :int32)
     mp.defMetric('lqi', :uint32)
     mp.defMetric('length', :uint32)
