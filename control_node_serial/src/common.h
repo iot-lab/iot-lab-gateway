@@ -23,18 +23,17 @@
 
 #if DEBUG
 #define DEBUG_PRINT_PACKET(data, len)  do{ \
-                for (unsigned char i=0; i < (len); i++) {\
-                        DEBUG_PRINT(" %02X", (data)[i]);\
-                }\
-                DEBUG_PRINT("\n");\
-        }while(0)
+        for (unsigned char i=0; i < (len); i++) {\
+            DEBUG_PRINT(" %02X", (data)[i]);\
+        }\
+        DEBUG_PRINT("\n");\
+    }while(0)
 #else
 #define DEBUG_PRINT_PACKET(len, data)
 #endif
 
 
-#define PRINT_MEASURE(print, fmt, ...) \
-        if ((print)) PRINT_MSG("measures_debug: " fmt, __VA_ARGS__)
+#define PRINT_MEASURE(fmt, ...) PRINT_MSG("measures_debug: " fmt, __VA_ARGS__)
 
 
 #endif // COMMON_H

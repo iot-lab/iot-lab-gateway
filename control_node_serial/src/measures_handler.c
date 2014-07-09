@@ -26,7 +26,6 @@ struct radio_measure {
 };
 
 static struct _measure_handler_state {
-    int print_measures;
     struct {
         int p;
         int v;
@@ -52,8 +51,7 @@ static void extract_data(uint8_t *dst, uint8_t **src, size_t len);
 
 void measures_handler_start(int print_measures, char *oml_config_file_path)
 {
-    mh_state.print_measures = print_measures;
-    oml_measures_start(oml_config_file_path);
+    oml_measures_start(oml_config_file_path, print_measures);
 }
 
 void measures_handler_stop()
@@ -108,9 +106,6 @@ static void radio_handler(uint8_t *buf, struct timeval *time)
     memcpy(&radio, buf, sizeof(radio));
     oml_measures_radio(time->tv_sec, time->tv_usec,
             radio.channel, radio.rssi);
-    PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %u %i\n",
-            "radio_measure", time->tv_sec, time->tv_usec,
-            radio.channel, radio.rssi);
 }
 
 static void handle_radio_sniffer(uint8_t *data, size_t len)
@@ -125,41 +120,23 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
 
 
     /*
-     * header + timestamp, channel, crc_ok, [RSSI, LQI, captured length, payload]
+     * header + timestamp, channel, rssi, lqi, crc_ok, [captured length, payload]
      */
     uint8_t *data_ptr = &data[1];
     rlen = 1;  //header
 
-    // big enough to get 'crc_ok' value
-    rlen += sizeof(timestamp) + sizeof(uint8_t) + sizeof(uint8_t);
+    // Could read captured_length
+    rlen += sizeof(timestamp) + 5 * sizeof(uint8_t);
     if (len < rlen) {
-        PRINT_ERROR("Invalid sniff pkt len: %zu < %zu(crc)\n", len, rlen);
+        PRINT_ERROR("Invalid sniff pkt len: %zu < %zu(len)\n", len, rlen);
         return;
     }
 
     extract_data((uint8_t *)&timestamp, &data_ptr, sizeof(timestamp));
     extract_data((uint8_t *)&channel,   &data_ptr, sizeof(channel));
-    extract_data((uint8_t *)&crc_ok,    &data_ptr, sizeof(crc_ok));
-
-
-    if (!crc_ok) {
-        oml_measures_sniffer(timestamp.tv_sec, timestamp.tv_usec,
-                channel, crc_ok, 0, 0, 0);
-        PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %u %s\n",
-                "sniffer", timestamp.tv_sec, timestamp.tv_usec,
-                channel, "crc_error");
-        return;
-    }
-
-    // big enough to get 'pkt_len' value
-    rlen += sizeof(uint8_t) + sizeof(uint8_t) + sizeof(uint8_t);
-    if (len < rlen) {
-        PRINT_ERROR("Invalid sniff pkt len: %zu < %zu(pkt_len)\n", len, rlen);
-        return;
-    }
-
     extract_data((uint8_t *)&rssi,    &data_ptr, sizeof(rssi));
     extract_data((uint8_t *)&lqi,     &data_ptr, sizeof(lqi));
+    extract_data((uint8_t *)&crc_ok,    &data_ptr, sizeof(crc_ok));
     extract_data((uint8_t *)&pkt_len, &data_ptr, sizeof(pkt_len));
 
     // big enough to get 'payload' value
@@ -168,20 +145,12 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
         PRINT_ERROR("Invalid sniff pkt len: %zu != %zu(payload)\n", len, rlen);
         return;
     }
+    /* Handle payload */
+    // Don't extract payload for the moment.
+
 
     oml_measures_sniffer(timestamp.tv_sec, timestamp.tv_usec,
-            channel, crc_ok, rssi, lqi, pkt_len);
-    PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %u %i %u %u\n",
-            "sniffer", timestamp.tv_sec, timestamp.tv_usec,
-            channel, rssi, lqi, pkt_len);
-
-    /*
-     * Handle payload
-     */
-    /*
-     * Don't extract payload for the moment.
-     */
-
+            channel, rssi, lqi, crc_ok, pkt_len);
 }
 
 static void consumption_handler(uint8_t *buf, struct timeval *time)
@@ -197,10 +166,6 @@ static void consumption_handler(uint8_t *buf, struct timeval *time)
     float c = (mh_state.consumption.c ? cons.val[i++] : NAN);
 
     oml_measures_consumption(time->tv_sec, time->tv_usec, p, v, c);
-
-    PRINT_MEASURE(mh_state.print_measures, "%s %lu.%06lu %f %f %f\n",
-            "consumption_measure", time->tv_sec, time->tv_usec,
-            p, v, c);
 }
 
 static void config_consumption(int power_source, int p, int v, int c)
@@ -235,30 +200,30 @@ static void handle_ack_pkt(uint8_t *data, size_t len)
 
 
     switch (ack_type) {
-    case SET_TIME:
-        gettimeofday(&time_ack, NULL);
-        timeval_substract(&time_diff, &time_ack, &set_time_ref);
-        PRINT_MSG("config_ack set_time %lu.%06lu\n",
-                time_diff.tv_sec, time_diff.tv_usec);
-        timerclear(&set_time_ref);
-        break;
-    case CONFIG_CONSUMPTION:
-        PRINT_MSG("config_ack config_consumption_measure\n");
-        config_consumption(
-                config & (PW_SRC_3_3V | PW_SRC_5V | PW_SRC_BATT),
-                config & MEASURE_POWER,
-                config & MEASURE_VOLTAGE,
-                config & MEASURE_CURRENT);
-        break;
-    case CONFIG_RADIO_STOP:
-        PRINT_MSG("config_ack config_radio_stop\n");
-        break;
-    case CONFIG_RADIO_MEAS:
-        PRINT_MSG("config_ack config_radio_measure\n");
-        break;
-    default:
-        PRINT_ERROR("Unkown ACK frame 0x%02x\n", ack_type);
-        break;
+        case SET_TIME:
+            gettimeofday(&time_ack, NULL);
+            timeval_substract(&time_diff, &time_ack, &set_time_ref);
+            PRINT_MSG("config_ack set_time %lu.%06lu\n",
+                    time_diff.tv_sec, time_diff.tv_usec);
+            timerclear(&set_time_ref);
+            break;
+        case CONFIG_CONSUMPTION:
+            PRINT_MSG("config_ack config_consumption_measure\n");
+            config_consumption(
+                    config & (PW_SRC_3_3V | PW_SRC_5V | PW_SRC_BATT),
+                    config & MEASURE_POWER,
+                    config & MEASURE_VOLTAGE,
+                    config & MEASURE_CURRENT);
+            break;
+        case CONFIG_RADIO_STOP:
+            PRINT_MSG("config_ack config_radio_stop\n");
+            break;
+        case CONFIG_RADIO_MEAS:
+            PRINT_MSG("config_ack config_radio_measure\n");
+            break;
+        default:
+            PRINT_ERROR("Unkown ACK frame 0x%02x\n", ack_type);
+            break;
     }
 }
 
