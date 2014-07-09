@@ -488,6 +488,20 @@ TEST(test_parse_cmd, invalid_commands)
         ASSERT_NE(0, ret);
 }
 
+TEST(test_cstrtok, test)
+{
+    char *token;
+
+    token = cstrtok("0123456789ABCDEF0123456789ABCDEF01  lala");
+    ASSERT_EQ(NULL, token);
+
+    token = cstrtok("0123");
+    ASSERT_STREQ("0123", token);
+
+    token = cstrtok("abcd 0123");
+    ASSERT_STREQ("abcd", token);
+}
+
 /*
  * Test thread (for coverage)
  */

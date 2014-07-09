@@ -4,14 +4,13 @@
 #include <stdint.h>
 
 struct command_description;
-typedef int (*command_fct_t)(char *, void *, void *);
+typedef int (*cmd_fct_t)(char *, void *, void *);
 
 
 struct command_description {
     char *fmt;
-    char *cmd_str;
     uint8_t fmt_count;
-    command_fct_t command;
+    cmd_fct_t command;
 };
 
 

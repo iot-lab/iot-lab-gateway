@@ -4,10 +4,10 @@
 #include "command_parser.c"
 
 struct command_description commands[] = {
-    {"no_arguments", "no_argument", 0, (command_fct_t) 1},
-    {"one_argument %d", "one_argument", 1, (command_fct_t) 2},
-    {"many_arguments %f lala %u test %s", "many_arguments", 3, (command_fct_t) 3},
-    {NULL, NULL, 0, NULL}
+    {"no_arguments",                      0, (cmd_fct_t) 1},
+    {"one_argument %d",                   1, (cmd_fct_t) 2},
+    {"many_arguments %f lala %u test %s", 3, (cmd_fct_t) 3},
+    {NULL, 0, NULL}
 };
 
 
@@ -47,8 +47,8 @@ TEST(test_command_parse, too_big_number_of_arguments)
             " %d %d %d %d %d %d %d %d"
             " %d %d %d %d %d %d %d %d"
             " %d %d %d %d %d %d %d %d"
-            " %d", "large_format", 33, (command_fct_t) 1},
-        {NULL, NULL, 0, NULL}
+            " %d", 33, (cmd_fct_t) 1},
+        {NULL, 0, NULL}
     };
     struct command_description *ret_fct;
 

@@ -356,47 +356,45 @@ static int cmd_radio_pp(char *cmd_str, struct command_buffer *cmd_buff,
 }
 
 struct command_description commands[] = {
-    {"start %8s",
-        "start", 1, (command_fct_t)cmd_alim},
-    {"stop %8s",
-        "stop",  1, (command_fct_t)cmd_alim},
+    {"start %8s",                        1, (cmd_fct_t)cmd_alim},
+    {"stop %8s",                         1, (cmd_fct_t)cmd_alim},
 
     {"config_consumption_measure %8s %8s p %i v %i c %i -p %8s -a %8s",
-        "config_consumption_measure", 7, (command_fct_t)cmd_consumption},
-    {"config_consumption_measure %8s",
-        "config_consumption_measure", 1, (command_fct_t)cmd_consumption},
+                                         7, (cmd_fct_t)cmd_consumption},
+    {"config_consumption_measure %8s",   1, (cmd_fct_t)cmd_consumption},
 
-    {"config_radio_measure %256s %i %i",
-        "config_radio_measure", 3, (command_fct_t)cmd_radio_measure},
-    {"config_radio_sniffer %256s %i",
-        "config_radio_sniffer", 2, (command_fct_t)cmd_radio_sniffer},
-    {"config_radio_stop",
-        "config_radio_stop", 0, (command_fct_t)cmd_no_args},
+    {"config_radio_measure %256s %i %i", 3, (cmd_fct_t)cmd_radio_measure},
+    {"config_radio_sniffer %256s %i",    2, (cmd_fct_t)cmd_radio_sniffer},
+    {"config_radio_stop",                0, (cmd_fct_t)cmd_no_args},
 
-    {"green_led_on",
-        "green_led_on", 0, (command_fct_t)cmd_no_args},
-    {"green_led_blink",
-        "green_led_blink", 0, (command_fct_t)cmd_no_args},
-    {"set_time",
-        "set_time", 0, (command_fct_t)cmd_set_time},
+    {"set_time",                         0, (cmd_fct_t)cmd_set_time},
+    {"green_led_on",                     0, (cmd_fct_t)cmd_no_args},
+    {"green_led_blink",                  0, (cmd_fct_t)cmd_no_args},
 
-    {"test_gpio %8s",
-        "test_gpio", 1, (command_fct_t)cmd_start_stop_args},
-    {"test_i2c %8s",
-        "test_i2c", 1, (command_fct_t)cmd_start_stop_args},
+    {"test_gpio %8s",                    1, (cmd_fct_t)cmd_start_stop_args},
+    {"test_i2c %8s",                     1, (cmd_fct_t)cmd_start_stop_args},
 
-    {"test_pps %8s",
-        "test_pps", 1, (command_fct_t)cmd_start_stop_args},
-    {"test_got_pps",
-        "test_got_pps", 0, (command_fct_t)cmd_no_args},
+    {"test_pps %8s",                     1, (cmd_fct_t)cmd_start_stop_args},
+    {"test_got_pps",                     0, (cmd_fct_t)cmd_no_args},
 
-    {"test_radio_ping_pong %8s %i %8s",
-        "test_radio_ping_pong", 3, (command_fct_t)cmd_radio_pp},
-    {"test_radio_ping_pong %8s",
-        "test_radio_ping_pong", 1, (command_fct_t)cmd_radio_pp},
+    {"test_radio_ping_pong %8s %i %8s",  3, (cmd_fct_t)cmd_radio_pp},
+    {"test_radio_ping_pong %8s",         1, (cmd_fct_t)cmd_radio_pp},
 
-    {NULL, NULL, 0, NULL}
+    {NULL, 0, NULL}
 };
+
+static char *cstrtok(const char *s)
+{
+    static char token[32];
+    size_t index = 0;
+    index = strcspn(s, " ");
+    if (index > sizeof(token))
+        return NULL;
+
+    strncpy(token, s, index);
+    token[index] = '\0';
+    return token;
+}
 
 static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 {
@@ -414,7 +412,9 @@ static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
     memset(&cmd_buff->u.s.payload, 0, sizeof(cmd_buff->u.s.payload));
 
     // Add command
-    ret |= get_val(cmd->cmd_str, commands_d, &cmd_type);
+    // keep line_buff unmodified as it's used with scanf in command handler
+    char *command = cstrtok(line_buff);
+    ret |= get_val(command, commands_d, &cmd_type);
     append_data(cmd_buff, &cmd_type, sizeof(uint8_t));
 
     // Call command args handler
@@ -456,9 +456,8 @@ int write_answer(unsigned char *data, size_t len)
     char *cmd = NULL;
 
 
-    if (len != 2) {
+    if (len != 2)
         return -1;
-    }
 
     type = data[0];
 
