@@ -384,7 +384,7 @@ class AutoTestManager(object):
 
         # start pps on open node
         answer = self.on_serial.send_command(['test_pps_start'])
-        if (answer is None) or (answer[:2] != ['ACK', 'GPS_PPS_START']):
+        if (answer is None) or (answer[:2] != ['ACK', 'test_pps_start']):
             return self._check(1, 'test_pps_start', answer[:2])
 
         # try to get pps for max 2 min
@@ -392,7 +392,7 @@ class AutoTestManager(object):
         while time.time() < end_time:
             time.sleep(5)
             answer = self.on_serial.send_command(['test_pps_get'])
-            if (answer is None) or (answer[:2] != ['ACK', 'GPS_PPS_GET']):
+            if (answer is None) or (answer[:2] != ['ACK', 'test_pps_get']):
                 return self._check(1, 'test_pps_get', answer)
 
             # get pps value
