@@ -75,7 +75,7 @@ class AutoTestManager(object):
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup control node failed')
 
-    def _setup_open_node_connection(self):
+    def _setup_open_node_connection(self, board_type):
         """ Setup the connection with Open Node
         Should be done on DC"""
 
@@ -83,7 +83,6 @@ class AutoTestManager(object):
         ret_val += self.g_m.open_power_start(power='dc')
         time.sleep(2)  # wait open node ready
 
-        board_type = gateway_code.config.board_type()
         # setup open node
         if board_type == 'M3':
             ret = self.g_m.node_flash(
@@ -189,18 +188,15 @@ class AutoTestManager(object):
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
-        board_type = gateway_code.config.board_type()
-        is_m3 = 'M3' == board_type
-
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
+        board_type = gateway_code.config.board_type()
+
+        if board_type not in ['M3', 'A8']:
+            self._check(1, 'board_type: %s' % board_type, 'unkown')
+            raise FatalError('Unkown board_type')
 
         try:
             self.setup_control_node()
-
-            if board_type not in ['M3', 'A8']:
-                ret_val += self._check(1, 'board_type: %s' % board_type,
-                                       'unkown type')
-                raise FatalError('Unkown board_type')
 
             #
             # Tests using Battery
@@ -212,7 +208,7 @@ class AutoTestManager(object):
             ret_val += self.test_consumption_batt(board_type)
 
             # switch to DN and configure open node
-            self._setup_open_node_connection()
+            self._setup_open_node_connection(board_type)
             self.check_get_time()
             self.get_uid()
 
@@ -236,12 +232,12 @@ class AutoTestManager(object):
             ret_val += self.test_radio_with_rssi(channel)
 
             # test consumption measures
-            ret_val += self.test_consumption_dc()
+            ret_val += self.test_consumption_dc(board_type)
 
             # M3 specific tests
-            if is_m3:
+            if 'M3' == board_type:
                 # cannot test this with A8 I think
-                ret_val += self.test_leds_with_consumption()
+                ret_val += self.test_leds_with_consumption(board_type)
                 # test m3 specific sensors
                 ret_val += self.test_pressure()
                 ret_val += self.test_light()
@@ -528,7 +524,7 @@ class AutoTestManager(object):
 # Consumption tests
 #
 
-    def test_consumption_dc(self):
+    def test_consumption_dc(self, board_type):
         """ Try consumption for DC """
 
         ret_val = 0
@@ -536,7 +532,7 @@ class AutoTestManager(object):
         # one measure every ~0.1 seconds
 
         conso = Consumption(source='dc',
-                            board_type=gateway_code.config.board_type(),
+                            board_type=board_type,
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')
@@ -607,7 +603,7 @@ class AutoTestManager(object):
         ret_val += self.g_m.protocol.config_consumption(None)
         return ret_val
 
-    def test_leds_with_consumption(self):
+    def test_leds_with_consumption(self, board_type):
         """ Test Leds with consumption """
 
         _ = self.on_serial.send_command(['leds_off', '7'])
@@ -615,7 +611,7 @@ class AutoTestManager(object):
         # one measure every ~0.1 seconds
         ret_val = 0
         conso = Consumption(source='dc',
-                            board_type=gateway_code.config.board_type(),
+                            board_type=board_type,
                             period='1100', average='64',
                             power=True, voltage=True, current=True)
         ret_val += self.g_m.open_power_start(power='dc')
@@ -645,17 +641,14 @@ class AutoTestManager(object):
 
         values = []
         for led_time in leds_timestamps:
-            # get power consumption at led_time
-            index = bisect.bisect(timestamps, led_time)
             try:
-                values.append(measures[index][1])
+                # get power consumption at led_time
+                values.append(measures[bisect.bisect(timestamps, led_time)][1])
             except IndexError:  # pragma: no cover
                 values.append(float('NaN'))
 
         # check that consumption is higher with each led than with no leds on
         test_ok = all([val > values[0] for val in values[1:]])
-
         ret_val += self._check(TST_OK(test_ok), 'leds_using_conso',
                                (values[0], values[1:]))
-
         return ret_val
