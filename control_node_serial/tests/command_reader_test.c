@@ -240,7 +240,7 @@ TEST(test_parse_cmd, test_commands)
         char cmd[256];
 
         /* ping pong */
-        strcpy(cmd, "test_radio_ping_pong start 15 3.0");
+        strcpy(cmd, "test_radio_ping_pong start 15 3dBm");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
         ASSERT_EQ(4, cmd_buff.u.s.len);
@@ -253,10 +253,10 @@ TEST(test_parse_cmd, test_commands)
         ASSERT_EQ(TEST_RADIO_PING_PONG, cmd_buff.u.s.payload[0]);
         ASSERT_EQ(STOP, cmd_buff.u.s.payload[1]);
 
-        strcpy(cmd, "test_radio_ping_pong start 10 3.0");
+        strcpy(cmd, "test_radio_ping_pong start 10 3dBm");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_NE(0, ret);
-        strcpy(cmd, "test_radio_ping_pong start 27 3.0");
+        strcpy(cmd, "test_radio_ping_pong start 27 0dBm");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_NE(0, ret);
         strcpy(cmd, "test_radio_ping_pong start");

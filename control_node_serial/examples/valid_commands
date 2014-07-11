@@ -27,7 +27,7 @@ config_radio_stop
 
 
 #
-test_radio_ping_pong start 11 3.0
+test_radio_ping_pong start 11 3dBm
 
 test_radio_ping_pong stop
 

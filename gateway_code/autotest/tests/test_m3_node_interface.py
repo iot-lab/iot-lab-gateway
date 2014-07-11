@@ -44,49 +44,6 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         ret = self.on_interface.start()
         self.assertEquals((1, "ERROR_TEST"), ret)
 
-    def test_send_command(self):
-        cmd_ret = ['ANSWER', 'RETURN', 'VALUE']
-
-        def _mock_serial_send_cmd(_serial_data):
-            return cmd_ret
-        self.on_interface._serial_send_cmd = mock.Mock()
-        self.on_interface._serial_send_cmd.side_effect = _mock_serial_send_cmd
-
-        # leds
-        self.on_interface._serial_send_cmd.reset_mock()
-        ret = self.on_interface.send_command(['leds_on', '7'])
-        self.assertEquals(cmd_ret, ret)
-        self.on_interface._serial_send_cmd.assert_called()
-
-        self.on_interface._serial_send_cmd.reset_mock()
-        ret = self.on_interface.send_command(['leds_blink', '7', '42'])
-        self.assertEquals(cmd_ret, ret)
-        self.on_interface._serial_send_cmd.assert_called()
-
-        # radio cmds
-        self.on_interface._serial_send_cmd.reset_mock()
-        ret = self.on_interface.send_command(['radio_pkt', '3dBm', '20'])
-        self.assertEquals(cmd_ret, ret)
-        self.on_interface._serial_send_cmd.assert_called()
-
-        # get_<sensors>
-        self.on_interface._serial_send_cmd.reset_mock()
-        ret = self.on_interface.send_command(['get_light'])
-        self.assertEquals(cmd_ret, ret)
-        self.on_interface._serial_send_cmd.assert_called()
-
-        # test_<feature>
-        self.on_interface._serial_send_cmd.reset_mock()
-        ret = self.on_interface.send_command(['test_flash'])
-        self.assertEquals(cmd_ret, ret)
-        self.on_interface._serial_send_cmd.assert_called()
-
-        # invalid command
-        self.on_interface._serial_send_cmd.reset_mock()
-        self.assertRaises(NotImplementedError, self.on_interface.send_command,
-                          ['blabla'])
-        self.assertEquals(0, self.on_interface._serial_send_cmd.call_count)
-
     @mock.patch('Queue.Queue')
     def test_serial_send_cmd(self, mock_queue_class):
         mock_queue = mock_queue_class.return_value
@@ -95,14 +52,15 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         self.on_interface.start()
 
         # got answer
-        mock_queue.get.return_value = 'SUPER ANSWER'
-        ret = self.on_interface._serial_send_cmd(['a', 'b', 'c'])
-        self.assertEquals(ret, ['SUPER', 'ANSWER'])
+        mock_queue.get.return_value = 'ACK get_time'
+        ret = self.on_interface.send_command(['get_time'])
+        self.assertEquals(ret, ['ACK', 'get_time'])
 
         # no answer
         mock_queue.get.side_effect = Queue.Empty
-        ret = self.on_interface._serial_send_cmd(['a', 'b', 'c'])
+        ret = self.on_interface.send_command(['test_command', 'with_timeout'])
         self.assertEquals(ret, None)
+        self.serial.write.assertCalledWith('test_command with_timeout\n')
 
         self.on_interface.stop()
 

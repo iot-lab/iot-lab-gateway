@@ -59,17 +59,13 @@ class AutoTestManager(object):
 
     def setup_control_node(self):
         """ setup connection with control_node"""
-
-        self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
-        ret_val = 0
         LOGGER.info("Setup autotests")
+        ret_val = 0
 
         # configure Control Node
         ret_val += self.g_m.node_soft_reset('gwt')
-        self.g_m.cn_serial.start(_measures_handler=self._measures_handler,
-                                 _args=['-d'])
+        self.g_m.cn_serial.start(None, ['-d'], self._measures_handler)
         time.sleep(1)
-
         ret_val += self.g_m.set_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
@@ -196,6 +192,8 @@ class AutoTestManager(object):
         board_type = gateway_code.config.board_type()
         is_m3 = 'M3' == board_type
 
+        self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
+
         try:
             self.setup_control_node()
 
@@ -232,9 +230,10 @@ class AutoTestManager(object):
             # test M3-ON communication
             ret_val += self.test_gpio()
             ret_val += self.test_i2c()
-            if channel is not None:  # radio tests
-                ret_val += self.test_radio_ping_pong(channel)
-                ret_val += self.test_radio_with_rssi(channel)
+
+            # radio tests
+            ret_val += self.test_radio_ping_pong(channel)
+            ret_val += self.test_radio_with_rssi(channel)
 
             # test consumption measures
             ret_val += self.test_consumption_dc()
@@ -246,10 +245,7 @@ class AutoTestManager(object):
                 # test m3 specific sensors
                 ret_val += self.test_pressure()
                 ret_val += self.test_light()
-                if flash:
-                    ret_val += self.test_flash()
-                else:  # pragma: no cover
-                    pass
+                ret_val += self.test_flash(flash)
             else:  # pragma: no cover
                 pass
             if gps:
@@ -291,13 +287,13 @@ class AutoTestManager(object):
             LOGGER.error('Autotest: %r: %r', operation, log_message)
         return abs(int(ret))
 
-    def _run_test(self, num, cmd, answer_start, parse_function):
+    def _run_test(self, num, cmd, parse_function):
         """ Run a test 'num' times.
         In case of success parse answer with 'parse_function' """
         values = []
         for _ in range(0, num):
             answer = self.on_serial.send_command(cmd)
-            if (answer is None) or (answer[0:2] != ['ACK', answer_start]):
+            if (answer is None) or (answer[0:2] != ['ACK', cmd[0]]):
                 LOGGER.debug('%s answer == %r', cmd[0], answer)
             else:
                 values.append(parse_function(answer))
@@ -311,11 +307,10 @@ class AutoTestManager(object):
         """ runs the 'get_time' command
         Error on this check are fatal
         """
-        # get_time: ['ACK', 'CURRENT_TIME', '=', '122953', 'tick_32khz']
+        # get_time: ['ACK', 'get_time', '122953', 'tick_32khz']
         answer = self.on_serial.send_command(['get_time'])
 
-        values = self._run_test(5, ['get_time'], 'CURRENT_TIME',
-                                (lambda x: x[3].isdigit()))
+        values = self._run_test(5, ['get_time'], (lambda x: x[2].isdigit()))
         test_ok = (any(values))
         ret_val = self._check(TST_OK(test_ok), 'm3_comm_with_get_time', answer)
 
@@ -328,8 +323,8 @@ class AutoTestManager(object):
         """ runs the 'get_uid' command
         And add the resulting UID to the global return dictionary
         """
-        # get_uid: ['ACK', 'UID', '=', '05D8FF323632483343037109']
-        values = self._run_test(1, ['get_uid'], 'UID', (lambda x: x[3]))
+        # get_uid: ['ACK', 'get_uid', '05D8FF323632483343037109']
+        values = self._run_test(1, ['get_uid'], (lambda x: x[2]))
         test_ok = len(values)
 
         if test_ok:
@@ -347,32 +342,32 @@ class AutoTestManager(object):
 # sensors and flash
 #
 
-    def test_flash(self):
+    def test_flash(self, flash):
         """ test Flash """
-        values = self._run_test(1, ['test_flash'], 'TST_FLASH', (lambda x: x))
+        if not flash:
+            return 0
+
+        values = self._run_test(1, ['test_flash'], (lambda x: x))
         test_ok = len(values)
         return self._check(TST_OK(test_ok), 'test_flash', values)
 
     def test_pressure(self):
         """ test pressure sensor """
-        # ['ack', 'PRESSURE', '=', '9.944219E2', 'mbar']
-        values = self._run_test(10, ['get_pressure'], 'PRESSURE',
-                                (lambda x: float(x[3])))
+        # ['ack', 'get_pressure', '9.944219E2', 'mbar']
+        values = self._run_test(10, ['get_pressure'], (lambda x: float(x[2])))
         test_ok = 1 < len(set(values))
         return self._check(TST_OK(test_ok), 'test_pressure', values)
 
     def test_light(self):
         """ test light sensor with leds"""
-        # ['ACK', 'LIGHT', '=', '5.2001953E1', 'lux']
+        # ['ACK', 'get_light', '5.2001953E1', 'lux']
 
         # get light with leds
         _ = self.on_serial.send_command(['leds_on', '7'])
-        values_on = self._run_test(5, ['get_light'], 'LIGHT',
-                                   (lambda x: float(x[3])))
+        values_on = self._run_test(5, ['get_light'], (lambda x: float(x[2])))
         # get light without leds
         _ = self.on_serial.send_command(['leds_off', '7'])
-        values_off = self._run_test(5, ['get_light'], 'LIGHT',
-                                    (lambda x: float(x[3])))
+        values_off = self._run_test(5, ['get_light'], (lambda x: float(x[2])))
         values = values_on + values_off
         test_ok = 1 < len(set(values))
 
@@ -428,30 +423,33 @@ class AutoTestManager(object):
 #
     def test_gpio(self):
         """ test GPIO connections """
-        ret_val = 0
-        # setup control node
-        ret_val += self.g_m.protocol.send_cmd(['test_gpio', 'start'])
-
-        values = self._run_test(5, ['test_gpio'], 'GPIO', (lambda x: 0))
-        test_ok = len(values)
-        ret_val += self._check(TST_OK(test_ok), 'test_gpio_ON-CN', len(values))
-
-        # cleanup
-        ret_val += self.g_m.protocol.send_cmd(['test_gpio', 'stop'])
-        return ret_val
+        return self._test_on_cn(5, ['test_gpio'])
 
     def test_i2c(self):
         """ test i2c communication """
+        return self._test_on_cn(1, ['test_i2c'])
+
+    def _test_on_cn(self, num, cn_command, on_cmd=None, args=None):
+        """ Run a test command between open node and control node
+        setup control node
+        run num times on open node
+        teardown control node """
+        on_cmd = on_cmd or cn_command  # on_cmd is the same as cn_command
+        args = args or []
+        debug_str = '%s_on_cn' % cn_command[0]
         ret_val = 0
+
         # setup control node
-        ret_val += self.g_m.protocol.send_cmd(['test_i2c', 'start'])
+        ret_val += self.g_m.protocol.send_cmd(cn_command + ['start'] + args)
 
-        values = self._run_test(1, ['test_i2c'], 'I2C2_CN', (lambda x: x))
-        test_ok = len(values)
-        ret_val += self._check(TST_OK(test_ok), 'test_i2c_ON<->CN', values)
+        # Run num times
+        values = self._run_test(num, on_cmd + args, (lambda x: 0))
+        test_ok = (0 in values)  # at least one success
+        ret_val += self._check(TST_OK(test_ok), debug_str, values)
 
-        # cleanup
-        ret_val += self.g_m.protocol.send_cmd(['test_i2c', 'stop'])
+        # teardown
+        ret = self.g_m.protocol.send_cmd(cn_command + ['stop'])
+        ret_val += self._check(ret, debug_str, 'cleanup error')
 
         return ret_val
 
@@ -460,37 +458,29 @@ class AutoTestManager(object):
 #
     def test_magneto(self):
         """ test magneto sensor """
-        # ['ack', 'MAGNETO', '=', '4.328358E-2', '6.716418E-2', '-3.880597E-1']
-
-        values = self._run_test(
-            10, ['get_magneto'], 'MAGNETO',
-            (lambda x: tuple([float(val) for val in x[3:6]])))
-
-        test_ok = 1 < len(set(values))  # got different values
-        return self._check(TST_OK(test_ok), 'get_magneto', values)
+        # ['ack', 'get_magneto' '4.328358E-2', '6.716418E-2', '-3.880597E-1',
+        # 'gauss']
+        return self._test_xyz_sensor('get_magneto')
 
     def test_gyro(self):
         """ test gyro sensor """
-        # ['ack', 'GYRO_ROTATION_SPEED', '=',
-        #  '1.07625', '1.75', '5.2500002E-2', 'dps']
-
-        values = self._run_test(
-            10, ['get_gyro'], 'GYRO_ROTATION_SPEED',
-            (lambda x: tuple([float(val) for val in x[3:6]])))
-
-        test_ok = 1 < len(set(values))  # got different values
-        return self._check(TST_OK(test_ok), 'get_gyro', values)
+        # ['ack', 'get_gyro', '1.07625', '1.75', '5.2500002E-2', 'dps']
+        return self._test_xyz_sensor('get_gyro')
 
     def test_accelero(self):
         """ test accelerator sensor """
-        # ['ack', 'ACCELERATION', '=', '3.6E-2', '-1.56E-1', '1.0320001']
+        # ['ack', 'get_accelero', '3.6E-2', '-1.56E-1', '1.0320001', 'g']
+        return self._test_xyz_sensor('get_accelero')
+
+    def _test_xyz_sensor(self, sensor):
+        """ Test sensors returning 'xyz' float values """
+        # ['ack', sensor, '3.6E-2', '-1.56E-1', '1.0320001', unit]
 
         values = self._run_test(
-            10, ['get_accelero'], 'ACCELERATION',
-            (lambda x: tuple([float(val) for val in x[3:6]])))
+            10, [sensor], (lambda x: tuple([float(val) for val in x[2:5]])))
 
         test_ok = 1 < len(set(values))  # got different values
-        return self._check(TST_OK(test_ok), 'get_accelero', values)
+        return self._check(TST_OK(test_ok), sensor, values)
 
 #
 # Radio tests
@@ -498,33 +488,22 @@ class AutoTestManager(object):
 
     def test_radio_ping_pong(self, channel):
         """ test Radio Ping-pong with control-node """
-        ret_val = 0
+        if channel is None:
+            return 0
 
-        # setup control node
-        cmd = ['test_radio_ping_pong', 'start', str(channel), '3.0']
-        ret_val += self.g_m.protocol.send_cmd(cmd)
-
-        # send 10 packets
-        cmd_on = ['radio_ping_pong', '3dBm', str(channel)]
-        values = self._run_test(10, cmd_on, 'RADIO_PINGPONG', (lambda x: 0))
-
-        # got at least one answer from control_node
-        test_ok = (0 in values)  # at least one success
-        ret_val += self._check(TST_OK(test_ok), 'radio_ping_pong', values)
-
-        # cleanup
-        ret = self.g_m.protocol.send_cmd(['test_radio_ping_pong', 'stop'])
-        ret_val += self._check(ret, 'radio_ping_pong_cleanup', 'cleanup error')
-        return ret_val
+        return self._test_on_cn(10, ['test_radio_ping_pong'],
+                                ['radio_ping_pong'], [str(channel), '3dBm'])
 
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
+        if channel is None:
+            return 0
 
         # pkt length = 125
         # one measure every ~0.01 seconds
         ret_val = 0
         radio = Radio("rssi", [channel], period=10, num_per_channel=0)
-        cmd_on = ['radio_pkt', '3dBm', str(channel)]
+        cmd_on = ['radio_pkt', str(channel), '3dBm']
         del self.cn_measures[:]
 
         # get RSSI while sending 10 packets length 125

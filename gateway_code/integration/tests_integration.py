@@ -465,15 +465,13 @@ class TestAutoTests(GatewayCodeMock):
 
         g_v = gateway_code.autotest.autotest.AutoTestManager(
             self.app.gateway_manager)
+        ret_dict = g_v.auto_tests(channel=None, blink=False)
 
-        # radio functions
-        with patch.object(g_v, 'test_radio_ping_pong'):
-            with patch.object(g_v, 'test_radio_with_rssi'):
-                ret_dict = g_v.auto_tests(channel=None, blink=False)
-                self.assertEquals([], ret_dict['error'])
-                self.assertEquals(0, ret_dict['ret'])
-                self.assertEquals(0, g_v.test_radio_ping_pong.call_count)
-                self.assertEquals(0, g_v.test_radio_with_rssi.call_count)
+        self.assertEquals([], ret_dict['error'])
+        self.assertEquals(0, ret_dict['ret'])
+        # Radio functions not in results
+        self.assertNotIn('test_radio_ping_pong', ret_dict['success'])
+        self.assertNotIn('rssi_measures', ret_dict['success'])
 
 
 class TestUncommonCasesGatewayManager(GatewayCodeMock):

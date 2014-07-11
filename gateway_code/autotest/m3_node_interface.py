@@ -10,71 +10,12 @@ Interface for running autotests with open node auto-test firmware
 
 
 import threading
-import struct
 import serial
 import Queue
 import time
 
-
 from gateway_code import common
 from gateway_code import config
-
-
-SYNC_BYTE = chr(0x80)
-
-
-COMMAND_DICT = {
-    # leds
-    'leds_on': 0x00,
-    'leds_off': 0x01,
-    'leds_blink': 0x02,
-
-    # sensors
-    'get_light': 0x03,
-    'get_pressure': 0x04,
-    # IMU: inertial measurement unit
-    'get_gyro': 0x05,
-    'get_accelero': 0x06,
-    'get_magneto': 0x07,
-
-    'test_flash': 0x08,
-
-    # radio
-    'radio_pkt': 0x0B,
-    'radio_ping_pong': 0xBB,
-
-
-    # test ON-CN communication
-    'test_gpio': 0xBE,
-    'test_i2c': 0x09,
-    'test_pps_start': 0x0A,
-    'test_pps_stop': 0x1A,
-    'test_pps_get': 0x2A,
-
-    # get_ commands
-    'get_time': 0x0D,
-    'get_uid': 0x0E,
-}
-
-
-RADIO_POW_DICT = {
-    '3dBm': 38,
-    '2.8dBm': 37,
-    '2.3dBm': 36,
-    '1.8dBm': 34,
-    '1.3dBm': 33,
-    '0.7dBm': 31,
-    '0dBm': 30,
-    '-1dBm': 29,
-    '-2dBm': 28,
-    '-3dBm': 27,
-    '-4dBm': 26,
-    '-5dBm': 25,
-    '-7dBm': 23,
-    '-9dBm': 21,
-    '-12dBm': 18,
-    '-17dBm': 13,
-}
 
 
 class OpenNodeSerial(object):
@@ -111,49 +52,10 @@ class OpenNodeSerial(object):
         self.reader_thread.join()
         self.serial_fd.close()
 
-    def send_command(self, const_command_list):
+    def send_command(self, command_list):
         """ Send command and wait for answer """
-        serial_data = []
-
-        # act on a copy of the list
-        command_list = const_command_list[:]
-
-        # extract command
-        command = command_list.pop(0)
-        try:
-            serial_data.append(chr(COMMAND_DICT[command]))
-        except KeyError:
-            raise NotImplementedError
-
-        # extract parameters
-        if command in ['leds_on', 'leds_off', 'leds_blink']:
-            # extract leds <0-7>
-            leds = chr(int(command_list.pop(0)))
-            serial_data.append(leds)
-            # add <freq> for leds_blink
-            if command == 'leds_blink':
-                # convert freq to list of bytes
-                freq_codes = list(struct.pack('H', int(command_list.pop(0))))
-                serial_data.extend(freq_codes)
-        elif command in ['radio_pkt', 'radio_ping_pong']:
-            # add <power> and <channel>
-            pow_code = chr(RADIO_POW_DICT[command_list.pop(0)])
-            channel = chr(int(command_list.pop(0)))
-            serial_data.append(pow_code)
-            serial_data.append(channel)
-        else:  # command without parameter get_<sensor> or test_<feature>
-            pass
-
-        # send command
-        ret = self._serial_send_cmd(serial_data)
-        return ret
-
-    def _serial_send_cmd(self, chars_list):
-        """ Serial level level command send implementation """
-
-        # create packet with header
-        packet = ''.join([SYNC_BYTE, chr(len(chars_list))] + chars_list)
-        self.serial_fd.write(packet)
+        packet = ' '.join(command_list)
+        self.serial_fd.write(packet + '\n')
 
         # wait answer
         common.empty_queue(self.msg_queue)

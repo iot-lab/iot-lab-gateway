@@ -37,16 +37,15 @@ class TestProtocol(unittest.TestCase):
         self.g_v.on_serial.send_command.side_effect = \
             lambda x: self.send_ret.pop(0)
 
-        self.send_ret.append(['ACK', 'COMMAND', '3.14'])
+        self.send_ret.append(['ACK', 'test_command', '3.14'])
         self.send_ret.append(None)
-        self.send_ret.append(['NACK', 'COMMAND', '1.414'])
+        self.send_ret.append(['NACK', 'test_command', '1.414'])
 
-        values = self.g_v._run_test(3, ['test_command'], 'COMMAND',
-                                    lambda x: float(x[2]))
+        values = self.g_v._run_test(3, ['test_command'], lambda x: float(x[2]))
 
         self.assertEquals([3.14], values)
         mock_debug.assert_called_with('%s answer == %r', 'test_command',
-                                      ['NACK', 'COMMAND', '1.414'])
+                                      ['NACK', 'test_command', '1.414'])
 
 
 class TestAutoTestsErrorCases(unittest.TestCase):
