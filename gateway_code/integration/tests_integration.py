@@ -77,9 +77,9 @@ class GatewayCodeMock(unittest.TestCase):
             name='profile', filename='default_profile.json')
 
         # test specific files
-        cls.files['echo'] = FileUpload(
-            file=open(CURRENT_DIR + 'serial_echo.elf', 'rb'),
-            name='firmware', filename='serial_echo.elf')
+        cls.files['autotest'] = FileUpload(
+            file=open(STATIC_DIR + 'm3_autotest.elf', 'rb'),
+            name='firmware', filename='m3_autotest.elf')
 
         cls.files['profile'] = FileUpload(
             file=open(CURRENT_DIR + 'profile.json', 'rb'),
@@ -233,11 +233,11 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         time.sleep(1)
 
         # idle firmware, should be no reply
-        ret = _send_command_open_node('localhost', 20000, msg)
+        ret = _send_command_open_node('localhost', 20000, 'echo %s' % msg)
         self.assertEquals(ret, None)
 
         # flash echo firmware
-        self.request.files = {'firmware': self.files['echo']}
+        self.request.files = {'firmware': self.files['autotest']}
         ret = self.app.open_flash()
         self.assertEquals(ret, {'ret': 0})
         time.sleep(1)
@@ -245,11 +245,11 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         # test set_time during experiment
         self.app.set_time()
 
-        # echo firmware, should reply what was sent
+        # ecoo firmware, should reply what was sent
         # do it multiple times to be sure
         answers = []
         for _ in range(0, 5):
-            ret = _send_command_open_node('localhost', 20000, msg)
+            ret = _send_command_open_node('localhost', 20000, 'echo %s' % msg)
             answers.append(ret)
             time.sleep(0.5)
         self.assertIn(msg, answers)
