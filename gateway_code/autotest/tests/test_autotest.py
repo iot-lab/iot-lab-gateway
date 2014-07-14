@@ -12,12 +12,11 @@ class TestProtocol(unittest.TestCase):
     def setUp(self):
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
+        self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
+                             'mac': {}}
 
     @mock.patch('gateway_code.autotest.autotest.LOGGER')
     def test__check(self, mock_logger):
-
-        self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
-                             'mac': {}}
 
         # test validate
         ret_1 = self.g_v._check(0, 'message_1', ['1', '2'])
@@ -29,8 +28,8 @@ class TestProtocol(unittest.TestCase):
         self.assertTrue('message_1' in self.g_v.ret_dict['success'])
         self.assertTrue('message_2' in self.g_v.ret_dict['error'])
 
-    @mock.patch('gateway_code.autotest.autotest.LOGGER.debug')
-    def test_run_test(self, mock_debug):
+    @mock.patch('gateway_code.autotest.autotest.LOGGER.error')
+    def test_run_test(self, mock_error):
         self.g_v.on_serial = mock.Mock()
 
         self.send_ret = []
@@ -44,7 +43,8 @@ class TestProtocol(unittest.TestCase):
         values = self.g_v._run_test(3, ['test_command'], lambda x: float(x[2]))
 
         self.assertEquals([3.14], values)
-        mock_debug.assert_called_with('%s answer == %r', 'test_command',
+        mock_error.assert_called_with('Autotest: %r: %r',
+                                      "On Command: ['test_command']",
                                       ['NACK', 'test_command', '1.414'])
 
 

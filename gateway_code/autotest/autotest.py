@@ -4,10 +4,12 @@
 """ auto tests implementation """
 
 import time
-import bisect
+from bisect import bisect
 
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from serial import SerialException
+
+from collections import defaultdict
 
 # config should be accessed through gateway_code to allow testing...
 import gateway_code
@@ -250,10 +252,10 @@ class AutoTestManager(object):
                 pass
 
             # set_leds
-            _ = self.on_serial.send_command(['leds_off', '7'])
+            self._on_call(['leds_off', '7'])
             if ret_val == 0:
-                _ = self.on_serial.send_command(['leds_blink', '7', '500'])
-                _ = self.g_m.protocol.green_led_blink()
+                self._on_call(['leds_blink', '7', '500'])
+                self.g_m.protocol.green_led_blink()
             else:  # pragma: no cover
                 pass
         except FatalError as err:
@@ -288,12 +290,22 @@ class AutoTestManager(object):
         In case of success parse answer with 'parse_function' """
         values = []
         for _ in range(0, num):
-            answer = self.on_serial.send_command(cmd)
-            if (answer is None) or (answer[0:2] != ['ACK', cmd[0]]):
-                LOGGER.debug('%s answer == %r', cmd[0], answer)
-            else:
-                values.append(parse_function(answer))
+            (ret, answer) = self._on_call(cmd)
+            if ret:
+                continue
+            values.append(parse_function(answer))
         return values
+
+    def _on_call(self, cmd):
+        """ Call command to Open Node and expect correct answer
+        cmd args
+        ACK cmd [answer_args]
+        """
+        answer = self.on_serial.send_command(cmd)
+        if (answer is None) or (answer[0:2] != ['ACK', cmd[0]]):
+            self._check(1, "On Command: %r" % cmd, answer)
+            return (1, answer)
+        return (0, answer)
 
 #
 # Test implementation
@@ -304,7 +316,7 @@ class AutoTestManager(object):
         Error on this check are fatal
         """
         # get_time: ['ACK', 'get_time', '122953', 'tick_32khz']
-        answer = self.on_serial.send_command(['get_time'])
+        (_, answer) = self._on_call(['get_time'])
 
         values = self._run_test(5, ['get_time'], (lambda x: x[2].isdigit()))
         test_ok = (any(values))
@@ -349,7 +361,7 @@ class AutoTestManager(object):
 
     def test_pressure(self):
         """ test pressure sensor """
-        # ['ack', 'get_pressure', '9.944219E2', 'mbar']
+        # ['ACK', 'get_pressure', '9.944219E2', 'mbar']
         values = self._run_test(10, ['get_pressure'], (lambda x: float(x[2])))
         test_ok = 1 < len(set(values))
         return self._check(TST_OK(test_ok), 'test_pressure', values)
@@ -359,20 +371,14 @@ class AutoTestManager(object):
         # ['ACK', 'get_light', '5.2001953E1', 'lux']
 
         # get light with leds
-        _ = self.on_serial.send_command(['leds_on', '7'])
+        self._on_call(['leds_on', '7'])
         values_on = self._run_test(5, ['get_light'], (lambda x: float(x[2])))
         # get light without leds
-        _ = self.on_serial.send_command(['leds_off', '7'])
+        self._on_call(['leds_off', '7'])
         values_off = self._run_test(5, ['get_light'], (lambda x: float(x[2])))
+
         values = values_on + values_off
         test_ok = 1 < len(set(values))
-
-        # if len(set(values)) == 1 and values[0] < 0.20:
-        #     # test fails when run with low light, like at night
-        #     # so hack to let it work
-        #     LOGGER.warning("Got the same value which is '%f'", values[0])
-        #     self.ret_dict['warning'] = {'get_light_value': values[0]}
-        #     test_ok = False
         return self._check(TST_OK(test_ok), 'get_light', values)
 
 #
@@ -383,16 +389,16 @@ class AutoTestManager(object):
         ret_val = 0
 
         # start pps on open node
-        answer = self.on_serial.send_command(['test_pps_start'])
-        if (answer is None) or (answer[:2] != ['ACK', 'test_pps_start']):
-            return self._check(1, 'test_pps_start', answer[:2])
+        (ret, answer) = self._on_call(['test_pps_start'])
+        if ret:
+            return self._check(1, 'test_pps_start', answer)
 
         # try to get pps for max 2 min
         end_time = time.time() + 120.0
         while time.time() < end_time:
             time.sleep(5)
-            answer = self.on_serial.send_command(['test_pps_get'])
-            if (answer is None) or (answer[:2] != ['ACK', 'test_pps_get']):
+            (ret, answer) = self._on_call(['test_pps_get'])
+            if ret:
                 return self._check(1, 'test_pps_get', answer)
 
             # get pps value
@@ -403,7 +409,7 @@ class AutoTestManager(object):
         else:
             ret_val = self._check(1, 'test_pps_open_node_timeout', pps_count)
 
-        _ = self.on_serial.send_command(['test_pps_stop'])
+        _ = self._on_call(['test_pps_stop'])
         return ret_val
 
     def test_gps(self):
@@ -454,23 +460,23 @@ class AutoTestManager(object):
 #
     def test_magneto(self):
         """ test magneto sensor """
-        # ['ack', 'get_magneto' '4.328358E-2', '6.716418E-2', '-3.880597E-1',
+        # ['ACK', 'get_magneto' '4.328358E-2', '6.716418E-2', '-3.880597E-1',
         # 'gauss']
         return self._test_xyz_sensor('get_magneto')
 
     def test_gyro(self):
         """ test gyro sensor """
-        # ['ack', 'get_gyro', '1.07625', '1.75', '5.2500002E-2', 'dps']
+        # ['ACK', 'get_gyro', '1.07625', '1.75', '5.2500002E-2', 'dps']
         return self._test_xyz_sensor('get_gyro')
 
     def test_accelero(self):
         """ test accelerator sensor """
-        # ['ack', 'get_accelero', '3.6E-2', '-1.56E-1', '1.0320001', 'g']
+        # ['ACK', 'get_accelero', '3.6E-2', '-1.56E-1', '1.0320001', 'g']
         return self._test_xyz_sensor('get_accelero')
 
     def _test_xyz_sensor(self, sensor):
         """ Test sensors returning 'xyz' float values """
-        # ['ack', sensor, '3.6E-2', '-1.56E-1', '1.0320001', unit]
+        # ['ACK', sensor, '3.6E-2', '-1.56E-1', '1.0320001', unit]
 
         values = self._run_test(
             10, [sensor], (lambda x: tuple([float(val) for val in x[2:5]])))
@@ -492,6 +498,7 @@ class AutoTestManager(object):
 
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
+        self.cn_measures = []
         if channel is None:
             return 0
 
@@ -500,22 +507,21 @@ class AutoTestManager(object):
         ret_val = 0
         radio = Radio("rssi", [channel], period=10, num_per_channel=0)
         cmd_on = ['radio_pkt', str(channel), '3dBm']
-        del self.cn_measures[:]
 
         # get RSSI while sending 10 packets length 125
         ret_val += self.g_m.protocol.config_radio(radio)
         for _ in range(0, 10):
-            _ = self.on_serial.send_command(cmd_on)
+            self._on_call(cmd_on)
             time.sleep(0.5)
         ret_val += self.g_m.protocol.config_radio(None)
 
-        # ['measures_debug:', 'radio_measure',
-        #      '1378466517.186216', '11', '-91']
+        # ('11', '-91')
         # -91 == no radio detected
-        values = [int(measure[4]) for measure in self.cn_measures] + [-91]
+        measures = extract_measures(self.cn_measures)
+        values = [v[1] for v in measures['radio']['values']]
 
-        # check that values other than -91 measured
-        test_ok = 1 < len(set(values))
+        # check that there are values other than -91 measured
+        test_ok = set([-91]) != set(values)
         ret_val += self._check(TST_OK(test_ok), 'rssi_measures', set(values))
 
         return ret_val
@@ -531,27 +537,20 @@ class AutoTestManager(object):
 
         # one measure every ~0.1 seconds
 
-        conso = Consumption(source='dc',
-                            board_type=board_type,
-                            period='1100', average='64',
-                            power=True, voltage=True, current=True)
+        conso = Consumption('dc', board_type, '1100', '64', True, True, True)
         ret_val += self.g_m.open_power_start(power='dc')
 
-        del self.cn_measures[:]
+        self.cn_measures = []
         # store 2 secs of measures
         ret_val += self.g_m.protocol.config_consumption(conso)
         time.sleep(2)  # get measures for 2 seconds
         ret_val += self.g_m.protocol.config_consumption(None)
 
-        values = []
-        # measures_debug: consumption_measure
-        #     1378387028.906210 0.257343 3.216250 0.080003
-        for measure in self.cn_measures:
-            if measure[1] == 'consumption_measure':
-                values.append(tuple([float(meas) for meas in measure[3:6]]))
+        # (0.257343, 3.216250, 0.080003)
+        measures = extract_measures(self.cn_measures)
+        values = measures['consumption']['values']
 
         # Value ranges may be validated with an Idle firmware
-
         test_ok = 1 < len(set(values))
         ret_val += self._check(TST_OK(test_ok), 'consumption_dc', values)
 
@@ -573,10 +572,9 @@ class AutoTestManager(object):
 
         # configure consumption
         # one measure every ~0.1 seconds
-        conso = Consumption(source='battery', board_type=board_type,
-                            period='1100', average='64',
-                            power=True, voltage=True, current=True)
-        del self.cn_measures[:]
+        conso = Consumption('battery', board_type, '1100', '64',
+                            True, True, True)
+        self.cn_measures = []
         ret_val += self.g_m.protocol.config_consumption(conso)
 
         ret_val += self.g_m.open_power_stop(power='battery')
@@ -588,67 +586,109 @@ class AutoTestManager(object):
         ret_val += self.g_m.protocol.config_consumption(None)
         time.sleep(1)  # Flush last values
 
-        values = []
-        # measures_debug: consumption_measure
-        #     1378387028.906210 0.257343 3.216250 0.080003
-        for measure in self.cn_measures:
-            if measure[1] == 'consumption_measure':
-                values.append(tuple([float(meas) for meas in measure[3:6]]))
+        # (0.257343, 3.216250, 0.080003)
+        measures = extract_measures(self.cn_measures)
+        values = measures['consumption']['values']
 
         test_ok = 1 < len(set(values))
         ret_val += self._check(TST_OK(test_ok), 'consumption_batt', values)
 
         # Value ranges may be validated with an Idle firmware
-
-        ret_val += self.g_m.protocol.config_consumption(None)
         return ret_val
 
     def test_leds_with_consumption(self, board_type):
-        """ Test Leds with consumption """
+        """ Test Leds with consumption
 
-        _ = self.on_serial.send_command(['leds_off', '7'])
+        Start consumption measure
+        Then switch different leds on and save the timestamp where it's done
+
+        Finally compare that consumption with no leds on was lower than
+        with one or more leds on.
+        """
+
+        self._on_call(['leds_off', '7'])
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption(source='dc',
-                            board_type=board_type,
-                            period='1100', average='64',
-                            power=True, voltage=True, current=True)
+        conso = Consumption('dc', board_type, '1100', '64', True, True, True)
         ret_val += self.g_m.open_power_start(power='dc')
 
-        del self.cn_measures[:]
+        self.cn_measures = []
         leds_timestamps = []
         # get consumption for all leds mode:
         #     no leds, each led, all leds
         ret_val += self.g_m.protocol.config_consumption(conso)
         for leds in ['0', '1', '2', '4', '7']:
-            _ = self.on_serial.send_command(['leds_on', leds])
+            self._on_call(['leds_on', leds])
             time.sleep(0.5)
             leds_timestamps.append(time.time())
             time.sleep(0.5)
-            _ = self.on_serial.send_command(['leds_off', '7'])
+            self._on_call(['leds_off', '7'])
         ret_val += self.g_m.protocol.config_consumption(None)
         time.sleep(0.5)  # flush last values
 
-        for measure in self.cn_measures:
-            LOGGER.debug(measure)
+        # (0.257343, 3.216250, 0.080003)
+        measures = extract_measures(self.cn_measures)
+        values = [v[0] for v in measures['consumption']['values']]
+        timestamps = measures['consumption']['timestamps']
 
-        # measures_debug: consumption_measure
-        #     1378387028.906210  0.257343 3.216250 0.080003
-        measures = [measure[2:] for measure in self.cn_measures if
-                    measure[1] == 'consumption_measure']
-        timestamps = [float(meas[0]) for meas in measures]
-
-        values = []
+        led_consumption = []
         for led_time in leds_timestamps:
             try:
-                # get power consumption at led_time
-                values.append(measures[bisect.bisect(timestamps, led_time)][1])
-            except IndexError:  # pragma: no cover
-                values.append(float('NaN'))
+                led_consumption.append(values[bisect(timestamps, led_time)])
+            except IndexError:
+                led_consumption.append(float('NaN'))
 
         # check that consumption is higher with each led than with no leds on
-        test_ok = all([val > values[0] for val in values[1:]])
+        led_0 = led_consumption.pop(0)
+        test_ok = all([led_0 < v for v in led_consumption])
         ret_val += self._check(TST_OK(test_ok), 'leds_using_conso',
-                               (values[0], values[1:]))
+                               (led_0, led_consumption))
         return ret_val
+
+
+def extract_measures(meas_list):
+    """ Extract the measures of meas_list
+
+    >>> measures_list = [                         \
+        ['measures_debug', 'consumption_measure', \
+            '123.450000', '1.0', '2.0', '3.0'],   \
+        ['measures_debug', 'radio_measure',       \
+            '122.000000', '22', '-91'],           \
+        ['measures_debug', 'consumption_measure', \
+            '124.000000', '4.0', '5.0', '6.0'],   \
+        ['measures_debug', 'unhandled_measure'],  \
+    ]
+    >>> expected_result = {                       \
+        'consumption': {                          \
+            'values': [(1.0, 2.0, 3.0), (4.0, 5.0, 6.0)],\
+            'timestamps': [123.45, 124.0]         \
+        },                                        \
+        'radio': {                                \
+            'values': [(22, -91)],                \
+            'timestamps': [122]                   \
+        }                                         \
+    }
+    >>> expected_result == extract_measures(measures_list)
+    True
+    """
+    meas_dict = defaultdict(lambda: dict({'values': [], 'timestamps': []}))
+
+    for meas in meas_list:
+        if 'consumption_measure' == meas[1]:
+            # ['measures_debug', 'consumption_measure'
+            #     '1378387028.906210', '0.257343', '3.216250', '0.080003']
+            values = tuple([float(v) for v in meas[3:6]])
+            meas_dict['consumption']['values'].append(values)
+            meas_dict['consumption']['timestamps'].append(float(meas[2]))
+        elif 'radio_measure' == meas[1]:
+            # ['measures_debug:', 'radio_measure',
+            #      '1378466517.186216', '11', '-91']
+            values = tuple([int(v) for v in meas[3:5]])
+            meas_dict['radio']['values'].append(values)
+            meas_dict['radio']['timestamps'].append(float(meas[2]))
+        else:
+            LOGGER.debug('unhandled measure type: %r', meas)
+
+    # keep 'defaultdict' to simplify usage
+    return meas_dict

@@ -7,12 +7,14 @@ import time
 import shutil
 import math
 import recordtype
+from itertools import izip
 
 import mock
 from mock import patch
 import unittest
 
 import gateway_code
+from gateway_code.autotest.autotest import extract_measures
 
 # W0212 Access to a protected member '_xxx'of a client class
 # pylint: disable=C0103,R0904
@@ -183,17 +185,11 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             self._measures_handler
 
         if 'M3' == gateway_code.config.board_type():
+            # start
             for _ in range(0, 3):
-
                 m_error.reset_mock()
                 self.cn_measures = []
                 self._rewind_files()
-
-                # start
-                self.request.files = {
-                    'firmware': self.files['idle'],
-                    'profile': self.files['profile']
-                    }
                 self._run_one_experiment_m3(m_error)
 
         elif 'A8' == gateway_code.config.board_type():
@@ -222,11 +218,13 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         """ Run an experiment """
 
         msg = 'HELLO WORLD\n'
-        t_before_start = time.time()
+        t0 = time.time()
 
         #
         # Run an experiment
         #
+        self.request.files = {'firmware': self.files['idle'],
+                              'profile': self.files['profile']}
         ret = self.app.exp_start(self.exp_conf['user'],
                                  self.exp_conf['exp_id'])
         self.assertEquals(ret, {'ret': 0})
@@ -284,28 +282,20 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         #
         # Validate measures consumption
         #
-        measures = []
-        for meas in self.cn_measures:
-            # filter consumption meausures
-            if 'consumption_measure' != meas[1]:
-                continue
-            measures.append(tuple([float(val) for val in meas[2:6]]))
-
-        for meas in measures:
+        measures = extract_measures(self.cn_measures)
+        for meas in measures['consumption']['values']:
             # no power,  voltage in 3.3V, current not null
-            self.assertTrue(math.isnan(meas[1]))
-            self.assertTrue(2.8 <= meas[2] <= 3.5)
-            self.assertNotEquals(0.0, meas[3])
+            self.assertTrue(math.isnan(meas[0]))
+            self.assertTrue(2.8 <= meas[1] <= 3.5)
+            self.assertNotEquals(0.0, meas[2])
 
         # check timestamps are sorted in correct order
-        timestamps = ([t_before_start] + [args[0] for args in measures] +
-                      [time.time()])
-        self.assertTrue(
-            all([a < b for a, b in zip(timestamps, timestamps[1:])]))
+        for values in measures.values():
+            timestamps = [t0] + values['timestamps'] + [time.time()]
+            _sorted = all([a < b for a, b in izip(timestamps, timestamps[1:])])
+            self.assertTrue(_sorted)
 
-        #
         # Test OML Files
-        #
         # radio file is already removed
         self.assertRaises(IOError, open, exp_files['radio'])
         # conso file exists
