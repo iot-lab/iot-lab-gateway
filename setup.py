@@ -201,7 +201,8 @@ class Tests(_EmptyCommand):
     """ Run unit tests, pylint and pep8 """
     def run(self):
         args = ['python', 'setup.py']
-        ret = subprocess.call(args + ['nosetests', '--cover-html'])
+        ret = subprocess.call(args + ['nosetests', '-e=*integration/*',
+                                      '--cover-html'])
         subprocess.call(args + ['lint', '-o', 'pylint.out'])
         subprocess.call(args + ['pep8', '-o', 'pep8.out'])
 
@@ -215,7 +216,8 @@ class TestsRoomba(_EmptyCommand):
     def run(self):
         args = ['python', 'setup.py']
         try:
-            subprocess.check_call(args + ['nosetests', '-i=*robot/*'])
+            subprocess.check_call(args + ['nosetests', '-e=*integration/*',
+                                          '-i=*robot/*'])
         except subprocess.CalledProcessError as err:
             exit(err.returncode)
 
@@ -250,7 +252,7 @@ class OnlyIntegrationTests(Command):
         self.stop = False
 
     def finalize_options(self):
-        self.nose_args = ['nosetests', '-i=*integration/*',
+        self.nose_args = ['nosetests',
                           '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
                           '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
         if self.stop:

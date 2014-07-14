@@ -13,7 +13,10 @@ from mock import patch
 import unittest
 
 import gateway_code
+
+# W0212 Access to a protected member '_xxx'of a client class
 # pylint: disable=C0103,R0904
+# pylint: disable=W0212
 
 # Bottle FileUpload class stub
 FileUpload = recordtype.recordtype(
@@ -160,7 +163,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         )
 
     def test_admin_commands(self):
-
+        """ Try running the admin commands """
         # flash Control Node
         self.request.files = {'firmware': self.files['control_node']}
         ret = self.app.admin_control_flash()
@@ -194,12 +197,14 @@ class TestComplexExperimentRunning(GatewayCodeMock):
                 self._run_one_experiment_m3(m_error)
 
         elif 'A8' == gateway_code.config.board_type():
-                m_error.reset_mock()
-                self.request.files = {}
-                self._run_one_experiment_a8(m_error)
+            m_error.reset_mock()
+            self.request.files = {}
+            self._run_one_experiment_a8(m_error)
 
     def _run_one_experiment_a8(self, m_error):
         """ Run an experiment for A8 nodes """
+
+        _ = m_error
 
         # Run an experiment that does nothing but wait
         # should keep the same user as it's the only one setup
