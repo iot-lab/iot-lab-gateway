@@ -5,6 +5,7 @@
 
 import time
 from bisect import bisect
+import re
 
 from subprocess import Popen, PIPE, STDOUT, CalledProcessError
 from serial import SerialException
@@ -20,8 +21,8 @@ from gateway_code.profile import Consumption, Radio
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
-MAC_CMD = "ip link show dev eth0 " + \
-    r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'"
+MAC_CMD = "cat /sys/class/net/eth0/address"
+MAC_RE = re.compile(r'([0-9a-f]{2}:){5}[0-9a-f]{2}')
 
 
 class FatalError(Exception):
@@ -73,7 +74,10 @@ class AutoTestManager(object):
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
-        ret_val = self._check(ret_val, 'setup_cn_connection', ret_val)
+        test_ok = (MAC_RE.match(gwt_mac_addr) is not None)
+        ret_val += self._check(TST_OK(test_ok), 'gw_mac_addr', gwt_mac_addr)
+
+        self._check(ret_val, 'setup_cn_connection', ret_val)
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup control node failed')
 
@@ -122,7 +126,11 @@ class AutoTestManager(object):
                 raise FatalError('Setup Open Node failed')
 
             # save mac address
-            self.ret_dict['mac']['A8'] = self.a8_connection.get_mac_addr()
+            a8_mac_addr = self.a8_connection.get_mac_addr()
+            self.ret_dict['mac']['A8'] = a8_mac_addr
+
+            test_ok = (MAC_RE.match(a8_mac_addr) is not None)
+            ret_val += self._check(TST_OK(test_ok), 'a8_mac_addr', a8_mac_addr)
 
             # open A8 flash
             try:
@@ -134,9 +142,7 @@ class AutoTestManager(object):
                 raise FatalError('Setup Open Node failed')
 
             try:
-                self.a8_connection.ssh_run(
-                    'source /etc/profile; ' +
-                    '/usr/bin/flash_a8.sh /tmp/a8_autotest.elf')
+                self.a8_connection.ssh_run('flash_a8.sh /tmp/a8_autotest.elf')
             except CalledProcessError as err:  # pragma: no cover
                 ret_val += self._check(1, 'Flash A8-M3 fail', str(err))
                 raise FatalError('Setup Open Node failed')

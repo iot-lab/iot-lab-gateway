@@ -19,18 +19,17 @@ A8_TTY_PATH = '/tmp/tty_open_a8_m3'
 
 # cannot specify static_files_path at import to allow testing
 _SSH_OPTS = '-F   {static_files_path}/ssh_a8_config'
-SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "{cmd}"'
+SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "source /etc/profile; {cmd}"'
 SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 
 IP_CMD = ("ip addr show dev eth0 " +
           r" | sed -n '/inet/ s/.*inet \([^ ]*\)\/.*/\1/p'")
 
-SOCAT_CMD = ('/usr/bin/socat -d TCP4-LISTEN:{port},reuseaddr ' +
+SOCAT_CMD = ('socat -d TCP4-LISTEN:{port},reuseaddr ' +
              'open:{tty},b{baudrate},echo=0,raw ')
-LOCAL_TTY = ('/usr/bin/socat -d tcp4-connect:{ip_addr}:{port} ' +
+LOCAL_TTY = ('socat -d tcp4-connect:{ip_addr}:{port} ' +
              ' PTY,link={tty},b{baudrate},echo=0,raw')
-MAC_CMD = ('ip link show dev eth0 ' +
-           r"| sed -n '/ether/ s/.*ether \(.*\) brd.*/\1/p'")
+MAC_CMD = "cat /sys/class/net/eth0/address"
 
 
 class A8ConnectionError(Exception):
