@@ -62,12 +62,14 @@ if [[ 1 -eq $verbose ]]; then
 fi
 
 date
+set -e
 
 # update gateway_code_python to host with www-data:www-data as owner
 rsync -e "ssh ${SSH_OPT}" -av --delete --exclude='gateway_code.egg-info' \
     --exclude='obj' --exclude='tests/bin' --exclude='tests/results'      \
     --exclude='*pyc' --exclude='cover' \
     ${SRC_DIR}   ${GATEWAY_HOSTNAME}:${DEST}
+set +e
 
 ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "chown -R www-data:www-data ${DEST}"
 
