@@ -14,8 +14,10 @@ DAEMONUSER=www-data
 DAEMON=/usr/bin/gateway-rest-server
 DAEMON_OPTS="0.0.0.0 8080 --log-folder=$LOGDIR"
 
-# add path for finding openocd and 'ip' command
-source /etc/profile
+# add path for finding openocd
+export PATH=$PATH:/usr/local/bin
+
+
 
 case "$1" in
   start)
