@@ -15,7 +15,8 @@ class Profile(object):
     """ Experiment monitoring Profile """
 
     def __init__(self, profilename, power, board_type,
-                 consumption=None, radio=None):
+                 consumption=None, radio=None, **_):
+        # **_ argument for other unused parameters
         self.profilename = profilename
         self.power = power
 

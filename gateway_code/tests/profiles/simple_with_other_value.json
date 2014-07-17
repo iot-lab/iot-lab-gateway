@@ -1,0 +1,9 @@
+{
+    "profilename": "simple_1",
+    "power": "dc",
+    "mobility": {
+        "an_entry": 1,
+        "another_entry": null
+    },
+    "anything_else": 2
+}
