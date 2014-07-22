@@ -56,7 +56,7 @@ SCRIPTS += ['control_node_serial/' + config.CONTROL_NODE_SERIAL_INTERFACE]
 EXT_MODULES = Extension(config.CONTROL_NODE_SERIAL_INTERFACE, [])
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
-TESTS_REQUIRES = ['nose>=1.0', 'pylint', 'nosexcover', 'mock', 'pep8']
+TESTS_REQUIRES = ['nose>=1.3', 'pylint', 'nosexcover', 'mock', 'pep8']
 
 # unload 'gateway_code.config' module
 # either it's not included in the coverage report...
@@ -140,7 +140,6 @@ class Release(_EmptyCommand):
         """ Install init.d script
         Add www-data user to dialout group """
         import shutil
-        print >> sys.stderr, 'running post_install'
 
         # setup init script
         init_script = 'gateway-server-daemon'
@@ -197,12 +196,21 @@ class Pep8(_EmptyCommand):
             pep8._main()  # pylint: disable=W0212
 
 
-class Tests(_EmptyCommand):
+class Tests(Command):
     """ Run unit tests, pylint and pep8 """
+    user_options = [('tests=', None, "Run these tests (comma-separated-list)")]
+
+    def initialize_options(self):
+        self.tests = ''
+
+    def finalize_options(self):
+        self.test_opt = ['--tests=%s' % self.tests] if self.tests else []
+
     def run(self):
         args = ['python', 'setup.py']
-        ret = subprocess.call(args + ['nosetests', '-e=*integration/*',
-                                      '--cover-html'])
+        ret = subprocess.call(
+            args + ['nosetests', '-e=*integration/*', '--cover-html'] +
+            self.test_opt)
         subprocess.call(args + ['lint', '-o', 'pylint.out'])
         subprocess.call(args + ['pep8', '-o', 'pep8.out'])
 
@@ -227,15 +235,19 @@ class IntegrationTests(Command):
     Run unit tests, pylint and pep8, and integration tests.
     Should be run on a gateway
     """
-    user_options = [('stop', None, "Stop tests after a failed test")]
+    user_options = [('stop', None, "Stop tests after a failed test"),
+                    ('tests=', None, "Run these tests (comma-separated-list)")]
 
     def initialize_options(self):
         self.stop = False
+        self.tests = ''
 
     def finalize_options(self):
         self.tests_args = ['run_integration_tests']
+        self.tests_args += ['--tests=%s' % self.tests] if self.tests else []
+
         if self.stop:
-            self.tests_args += ['--stop']
+            self.tests_args.append('--stop')
 
     def run(self):
         args = ['python', 'setup.py']
@@ -246,26 +258,31 @@ class IntegrationTests(Command):
 
 class OnlyIntegrationTests(Command):
     """ Run unit tests and integration tests.  Should be run on a gateway """
-    user_options = [('stop', None, "Stop tests after a failed test")]
+    user_options = [('stop', None, "Stop tests after a failed test"),
+                    ('tests=', None, "Run these tests (comma-separated-list)")]
 
     def initialize_options(self):
+        self.tests = ''
         self.stop = False
 
     def finalize_options(self):
         self.nose_args = ['nosetests',
                           '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
                           '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
+        self.nose_args += ['--tests=%s' % self.tests] if self.tests else []
         if self.stop:
-            self.nose_args += ['--stop']
+            self.nose_args.append('--stop')
 
     def run(self):
         args = ['python', 'setup.py']
+        print ' '.join(self.nose_args)
+        print >> sys.stderr, ' '.join(self.nose_args)
 
         env = os.environ.copy()
         env['PATH'] = './control_node_serial/:' + env['PATH']
         if 'www-data' != env['USER']:
-            stderr.write("ERR: Run Integration tests as 'www-data':\n")
-            stderr.write("\nsu www-data -c 'python setup.py integration'\n")
+            stderr.write("ERR: Run Integration tests as 'www-data':\n\n")
+            stderr.write("\tsu www-data -c 'python setup.py integration'\n")
             exit(1)
 
         ret = subprocess.call(args + self.nose_args, env=env)

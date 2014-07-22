@@ -8,6 +8,7 @@ DEST="/tmp/fit-dev/"
 verbose=0
 SSH_OPT='-o StrictHostKeyChecking=no'
 tests_only=0
+TESTS_ARGS=''
 GATEWAY_HOSTNAME=
 
 usage()
@@ -16,6 +17,7 @@ usage()
 Usage: ${0##*/} [-hv] [-t] [-F CONFFILE] <GATEWAY_HOSTNAME>
 Run the integrations tests on GATEWAY_HOSTNAME.
     -F CONFFILE ssh configfile see option '-F' in 'man ssh' for details
+    -T TEST_LIST Run these tests (comma-separated list)
     -t          run only python tests
     -h          display this help and exit
     -v          verbose mode
@@ -25,9 +27,11 @@ EOF
 parse_arguments()
 {
     local OPTIND=1
-    while getopts "hvF:t" opt; do
+    while getopts "hvF:tT:" opt; do
         case "$opt" in
             F) SSH_OPT="${SSH_OPT} -F $(readlink -e $OPTARG)"
+                ;;
+            T) TESTS_ARGS="--tests=$OPTARG"
                 ;;
             h) usage
                 exit 0
@@ -80,7 +84,8 @@ if [[ 1 -eq ${tests_only} ]]; then
         killall python; \
         killall socat; \
         killall control_node_serial_interface; \
-        python ${DEST}/gateway_code_python/setup.py run_integration_tests --stop'"
+        python ${DEST}/gateway_code_python/setup.py \
+        run_integration_tests --stop ${TESTS_ARGS}'"
 else
     # Run all tests, python, style checker, C code tests
 
@@ -89,7 +94,8 @@ else
         killall python; \
         killall socat; \
         killall control_node_serial_interface; \
-        python ${DEST}/gateway_code_python/setup.py integration'"
+        python ${DEST}/gateway_code_python/setup.py \
+        integration ${TESTS_ARGS}'"
 
     # run control_node_serial tests
     ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "\
