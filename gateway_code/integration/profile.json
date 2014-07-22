@@ -9,5 +9,11 @@
         "current": true,
         "voltage": true,
         "power"  : false
+    },
+    "radio": {
+        "mode" : "rssi",
+        "channels" : [15, 26],
+        "period" : 1024,
+        "num_per_channel" : 5
     }
 }

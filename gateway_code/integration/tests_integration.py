@@ -129,7 +129,7 @@ class GatewayCodeMock(unittest.TestCase):
         self.app.exp_stop()  # just in case, post error cleanup
 
 
-def _send_command_open_node(host, port, command):
+def _send_command_open_node(command, host='localhost', port=20000):
     """ send a command to host/port and wait for an answer as a line """
     import socket
 
@@ -239,39 +239,33 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         time.sleep(1)
 
         # idle firmware, should be no reply
-        ret = _send_command_open_node('localhost', 20000, 'echo %s' % msg)
+        ret = _send_command_open_node('echo %s' % msg)
         self.assertEquals(ret, None)
 
         # flash echo firmware
         self.request.files = {'firmware': self.files['autotest']}
-        ret = self.app.open_flash()
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)
 
         # test set_time during experiment
         self.app.set_time()
 
-        # ecoo firmware, should reply what was sent
+        # echo firmware, should reply what was sent
         # do it multiple times to be sure
         answers = []
         for _ in range(0, 5):
-            ret = _send_command_open_node('localhost', 20000, 'echo %s' % msg)
+            ret = _send_command_open_node('echo %s' % msg)
             answers.append(ret)
             time.sleep(0.5)
         self.assertIn(msg, answers)
 
         # open node reset and start stop
-        ret = self.app.open_soft_reset()
-        self.assertEquals(ret, {'ret': 0})
-
-        ret = self.app.open_start()
-        self.assertEquals(ret, {'ret': 0})
-        ret = self.app.open_stop()
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.open_soft_reset())
+        self.assertEquals({'ret': 0}, self.app.open_start())
+        self.assertEquals({'ret': 0}, self.app.open_stop())
 
         # stop exp
-        ret = self.app.exp_stop()
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.exp_stop())
 
         #
         # Check results
@@ -281,8 +275,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # reset firmware should fail
         # logger error will be called
-        ret = self.app.open_soft_reset()
-        self.assertNotEquals(ret, {'ret': 0})
+        self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)
 
         #
@@ -291,11 +284,16 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         measures = extract_measures(self.cn_measures)
 
         self.assertNotEquals([], measures['consumption']['values'])
-        for meas in measures['consumption']['values']:
+        for values in measures['consumption']['values']:
             # no power, voltage in 3.3V, current not null
-            self.assertTrue(math.isnan(meas[0]))
-            self.assertTrue(2.8 <= meas[1] <= 3.5)
-            self.assertNotEquals(0.0, meas[2])
+            self.assertTrue(math.isnan(values[0]))
+            self.assertTrue(2.8 <= values[1] <= 3.5)
+            self.assertNotEquals(0.0, values[2])
+
+        self.assertNotEquals([], measures['radio']['values'])
+        for values in measures['radio']['values']:
+            self.assertIn(values[0], [15, 26])
+            self.assertGreaterEqual(-91, values[1])
 
         # check timestamps are sorted in correct order
         for values in measures.values():
@@ -304,14 +302,13 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             self.assertTrue(_sorted)
 
         # Test OML Files
-        # radio file is already removed
-        self.assertRaises(IOError, open, exp_files['radio'])
-        # conso file exists
-        try:
-            open(exp_files['consumption']).close()
-            os.remove(exp_files['consumption'])
-        except IOError:
-            self.fail('File should exist %r' % exp_files['consumption'])
+        # radio and conso file exist
+        for meas_type in ('radio', 'consumption'):
+            self.assertTrue(os.path.isfile(exp_files[meas_type]))
+            try:
+                os.remove(exp_files[meas_type])
+            except IOError:
+                self.fail('File should exist %r' % exp_files[meas_type])
 
     def tests_experiment_timeout(self):
         """ Test two experiments with a timeout """
