@@ -11,7 +11,6 @@ from cStringIO import StringIO
 
 from os.path import dirname, abspath
 
-import gateway_code
 from gateway_code import openocd_cmd
 
 CURRENT_DIR = dirname(abspath(__file__)) + '/'

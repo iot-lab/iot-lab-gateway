@@ -13,7 +13,6 @@ import unittest
 
 import recordtype
 
-import gateway_code
 from gateway_code import server_rest
 
 import os
@@ -263,4 +262,4 @@ class TestServerRestMain(unittest.TestCase):
         popen.returncode = mock_ret = 0
 
         args = ['server_rest.py', 'localhost', '8080']
-        gateway_code.server_rest._main(args)
+        server_rest._main(args)

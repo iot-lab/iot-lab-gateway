@@ -13,7 +13,7 @@ from serial import SerialException
 from collections import defaultdict
 
 # config should be accessed through gateway_code to allow testing...
-import gateway_code
+import gateway_code.config
 from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio

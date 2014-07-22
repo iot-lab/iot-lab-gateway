@@ -55,6 +55,7 @@ class GatewayRest(object):
 
         :param user: user of the experiment owner
         :param exp_id: experiment id
+
         Query string: 'timeout' int
         """
         exp_id = int(exp_id)

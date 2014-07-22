@@ -13,7 +13,13 @@ import mock
 from mock import patch
 import unittest
 
-import gateway_code
+# all modules should be imported and not only the package
+import gateway_code.server_rest
+import gateway_code.control_node_interface
+import gateway_code.config
+import gateway_code.autotest.m3_node_interface
+import gateway_code.autotest.autotest
+
 from gateway_code.autotest.autotest import extract_measures
 
 # W0212 Access to a protected member '_xxx'of a client class
@@ -283,8 +289,10 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         # Validate measures consumption
         #
         measures = extract_measures(self.cn_measures)
+
+        self.assertNotEquals([], measures['consumption']['values'])
         for meas in measures['consumption']['values']:
-            # no power,  voltage in 3.3V, current not null
+            # no power, voltage in 3.3V, current not null
             self.assertTrue(math.isnan(meas[0]))
             self.assertTrue(2.8 <= meas[1] <= 3.5)
             self.assertNotEquals(0.0, meas[2])

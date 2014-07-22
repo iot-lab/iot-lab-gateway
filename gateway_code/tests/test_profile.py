@@ -8,7 +8,7 @@ import unittest
 import os
 import re
 import json
-import gateway_code
+import gateway_code.profile
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 PROFILES_DIR = CURRENT_DIR + 'profiles/'
