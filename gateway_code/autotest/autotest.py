@@ -12,8 +12,7 @@ from serial import SerialException
 
 from collections import defaultdict
 
-# config should be accessed through gateway_code to allow testing...
-import gateway_code.config
+import gateway_code.config as config
 import gateway_code.open_node
 from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
@@ -82,6 +81,76 @@ class AutoTestManager(object):
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup control node failed')
 
+    def _setup_open_node_m3(self):
+        """ Setup open node M3 connection """
+        ret_val = 0
+
+        ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+        ret_val += self._check(ret, 'flash_m3', ret)
+        time.sleep(2)
+
+        self.on_serial = m3_node_interface.OpenNodeSerial()
+        ret, err_msg = self.on_serial.start()
+        ret_val += self._check(ret, 'open_M3_serial', err_msg)
+
+        return ret_val
+
+    def _setup_open_node_a8(self):
+        """ Setup open node A8-M3 connection
+
+        * Boot open node
+        * Connect through serial and get ip address
+        * SSH connect to it
+          * get
+
+        """
+        ret_val = 0
+        try:
+            ret_val += gateway_code.open_node.NodeA8.wait_tty_a8(
+                config.OPEN_A8_CFG['tty'], timeout=20)
+
+            # wait nodes start
+            # get ip address using serial
+            # run socats commands to access A8-M3 open node on gateway
+            self.a8_connection = open_a8_interface.OpenA8Connection()
+            LOGGER.debug("Wait that open A8 node starts")
+            self.a8_connection.start()
+
+        except SerialException as err:  # pragma: no cover
+            ret_val += self._check(1, 'access_A8_serial_port', str(err))
+            raise FatalError('Setup Open Node failed')
+        except open_a8_interface.A8ConnectionError as err:  # pragma: no cover
+            ret_val += self._check(1, 'open_a8_init_error: %s' % err.err_msg,
+                                   str(err))
+            raise FatalError('Setup Open Node failed')
+
+        # save mac address
+        a8_mac_addr = self.a8_connection.get_mac_addr()
+        self.ret_dict['mac']['A8'] = a8_mac_addr
+        test_ok = (MAC_RE.match(a8_mac_addr) is not None)
+        ret_val += self._check(TST_OK(test_ok), 'a8_mac_addr', a8_mac_addr)
+
+        # open A8 flash
+        try:
+            self.a8_connection.scp(config.FIRMWARES['a8_autotest'],
+                                   '/tmp/a8_autotest.elf')
+        except CalledProcessError as err:  # pragma: no cover
+            ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
+            raise FatalError('Setup Open Node failed')
+        try:
+            self.a8_connection.ssh_run('flash_a8.sh /tmp/a8_autotest.elf')
+            time.sleep(5)
+        except CalledProcessError as err:  # pragma: no cover
+            ret_val += self._check(1, 'Flash A8-M3 fail', str(err))
+            raise FatalError('Setup Open Node failed')
+
+        # Create open node A8-M3 connection through socat
+        self.on_serial = m3_node_interface.OpenNodeSerial()
+        ret, err_msg = self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
+        ret_val += self._check(ret, 'open_A8_serial', err_msg)
+
+        return ret_val
+
     def _setup_open_node_connection(self, board_type):
         """ Setup the connection with Open Node
         Should be done on DC"""
@@ -91,71 +160,8 @@ class AutoTestManager(object):
         time.sleep(2)  # wait open node ready
 
         # setup open node
-        if board_type == 'M3':
-            ret = self.g_m.node_flash(
-                'm3', gateway_code.config.FIRMWARES['m3_autotest'])
-            ret_val += self._check(ret, 'flash_m3', ret)
-            time.sleep(2)
-
-            self.on_serial = m3_node_interface.OpenNodeSerial()
-            ret, err_msg = self.on_serial.start()
-            ret_val += self._check(ret, 'open_M3_serial', err_msg)
-        else:  # pragma: no cover
-            pass
-
-        if board_type == 'A8':
-            try:
-                ret_val += gateway_code.open_node.NodeA8.wait_tty_a8(
-                    gateway_code.config.OPEN_A8_CFG['tty'], timeout=20)
-
-                # wait nodes booting
-                self.a8_connection = open_a8_interface.OpenA8Connection()
-
-                # wait nodes start
-                # get ip address using serial
-                # run socats commands
-                LOGGER.debug("Wait that open A8 node starts")
-                self.a8_connection.start()
-
-            except SerialException as err:  # pragma: no cover
-                ret_val += self._check(1, 'access_A8_serial_port', str(err))
-                raise FatalError('Setup Open Node failed')
-            except open_a8_interface.A8ConnectionError \
-                    as err:  # pragma: no cover
-                ret_val += self._check(1, 'error_in_open_a8_init: %s' %
-                                       err.err_msg, str(err))
-                raise FatalError('Setup Open Node failed')
-
-            # save mac address
-            a8_mac_addr = self.a8_connection.get_mac_addr()
-            self.ret_dict['mac']['A8'] = a8_mac_addr
-
-            test_ok = (MAC_RE.match(a8_mac_addr) is not None)
-            ret_val += self._check(TST_OK(test_ok), 'a8_mac_addr', a8_mac_addr)
-
-            # open A8 flash
-            try:
-                self.a8_connection.scp(
-                    gateway_code.config.FIRMWARES['a8_autotest'],
-                    '/tmp/a8_autotest.elf')
-            except CalledProcessError as err:  # pragma: no cover
-                ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
-                raise FatalError('Setup Open Node failed')
-
-            try:
-                self.a8_connection.ssh_run('flash_a8.sh /tmp/a8_autotest.elf')
-            except CalledProcessError as err:  # pragma: no cover
-                ret_val += self._check(1, 'Flash A8-M3 fail', str(err))
-                raise FatalError('Setup Open Node failed')
-
-            time.sleep(5)
-            self.on_serial = m3_node_interface.OpenNodeSerial()
-            time.sleep(1)
-            ret, err_msg = self.on_serial.start(
-                tty=open_a8_interface.A8_TTY_PATH)
-            ret_val += self._check(ret, 'open_A8_serial', err_msg)
-        else:  # pragma: no cover
-            pass
+        ret_val += {'M3': self._setup_open_node_m3,
+                    'A8': self._setup_open_node_a8}[board_type]()
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -184,10 +190,10 @@ class AutoTestManager(object):
         self.g_m.cn_serial.stop()
         LOGGER.debug("cn_serial stopped")
 
-        if self.a8_connection is not None:
+        try:
             self.a8_connection.stop()
             LOGGER.debug("a8_connection_stopped")
-        else:  # pragma: no cover
+        except AttributeError:  # pragma: no cover
             pass
 
         return self._check(ret_val, 'teardown', ret_val)
@@ -198,7 +204,7 @@ class AutoTestManager(object):
         """
         ret_val = 0
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
-        board_type = gateway_code.config.board_type()
+        board_type = config.board_type()
 
         if board_type not in ['M3', 'A8']:
             self._check(1, 'board_type: %s' % board_type, 'unkown')
@@ -216,7 +222,7 @@ class AutoTestManager(object):
             # so check battery and then switch to DC
             ret_val += self.test_consumption_batt(board_type)
 
-            # switch to DN and configure open node
+            # switch to DC and configure open node
             self._setup_open_node_connection(board_type)
             self.check_get_time()
             self.get_uid()
@@ -253,10 +259,9 @@ class AutoTestManager(object):
                 ret_val += self.test_flash(flash)
             else:  # pragma: no cover
                 pass
-            if gps:
-                ret_val += self.test_gps()
-            else:  # pragma: no cover
-                pass
+
+            # run test_gps if requested
+            ret_val += self.test_gps(gps)
 
             # set_leds
             self._on_call(['leds_off', '7'])
@@ -329,10 +334,8 @@ class AutoTestManager(object):
         test_ok = (any(values))
         ret_val = self._check(TST_OK(test_ok), 'm3_comm_with_get_time', answer)
 
-        if 0 != ret_val:  # fatal Error
+        if 0 != ret_val:  # pragma: no cover
             raise FatalError("get_time failed. Can't communicate with M3 node")
-        else:  # pragma: no cover
-            pass
 
     def get_uid(self):
         """ runs the 'get_uid' command
@@ -391,7 +394,7 @@ class AutoTestManager(object):
 #
 # Test GPS
 #
-    def _test_pps_open_node(self):
+    def _test_pps_open_node(self, timeout):
         """ Test the pps on open A8 m3 node"""
         ret_val = 0
 
@@ -400,8 +403,7 @@ class AutoTestManager(object):
         if ret:
             return self._check(1, 'test_pps_start', answer)
 
-        # try to get pps for max 2 min
-        end_time = time.time() + 120.0
+        end_time = time.time() + timeout
         while time.time() < end_time:
             time.sleep(5)
             (ret, answer) = self._on_call(['test_pps_get'])
@@ -419,11 +421,13 @@ class AutoTestManager(object):
         _ = self._on_call(['test_pps_stop'])
         return ret_val
 
-    def test_gps(self):
+    def test_gps(self, gps):
         """ Test the gps """
+        if not gps:
+            return 0
         ret_val = 0
         # ret_val += self._test_gps_serial()
-        ret_val += self._test_pps_open_node()
+        ret_val += self._test_pps_open_node(120.0)  # try to get pps, max 2 min
         ret_val = self._check(ret_val, 'test_gps', ret_val)
         return ret_val
 
@@ -573,8 +577,7 @@ class AutoTestManager(object):
         # on A8, linux is consuming enough I think
         if 'M3' == board_type:
             time.sleep(1)
-            ret = self.g_m.node_flash(
-                'm3', gateway_code.config.FIRMWARES['m3_autotest'])
+            ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption
@@ -643,7 +646,7 @@ class AutoTestManager(object):
         for led_time in leds_timestamps:
             try:
                 led_consumption.append(values[bisect(timestamps, led_time)])
-            except IndexError:
+            except IndexError:  # pragma: no cover
                 led_consumption.append(float('NaN'))
 
         # check that consumption is higher with each led than with no leds on

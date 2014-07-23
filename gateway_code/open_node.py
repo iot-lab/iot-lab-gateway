@@ -81,9 +81,9 @@ class NodeA8(object):
     def _debug_a8_boot_start_thread(self, timeout, open_a8_cfg):
         """ Monitor A8 tty to check if node booted """
         self._a8_expect = expect.SerialExpect(logger=LOGGER, **open_a8_cfg)
-        ret = self._a8_expect.expect(' login: ', timeout=timeout)
+        match = self._a8_expect.expect(' login: ', timeout=timeout)
 
-        if ret == 0:
+        if match != '':
             LOGGER.info("Boot A8 succeeded in time: %ds", timeout)
         else:
             LOGGER.error("Boot A8 failed in time: %ds", timeout)
@@ -92,5 +92,5 @@ class NodeA8(object):
         """ Stop the debug thread """
         try:
             self._a8_expect.serial_fd.close()
-        except AttributeError:
+        except AttributeError:  # pragma: no cover
             pass
