@@ -4,7 +4,7 @@
 
 """ Gateway manager """
 
-from threading import Thread, RLock, Timer
+from threading import RLock, Timer
 import os
 import time
 
@@ -12,9 +12,9 @@ import gateway_code.config as config
 from gateway_code import common
 from gateway_code import openocd_cmd
 from gateway_code.profile import Profile
-from gateway_code.serial_redirection import SerialRedirection
-from gateway_code.autotest import autotest, expect
+from gateway_code.autotest import autotest
 
+import gateway_code.open_node
 
 from gateway_code import control_node_interface, protocol_cn
 from gateway_code import gateway_logging
@@ -34,10 +34,13 @@ class GatewayManager(object):
     board_type = None
     default_profile = None
 
+    open_nodes = {'M3': gateway_code.open_node.NodeM3,
+                  'A8': gateway_code.open_node.NodeA8}
+
     def __init__(self, log_folder='.'):
 
         _board_type = config.board_type()
-        if _board_type not in ('M3', 'A8'):
+        if _board_type not in GatewayManager.open_nodes:
             raise ValueError('Board type not managed %r' % _board_type)
 
         # Init class arguments when creating gateway_manager
@@ -65,10 +68,7 @@ class GatewayManager(object):
         self.cn_serial = control_node_interface.ControlNodeSerial()
         self.protocol = protocol_cn.Protocol(self.cn_serial.send_command)
 
-        # open node interraction
-        self.serial_redirection = SerialRedirection('m3')
-
-        self._a8_expect = None
+        self.open_node = GatewayManager.open_nodes[self.board_type](self)
 
     def setup(self):
         """ Run commands that might crash
@@ -129,7 +129,7 @@ class GatewayManager(object):
             LOGGER.info("I'm a Turtlebot")
             self._create_user_exp_folders(user, exp_id)
 
-        self._create_user_exp_files(user=user, exp_id=exp_id)
+        self.create_user_exp_files(user=user, exp_id=exp_id)
         self.user_log_handler = gateway_logging.user_logger(
             self.exp_desc['exp_files']['log'])
         LOGGER.addHandler(self.user_log_handler)
@@ -160,19 +160,7 @@ class GatewayManager(object):
         # # # # # # # # # # #
         # Prepare Open Node #
         # # # # # # # # # # #
-        if self.board_type == 'M3':
-            ret_val += self.node_flash('m3', firmware_path)
-            ret_val += self.serial_redirection.start()
-            # ret_val += self.gdb_server.start()
-        elif self.board_type == 'A8':
-            # 15 secs was not always enough
-            ret = self.wait_tty_a8(config.OPEN_A8_CFG['tty'], timeout=20)
-            ret_val += ret
-            if ret == 0:
-                # Timeout 5 minutes for boot
-                self._debug_a8_boot_start(5*60, config.OPEN_A8_CFG)
-        else:  # pragma: no cover
-            pass
+        ret_val += self.open_node.setup(firmware_path)
 
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
@@ -236,14 +224,7 @@ class GatewayManager(object):
         # # # # # # # # # # #
         # Cleanup open node #
         # # # # # # # # # # #
-        if self.board_type == 'M3':
-            # ret_val += self.gdb_server.stop()
-            ret_val += self.serial_redirection.stop()
-            ret_val += self.node_flash('m3', config.FIRMWARES['idle'])
-        elif self.board_type == 'A8':
-            self._debug_a8_boot_stop_thread()
-        else:  # pragma: no cover
-            raise NotImplementedError('Board type not managed')
+        ret_val += self.open_node.teardown()
         ret_val += self.open_power_stop(power='dc')
 
         # # # # # # # # # # # # # # # # # # #
@@ -252,7 +233,7 @@ class GatewayManager(object):
         self.cn_serial.stop()
 
         # Remove empty user experiment files
-        self._cleanup_user_exp_files()
+        self.cleanup_user_exp_files()
 
         # Reset configuration
         self.exp_desc['exp_id'] = None
@@ -262,40 +243,6 @@ class GatewayManager(object):
         LOGGER.removeHandler(self.user_log_handler)
 
         return ret_val
-
-    @staticmethod
-    def wait_tty_a8(a8_tty, timeout=0):
-        """ Procedure to call at a8 startup
-        It runs sanity checks and start debug features """
-        # Test if open a8 tty correctly appeared
-        if not common.wait_cond(timeout, True, os.path.exists, a8_tty):
-            LOGGER.error('Error Open A8 tty not visible: %s', a8_tty)
-            return 1
-        return 0
-
-    def _debug_a8_boot_start(self, timeout, open_a8_cfg):
-        """ A8 boot debug thread start """
-        a8_debug_thread = Thread(target=self._debug_a8_boot_start_thread,
-                                 args=(timeout, open_a8_cfg))
-        a8_debug_thread.daemon = True
-        a8_debug_thread.start()
-
-    def _debug_a8_boot_start_thread(self, timeout, open_a8_cfg):
-        """ Monitor A8 tty to check if node booted """
-        self._a8_expect = expect.SerialExpect(logger=LOGGER, **open_a8_cfg)
-        ret = self._a8_expect.expect(' login: ', timeout=timeout)
-
-        if not ret:
-            LOGGER.error("Boot A8 failed in time: %ds", timeout)
-        else:
-            LOGGER.info("Boot A8 Succeeded in time: %ds", timeout)
-
-    def _debug_a8_boot_stop_thread(self):
-        """ Stop the debug thread """
-        try:
-            self._a8_expect.serial_fd.close()
-        except AttributeError:
-            pass
 
     @common.syncronous('rlock')
     def exp_update_profile(self):
@@ -407,6 +354,36 @@ class GatewayManager(object):
 # Experiment files and folder management methods
 #
 
+    def create_user_exp_files(self, user, exp_id):
+        """ Create user experiment files with 0666 permissions """
+
+        exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
+        node_id = config.hostname()
+
+        for key, exp_file in config.EXP_FILES.iteritems():
+            # calculate file_path and store it in exp_description
+            file_path = exp_files_dir + exp_file.format(node_id=node_id)
+            self.exp_desc['exp_files'][key] = file_path
+            try:
+                # create empty file with 0666 permission
+                open(file_path, "w").close()
+                os.chmod(file_path, config.STAT_0666)
+            except IOError as err:
+                LOGGER.error('Cannot write exp file: %r', file_path)
+                raise err
+
+    def cleanup_user_exp_files(self):
+        """ Delete empty user experiment files """
+        for exp_file in self.exp_desc['exp_files'].itervalues():
+            try:
+                if os.path.getsize(exp_file) == 0:
+                    os.unlink(exp_file)
+            except OSError:
+                pass
+        self.exp_desc['exp_files'] = {}
+
+# Exp folders creation used in tests
+
     @staticmethod
     def _create_user_exp_folders(user, exp_id):
         """ Create a user experiment folders
@@ -433,31 +410,3 @@ class GatewayManager(object):
             shutil.rmtree(exp_files_dir)
         except OSError:
             pass
-
-    def _create_user_exp_files(self, user, exp_id):
-        """ Create user experiment files with 0666 permissions """
-
-        exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
-        node_id = config.hostname()
-
-        for key, exp_file in config.EXP_FILES.iteritems():
-            # calculate file_path and store it in exp_description
-            file_path = exp_files_dir + exp_file.format(node_id=node_id)
-            self.exp_desc['exp_files'][key] = file_path
-            try:
-                # create empty file with 0666 permission
-                open(file_path, "w").close()
-                os.chmod(file_path, config.STAT_0666)
-            except IOError as err:
-                LOGGER.error('Cannot write exp file: %r', file_path)
-                raise err
-
-    def _cleanup_user_exp_files(self):
-        """ Delete empty user experiment files """
-        for exp_file in self.exp_desc['exp_files'].itervalues():
-            try:
-                if os.path.getsize(exp_file) == 0:
-                    os.unlink(exp_file)
-            except OSError:
-                pass
-        self.exp_desc['exp_files'] = {}

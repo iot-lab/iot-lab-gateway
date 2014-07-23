@@ -19,7 +19,7 @@ import gateway_code.autotest.autotest
 
 from gateway_code.autotest.autotest import extract_measures
 
-from gateway_code.integration import integration_mock
+from gateway_code.integration import test_integration_mock
 
 # W0212 Access to a protected member '_xxx'of a client class
 # pylint: disable=protected-access
@@ -47,7 +47,7 @@ def _send_command_open_node(command, host='localhost', port=20000):
     return ret
 
 
-class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
+class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
     """ Run complete experiment test """
 
     def setUp(self):
@@ -89,7 +89,7 @@ class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
             for _ in range(0, 3):
                 m_error.reset_mock()
                 self.cn_measures = []
-                integration_mock.FileUpload.rewind_all()
+                test_integration_mock.FileUpload.rewind_all()
                 self._run_one_experiment_m3(m_error)
 
         elif 'A8' == gateway_code.config.board_type():
@@ -285,7 +285,7 @@ class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
         self.assertEquals(0, g_m.exp_stop())
 
 
-class TestAutoTests(integration_mock.GatewayCodeMock):
+class TestAutoTests(test_integration_mock.GatewayCodeMock):
     """ Try running autotests on node """
 
     def test_complete_auto_tests(self):
@@ -323,7 +323,7 @@ class TestAutoTests(integration_mock.GatewayCodeMock):
         self.assertNotIn('rssi_measures', ret_dict['success'])
 
 
-class TestInvalidCases(integration_mock.GatewayCodeMock):
+class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     """ Invalid calls """
 
     def tests_invalid_profile_at_start(self):

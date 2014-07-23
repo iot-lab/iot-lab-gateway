@@ -49,15 +49,15 @@ class TestGatewayManagerErrorCases(unittest.TestCase):
             g_m = gateway_manager.GatewayManager()
             g_m._create_user_exp_folders('user', 123)
             g_m._create_user_exp_folders('user', 123)
-            g_m._create_user_exp_files('user', 123)
-            g_m._cleanup_user_exp_files()
+            g_m.create_user_exp_files('user', 123)
+            g_m.cleanup_user_exp_files()
             g_m._destroy_user_exp_folders('user', 123)
             g_m._destroy_user_exp_folders('user', 123)
 
     def test__create_user_exp_files_fail(self):
         """ Create user_exp files fail """
         g_m = gateway_manager.GatewayManager()
-        self.assertRaises(IOError, g_m._create_user_exp_files, '_user_', '-1')
+        self.assertRaises(IOError, g_m.create_user_exp_files, '_user_', '-1')
 
     def test__cleanup_user_exp_files_fail_cases(self):
         """ Trying cleaning up files in different state """
@@ -70,22 +70,9 @@ class TestGatewayManagerErrorCases(unittest.TestCase):
         with open('test_file_2', 'w') as test_file:
             test_file.write('test\n')
 
-        g_m._cleanup_user_exp_files()
+        g_m.cleanup_user_exp_files()
 
         # no exception
         self.assertFalse(os.path.exists("test_file"))
         self.assertTrue(os.path.exists("test_file_2"))
         os.unlink("test_file_2")
-
-
-@patch('gateway_code.config.board_type', (lambda: 'A8'))
-@patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
-class TestA8StartStop(unittest.TestCase):
-    """ A8 specific tests """
-
-    def test_start_stop_a8_tty(self):
-        """ Test running wait_tty_a8 fct """
-        g_m = gateway_manager.GatewayManager()
-
-        self.assertEquals(0, g_m.wait_tty_a8('/dev/null'))
-        self.assertNotEquals(0, g_m.wait_tty_a8('no_tty_file'))

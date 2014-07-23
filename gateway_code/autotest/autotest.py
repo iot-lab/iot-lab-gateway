@@ -14,6 +14,7 @@ from collections import defaultdict
 
 # config should be accessed through gateway_code to allow testing...
 import gateway_code.config
+import gateway_code.open_node
 from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
@@ -104,7 +105,7 @@ class AutoTestManager(object):
 
         if board_type == 'A8':
             try:
-                ret_val += self.g_m.wait_tty_a8(
+                ret_val += gateway_code.open_node.NodeA8.wait_tty_a8(
                     gateway_code.config.OPEN_A8_CFG['tty'], timeout=20)
 
                 # wait nodes booting
