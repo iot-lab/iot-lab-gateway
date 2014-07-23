@@ -49,8 +49,7 @@ class TestA8StartStop(unittest.TestCase):
 
     def test_create_and_cleanup_user_exp_files(self):
         """ Create files and clean them"""
-        with patch('gateway_code.gateway_manager.config.EXP_FILES_DIR',
-                   './iotlab/'):
+        with patch('gateway_code.config.EXP_FILES_DIR', './iotlab/'):
             g_m = gateway_manager.GatewayManager()
             g_m._create_user_exp_folders('user', 123)
             g_m._create_user_exp_folders('user', 123)

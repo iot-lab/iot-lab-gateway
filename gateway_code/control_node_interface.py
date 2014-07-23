@@ -22,7 +22,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 # use for tests
-CONTROL_NODE_INTERFACE_ARGS = []
+TESTS_ARGS = []
 
 
 OML_XML = '''
@@ -80,7 +80,7 @@ class ControlNodeSerial(object):
         args += self._config_oml(exp_desc)
 
         # add arguments, used by tests
-        args += _args or CONTROL_NODE_INTERFACE_ARGS
+        args += _args or TESTS_ARGS
         self.cn_interface_process = subprocess.Popen(
             args, stderr=PIPE, stdin=PIPE)
 

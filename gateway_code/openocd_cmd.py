@@ -10,8 +10,8 @@ import shlex
 import subprocess
 from subprocess import PIPE
 
-from os.path import abspath
-from gateway_code import config
+import os
+import gateway_code.config as config
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -50,7 +50,7 @@ def flash(node, elf_file):
     """
     try:
         # get the absolute file path required for openocd
-        elf_path = abspath(elf_file)
+        elf_path = os.path.abspath(elf_file)
         open(elf_path, 'rb').close()  # exist and can be opened by this user
     except IOError as err:
         LOGGER.error('%s', err)
@@ -67,9 +67,9 @@ def _run_openocd_command(node, command_str):
 
     # Get configuration file
     try:
-        cfg_file = abspath(
-            '%s/%s' % (config.STATIC_FILES_PATH,
-                       config.NODES_CFG[node]['openocd_cfg_file']))
+        _file = os.path.join(config.STATIC_FILES_PATH,
+                             config.NODES_CFG[node]['openocd_cfg_file'])
+        cfg_file = os.path.abspath(_file)
         open(cfg_file, 'rb').close()  # exist and can be opened by this user
     except KeyError:
         raise ValueError('Unknown node, not in %r', config.NODES_CFG.keys())

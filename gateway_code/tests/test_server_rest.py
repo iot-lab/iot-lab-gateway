@@ -246,8 +246,8 @@ MOCK_FIRMWARES = {
     }
 
 
-@patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
-@patch('gateway_code.gateway_manager.config.FIRMWARES', MOCK_FIRMWARES)
+@patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
+@patch('gateway_code.config.FIRMWARES', MOCK_FIRMWARES)
 @patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
 class TestServerRestMain(unittest.TestCase):
     """

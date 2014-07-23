@@ -8,7 +8,7 @@ from threading import Thread, RLock, Timer
 import os
 import time
 
-from gateway_code import config
+import gateway_code.config as config
 from gateway_code import common
 from gateway_code import openocd_cmd
 from gateway_code.profile import Profile

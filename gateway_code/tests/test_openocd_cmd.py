@@ -17,7 +17,7 @@ CURRENT_DIR = dirname(abspath(__file__)) + '/'
 STATIC_DIR = CURRENT_DIR + 'static/'  # using the 'static' symbolic link
 
 
-@patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
+@patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
 class TestsFlashMethods(unittest.TestCase):
     """
     Tests flash_firmware methods
@@ -70,18 +70,17 @@ class TestsFlashMethods(unittest.TestCase):
 
 
 class TestsFlashInvalidPaths(unittest.TestCase):
-    @patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH',
-           new='/invalid/path/')
+    @patch('gateway_code.config.STATIC_FILES_PATH', new='/invalid/path/')
     def test_invalid_config_file_path(self):
         self.assertRaises(IOError, openocd_cmd.flash, 'm3', '/dev/null')
 
-    @patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
+    @patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
     def test_invalid_firmware_path(self):
         ret, out = openocd_cmd.flash('m3', '/invalid/path')
         self.assertNotEqual(ret, 0)
 
 
-@patch('gateway_code.openocd_cmd.config.STATIC_FILES_PATH', new=STATIC_DIR)
+@patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
 class TestsResetMethods(unittest.TestCase):
     """ Tests reset functions """
     def setUp(self):

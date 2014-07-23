@@ -6,15 +6,12 @@ import os
 import time
 import shutil
 import math
-import recordtype
 from itertools import izip
 
 import mock
 from mock import patch
-import unittest
 
 # all modules should be imported and not only the package
-import gateway_code.server_rest
 import gateway_code.control_node_interface
 import gateway_code.config
 import gateway_code.autotest.m3_node_interface
@@ -22,111 +19,13 @@ import gateway_code.autotest.autotest
 
 from gateway_code.autotest.autotest import extract_measures
 
+from gateway_code.integration import integration_mock
+
 # W0212 Access to a protected member '_xxx'of a client class
-# pylint: disable=C0103,R0904
-# pylint: disable=W0212
-
-# Bottle FileUpload class stub
-FileUpload = recordtype.recordtype(
-    'FileUpload', ['file', 'name', 'filename', ('headers', None)])
-
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
-STATIC_DIR = CURRENT_DIR + 'static/'  # using the 'static' symbolic link
-MOCK_FIRMWARES = {
-    'idle': STATIC_DIR + 'idle.elf',
-    'control_node': STATIC_DIR + 'control_node.elf',
-    'm3_autotest': STATIC_DIR + 'm3_autotest.elf',
-    'a8_autotest': STATIC_DIR + 'a8_autotest.elf'
-    }
+# pylint: disable=protected-access
+# pylint: disable=too-many-public-methods
 
 USER = 'harter'
-
-
-class GatewayCodeMock(unittest.TestCase):
-    """ gateway_code mock for integration tests  """
-
-    @classmethod
-    def setUpClass(cls):
-        cls.static_patcher = patch(
-            'gateway_code.openocd_cmd.config.STATIC_FILES_PATH',
-            new=STATIC_DIR)
-        cls.static_patcher.start()
-
-        cls.static_patcher_2 = patch(
-            'gateway_code.autotest.open_a8_interface.config.STATIC_FILES_PATH',
-            new=STATIC_DIR)
-        cls.static_patcher_2.start()
-
-        cls.firmwares_patcher = patch('gateway_code.config.FIRMWARES',
-                                      MOCK_FIRMWARES)
-        cls.firmwares_patcher.start()
-        cls.cn_interface_patcher = patch(
-            'gateway_code.control_node_interface.CONTROL_NODE_INTERFACE_ARGS',
-            ['-d'])  # print measures
-        cls.cn_interface_patcher.start()
-
-        g_m = gateway_code.server_rest.GatewayManager('.')
-        g_m.setup()
-        cls.app = gateway_code.server_rest.GatewayRest(g_m)
-
-        cls.files = {}
-        # default files
-        cls.files['control_node'] = FileUpload(
-            file=open(STATIC_DIR + 'control_node.elf', 'rb'),
-            name='firmware', filename='control_node.elf')
-
-        cls.files['idle'] = FileUpload(
-            file=open(STATIC_DIR + 'idle.elf', 'rb'),
-            name='firmware', filename='idle.elf')
-        cls.files['default_profile'] = FileUpload(
-            file=open(STATIC_DIR + 'default_profile.json', 'rb'),
-            name='profile', filename='default_profile.json')
-
-        # test specific files
-        cls.files['autotest'] = FileUpload(
-            file=open(STATIC_DIR + 'm3_autotest.elf', 'rb'),
-            name='firmware', filename='m3_autotest.elf')
-
-        cls.files['profile'] = FileUpload(
-            file=open(CURRENT_DIR + 'profile.json', 'rb'),
-            name='profile', filename='profile.json')
-        cls.files['invalid_profile'] = FileUpload(
-            file=open(CURRENT_DIR + 'invalid_profile.json', 'rb'),
-            name='profile', filename='invalid_profile.json')
-        cls.files['invalid_profile_2'] = FileUpload(
-            file=open(CURRENT_DIR + 'invalid_profile_2.json', 'rb'),
-            name='profile', filename='invalid_profile_2.json')
-
-    @classmethod
-    def tearDownClass(cls):
-        for file_obj in cls.files.itervalues():
-            file_obj.file.close()
-        cls.static_patcher.stop()
-        cls.static_patcher_2.stop()
-        cls.firmwares_patcher.stop()
-        cls.cn_interface_patcher.stop()
-
-    def setUp(self):
-        # get quick access to class attributes
-        self.app = type(self).app
-        self.files = type(self).files
-
-        self.request_patcher = patch('gateway_code.server_rest.request')
-        self.request = self.request_patcher.start()
-        self.request.query = mock.Mock(timeout='0')  # no timeout by default
-
-        self._rewind_files()
-
-    def _rewind_files(self):
-        """
-        Rewind files at start position
-        """
-        for file_obj in self.files.itervalues():
-            file_obj.file.seek(0)
-
-    def tearDown(self):
-        self.request_patcher.stop()
-        self.app.exp_stop()  # just in case, post error cleanup
 
 
 def _send_command_open_node(command, host='localhost', port=20000):
@@ -148,7 +47,7 @@ def _send_command_open_node(command, host='localhost', port=20000):
     return ret
 
 
-class TestComplexExperimentRunning(GatewayCodeMock):
+class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
     """ Run complete experiment test """
 
     def setUp(self):
@@ -160,15 +59,11 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # config experiment and create folder
         self.exp_conf = {'user': USER, 'exp_id': 123}
-        self.app.gateway_manager._create_user_exp_folders(
-            self.exp_conf['user'], self.exp_conf['exp_id']
-        )
+        self.app.gateway_manager._create_user_exp_folders(**self.exp_conf)
 
     def tearDown(self):
         super(TestComplexExperimentRunning, self).tearDown()
-        self.app.gateway_manager._destroy_user_exp_folders(
-            self.exp_conf['user'], self.exp_conf['exp_id']
-        )
+        self.app.gateway_manager._destroy_user_exp_folders(**self.exp_conf)
 
     def test_admin_commands(self):
         """ Try running the admin commands """
@@ -195,7 +90,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             for _ in range(0, 3):
                 m_error.reset_mock()
                 self.cn_measures = []
-                self._rewind_files()
+                integration_mock.FileUpload.rewind_all()
                 self._run_one_experiment_m3(m_error)
 
         elif 'A8' == gateway_code.config.board_type():
@@ -210,8 +105,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # Run an experiment that does nothing but wait
         # should keep the same user as it's the only one setup
-        ret = self.app.exp_start(self.exp_conf['user'],
-                                 self.exp_conf['exp_id'])
+        ret = self.app.exp_start(**self.exp_conf)
         self.assertEquals(ret, {'ret': 0})
 
         # waiting One minute to try to have complete boot log on debug output
@@ -224,15 +118,14 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         """ Run an experiment """
 
         msg = 'HELLO WORLD\n'
-        t0 = time.time()
+        t_start = time.time()
 
         #
         # Run an experiment
         #
         self.request.files = {'firmware': self.files['idle'],
                               'profile': self.files['profile']}
-        ret = self.app.exp_start(self.exp_conf['user'],
-                                 self.exp_conf['exp_id'])
+        ret = self.app.exp_start(**self.exp_conf)
         self.assertEquals(ret, {'ret': 0})
         exp_files = self.app.gateway_manager.exp_desc['exp_files'].copy()
 
@@ -243,7 +136,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.assertEquals(ret, None)
 
         # flash echo firmware
-        self.request.files = {'firmware': self.files['autotest']}
+        self.request.files = {'firmware': self.files['m3_autotest']}
         self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)
 
@@ -297,7 +190,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
         # check timestamps are sorted in correct order
         for values in measures.values():
-            timestamps = [t0] + values['timestamps'] + [time.time()]
+            timestamps = [t_start] + values['timestamps'] + [time.time()]
             _sorted = all([a < b for a, b in izip(timestamps, timestamps[1:])])
             self.assertTrue(_sorted)
 
@@ -312,7 +205,6 @@ class TestComplexExperimentRunning(GatewayCodeMock):
 
     def tests_experiment_timeout(self):
         """ Test two experiments with a timeout """
-        self._rewind_files()
         self.request.files = {}
 
         # Create measures folder
@@ -364,7 +256,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         for exp_id in ['1234', '2345']:
             self.app.gateway_manager._destroy_user_exp_folders(USER, exp_id)
 
-    def tests_non_regular_start_stop_calls(self):
+    def tests_non_regular_start_stop(self):
         """ Test start calls when not needed
             * start when started
             * stop when stopped
@@ -372,14 +264,12 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
         with patch.object(self.app.gateway_manager, 'exp_stop', stop_mock):
 
-            ret = self.app.gateway_manager.exp_start(self.exp_conf['user'],
-                                                     self.exp_conf['exp_id'])
+            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
             self.assertEquals(ret, 0)
             self.assertEquals(stop_mock.call_count, 0)
 
             # replace current experiment
-            ret = self.app.gateway_manager.exp_start(self.exp_conf['user'],
-                                                     self.exp_conf['exp_id'])
+            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
             self.assertEquals(ret, 0)
             self.assertEquals(stop_mock.call_count, 1)
 
@@ -391,7 +281,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             ret = self.app.gateway_manager.exp_stop()
             self.assertEquals(ret, 0)
 
-    def tests_invalid_tty_state_at_start_stop_for_A8(self):
+    def tests_invalid_tty_exp_a8(self):
         """  Test start/stop calls where A8 tty is in invalid state
         Test a start call where tty is not visible
         Followed by a stop call that will have it's tty not disappeared
@@ -401,8 +291,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
             return
 
         # Disable stop open A8
-        self.app.gateway_manager.exp_start(self.exp_conf['user'],
-                                           self.exp_conf['exp_id'])
+        self.app.gateway_manager.exp_start(**self.exp_conf)
         with patch.object(self.app.gateway_manager, 'open_power_stop',
                           self.app.gateway_manager.open_power_start):
             # detect Error on stop
@@ -413,8 +302,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         with patch.object(self.app.gateway_manager, 'open_power_start',
                           self.app.gateway_manager.open_power_stop):
             # detect error on start
-            ret = self.app.gateway_manager.exp_start(self.exp_conf['user'],
-                                                     self.exp_conf['exp_id'])
+            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
             self.assertNotEquals(ret, 0)
 
         # stop and cleanup
@@ -422,7 +310,7 @@ class TestComplexExperimentRunning(GatewayCodeMock):
         self.assertEquals(ret, 0)
 
 
-class TestAutoTests(GatewayCodeMock):
+class TestAutoTests(integration_mock.GatewayCodeMock):
     """ Try running autotests on node """
 
     def test_complete_auto_tests(self):
@@ -474,7 +362,7 @@ class TestAutoTests(GatewayCodeMock):
         self.assertNotIn('rssi_measures', ret_dict['success'])
 
 
-class TestUncommonCasesGatewayManager(GatewayCodeMock):
+class TestUncommonCasesGatewayManager(integration_mock.GatewayCodeMock):
     """ Uncommon cases """
 
     def setUp(self):
@@ -500,7 +388,7 @@ class TestUncommonCasesGatewayManager(GatewayCodeMock):
             shutil.rmtree('/tmp/%s/' % measure_type, ignore_errors=True)
 
 
-class TestInvalidCases(GatewayCodeMock):
+class TestInvalidCases(integration_mock.GatewayCodeMock):
     """ Invalid calls """
 
     def tests_invalid_profile_at_start(self):
