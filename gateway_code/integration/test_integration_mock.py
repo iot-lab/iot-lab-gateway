@@ -98,6 +98,7 @@ class GatewayCodeMock(unittest.TestCase):
     def setUp(self):
         # get quick access to class attributes
         self.app = type(self).app
+        self.g_m = self.app.gateway_manager
 
         self.request_patcher = patch('gateway_code.server_rest.request')
         self.request = self.request_patcher.start()

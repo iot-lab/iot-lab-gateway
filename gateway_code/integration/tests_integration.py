@@ -4,9 +4,9 @@
 
 import os
 import time
-import shutil
 import math
 from itertools import izip
+from sys import stderr
 
 import mock
 from mock import patch
@@ -59,11 +59,11 @@ class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
 
         # config experiment and create folder
         self.exp_conf = {'user': USER, 'exp_id': 123}
-        self.app.gateway_manager._create_user_exp_folders(**self.exp_conf)
+        self.g_m._create_user_exp_folders(**self.exp_conf)
 
     def tearDown(self):
         super(TestComplexExperimentRunning, self).tearDown()
-        self.app.gateway_manager._destroy_user_exp_folders(**self.exp_conf)
+        self.g_m._destroy_user_exp_folders(**self.exp_conf)
 
     def test_admin_commands(self):
         """ Try running the admin commands """
@@ -82,8 +82,7 @@ class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
     @patch('gateway_code.control_node_interface.LOGGER.error')
     def tests_complete_experiments(self, m_error):
         """ Test complete experiment (loooong test) (3 for M3, 1 for A8)"""
-        self.app.gateway_manager.cn_serial.measures_handler = \
-            self._measures_handler
+        self.g_m.cn_serial.measures_handler = self._measures_handler
 
         if 'M3' == gateway_code.config.board_type():
             # start
@@ -125,15 +124,13 @@ class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
         #
         self.request.files = {'firmware': self.files['idle'],
                               'profile': self.files['profile']}
-        ret = self.app.exp_start(**self.exp_conf)
-        self.assertEquals(ret, {'ret': 0})
-        exp_files = self.app.gateway_manager.exp_desc['exp_files'].copy()
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        exp_files = self.g_m.exp_desc['exp_files'].copy()
 
         time.sleep(1)
 
         # idle firmware, should be no reply
-        ret = _send_command_open_node('echo %s' % msg)
-        self.assertEquals(ret, None)
+        self.assertIsNone(_send_command_open_node('echo %s' % msg))
 
         # flash echo firmware
         self.request.files = {'firmware': self.files['m3_autotest']}
@@ -209,105 +206,83 @@ class TestComplexExperimentRunning(integration_mock.GatewayCodeMock):
 
         # Create measures folder
         for exp_id in ['1234', '2345']:
-            self.app.gateway_manager._create_user_exp_folders(USER, exp_id)
+            self.g_m._create_user_exp_folders(USER, exp_id)
 
         # Stop after timeout
         self.request.query = mock.Mock(timeout='5')
-        ret = self.app.exp_start(USER, '1234')
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '1234'))
         time.sleep(10)   # Ensure that timeout occured
-        self.app.gateway_manager.rlock.acquire()  # wait calls ended
-        self.app.gateway_manager.rlock.release()
+        self.g_m.rlock.acquire()  # wait calls ended
+        self.g_m.rlock.release()
         # experiment should be stopped
-        self.assertFalse(self.app.gateway_manager.experiment_is_running)
+        self.assertFalse(self.g_m.experiment_is_running)
 
         # Stop remove timeout
         self.request.query = mock.Mock(timeout='5')
-        ret = self.app.exp_start(USER, '1234')
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '1234'))
         self.request.query = mock.Mock(timeout='0')
-        ret = self.app.exp_start(USER, '2345')
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '2345'))
         time.sleep(10)   # Ensure that timeout could have occured
-        self.app.gateway_manager.rlock.acquire()  # wait calls ended
-        self.app.gateway_manager.rlock.release()
+        self.g_m.rlock.acquire()  # wait calls ended
+        self.g_m.rlock.release()
         # experiment should be stopped
-        self.assertTrue(self.app.gateway_manager.experiment_is_running)
-        ret = self.app.exp_stop()
+        self.assertTrue(self.g_m.experiment_is_running)
+        self.app.exp_stop()
 
         # Simulate strange case where timeout is called when another experiment
         # is already running
         self.request.query = mock.Mock(timeout='5')
-        ret = self.app.exp_start(USER, '1234')
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '1234'))
 
         # 'change' experiment
-        self.app.gateway_manager.exp_desc['exp_id'] = '2345'
+        self.g_m.exp_desc['exp_id'] = '2345'
         time.sleep(10)   # Ensure that timeout could have occured
-        self.app.gateway_manager.rlock.acquire()  # wait calls ended
-        self.app.gateway_manager.rlock.release()
-        self.assertTrue(self.app.gateway_manager.experiment_is_running)
+        self.g_m.rlock.acquire()  # wait calls ended
+        self.g_m.rlock.release()
+        self.assertTrue(self.g_m.experiment_is_running)
 
         # Cleanup experiment
-        self.app.gateway_manager.exp_desc['exp_id'] = '1234'
-        ret = self.app.exp_stop()
+        self.g_m.exp_desc['exp_id'] = '1234'
+        self.app.exp_stop()
 
         # Cleanup measures folder
         for exp_id in ['1234', '2345']:
-            self.app.gateway_manager._destroy_user_exp_folders(USER, exp_id)
+            self.g_m._destroy_user_exp_folders(USER, exp_id)
 
     def tests_non_regular_start_stop(self):
         """ Test start calls when not needed
             * start when started
             * stop when stopped
         """
-        stop_mock = mock.Mock(side_effect=self.app.gateway_manager.exp_stop)
-        with patch.object(self.app.gateway_manager, 'exp_stop', stop_mock):
+        stop_mock = mock.Mock(side_effect=self.g_m.exp_stop)
+        with patch.object(self.g_m, 'exp_stop', stop_mock):
 
-            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
-            self.assertEquals(ret, 0)
+            # create experiment
+            self.assertEquals(0, self.g_m.exp_start(**self.exp_conf))
             self.assertEquals(stop_mock.call_count, 0)
-
             # replace current experiment
-            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
-            self.assertEquals(ret, 0)
+            self.assertEquals(0, self.g_m.exp_start(**self.exp_conf))
             self.assertEquals(stop_mock.call_count, 1)
 
             # stop exp
-            ret = self.app.gateway_manager.exp_stop()
-            self.assertEquals(ret, 0)
-
+            self.assertEquals(0, self.g_m.exp_stop())
             # exp already stoped no error
-            ret = self.app.gateway_manager.exp_stop()
-            self.assertEquals(ret, 0)
+            self.assertEquals(0, self.g_m.exp_stop())
 
     def tests_invalid_tty_exp_a8(self):
-        """  Test start/stop calls where A8 tty is in invalid state
-        Test a start call where tty is not visible
-        Followed by a stop call that will have it's tty not disappeared
-        """
-
+        """ Test start where tty is not visible """
         if 'A8' != gateway_code.config.board_type():
             return
 
-        # Disable stop open A8
-        self.app.gateway_manager.exp_start(**self.exp_conf)
-        with patch.object(self.app.gateway_manager, 'open_power_stop',
-                          self.app.gateway_manager.open_power_start):
-            # detect Error on stop
-            ret = self.app.gateway_manager.exp_stop()
-            self.assertNotEquals(ret, 0)
+        g_m = self.g_m
+        g_m.exp_start(**self.exp_conf)
 
-        # Disable start open A8
-        with patch.object(self.app.gateway_manager, 'open_power_start',
-                          self.app.gateway_manager.open_power_stop):
-            # detect error on start
-            ret = self.app.gateway_manager.exp_start(**self.exp_conf)
-            self.assertNotEquals(ret, 0)
+        with patch.object(g_m, 'open_power_start', g_m.open_power_stop):
+            # detect error when A8 does not start
+            self.assertNotEquals(0, g_m.exp_start(**self.exp_conf))
 
         # stop and cleanup
-        ret = self.app.gateway_manager.exp_stop()
-        self.assertEquals(ret, 0)
+        self.assertEquals(0, g_m.exp_stop())
 
 
 class TestAutoTests(integration_mock.GatewayCodeMock):
@@ -315,44 +290,30 @@ class TestAutoTests(integration_mock.GatewayCodeMock):
 
     def test_complete_auto_tests(self):
         """ Test a regular autotest """
+        g_m = self.g_m
         # replace stop
-        g_m = self.app.gateway_manager
-        real_stop = g_m.open_power_stop
-        mock_stop = mock.Mock(side_effect=real_stop)
-
-        g_m.open_power_stop = mock_stop
-
-        self.request.query = mock.Mock()
-        self.request.query.channel = '22'
-        self.request.query.gps = ''
-        self.request.query.flash = ''
+        g_m.open_power_stop = mock.Mock(side_effect=g_m.open_power_stop)
 
         # call using rest
+        self.request.query = mock.Mock(channel='22', gps='', flash='1')
         ret_dict = self.app.auto_tests(mode='blink')
-        ret = ret_dict['ret']
-        errors = ret_dict['error']
-        mac_addresses = ret_dict['mac']
-
-        import sys
-        print >> sys.stderr, ret_dict
-        self.assertEquals([], errors)
-        self.assertTrue('GWT' in mac_addresses)
-        self.assertEquals(0, ret)
+        print >> stderr, ret_dict
+        self.assertEquals([], ret_dict['error'])
+        self.assertTrue('GWT' in ret_dict['mac'])
+        self.assertEquals(0, ret_dict['ret'])
 
         # test that ON still on => should be blinking and answering
-        if gateway_code.config.board_type() == 'M3':
-            open_serial = gateway_code.autotest.m3_node_interface.\
-                OpenNodeSerial()
-            open_serial.start()
-            answer = open_serial.send_command(['get_time'])
-            self.assertNotEquals(None, answer)
-            open_serial.stop()
+        if gateway_code.config.board_type() != 'M3':
+            return
+        open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial()
+        open_serial.start()
+        self.assertIsNotNone(open_serial.send_command(['get_time']))
+        open_serial.stop()
 
     def test_mode_no_blink_no_radio(self):
         """ Try running autotest without blinking leds and without radio """
 
-        g_v = gateway_code.autotest.autotest.AutoTestManager(
-            self.app.gateway_manager)
+        g_v = gateway_code.autotest.autotest.AutoTestManager(self.g_m)
         ret_dict = g_v.auto_tests(channel=None, blink=False)
 
         self.assertEquals([], ret_dict['error'])
@@ -362,32 +323,6 @@ class TestAutoTests(integration_mock.GatewayCodeMock):
         self.assertNotIn('rssi_measures', ret_dict['success'])
 
 
-class TestUncommonCasesGatewayManager(integration_mock.GatewayCodeMock):
-    """ Uncommon cases """
-
-    def setUp(self):
-        # create measures_dir
-        self.measures_path_patcher = patch('gateway_code.config.MEASURES_PATH',
-                                           '/tmp/{type}/{node_id}.oml')
-        self.measures_path_patcher.start()
-        self.user_log_path_patcher = patch('gateway_code.config.USER_LOG_PATH',
-                                           '/tmp/{node_id}.oml')
-        self.user_log_path_patcher.start()
-
-        for measure_type in ('consumption', 'radio'):
-            try:
-                os.mkdir('/tmp/%s/' % measure_type)
-            except OSError:
-                pass
-
-    def tearDown(self):
-        self.measures_path_patcher.stop()
-        self.user_log_path_patcher.stop()
-        # remove measures_dir
-        for measure_type in ('consumption', 'radio'):
-            shutil.rmtree('/tmp/%s/' % measure_type, ignore_errors=True)
-
-
 class TestInvalidCases(integration_mock.GatewayCodeMock):
     """ Invalid calls """
 
@@ -395,20 +330,13 @@ class TestInvalidCases(integration_mock.GatewayCodeMock):
         """ Run experiments with invalid profiles """
 
         self.request.files = {'profile': self.files['invalid_profile']}
-        ret = self.app.exp_start(USER, 123)
-        self.assertNotEquals(ret, {'ret': 0})
+        self.assertNotEquals({'ret': 0}, self.app.exp_start(USER, 123))
 
         self.request.files = {'profile': self.files['invalid_profile_2']}
-        ret = self.app.exp_start(USER, 123)
-        self.assertNotEquals(ret, {'ret': 0})
+        self.assertNotEquals({'ret': 0}, self.app.exp_start(USER, 123))
 
     def tests_invalid_files(self):
-        """
-        Test invalid calls
-            * invalid start
-            * invalid flash
-        """
+        """ Test invalid flash files """
 
         self.request.files = {'profile': self.files['profile']}
-        ret = self.app.open_flash()
-        self.assertNotEquals(ret, {'ret': 0})
+        self.assertNotEquals({'ret': 0}, self.app.open_flash())

@@ -17,13 +17,19 @@ from mock import patch
 from gateway_code import gateway_manager
 
 
+@patch('gateway_code.config.board_type', (lambda: 'NOT_A_BOARD'))
+class TestGatewayManagerInvalidBoardType(unittest.TestCase):
+    def test_invalid_board_type(self):
+        """ Run setup with a wrong board type"""
+        self.assertRaises(ValueError, gateway_manager.GatewayManager)
+
+
 @patch('gateway_code.config.board_type', (lambda: 'M3'))
 @patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
-class TestA8StartStop(unittest.TestCase):
+class TestGatewayManagerErrorCases(unittest.TestCase):
 
     def test_setup(self):
         """ Test running gateway_manager with setup without error """
-
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=0)
         try:
@@ -36,16 +42,6 @@ class TestA8StartStop(unittest.TestCase):
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=1)
         self.assertRaises(StandardError, g_m.setup)
-
-    def test_start_stop_a8_tty(self):
-        """ Test running wait_tty_a8 and _wait_no_tty_a8 fcs """
-        g_m = gateway_manager.GatewayManager()
-
-        self.assertEquals(0, g_m.wait_tty_a8('/dev/null'))
-        self.assertNotEquals(0, g_m.wait_tty_a8('no_tty_file'))
-
-        self.assertNotEquals(0, g_m._wait_no_tty_a8('/dev/null'))
-        self.assertEquals(0, g_m._wait_no_tty_a8('no_tty_file'))
 
     def test_create_and_cleanup_user_exp_files(self):
         """ Create files and clean them"""
@@ -61,8 +57,7 @@ class TestA8StartStop(unittest.TestCase):
     def test__create_user_exp_files_fail(self):
         """ Create user_exp files fail """
         g_m = gateway_manager.GatewayManager()
-        self.assertRaises(IOError, g_m._create_user_exp_files,
-                          'invalid_user_name', '-1')
+        self.assertRaises(IOError, g_m._create_user_exp_files, '_user_', '-1')
 
     def test__cleanup_user_exp_files_fail_cases(self):
         """ Trying cleaning up files in different state """
@@ -81,3 +76,16 @@ class TestA8StartStop(unittest.TestCase):
         self.assertFalse(os.path.exists("test_file"))
         self.assertTrue(os.path.exists("test_file_2"))
         os.unlink("test_file_2")
+
+
+@patch('gateway_code.config.board_type', (lambda: 'A8'))
+@patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
+class TestA8StartStop(unittest.TestCase):
+    """ A8 specific tests """
+
+    def test_start_stop_a8_tty(self):
+        """ Test running wait_tty_a8 fct """
+        g_m = gateway_manager.GatewayManager()
+
+        self.assertEquals(0, g_m.wait_tty_a8('/dev/null'))
+        self.assertNotEquals(0, g_m.wait_tty_a8('no_tty_file'))

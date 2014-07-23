@@ -32,8 +32,7 @@ class GatewayRest(object):
         """
         Declare the REST supported methods depending on board config
         """
-        bottle.route('/exp/start/<exp_id:int>/<user>',
-                     'POST')(self.exp_start)
+        bottle.route('/exp/start/<exp_id:int>/<user>', 'POST')(self.exp_start)
         bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
         bottle.route('/open/start', 'PUT')(self.open_start)
         bottle.route('/open/stop', 'PUT')(self.open_stop)

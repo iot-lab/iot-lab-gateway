@@ -246,10 +246,6 @@ class GatewayManager(object):
             raise NotImplementedError('Board type not managed')
         ret_val += self.open_power_stop(power='dc')
 
-        if self.board_type == 'A8':
-            ret_val += self._wait_no_tty_a8(config.OPEN_A8_CFG['tty'],
-                                            timeout=5)
-
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
         # # # # # # # # # # # # # # # # # # #
@@ -274,16 +270,6 @@ class GatewayManager(object):
         # Test if open a8 tty correctly appeared
         if not common.wait_cond(timeout, True, os.path.exists, a8_tty):
             LOGGER.error('Error Open A8 tty not visible: %s', a8_tty)
-            return 1
-        return 0
-
-    @staticmethod
-    def _wait_no_tty_a8(a8_tty, timeout=0):
-        """ Procedure to call at a8 stop
-        It runs sanity checks and stop debug features """
-        # Test if open a8 tty correctly disappeared
-        if not common.wait_cond(timeout, False, os.path.exists, a8_tty):
-            LOGGER.error('Error Open A8 tty still exist: %s', a8_tty)
             return 1
         return 0
 
