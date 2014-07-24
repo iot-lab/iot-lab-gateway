@@ -47,6 +47,19 @@ class TestProtocol(unittest.TestCase):
                                       "On Command: ['test_command']",
                                       ['NACK', 'test_command', '1.414'])
 
+    @mock.patch('gateway_code.autotest.autotest.AutoTestManager._run_test')
+    def test_get_uid(self, run_test_mock):
+        """ Test get_uid autotest function """
+
+        run_test_mock.return_value = ['05D8FF323632483343037109']
+        self.assertEquals(0, self.g_v.get_uid())
+        self.assertEquals('05D8:FF32:3632:4833:4303:7109',
+                          self.g_v.ret_dict['open_node_m3_uid'])
+
+        # error on get_uid
+        run_test_mock.return_value = []
+        self.assertNotEquals(0, self.g_v.get_uid())
+
 
 class TestAutoTestsErrorCases(unittest.TestCase):
 
