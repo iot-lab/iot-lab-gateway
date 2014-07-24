@@ -192,7 +192,6 @@ class AutoTestManager(object):
 
         try:
             self.a8_connection.stop()
-            LOGGER.debug("a8_connection_stopped")
         except AttributeError:  # pragma: no cover
             pass
 
@@ -207,8 +206,8 @@ class AutoTestManager(object):
         board_type = config.board_type()
 
         if board_type not in ['M3', 'A8']:
-            self._check(1, 'board_type: %s' % board_type, 'unkown')
-            raise FatalError('Unkown board_type')
+            self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
+            return self.ret_dict
 
         try:
             self.setup_control_node()

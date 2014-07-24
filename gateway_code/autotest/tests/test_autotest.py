@@ -54,6 +54,13 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
+    @mock.patch('gateway_code.config.board_type', lambda: 'unknown')
+    def test_invalid_board_type(self):
+        ret_dict = self.g_v.auto_tests()
+        self.assertNotEquals(0, ret_dict['ret'])
+        self.assertEquals([], ret_dict['success'])
+        self.assertEquals(['board_type'], ret_dict['error'])
+
     @mock.patch('gateway_code.config.board_type', lambda: 'M3')
     def test_fail_on_setup_control_node(self):
         def setup(*args, **kwargs):

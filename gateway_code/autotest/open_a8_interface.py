@@ -143,6 +143,7 @@ class OpenA8Connection(object):
                 self.remote_tty.terminate()
             if self.local_tty is not None:  # pragma: no cover
                 self.local_tty.terminate()
+        LOGGER.debug("a8_connection_stopped")
 
     def get_mac_addr(self):
         """ Get eth0 mac address """
