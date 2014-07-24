@@ -207,6 +207,7 @@ class GatewayManager(object):
         ret_val = 0
         if self.timeout_timer is not None:
             self.timeout_timer.cancel()
+            self.timeout_timer = None
 
         # # # # # # # # # # # # # # # #
         # Cleanup Control node config #

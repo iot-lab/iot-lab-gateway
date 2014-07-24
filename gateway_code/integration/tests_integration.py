@@ -1,29 +1,24 @@
-#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 """ Common integration tests M3/A8 """
+
+# pylint: disable=protected-access
+# pylint: disable=too-many-public-methods
 
 import os
 import time
 import math
 from itertools import izip
-from sys import stderr
 
 import mock
 from mock import patch
 
+from gateway_code.integration import test_integration_mock
 # all modules should be imported and not only the package
 import gateway_code.control_node_interface
 import gateway_code.config
-import gateway_code.autotest.m3_node_interface
-import gateway_code.autotest.autotest
-
+from gateway_code.common import wait_cond
 from gateway_code.autotest.autotest import extract_measures
-
-from gateway_code.integration import test_integration_mock
-
-# W0212 Access to a protected member '_xxx'of a client class
-# pylint: disable=protected-access
-# pylint: disable=too-many-public-methods
 
 USER = 'harter'
 
@@ -56,6 +51,7 @@ class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
 
         # no timeout
         self.request.query = mock.Mock(timeout='')
+        self.request.files = {}
 
         # config experiment and create folder
         self.exp_conf = {'user': USER, 'exp_id': 123}
@@ -200,54 +196,49 @@ class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
 
-    def tests_experiment_timeout(self):
-        """ Test two experiments with a timeout """
-        self.request.files = {}
+    def test_experiment_with_timeout(self):
+        """ Start an experiment with a timeout. """
+        timeout_mock = mock.Mock(side_effect=self.g_m._timeout_exp_stop)
+        with patch.object(self.g_m, '_timeout_exp_stop', timeout_mock):
+            self.request.query = mock.Mock(timeout='5')
+            self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+            # Wait max 10 seconds for experiment to have been stopped
+            self.assertTrue(wait_cond(10, False, self._safe_exp_is_running))
+            self.assertTrue(timeout_mock.called)
 
+    def test_exp_stop_removes_timeout(self):
+        """ Test exp_stop removes timeout stop """
         # Create measures folder
-        for exp_id in ['1234', '2345']:
-            self.g_m._create_user_exp_folders(USER, exp_id)
+        timeout_mock = mock.Mock(side_effect=self.g_m._timeout_exp_stop)
 
-        # Stop after timeout
-        self.request.query = mock.Mock(timeout='5')
-        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '1234'))
-        time.sleep(10)   # Ensure that timeout occured
-        self.g_m.rlock.acquire()  # wait calls ended
-        self.g_m.rlock.release()
-        # experiment should be stopped
-        self.assertFalse(self.g_m.experiment_is_running)
+        # Stop removes timeout
+        with patch.object(self.g_m, '_timeout_exp_stop', timeout_mock):
+            self.request.query = mock.Mock(timeout='5')
+            self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+            self.app.exp_stop()
 
-        # Stop remove timeout
-        self.request.query = mock.Mock(timeout='5')
-        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '1234'))
-        self.request.query = mock.Mock(timeout='0')
-        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '2345'))
-        time.sleep(10)   # Ensure that timeout could have occured
-        self.g_m.rlock.acquire()  # wait calls ended
-        self.g_m.rlock.release()
-        # experiment should be stopped
-        self.assertTrue(self.g_m.experiment_is_running)
+            time.sleep(10)   # Ensure that timeout could have occured
+            self.assertFalse(timeout_mock.called)  # not called
+
+    def test__timeout_on_wrong_exp(self):
+        """ Test _timeout_exp_stop only stops it's experiment """
+        old_exp_conf = self.exp_conf.copy()
+        old_exp_conf['exp_id'] -= 1
+
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        # simulate a previous experiment stop occuring too late
+        self.g_m._timeout_exp_stop(**old_exp_conf)
+        # still running
+        self.assertTrue(self._safe_exp_is_running)
+
+        # cleanup
         self.app.exp_stop()
 
-        # Simulate strange case where timeout is called when another experiment
-        # is already running
-        self.request.query = mock.Mock(timeout='5')
-        self.assertEquals({'ret': 0}, self.app.exp_start(USER, '1234'))
-
-        # 'change' experiment
-        self.g_m.exp_desc['exp_id'] = '2345'
-        time.sleep(10)   # Ensure that timeout could have occured
-        self.g_m.rlock.acquire()  # wait calls ended
-        self.g_m.rlock.release()
-        self.assertTrue(self.g_m.experiment_is_running)
-
-        # Cleanup experiment
-        self.g_m.exp_desc['exp_id'] = '1234'
-        self.app.exp_stop()
-
-        # Cleanup measures folder
-        for exp_id in ['1234', '2345']:
-            self.g_m._destroy_user_exp_folders(USER, exp_id)
+    def _safe_exp_is_running(self):
+        """ Return experiment state but do it under gateway manager rlock
+        It prevents other commands to be still running while checking """
+        with self.g_m.rlock:  # No operation running at the same time
+            return self.g_m.experiment_is_running
 
     def tests_non_regular_start_stop(self):
         """ Test start calls when not needed
@@ -283,44 +274,6 @@ class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
 
         # stop and cleanup
         self.assertEquals(0, g_m.exp_stop())
-
-
-class TestAutoTests(test_integration_mock.GatewayCodeMock):
-    """ Try running autotests on node """
-
-    def test_complete_auto_tests(self):
-        """ Test a regular autotest """
-        g_m = self.g_m
-        # replace stop
-        g_m.open_power_stop = mock.Mock(side_effect=g_m.open_power_stop)
-
-        # call using rest
-        self.request.query = mock.Mock(channel='22', gps='', flash='1')
-        ret_dict = self.app.auto_tests(mode='blink')
-        print >> stderr, ret_dict
-        self.assertEquals([], ret_dict['error'])
-        self.assertTrue('GWT' in ret_dict['mac'])
-        self.assertEquals(0, ret_dict['ret'])
-
-        # test that ON still on => should be blinking and answering
-        if gateway_code.config.board_type() != 'M3':
-            return
-        open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial()
-        open_serial.start()
-        self.assertIsNotNone(open_serial.send_command(['get_time']))
-        open_serial.stop()
-
-    def test_mode_no_blink_no_radio(self):
-        """ Try running autotest without blinking leds and without radio """
-
-        g_v = gateway_code.autotest.autotest.AutoTestManager(self.g_m)
-        ret_dict = g_v.auto_tests(channel=None, blink=False)
-
-        self.assertEquals([], ret_dict['error'])
-        self.assertEquals(0, ret_dict['ret'])
-        # Radio functions not in results
-        self.assertNotIn('test_radio_ping_pong', ret_dict['success'])
-        self.assertNotIn('rssi_measures', ret_dict['success'])
 
 
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):
