@@ -114,10 +114,8 @@ class GatewayManager(object):
             self.exp_stop()
 
         try:
-            if profile is not None:
-                self.profile = Profile(board_type=self.board_type, **profile)
-        except (ValueError, TypeError) as err:
-            LOGGER.error('Invalid profile: %r', err)
+            self.decode_and_store_profile(profile)
+        except ValueError:
             return 1
 
         self.experiment_is_running = True
@@ -134,7 +132,7 @@ class GatewayManager(object):
             self.exp_desc['exp_files']['log'])
         LOGGER.addHandler(self.user_log_handler)
 
-        # Rest server already printed log, but not for the user
+        # Print log after creating user logs
         LOGGER.info('Start experiment: %s-%i', user, exp_id)
 
         firmware_path = firmware_path or config.FIRMWARES['idle']
@@ -155,7 +153,7 @@ class GatewayManager(object):
         ret_val += self.protocol.green_led_blink()
         ret_val += self.open_power_start(power='dc')
         ret_val += self.set_time()
-        ret_val += self.exp_update_profile()
+        ret_val += self.configure_cn_profile()
 
         # # # # # # # # # # #
         # Prepare Open Node #
@@ -167,6 +165,7 @@ class GatewayManager(object):
             self.timeout_timer = Timer(timeout, self._timeout_exp_stop,
                                        args=(exp_id, user))
             self.timeout_timer.start()
+        LOGGER.info("Start experiment succeeded")
         return ret_val
 
     @common.syncronous('rlock')
@@ -201,6 +200,8 @@ class GatewayManager(object):
         5) Experiment Stopped
 
         """
+        LOGGER.info("Stop experiment")
+
         if not self.experiment_is_running:
             LOGGER.warning("No experiment running. Don't stop")
             return 0
@@ -214,7 +215,7 @@ class GatewayManager(object):
         # # # # # # # # # # # # # # # #
 
         self.profile = self.default_profile
-        ret_val += self.exp_update_profile()
+        ret_val += self.configure_cn_profile()
         ret_val += self.open_power_start(power='dc')
         ret_val += self.protocol.green_led_on()
 
@@ -241,14 +242,41 @@ class GatewayManager(object):
         self.exp_desc['user'] = None
         self.experiment_is_running = False
 
+        LOGGER.info("Stop experiment succeeded")
         LOGGER.removeHandler(self.user_log_handler)
 
         return ret_val
 
     @common.syncronous('rlock')
-    def exp_update_profile(self):
-        """ Update the control node profile """
-        LOGGER.debug('Update profile')
+    def exp_update_profile(self, profile):
+        """ Update the experiment profile """
+        LOGGER.info('Update experiment profile')
+
+        try:
+            self.decode_and_store_profile(profile)
+            ret = self.configure_cn_profile()
+        except ValueError:
+            ret = 1
+
+        if ret != 0:  # pragma: no cover
+            LOGGER.error('Update experiment profile failed')
+        return ret
+
+    def decode_and_store_profile(self, profile_dict):
+        """ Create Profile object from `profile_dict`
+        Store Profile in 'self.profile' on success
+        :raises: ValueError on invalid profile_dict """
+        if profile_dict is None:
+            return
+        try:
+            self.profile = Profile(board_type=self.board_type, **profile_dict)
+        except (ValueError, TypeError) as err:
+            LOGGER.error('Invalid profile: %r', err)
+            raise ValueError
+
+    def configure_cn_profile(self):
+        """ Configure the control node profile """
+        LOGGER.debug('Configure profile on control node')
 
         ret = 0
         # power_mode (keep open node started/stoped state)

@@ -115,6 +115,7 @@ class TestRestMethods(unittest.TestCase):
 
         self.request.files = mock.Mock()
         self.request.files.__contains__ = mock.Mock(side_effect=ValueError())
+        self.request.files.__getitem__ = mock.Mock(side_effect=ValueError())
         self.request.query = mock.Mock(timeout='')
         ret_dict = s_r.exp_start('user', '123')
 

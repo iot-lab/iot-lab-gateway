@@ -23,31 +23,13 @@ from gateway_code.autotest.autotest import extract_measures
 USER = 'harter'
 
 
-def _send_command_open_node(command, host='localhost', port=20000):
-    """ send a command to host/port and wait for an answer as a line """
-    import socket
-
-    ret = None
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((host, port))
-        sock_file = sock.makefile('rw')
-        sock.settimeout(5.0)
-        sock.send(command)
-        ret = sock_file.readline()
-    except (socket.timeout, IOError):
-        ret = None
-    finally:
-        sock.close()
-    return ret
-
-
 class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
     """ Create environment for running experiments """
 
     def setUp(self):
         super(ExperimentRunningMock, self).setUp()
         self.cn_measures = []
+        self.g_m.cn_serial.measures_handler = self._measures_handler
 
         # no timeout
         self.request.query = mock.Mock(timeout='')
@@ -66,79 +48,79 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
         gateway_code.control_node_interface.LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
 
+    @staticmethod
+    def _send_command_open_node(command, host='localhost', port=20000):
+        """ send a command to host/port and wait for an answer as a line """
+        import socket
+
+        ret = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((host, port))
+            sock_file = sock.makefile('rw')
+            sock.settimeout(5.0)
+            sock.send(command + '\n')
+            ret = sock_file.readline().rstrip()
+        except (socket.timeout, IOError):
+            ret = None
+        finally:
+            sock.close()
+        return ret
+
+    def _send_command_multiple(self, command, num_times, step=0.5):
+        """ Send a command multiple times and return array of answers """
+        answers = []
+        for _ in range(0, num_times):
+            answers.append(self._send_command_open_node(command))
+            time.sleep(step)
+        return answers
+
 
 class TestComplexExperimentRunning(ExperimentRunningMock):
     """ Run complete experiment test """
 
     @patch('gateway_code.control_node_interface.LOGGER.error')
-    def tests_complete_experiments(self, m_error):
-        """ Test complete experiment (loooong test) (3 for M3, 1 for A8)"""
-        self.g_m.cn_serial.measures_handler = self._measures_handler
-
+    def test_simple_experiment(self, m_error):
+        """ Test simple experiment"""
         if 'M3' == gateway_code.config.board_type():
-            # start
-            for _ in range(0, 3):
-                m_error.reset_mock()
-                self.cn_measures = []
-                test_integration_mock.FileUpload.rewind_all()
-                self._run_one_experiment_m3(m_error)
-
+            self._run_simple_experiment_m3(m_error)
         elif 'A8' == gateway_code.config.board_type():
-            m_error.reset_mock()
-            self.request.files = {}
-            self._run_one_experiment_a8(m_error)
+            self._run_simple_experiment_a8(m_error)
 
-    def _run_one_experiment_a8(self, m_error):
+    def _run_simple_experiment_a8(self, m_error):
         """ Run an experiment for A8 nodes """
-
         _ = m_error
 
-        # Run an experiment that does nothing but wait
-        # should keep the same user as it's the only one setup
-        ret = self.app.exp_start(**self.exp_conf)
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
 
         # waiting One minute to try to have complete boot log on debug output
         time.sleep(60)  # maybe do something here later
 
-        ret = self.app.exp_stop()
-        self.assertEquals(ret, {'ret': 0})
+        self.assertEquals({'ret': 0}, self.app.exp_stop())
 
-    def _run_one_experiment_m3(self, m_error):
-        """ Run an experiment """
+    def _run_simple_experiment_m3(self, m_error):
+        """ Run a simple experiment on M3 node without profile
+        Try the different node features """
 
-        msg = 'HELLO WORLD\n'
-        t_start = time.time()
+        msg = 'HELLO WORLD'
 
-        #
-        # Run an experiment
-        #
-        self.request.files = {'firmware': self.files['idle'],
-                              'profile': self.files['profile']}
+        # start exp with idle firmware
+        self.request.files = {'firmware': self.files['idle']}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
-        exp_files = self.g_m.exp_desc['exp_files'].copy()
-
         time.sleep(1)
 
-        # idle firmware, should be no reply
-        self.assertIsNone(_send_command_open_node('echo %s' % msg))
+        # idle firmware, there should be no reply
+        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
 
         # flash echo firmware
         self.request.files = {'firmware': self.files['m3_autotest']}
         self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)
 
-        # test set_time during experiment
-        self.app.set_time()
+        self.app.set_time()  # test set_time during experiment
 
-        # echo firmware, should reply what was sent
-        # do it multiple times to be sure
-        answers = []
-        for _ in range(0, 5):
-            ret = _send_command_open_node('echo %s' % msg)
-            answers.append(ret)
-            time.sleep(0.5)
-        self.assertIn(msg, answers)
+        # Should echo <message>, do it multiple times for reliability
+        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
 
         # open node reset and start stop
         self.assertEquals({'ret': 0}, self.app.open_soft_reset())
@@ -148,30 +130,55 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # stop exp
         self.assertEquals({'ret': 0}, self.app.exp_stop())
 
-        #
-        # Check results
-        #
-        # Got no error during tests (use assertEquals for printing result)
+        # Got no error during tests (use call_args_list for printing on error)
         self.assertEquals([], m_error.call_args_list)
 
-        # reset firmware should fail
-        # logger error will be called
+        # node is correctly shutdown
+        # reset firmware should fail and logger error will be called
         self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)
 
-        #
-        # Validate measures consumption
-        #
-        measures = extract_measures(self.cn_measures)
+    @patch('gateway_code.control_node_interface.LOGGER.error')
+    def test_m3_exp_with_measures(self, m_error):
+        """ Run an experiment with measures and profile update """
 
+        if 'M3' != gateway_code.config.board_type():
+            return
+        t_start = time.time()
+
+        self.request.files = {'firmware': self.files['m3_autotest']}
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        exp_files = self.g_m.exp_desc['exp_files'].copy()
+        time.sleep(1)
+
+        # Set first profile
+        self.request.files = {'profile': self.files['profile']}
+        self.assertEquals({'ret': 0}, self.app.exp_update_profile())
+        time.sleep(5)  # wait measures here
+        self.app.set_time()  # test set_time during experiment
+        time.sleep(5)  # wait measures here
+        # remove profile
+        self.request.files = {}
+        self.assertEquals({'ret': 0}, self.app.exp_update_profile())
+        time.sleep(2)  # wait maybe remaining values
+
+        measures = extract_measures(self.cn_measures)
+        self.cn_measures = []
+
+        # # # # # # # # # #
+        # Check measures  #
+        # # # # # # # # # #
+
+        # Got consumption and radio
         self.assertNotEquals([], measures['consumption']['values'])
+        self.assertNotEquals([], measures['radio']['values'])
+
+        # Validate values
         for values in measures['consumption']['values']:
             # no power, voltage in 3.3V, current not null
             self.assertTrue(math.isnan(values[0]))
             self.assertTrue(2.8 <= values[1] <= 3.5)
             self.assertNotEquals(0.0, values[2])
-
-        self.assertNotEquals([], measures['radio']['values'])
         for values in measures['radio']['values']:
             self.assertIn(values[0], [15, 26])
             self.assertGreaterEqual(-91, values[1])
@@ -182,10 +189,19 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             _sorted = all([a < b for a, b in izip(timestamps, timestamps[1:])])
             self.assertTrue(_sorted)
 
-        # Test OML Files
-        # radio and conso file exist
+        # there should be no new measures
+        self.assertEquals([], self.cn_measures)
+
+        # Stop experiment
+        self.assertEquals({'ret': 0}, self.app.exp_stop())
+        # Got no error during tests (use assertEquals for printing result)
+        self.assertEquals([], m_error.call_args_list)
+
+        # # # # # # # # # # # # # # # # # # # # # #
+        # Test OML Files still exists after stop  #
+        #    * radio and conso file exist         #
+        # # # # # # # # # # # # # # # # # # # # # #
         for meas_type in ('radio', 'consumption'):
-            self.assertTrue(os.path.isfile(exp_files[meas_type]))
             try:
                 os.remove(exp_files[meas_type])
             except IOError:

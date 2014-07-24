@@ -34,6 +34,7 @@ class GatewayRest(object):
         """
         bottle.route('/exp/start/<exp_id:int>/<user>', 'POST')(self.exp_start)
         bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
+        bottle.route('/exp/update', 'PUT')(self.exp_update_profile)
         bottle.route('/open/start', 'PUT')(self.open_start)
         bottle.route('/open/stop', 'PUT')(self.open_stop)
 
@@ -57,70 +58,88 @@ class GatewayRest(object):
 
         Query string: 'timeout' int
         """
+
         exp_id = int(exp_id)
-        LOGGER.info('Start experiment: %s-%i', user, exp_id)
-
-        firmware_path = None
-        firmware_file = None
-        profile = None
-
+        LOGGER.debug('REST: Start experiment: %s-%i', user, exp_id)
         try:
             timeout = max(0, int(request.query.timeout))
         except ValueError:
             timeout = 0
 
-        # verify passed files as request
+        # Extract firmware file
+        firmware_file = self._extract_firmware()
+        firmware = firmware_file.name if firmware_file is not None else None
+
+        # Extract profile to a dict
         try:
-            if 'profile' in request.files:
-                # create profile object from json
-                _prof = request.files['profile']
-                try:
-                    profile = json.load(_prof.file)
-                    LOGGER.debug('Profile json dict: %r', profile)
-                except ValueError:
-                    LOGGER.error('Invalid json for profile')
-                    return {'ret': 1}
-            if self.board_type == 'M3' and 'firmware' in request.files:
-                # save http file to disk
-                _firm = request.files['firmware']
-                firmware_file = NamedTemporaryFile(suffix='--'+_firm.filename)
-                firmware_path = firmware_file.name
-                firmware_file.write(_firm.file.read())
-                firmware_file.flush()
-            else:  # pragma: no cover
-                pass
+            profile = self._extract_profile()
         except ValueError:
-            pass  # no files in multipart request
+            LOGGER.error('Invalid json for profile')
+            return {'ret': 1}
 
         ret = self.gateway_manager.exp_start(
-            user, exp_id, firmware_path, profile, timeout)
+            user, exp_id, firmware, profile, timeout)
 
         # cleanup of temp file
         if firmware_file is not None:
             firmware_file.close()
 
-        if ret == 0:
-            LOGGER.info('Start experiment Succeeded')
-        else:  # pragma: no cover
+        if ret:  # pragma: no cover
             LOGGER.error('Start experiment with errors: ret: %d', ret)
         return {'ret': ret}
 
     def exp_stop(self):
         """ Stop the current experiment """
-        LOGGER.info('Stop experiment')
-
+        LOGGER.debug('REST: Stop experiment')
         ret = self.gateway_manager.exp_stop()
-        if ret == 0:
-            LOGGER.info('Stop experiment Succeeded')
-        else:  # pragma: no cover
+        if ret:  # pragma: no cover
             LOGGER.error('Stop experiment errors: ret: %d', ret)
         return {'ret': ret}
 
+    def exp_update_profile(self):
+        """ Update current experiment profile """
+        LOGGER.debug('REST: Update profile')
+        try:
+            profile = self._extract_profile()
+        except ValueError:
+            LOGGER.error('Invalid json for profile')
+            return {'ret': 1}
+
+        ret = self.gateway_manager.exp_update_profile(profile)
+        return {'ret': ret}
+
+    @staticmethod
+    def _extract_profile():
+        """ Extract profile dict from request files
+        :raises: ValueError on an invalid pofile """
+        try:
+            _prof = request.files['profile']
+        except (ValueError, KeyError):
+            # ValueError: no files in multipart request
+            return None
+
+        profile = json.load(_prof.file)  # ValueError on invalid profile
+        LOGGER.debug('Profile json dict: %r', profile)
+        return profile
+
+    @staticmethod
+    def _extract_firmware():
+        """ Extract firmware from request files """
+        try:
+            _firm = request.files['firmware']
+        except (ValueError, KeyError):
+            # ValueError: no files in multipart request
+            return None
+
+        # save http file to disk
+        firmware_file = NamedTemporaryFile(suffix='--'+_firm.filename)
+        firmware_file.write(_firm.file.read())
+        firmware_file.flush()
+        return firmware_file
+
     def set_time(self):
-        """
-        Reset Control node time and update time reference
-        """
-        LOGGER.info('Reset Time')
+        """ Reset Control node time and update time reference """
+        LOGGER.debug('REST: Set time')
         ret = self.gateway_manager.set_time()
         return {'ret': ret}
 
@@ -132,51 +151,53 @@ class GatewayRest(object):
         request.files contains 'firmware' file argument
         """
         ret = 0
-        try:
-            firmware = request.files['firmware']
-        except KeyError:
-            return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
-        LOGGER.info("Flash Firmware '%s', on %s",
-                    request.files.get('firmware').filename, node)
 
-        # save http file to disk
-        with NamedTemporaryFile(suffix='--'+firmware.filename) as _file:
-            _file.write(firmware.file.read())
-            ret = self.gateway_manager.node_flash(node, _file.name)
+        firmware_file = self._extract_firmware()
+        if firmware_file is None:
+            return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
+
+        ret = self.gateway_manager.node_flash(node, firmware_file.name)
+
+        firmware_file.close()
         return {'ret': ret}
 
     def _reset(self, node):
         """ Reset given node with 'reset' pin """
-        LOGGER.info("Reset node: %s", node)
         return self.gateway_manager.node_soft_reset(node)
 
     def open_flash(self):
         """ Flash open node """
+        LOGGER.debug('REST: Flash M3')
         return self._flash('m3')
 
     def open_soft_reset(self):
         """ Soft reset open node """
+        LOGGER.debug('REST: Reset M3')
         ret = self._reset('m3')
         return {'ret': ret}
 
     def open_start(self):
         """ Start open node. Alimentation mode stays the same """
+        LOGGER.debug('REST: Open node start')
         ret = self.gateway_manager.open_power_start(power=None)
         return {'ret': ret}
 
     def open_stop(self):
         """ Stop open node. Alimentation mode stays the same """
+        LOGGER.debug('REST: Open node stop')
         ret = self.gateway_manager.open_power_stop(power=None)
         return {'ret': ret}
 
     # Admins commands
     def admin_control_soft_reset(self):
         """ Soft reset control node """
+        LOGGER.debug('REST: Reset CN')
         ret = self._reset('gwt')
         return {'ret': ret}
 
     def admin_control_flash(self):
         """ Flash control node """
+        LOGGER.debug('REST: Flash CN')
         return self._flash('gwt')
 
     def auto_tests(self, mode=None):
@@ -190,6 +211,7 @@ class GatewayRest(object):
         Mode:
          * 'blink': leds keep blinking
         """
+        LOGGER.debug('REST: auto_tests')
 
         # get mode
         if mode not in ['blink', None]:
