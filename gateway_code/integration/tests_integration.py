@@ -42,11 +42,11 @@ def _send_command_open_node(command, host='localhost', port=20000):
     return ret
 
 
-class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
-    """ Run complete experiment test """
+class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
+    """ Create environment for running experiments """
 
     def setUp(self):
-        super(TestComplexExperimentRunning, self).setUp()
+        super(ExperimentRunningMock, self).setUp()
         self.cn_measures = []
 
         # no timeout
@@ -58,22 +58,17 @@ class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
         self.g_m._create_user_exp_folders(**self.exp_conf)
 
     def tearDown(self):
-        super(TestComplexExperimentRunning, self).tearDown()
+        super(ExperimentRunningMock, self).tearDown()
         self.g_m._destroy_user_exp_folders(**self.exp_conf)
-
-    def test_admin_commands(self):
-        """ Try running the admin commands """
-        # flash Control Node
-        self.request.files = {'firmware': self.files['control_node']}
-        ret = self.app.admin_control_flash()
-        self.assertEquals(ret, {'ret': 0})
-        ret = self.app.admin_control_soft_reset()
-        self.assertEquals(ret, {'ret': 0})
 
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
         gateway_code.control_node_interface.LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
+
+
+class TestComplexExperimentRunning(ExperimentRunningMock):
+    """ Run complete experiment test """
 
     @patch('gateway_code.control_node_interface.LOGGER.error')
     def tests_complete_experiments(self, m_error):
@@ -196,29 +191,44 @@ class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
 
+
+class TestExperimentTimeout(ExperimentRunningMock):
+    """ Test the 'timeout' feature of experiments """
+
+    def setUp(self):
+        super(TestExperimentTimeout, self).setUp()
+        self.timeout_mock = mock.Mock(side_effect=self.g_m._timeout_exp_stop)
+
+        self.timeout_patcher = patch.object(self.g_m, '_timeout_exp_stop',
+                                            self.timeout_mock)
+        self.timeout_patcher.start()
+
+    def tearDown(self):
+        super(TestExperimentTimeout, self).tearDown()
+        self.timeout_patcher.stop()
+
+    def _safe_exp_is_running(self):
+        """ Return experiment state but do it under gateway manager rlock
+        It prevents other commands to be still running while checking """
+        with self.g_m.rlock:  # No operation running at the same time
+            return self.g_m.experiment_is_running
+
     def test_experiment_with_timeout(self):
         """ Start an experiment with a timeout. """
-        timeout_mock = mock.Mock(side_effect=self.g_m._timeout_exp_stop)
-        with patch.object(self.g_m, '_timeout_exp_stop', timeout_mock):
-            self.request.query = mock.Mock(timeout='5')
-            self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
-            # Wait max 10 seconds for experiment to have been stopped
-            self.assertTrue(wait_cond(10, False, self._safe_exp_is_running))
-            self.assertTrue(timeout_mock.called)
+        self.request.query = mock.Mock(timeout='5')
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        # Wait max 10 seconds for experiment to have been stopped
+        self.assertTrue(wait_cond(10, False, self._safe_exp_is_running))
+        self.assertTrue(self.timeout_mock.called)
 
     def test_exp_stop_removes_timeout(self):
         """ Test exp_stop removes timeout stop """
-        # Create measures folder
-        timeout_mock = mock.Mock(side_effect=self.g_m._timeout_exp_stop)
+        self.request.query = mock.Mock(timeout='5')
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        self.app.exp_stop()  # Stop should remove timeout
 
-        # Stop removes timeout
-        with patch.object(self.g_m, '_timeout_exp_stop', timeout_mock):
-            self.request.query = mock.Mock(timeout='5')
-            self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
-            self.app.exp_stop()
-
-            time.sleep(10)   # Ensure that timeout could have occured
-            self.assertFalse(timeout_mock.called)  # not called
+        time.sleep(10)   # Ensure that timeout could have occured
+        self.assertFalse(self.timeout_mock.called)  # not called
 
     def test__timeout_on_wrong_exp(self):
         """ Test _timeout_exp_stop only stops it's experiment """
@@ -234,11 +244,18 @@ class TestComplexExperimentRunning(test_integration_mock.GatewayCodeMock):
         # cleanup
         self.app.exp_stop()
 
-    def _safe_exp_is_running(self):
-        """ Return experiment state but do it under gateway manager rlock
-        It prevents other commands to be still running while checking """
-        with self.g_m.rlock:  # No operation running at the same time
-            return self.g_m.experiment_is_running
+
+class TestIntegrationOther(ExperimentRunningMock):
+    """ Group other tests cases"""
+
+    def test_admin_commands(self):
+        """ Try running the admin commands """
+        # flash Control Node
+        self.request.files = {'firmware': self.files['control_node']}
+        ret = self.app.admin_control_flash()
+        self.assertEquals(ret, {'ret': 0})
+        ret = self.app.admin_control_soft_reset()
+        self.assertEquals(ret, {'ret': 0})
 
     def tests_non_regular_start_stop(self):
         """ Test start calls when not needed
