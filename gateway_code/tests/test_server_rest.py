@@ -35,6 +35,9 @@ class TestRestMethods(unittest.TestCase):
         self.board = self.board_patcher.start()
         self.board.return_value = 'M3'
 
+        self.g_m = mock.Mock()
+        self.s_r = server_rest.GatewayRest(self.g_m)
+
     def tearDown(self):
         self.request_patcher.stop()
         self.board_patcher.stop()
@@ -50,16 +53,14 @@ class TestRestMethods(unittest.TestCase):
             file=StringIO(profile_str),
             name='profile', filename='default_profile.json')
 
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.exp_start.return_value = 0
+        self.g_m.exp_start.return_value = 0
 
         self.request.files = {'firmware': idle, 'profile': default_profile}
-        ret_dict = s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', '123')
         self.assertEquals(0, ret_dict['ret'])
 
         # validate arguments
-        call_args = g_m.exp_start.call_args[0]
+        call_args = self.g_m.exp_start.call_args[0]
         self.assertEquals(('user', 123), call_args[0: 2])
         self.assertTrue(idle.filename in call_args[2])
         self.assertEquals(profile_dict, call_args[3])
@@ -69,172 +70,176 @@ class TestRestMethods(unittest.TestCase):
         profile = FileUpload(file=StringIO('not a valid profile json, }'),
                              name='profile', filename='default_profile.json')
 
-        s_r = server_rest.GatewayRest(None)
-
         self.request.files = {'profile': profile}
-        ret_dict = s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', '123')
         self.assertNotEquals(0, ret_dict['ret'])
 
     def test_exp_start_no_files(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.exp_start.return_value = 0
+        self.g_m.exp_start.return_value = 0
 
         # nothing in files
         self.request.files = {}
         self.request.query = mock.Mock(timeout='')
-        ret_dict = s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', '123')
 
         # validate
-        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
+        self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
 
     def test_exp_start_valid_duration(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.exp_start.return_value = 0
+        self.g_m.exp_start.return_value = 0
         self.request.files = {}
 
         self.request.query = mock.Mock(timeout='12')
-        ret_dict = s_r.exp_start('user', '123')
-        g_m.exp_start.assert_called_with('user', 123, None, None, 12)
+        ret_dict = self.s_r.exp_start('user', '123')
+        self.g_m.exp_start.assert_called_with('user', 123, None, None, 12)
 
         # invalid data
         self.request.query = mock.Mock(timeout='ten_minutes')
-        ret_dict = s_r.exp_start('user', '123')
-        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
+        ret_dict = self.s_r.exp_start('user', '123')
+        self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
         self.request.query = mock.Mock(timeout='-1')
-        ret_dict = s_r.exp_start('user', '123')
-        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
+        ret_dict = self.s_r.exp_start('user', '123')
+        self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
     def test_exp_start_multipart_without_files(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.exp_start.return_value = 0
+        self.g_m.exp_start.return_value = 0
 
         self.request.files = mock.Mock()
         self.request.files.__contains__ = mock.Mock(side_effect=ValueError())
         self.request.files.__getitem__ = mock.Mock(side_effect=ValueError())
         self.request.query = mock.Mock(timeout='')
-        ret_dict = s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', '123')
 
         # validate
-        g_m.exp_start.assert_called_with('user', 123, None, None, 0)
+        self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
         self.assertEquals(0, ret_dict['ret'])
 
     def test_exp_stop(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-
-        g_m.exp_stop.return_value = 0
-        ret_dict = s_r.exp_stop()
+        self.g_m.exp_stop.return_value = 0
+        ret_dict = self.s_r.exp_stop()
         self.assertEquals(0, ret_dict['ret'])
 
-        g_m.exp_stop.return_value = 1
-        ret_dict = s_r.exp_stop()
+        self.g_m.exp_stop.return_value = 1
+        ret_dict = self.s_r.exp_stop()
         self.assertEquals(1, ret_dict['ret'])
 
-    def test_set_time(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
+# Simple functions
 
-        g_m.set_time.return_value = 0
-        ret_dict = s_r.set_time()
+    def test_exp_update_profile(self):
+        self.g_m.exp_update_profile = mock.Mock(return_value=0)
+
+        # No profile
+        self.request.files = {}
+        self.assertEquals({'ret': 0}, self.s_r.exp_update_profile())
+        self.assertTrue(self.g_m.exp_update_profile.called)
+        self.g_m.exp_update_profile.reset_mock()
+
+        # default profile
+        profile_str = '{ "profilename": "_default_profile", "power": "dc" }'
+        self.request.files = {
+            'profile': FileUpload(filename='default_profile.json',
+                                  file=StringIO(profile_str), name='profile')
+        }
+        self.assertEquals({'ret': 0}, self.s_r.exp_update_profile())
+        self.assertTrue(self.g_m.exp_update_profile.called)
+        self.g_m.exp_update_profile.reset_mock()
+
+        # profile that cannot be decoded
+        self.request.files = {
+            'profile': FileUpload(file=StringIO('{ inval_json'),
+                                  name='profile', filename='_p.json')
+        }
+        self.assertEquals({'ret': 1}, self.s_r.exp_update_profile())
+        self.assertFalse(self.g_m.exp_update_profile.called)
+        self.g_m.exp_update_profile.reset_mock()
+
+    def test_set_time(self):
+        self.g_m.set_time.return_value = 0
+        ret_dict = self.s_r.set_time()
         self.assertEquals(0, ret_dict['ret'])
 
     def test_flash_function(self):
         idle = FileUpload(file=StringIO('empty_firmware'),
                           name='firmware', filename='idle.elf')
 
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.node_flash.return_value = 0
+        self.g_m.node_flash.return_value = 0
 
         self.request.files = {}
-        ret_dict = s_r._flash('m3')
+        ret_dict = self.s_r._flash('m3')
         self.assertNotEquals(0, ret_dict['ret'])
 
-        # valide command
+        # valid command
         self.request.files = {'firmware': idle}
-        ret_dict = s_r._flash('gwt')
+        ret_dict = self.s_r._flash('gwt')
         self.assertEquals(0, ret_dict['ret'])
 
-        call_args = g_m.node_flash.call_args[0]
+        call_args = self.g_m.node_flash.call_args[0]
         self.assertEquals('gwt', call_args[0])
         self.assertTrue(idle.filename in call_args[1])
 
     def test_generic_flash_wrappers(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        s_r._flash = mock.Mock(return_value={'ret': 0})
+        self.s_r._flash = mock.Mock(return_value={'ret': 0})
 
-        ret_dict = s_r.open_flash()
+        ret_dict = self.s_r.open_flash()
         self.assertEquals(0, ret_dict['ret'])
-        ret_dict = s_r.admin_control_flash()
+        ret_dict = self.s_r.admin_control_flash()
         self.assertEquals(0, ret_dict['ret'])
 
     def test_reset_wrappers(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.node_soft_reset.return_value = 0
+        self.g_m.node_soft_reset.return_value = 0
 
-        ret_dict = s_r.open_soft_reset()
+        ret_dict = self.s_r.open_soft_reset()
         self.assertEquals(0, ret_dict['ret'])
-        ret_dict = s_r.admin_control_soft_reset()
+        ret_dict = self.s_r.admin_control_soft_reset()
         self.assertEquals(0, ret_dict['ret'])
 
     def test_open_start(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.open_power_start.return_value = 0
+        self.g_m.open_power_start.return_value = 0
 
-        ret_dict = s_r.open_start()
+        ret_dict = self.s_r.open_start()
         self.assertEquals(0, ret_dict['ret'])
 
     def test_open_stop(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.open_power_stop.return_value = 0
+        self.g_m.open_power_stop.return_value = 0
 
-        ret_dict = s_r.open_stop()
+        ret_dict = self.s_r.open_stop()
         self.assertEquals(0, ret_dict['ret'])
 
     def auto_tests(self):
-        g_m = mock.Mock()
-        s_r = server_rest.GatewayRest(g_m)
-        g_m.auto_tests.return_value = {'ret': 0,
-                                       'error': [], 'success': ['test_ok'],
-                                       'mac': {'A8': '12: 34: 56: 78: 9A: BC'}
-                                       }
+        self.g_m.auto_tests.return_value = {
+            'ret': 0, 'error': [], 'success': ['test_ok'],
+            'mac': {'A8': '12: 34: 56: 78: 9A: BC'}
+        }
 
         self.request.query = mock.Mock(channel='', flash='', gps='')
-        ret_dict = s_r.auto_tests(mode=None)
+        ret_dict = self.s_r.auto_tests(mode=None)
         self.assertEquals(0, ret_dict['ret'])
-        g_m.auto_tests.assert_called_with(None, False, False, False)
+        self.g_m.auto_tests.assert_called_with(None, False, False, False)
 
         self.request.query = mock.Mock(channel='22', flash='1', gps='')
-        ret_dict = s_r.auto_tests(mode='blink')
+        ret_dict = self.s_r.auto_tests(mode='blink')
         self.assertEquals(0, ret_dict['ret'])
-        g_m.auto_tests.assert_called_with(22, True, True, False)
+        self.g_m.auto_tests.assert_called_with(22, True, True, False)
         self.assertEquals(0, ret_dict['ret'])
 
         # invalid calls
-        ret_dict = s_r.auto_tests(mode='nothing_valid')
+        ret_dict = self.s_r.auto_tests(mode='nothing_valid')
         self.assertNotEquals(0, ret_dict['ret'])
 
         self.request.query = mock.Mock(channel='abc')
-        ret_dict = s_r.auto_tests()
+        ret_dict = self.s_r.auto_tests()
         self.assertNotEquals(0, ret_dict['ret'])
         self.request.query = mock.Mock(channel='42')
-        ret_dict = s_r.auto_tests()
+        ret_dict = self.s_r.auto_tests()
         self.assertNotEquals(0, ret_dict['ret'])
 
         self.request.query = mock.Mock(channel='11', gps='true')
-        ret_dict = s_r.auto_tests()
+        ret_dict = self.s_r.auto_tests()
         self.assertNotEquals(0, ret_dict['ret'])
         self.request.query = mock.Mock(channel='11', gps=None, flash='false')
-        ret_dict = s_r.auto_tests()
+        ret_dict = self.s_r.auto_tests()
         self.assertNotEquals(0, ret_dict['ret'])
 
 

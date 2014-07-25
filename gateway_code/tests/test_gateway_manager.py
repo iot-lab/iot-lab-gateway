@@ -26,7 +26,7 @@ class TestGatewayManagerInvalidBoardType(unittest.TestCase):
 
 @patch('gateway_code.config.board_type', (lambda: 'M3'))
 @patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
-class TestGatewayManagerErrorCases(unittest.TestCase):
+class TestGatewayManager(unittest.TestCase):
 
     def test_setup(self):
         """ Test running gateway_manager with setup without error """
@@ -42,6 +42,16 @@ class TestGatewayManagerErrorCases(unittest.TestCase):
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=1)
         self.assertRaises(StandardError, g_m.setup)
+
+    def test_exp_update_profile_error(self):
+        """ Update profile with an invalid profile """
+
+        g_m = gateway_manager.GatewayManager()
+        self.assertEquals(1, g_m.exp_update_profile(profile={}))
+
+# # # # # # # # # # # # # # # # # # # # #
+# Measures folder and files management  #
+# # # # # # # # # # # # # # # # # # # # #
 
     def test_create_and_cleanup_user_exp_files(self):
         """ Create files and clean them"""
