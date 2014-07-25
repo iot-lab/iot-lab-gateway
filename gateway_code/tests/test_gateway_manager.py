@@ -6,15 +6,19 @@ Complement the 'integration' tests
 """
 
 import os
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
 
 import unittest
 import mock
-import os
 from mock import patch
 
 from gateway_code import gateway_manager
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
+
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-public-methods
+# pylint: disable=invalid-name
+# pylint: disable=protected-access
 
 
 @patch('gateway_code.config.board_type', (lambda: 'NOT_A_BOARD'))
@@ -55,6 +59,7 @@ class TestGatewayManager(unittest.TestCase):
 
     def test_create_and_cleanup_user_exp_files(self):
         """ Create files and clean them"""
+        _ = self
         with patch('gateway_code.config.EXP_FILES_DIR', './iotlab/'):
             g_m = gateway_manager.GatewayManager()
             g_m._create_user_exp_folders('user', 123)

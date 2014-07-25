@@ -1,5 +1,9 @@
 # -*- coding:utf-8 -*-
 
+# pylint: disable=missing-docstring
+# pylint: disable=protected-access
+# pylint: disable=too-many-public-methods
+# pylint: disable=invalid-name
 
 import unittest
 import mock
@@ -153,7 +157,7 @@ class TestProtocolRadio(unittest.TestCase):
         self.protocol._stop_radio = mock.Mock()
         self.protocol._stop_radio.return_value = 0
 
-        ret = self.protocol.config_radio(None)
+        self.protocol.config_radio(None)
         self.assertEquals(0, self.protocol._config_radio_measure.call_count)
         self.assertEquals(1, self.protocol._stop_radio.call_count)
 

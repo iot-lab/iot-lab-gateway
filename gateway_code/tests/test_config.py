@@ -1,6 +1,10 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-public-methods
+# pylint: disable=protected-access
+
 import mock
 import unittest
 
@@ -20,10 +24,11 @@ class TestGetHostname(unittest.TestCase):
 
 class TestDefaultProfile(unittest.TestCase):
 
+    @mock.patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
+    @mock.patch('gateway_code.config.board_type', lambda: 'M3')
     def test_default_profile(self):
-        with mock.patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR):
-            with mock.patch('gateway_code.config.board_type', lambda: 'M3'):
-                ret = config.default_profile()
+        _ = self
+        config.default_profile()
 
 
 class TestsBoardAndRobotType(unittest.TestCase):
@@ -45,7 +50,7 @@ class TestsBoardAndRobotType(unittest.TestCase):
 
         self.string_io.write('M3\n')
         self.string_io.seek(0)
-        ret = config.board_type()
+        config.board_type()
 
         self.assertEquals('M3', config.board_type())
 

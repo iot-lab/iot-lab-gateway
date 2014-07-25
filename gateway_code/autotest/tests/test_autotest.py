@@ -1,10 +1,15 @@
 # -*- coding:utf-8 -*-
 
+""" Test the autotest module """
 
 import unittest
 import mock
 
 from gateway_code.autotest import autotest
+
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-public-methods
+# pylint: disable=protected-access
 
 
 class TestProtocol(unittest.TestCase):
@@ -15,9 +20,7 @@ class TestProtocol(unittest.TestCase):
         self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
                              'mac': {}}
 
-    @mock.patch('gateway_code.autotest.autotest.LOGGER')
-    def test__check(self, mock_logger):
-
+    def test__check(self):
         # test validate
         ret_1 = self.g_v._check(0, 'message_1', ['1', '2'])
         ret_2 = self.g_v._check(1, 'message_2', ['3', '4'])
@@ -32,13 +35,13 @@ class TestProtocol(unittest.TestCase):
     def test_run_test(self, mock_error):
         self.g_v.on_serial = mock.Mock()
 
-        self.send_ret = []
+        send_ret = []
         self.g_v.on_serial.send_command.side_effect = \
-            lambda x: self.send_ret.pop(0)
+            lambda x: send_ret.pop(0)
 
-        self.send_ret.append(['ACK', 'test_command', '3.14'])
-        self.send_ret.append(None)
-        self.send_ret.append(['NACK', 'test_command', '1.414'])
+        send_ret.append(['ACK', 'test_command', '3.14'])
+        send_ret.append(None)
+        send_ret.append(['NACK', 'test_command', '1.414'])
 
         values = self.g_v._run_test(3, ['test_command'], lambda x: float(x[2]))
 
@@ -76,13 +79,11 @@ class TestAutoTestsErrorCases(unittest.TestCase):
 
     @mock.patch('gateway_code.config.board_type', lambda: 'M3')
     def test_fail_on_setup_control_node(self):
-        def setup(*args, **kwargs):
-            self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
-                                 'mac': {}}
+        def setup():
             self.g_v.ret_dict['error'].append('setup')
             raise autotest.FatalError('Setup failed')
 
-        def teardown(*args, **kwargs):
+        def teardown(_):
             self.g_v.ret_dict['error'].append('teardown')
             return 1
 

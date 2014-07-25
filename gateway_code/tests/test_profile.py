@@ -1,8 +1,6 @@
 # -*- coding:utf-8 -*-
 
-"""
-Test profile creation with valid and invalids profiles jsons
-"""
+""" Test profile creation with valid and invalids profiles jsons """
 
 import unittest
 import os
@@ -12,6 +10,12 @@ import gateway_code.profile
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 PROFILES_DIR = CURRENT_DIR + 'profiles/'
+
+# pylint: disable=missing-docstring
+# pylint: disable=invalid-name
+# pylint: disable=protected-access
+# pylint: disable=too-many-public-methods
+# pylint: disable=star-args
 
 
 class TestsSimpleProfile(unittest.TestCase):

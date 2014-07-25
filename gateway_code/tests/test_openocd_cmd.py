@@ -1,10 +1,13 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-public-methods
+# pylint: disable=invalid-name
+# pylint: disable=protected-access
+# serial mock note correctly detected
+# pylint: disable=maybe-no-member
 
-import sys
-
-import mock
 from mock import patch
 import unittest
 from cStringIO import StringIO
@@ -33,13 +36,13 @@ class TestsFlashMethods(unittest.TestCase):
     def test_node_detection(self):
         """ Test node detection """
         # config mock
-        self.popen.communicate.return_value = mock_out = "OUT_MSG"
-        self.popen.returncode = mock_ret = 0
+        self.popen.communicate.return_value = "OUT_MSG"
+        self.popen.returncode = 0
 
         # valid nodes
         for node in ('m3', 'gwt', 'a8'):
             filename = STATIC_DIR + 'idle.elf'
-            ret, out = openocd_cmd.flash(node, filename)
+            openocd_cmd.flash(node, filename)
 
         # invalid nodes
         self.assertRaises(ValueError, openocd_cmd.flash, 'INEXISTANT',
@@ -76,7 +79,7 @@ class TestsFlashInvalidPaths(unittest.TestCase):
 
     @patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
     def test_invalid_firmware_path(self):
-        ret, out = openocd_cmd.flash('m3', '/invalid/path')
+        ret, _ = openocd_cmd.flash('m3', '/invalid/path')
         self.assertNotEqual(ret, 0)
 
 

@@ -1,10 +1,15 @@
 # -*- coding:utf-8 -*-
 
+# pylint: disable=missing-docstring
+# pylint: disable=invalid-name
+# pylint: disable=protected-access
+# serial mock note correctly detected
+# pylint: disable=maybe-no-member
+# pylint: disable=too-many-public-methods
+
 import unittest
 import mock
 
-import os
-import shutil
 import Queue
 from gateway_code.control_node_interface import ControlNodeSerial
 
@@ -118,14 +123,15 @@ class TestControlNodeSerial(unittest.TestCase):
         self.assertEquals([], ret)
 
     def test_config_oml(self):
-        exp_desc = {'user': 'harter',
-                    'exp_id': '1234',
-                    'exp_files': {'consumption': '/tmp/consumption',
-                                  'radio': '/tmp/radio',
-                                  'event': '/tmp/event',
-                                  'sniffer': '/tmp/sniffer',
-                                  'log': '/tmp/log'}
-                    }
+        exp_desc = {
+            'user': 'harter',
+            'exp_id': '1234',
+            'exp_files': {'consumption': '/tmp/consumption',
+                          'radio': '/tmp/radio',
+                          'event': '/tmp/event',
+                          'sniffer': '/tmp/sniffer',
+                          'log': '/tmp/log'}
+        }
 
         self.cn.start(exp_desc=exp_desc)
         self.assertIsNotNone(self.cn.oml_cfg_file)

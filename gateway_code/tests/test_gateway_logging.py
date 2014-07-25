@@ -1,5 +1,8 @@
 # -*- coding:utf-8 -*-
 
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-public-methods
+
 import unittest
 import logging
 from gateway_code import gateway_logging, config

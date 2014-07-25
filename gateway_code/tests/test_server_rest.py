@@ -5,13 +5,17 @@ Unit tests for server-rest
 Complement the 'integration' tests
 """
 
+# pylint: disable=missing-docstring
+# too long tests names
+# pylint: disable=invalid-name
+# pylint: disable=protected-access
+# pylint: disable=too-many-public-methods
+
 from cStringIO import StringIO
 
 import mock
 from mock import patch
 import unittest
-
-import recordtype
 
 from gateway_code import server_rest
 
@@ -21,8 +25,29 @@ STATIC_DIR = CURRENT_DIR + '/static/'  # using the 'static' symbolic link
 
 
 # Bottle FileUpload class stub
-FileUpload = recordtype.recordtype(
-    'FileUpload', ['file', 'name', 'filename', ('headers', None)])
+class FileUpload(object):  # pylint: disable=too-few-public-methods
+    """ Bottle FileUpload class stub """
+    files = {}
+
+    def __init__(self, file_content, file_name):
+        self.file = None
+        self.filename = None
+        self.name = None
+        self.headers = None
+
+        self.filename = file_name
+        _ext = os.path.splitext(self.filename)[1]
+
+        try:
+            self.name = {'.json': 'profile', '.elf': 'firmware'}[_ext]
+        except KeyError:
+            raise ValueError("Uknown file type %r: %r" % (_ext, file_name))
+
+        self.file = StringIO(file_content)
+
+    def rewind(self):
+        """ Rewind at start position """
+        self.file.seek(0)
 
 
 class TestRestMethods(unittest.TestCase):
@@ -42,20 +67,16 @@ class TestRestMethods(unittest.TestCase):
         self.request_patcher.stop()
         self.board_patcher.stop()
 
-    def test_exp_start_with_file_and_profile(self):
-        idle = FileUpload(file=StringIO('empty_firmware'),
-                          name='firmware', filename='idle.elf')
+    def test_exp_start_file_and_profile(self):
+        idle = FileUpload('elf32arm0X1234', 'idle.elf')
 
         profile_str = '{ "profilename": "_default_profile", "power": "dc" }'
         profile_dict = {u'profilename': u'_default_profile', u'power': u'dc'}
 
-        default_profile = FileUpload(
-            file=StringIO(profile_str),
-            name='profile', filename='default_profile.json')
-
+        profile = FileUpload(profile_str, 'default_profile.json')
         self.g_m.exp_start.return_value = 0
 
-        self.request.files = {'firmware': idle, 'profile': default_profile}
+        self.request.files = {'firmware': idle, 'profile': profile}
         ret_dict = self.s_r.exp_start('user', '123')
         self.assertEquals(0, ret_dict['ret'])
 
@@ -67,8 +88,7 @@ class TestRestMethods(unittest.TestCase):
 
     def test_exp_start_invalid_profile(self):
 
-        profile = FileUpload(file=StringIO('not a valid profile json, }'),
-                             name='profile', filename='default_profile.json')
+        profile = FileUpload('invalid json profile}', 'inval_profile.json')
 
         self.request.files = {'profile': profile}
         ret_dict = self.s_r.exp_start('user', '123')
@@ -91,16 +111,16 @@ class TestRestMethods(unittest.TestCase):
         self.request.files = {}
 
         self.request.query = mock.Mock(timeout='12')
-        ret_dict = self.s_r.exp_start('user', '123')
+        self.s_r.exp_start('user', '123')
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 12)
 
         # invalid data
         self.request.query = mock.Mock(timeout='ten_minutes')
-        ret_dict = self.s_r.exp_start('user', '123')
+        self.s_r.exp_start('user', '123')
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
         self.request.query = mock.Mock(timeout='-1')
-        ret_dict = self.s_r.exp_start('user', '123')
+        self.s_r.exp_start('user', '123')
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
     def test_exp_start_multipart_without_files(self):
@@ -139,8 +159,7 @@ class TestRestMethods(unittest.TestCase):
         # default profile
         profile_str = '{ "profilename": "_default_profile", "power": "dc" }'
         self.request.files = {
-            'profile': FileUpload(filename='default_profile.json',
-                                  file=StringIO(profile_str), name='profile')
+            'profile': FileUpload(profile_str, 'default_profile.json')
         }
         self.assertEquals({'ret': 0}, self.s_r.exp_update_profile())
         self.assertTrue(self.g_m.exp_update_profile.called)
@@ -148,8 +167,7 @@ class TestRestMethods(unittest.TestCase):
 
         # profile that cannot be decoded
         self.request.files = {
-            'profile': FileUpload(file=StringIO('{ inval_json'),
-                                  name='profile', filename='_p.json')
+            'profile': FileUpload('{ inval_json', 'invalid_profile.json')
         }
         self.assertEquals({'ret': 1}, self.s_r.exp_update_profile())
         self.assertFalse(self.g_m.exp_update_profile.called)
@@ -161,8 +179,7 @@ class TestRestMethods(unittest.TestCase):
         self.assertEquals(0, ret_dict['ret'])
 
     def test_flash_function(self):
-        idle = FileUpload(file=StringIO('empty_firmware'),
-                          name='firmware', filename='idle.elf')
+        idle = FileUpload('elf32arm0X1234', 'idle.elf')
 
         self.g_m.node_flash.return_value = 0
 
@@ -264,8 +281,9 @@ class TestServerRestMain(unittest.TestCase):
     @patch('bottle.run')
     def test_main_function(self, run_mock, mock_popen):
         popen = mock_popen.return_value
-        popen.communicate.return_value = (mock_out, mock_err) = ("OUT_MSG", "")
-        popen.returncode = mock_ret = 0
+        popen.communicate.return_value = ("OUT_MSG", "")
+        popen.returncode = 0
 
         args = ['server_rest.py', 'localhost', '8080']
         server_rest._main(args)
+        self.assertTrue(run_mock.called)

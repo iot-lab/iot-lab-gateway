@@ -1,6 +1,5 @@
 [MASTER]
 persistent = no
-ignore = tests
 
 [REPORTS]
 

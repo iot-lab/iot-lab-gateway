@@ -1,5 +1,7 @@
 # -*- coding:utf-8 -*-
 
+""" Test m3_node_interface module """
+
 import unittest
 import mock
 
@@ -7,10 +9,15 @@ import threading
 import Queue
 from gateway_code.autotest import m3_node_interface
 
-import sys
+# errors when analysing self.serial
+# pylint: disable=maybe-no-member
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-public-methods
 
 
-class TestOpenNodeAutoTestInterface(unittest.TestCase):
+class TestOpenNodeSerial(unittest.TestCase):
+
+    """ Test the open node autotest interface """
 
     def setUp(self):
         self.on_interface = m3_node_interface.OpenNodeSerial()
@@ -22,7 +29,7 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         self.serial.readline.side_effect = self.readline_mock
         self.serial.readline.return_value = ''
 
-    def readline_mock(self, *args, **kwargs):
+    def readline_mock(self):
         self.readline_called.set()
         self.on_interface.stop_reader.wait()
         return mock.DEFAULT
@@ -37,10 +44,9 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
         self.on_interface.stop()
         self.serial.close.assert_called()
 
-    def test_start_with_serial_exception(self):
-        import serial
-        self.serial.flushInput.side_effect = \
-            serial.SerialException("ERROR_TEST")
+    def test_start_serial_exception(self):
+        from serial import SerialException
+        self.serial.flushInput.side_effect = SerialException("ERROR_TEST")
         ret = self.on_interface.start()
         self.assertEquals((1, "ERROR_TEST"), ret)
 
@@ -70,7 +76,8 @@ class TestOpenNodeAutoTestInterface(unittest.TestCase):
 
         readline_ret_list = ['begin of ', 'complete answer\n']
 
-        def readline_mock(*args, **kwargs):
+        def readline_mock():
+            """ Return values from readline_ret_list """
             if len(readline_ret_list) == 0:
                 self.readline_called.set()
                 self.on_interface.stop_reader.wait()

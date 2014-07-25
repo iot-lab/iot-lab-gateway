@@ -4,6 +4,7 @@
 
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
+# pylint: disable=star-args
 
 import os
 import time
@@ -13,8 +14,8 @@ from itertools import izip
 import mock
 from mock import patch
 
-from gateway_code.integration import test_integration_mock
 # all modules should be imported and not only the package
+from gateway_code.integration import test_integration_mock
 import gateway_code.control_node_interface
 import gateway_code.config
 from gateway_code.common import wait_cond

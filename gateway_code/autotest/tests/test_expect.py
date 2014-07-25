@@ -1,12 +1,16 @@
 # -*- coding:utf-8 -*-
 
+""" expect module test """
+
 import unittest
 import mock
-import Queue
 import time
 
 from gateway_code.autotest import expect
 import serial
+
+# pylint: disable=missing-docstring
+# pylint: disable=too-many-public-methods
 
 
 class TestSerialExpect(unittest.TestCase):
@@ -26,6 +30,7 @@ class TestSerialExpect(unittest.TestCase):
         self.serial_patcher.stop()
 
     def serial_read_mock(self, size):
+        _ = size
         try:
             return self.read_ret.pop(0)
         except IndexError:
@@ -66,7 +71,7 @@ class TestSerialExpect(unittest.TestCase):
         ret = self.expect.expect_list(['a', 'b'])
         self.assertEquals('b', ret)
 
-    def test_expect_pattern_over_newline(self):
+    def test_expect_read_new_line(self):
         self.read_ret = ['ab\ncd', 'a00d']
         ret = self.expect.expect('a.*d')
         self.assertEquals('a00d', ret)

@@ -1,5 +1,6 @@
-#! /usr/bin/env python
 # -*- coding:utf-8 -*-
+
+""" test serial_redirection module """
 
 import mock
 import unittest
@@ -10,8 +11,10 @@ import threading
 from gateway_code.serial_redirection import SerialRedirection
 from gateway_code import serial_redirection
 
-_SerialRedirection_str = ('gateway_code.serial_redirection.' +
-                          '_SerialRedirectionThread')
+# pylint: disable=missing-docstring
+# pylint: disable=invalid-name
+# pylint: disable=protected-access
+# pylint: disable=too-many-public-methods
 
 
 @mock.patch('sys.stderr', StringIO())
@@ -50,7 +53,7 @@ class TestMainFunction(unittest.TestCase):
 
         redirection = SerialRedirection('m3')
 
-        self.assertEquals(redirection.stop(),  1)  # cannot stop before start
+        self.assertEquals(redirection.stop(), 1)  # cannot stop before start
         self.assertEquals(redirection.start(), 0)
         self.assertEquals(redirection.start(), 1)  # only one start
 
@@ -74,11 +77,11 @@ class TestMainFunction(unittest.TestCase):
 
         with mock.patch('gateway_code.serial_redirection.LOGGER.error') \
                 as mock_logger:
-            self.redirection = SerialRedirection('m3')
+            redirection = SerialRedirection('m3')
 
-            self.assertEquals(self.redirection.start(), 0)
+            self.assertEquals(redirection.start(), 0)
             self.communicate_called.wait()
-            self.redirection.stop()
+            redirection.stop()
 
             mock_logger.assert_called_with(
                 'Open node serial redirection exit: %d', 42)
@@ -152,6 +155,9 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         unlock_popen = threading.Event()
 
         def blocking_popen(a, stdout, stderr):
+            _ = a
+            _ = stdout
+            _ = stderr
             unlock_popen.wait()  # block on Popen creation
             return mock.DEFAULT
 
@@ -190,17 +196,16 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         self.redirect.stop()
 
 
-@mock.patch(_SerialRedirection_str)
+@mock.patch('gateway_code.serial_redirection._SerialRedirectionThread')
 class TestSerialRedirectionInit(unittest.TestCase):
     """ Test the SerialRedirection class init """
 
-    def test_valid_init(self, mock_thread):
-        """ Test valid init calls"""
+    def test__init(self, _):
+        """ Test init calls"""
+        # valid inits
         for node in ('m3', 'gwt', 'a8'):
-            redirection = SerialRedirection(node)
+            SerialRedirection(node)
 
-    def test_invalid_init(self, mock_thread):
-        """ Test Invalid init calls """
         # invalid node name
         self.assertRaises(ValueError, SerialRedirection, 'INVALID_NODE')
 
