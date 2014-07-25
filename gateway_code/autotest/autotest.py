@@ -249,15 +249,13 @@ class AutoTestManager(object):
             ret_val += self.test_consumption_dc(board_type)
 
             # M3 specific tests
-            if 'M3' == board_type:
+            if 'M3' == board_type:  # pragma: no branch
                 # cannot test this with A8 I think
                 ret_val += self.test_leds_with_consumption(board_type)
                 # test m3 specific sensors
                 ret_val += self.test_pressure()
                 ret_val += self.test_light()
                 ret_val += self.test_flash(flash)
-            else:  # pragma: no cover
-                pass
 
             # run test_gps if requested
             ret_val += self.test_gps(gps)
@@ -574,7 +572,7 @@ class AutoTestManager(object):
 
         # set a firmware on M3 to ensure corret consumption measures
         # on A8, linux is consuming enough I think
-        if 'M3' == board_type:
+        if 'M3' == board_type:  # pragma: no branch
             time.sleep(1)
             ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
