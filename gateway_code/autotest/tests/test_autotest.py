@@ -4,6 +4,7 @@
 
 import unittest
 import mock
+from mock import patch
 
 from gateway_code.autotest import autotest
 
@@ -62,6 +63,38 @@ class TestProtocol(unittest.TestCase):
         # error on get_uid
         run_test_mock.return_value = []
         self.assertNotEquals(0, self.g_v.get_uid())
+
+    def test_test_gps(self):
+        with patch.object(self.g_v, '_test_pps_open_node') as test_pps_mock:
+            # test with gps disabled
+            self.assertEquals(0, self.g_v.test_gps(False))
+            self.assertFalse(test_pps_mock.called)
+
+            # Test with gps enabled
+            test_pps_mock.return_value = 0
+            self.assertEquals(0, self.g_v.test_gps(True))
+            self.assertTrue(test_pps_mock.called)
+
+    def test__test_pps_open_node(self):
+        pps_get_values = []
+
+        def _on_call(cmd):
+            if cmd[0] == 'test_pps_start':
+                return (0, ['ACK', 'test_pps_start'])
+            elif cmd[0] == 'test_pps_stop':
+                return (0, ['ACK', 'test_pps_stop'])
+            return pps_get_values.pop(0)
+
+        with patch.object(self.g_v, '_on_call', _on_call):
+
+            pps_get_values = [
+                (0, ['ACK', 'test_pps_get', '0', 'pps']),
+                (0, ['ACK', 'test_pps_get', '3', 'pps'])
+            ]
+            self.assertEquals(0, self.g_v._test_pps_open_node(10))
+
+            pps_get_values = []
+            self.assertNotEquals(0, self.g_v._test_pps_open_node(0))
 
 
 class TestAutoTestsErrorCases(unittest.TestCase):

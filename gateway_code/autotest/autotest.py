@@ -397,23 +397,23 @@ class AutoTestManager(object):
 
         # start pps on open node
         (ret, answer) = self._on_call(['test_pps_start'])
-        if ret:
+        if ret:  # pragma: no cover
             return self._check(1, 'test_pps_start', answer)
 
         end_time = time.time() + timeout
         while time.time() < end_time:
             time.sleep(5)
             (ret, answer) = self._on_call(['test_pps_get'])
-            if ret:
+            if ret:  # pragma: no cover
                 return self._check(1, 'test_pps_get', answer)
 
             # get pps value
-            pps_count = int(answer[3])
+            pps_count = int(answer[2])
             if pps_count > 2:
                 ret_val = self._check(0, 'test_pps_open_node', pps_count)
                 break
         else:
-            ret_val = self._check(1, 'test_pps_open_node_timeout', pps_count)
+            ret_val = self._check(1, 'test_pps_open_node_timeout', 0)
 
         _ = self._on_call(['test_pps_stop'])
         return ret_val
