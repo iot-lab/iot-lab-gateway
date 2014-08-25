@@ -158,11 +158,10 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         time.sleep(5)  # wait measures here
         self.app.set_time()  # test set_time during experiment
         time.sleep(5)  # wait measures here
-        # remove profile
+        # Remove profile
         self.request.files = {}
         self.assertEquals({'ret': 0}, self.app.exp_update_profile())
         time.sleep(2)  # wait maybe remaining values
-
         measures = extract_measures(self.cn_measures)
         self.cn_measures = []
 
@@ -190,7 +189,10 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             _sorted = all([a < b for a, b in izip(timestamps, timestamps[1:])])
             self.assertTrue(_sorted)
 
-        # there should be no new measures
+        # there should be no new measures since profile update
+        # wait 5 more seconds that no measures arrive
+        # wait_cond is used as 'check still false'
+        wait_cond(5, False, lambda: [] == self.cn_measures)
         self.assertEquals([], self.cn_measures)
 
         # Stop experiment
