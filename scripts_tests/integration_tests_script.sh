@@ -8,6 +8,7 @@ DEST="/tmp/fit-dev/"
 verbose=0
 SSH_OPT='-o StrictHostKeyChecking=no'
 tests_only=0
+sync_only=0
 TESTS_ARGS=''
 GATEWAY_HOSTNAME=
 
@@ -19,6 +20,7 @@ Run the integrations tests on GATEWAY_HOSTNAME.
     -F CONFFILE ssh configfile see option '-F' in 'man ssh' for details
     -T TEST_LIST Run these tests (comma-separated list)
     -t          run only python tests
+    -s          sync code only and exit
     -h          display this help and exit
     -v          verbose mode
 
@@ -30,7 +32,7 @@ EOF
 parse_arguments()
 {
     local OPTIND=1
-    while getopts "hvF:tT:" opt; do
+    while getopts "hvsF:tT:" opt; do
         case "$opt" in
             F) SSH_OPT="${SSH_OPT} -F $(readlink -e $OPTARG)"
                 ;;
@@ -42,6 +44,8 @@ parse_arguments()
             v) verbose=1
                 ;;
             t) tests_only=1
+                ;;
+            s) sync_only=1
                 ;;
             '?')
                 usage >&2
@@ -79,6 +83,12 @@ rsync -e "ssh ${SSH_OPT}" -av --delete --exclude='gateway_code.egg-info' \
 set +e
 
 ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "chown -R www-data:www-data ${DEST}"
+
+if [[ 1 -eq ${sync_only} ]]; then
+    exit 0
+fi
+
+
 
 if [[ 1 -eq ${tests_only} ]]; then
     # Run only python tests
