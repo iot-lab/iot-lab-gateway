@@ -25,13 +25,12 @@ class TestMainFunction(unittest.TestCase):
         self.popen_class = self.popen_patcher.start()
         self.popen = self.popen_class.return_value
 
-        self.popen.communicate.side_effect = self._communicate
-        self.popen.communicate.return_value = ("OUT", "ERR")
+        self.popen.wait.side_effect = self._wait
+        self.popen.wait.return_value = 0
         self.popen.terminate.side_effect = self._terminate
-        self.popen.returncode = 0
 
-        self.unlock_communicate = threading.Event()
-        self.communicate_called = threading.Event()
+        self.unlock_wait = threading.Event()
+        self.wait = threading.Event()
 
         self.redirect = None
 
@@ -40,14 +39,14 @@ class TestMainFunction(unittest.TestCase):
         if self.redirect is not None:
             self.redirect.stop()  # last chance cleanup
 
-    def _communicate(self):
-        self.communicate_called.set()
-        self.unlock_communicate.wait()
-        self.unlock_communicate.clear()
+    def _wait(self):
+        self.wait.set()
+        self.unlock_wait.wait()
+        self.unlock_wait.clear()
         return mock.DEFAULT
 
     def _terminate(self):
-        self.unlock_communicate.set()
+        self.unlock_wait.set()
 
     def test_simple_start(self):
 
@@ -57,30 +56,31 @@ class TestMainFunction(unittest.TestCase):
         self.assertEquals(redirection.start(), 0)
         self.assertEquals(redirection.start(), 1)  # only one start
 
-        self.communicate_called.wait()
+        self.wait.wait()
 
         redirection.stop()
 
-        self.assertTrue(self.popen.communicate.call_count >= 1)
+        self.assertTrue(self.popen.wait.call_count >= 1)
         self.assertTrue(self.popen.terminate.call_count >= 1)
 
     def test_program_error(self):
-        """
-        Test program error
-        """
-        def communicate():
-            self.popen.communicate.side_effect = self._communicate
+        """ Test program error """
+        # on first call 'wait' is called
+        # on second call, 'self._wait' is called
+        def wait():
+            self.popen.wait.side_effect = self._wait
             return mock.DEFAULT
+
         # Popen mock
-        self.popen.communicate.side_effect = communicate
-        self.popen.returncode = 42
+        self.popen.wait.side_effect = wait
+        self.popen.wait.return_value = 42
 
         with mock.patch('gateway_code.serial_redirection.LOGGER.error') \
                 as mock_logger:
             redirection = SerialRedirection('m3')
 
             self.assertEquals(redirection.start(), 0)
-            self.communicate_called.wait()
+            self.wait.wait()
             redirection.stop()
 
             mock_logger.assert_called_with(
@@ -116,13 +116,12 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         self.popen_class = self.popen_patcher.start()
         self.popen = self.popen_class.return_value
 
-        self.popen.communicate.side_effect = self._communicate
-        self.popen.communicate.return_value = ("OUT", "ERR")
+        self.popen.wait.side_effect = self._wait
+        self.popen.wait.return_value = 0
         self.popen.terminate.side_effect = self._terminate
-        self.popen.returncode = 0
 
-        self.unlock_communicate = threading.Event()
-        self.communicate_called = threading.Event()
+        self.unlock_wait = threading.Event()
+        self.wait = threading.Event()
 
         self.redirect = None
 
@@ -131,14 +130,14 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         if self.redirect is not None:
             self.redirect.stop()  # last chance cleanup
 
-    def _communicate(self):
-        self.communicate_called.set()
-        self.unlock_communicate.wait()
-        self.unlock_communicate.clear()
+    def _wait(self):
+        self.wait.set()
+        self.unlock_wait.wait()
+        self.unlock_wait.clear()
         return mock.DEFAULT
 
     def _terminate(self):
-        self.unlock_communicate.set()
+        self.unlock_wait.set()
 
     def test_terminate_on_non_started_process(self):
         """
@@ -161,12 +160,12 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
             unlock_popen.wait()  # block on Popen creation
             return mock.DEFAULT
 
-        def communicate():
+        def wait():
             self.popen_class.side_effect = None
-            return self._communicate()
+            return self._wait()
 
         self.popen_class.side_effect = blocking_popen
-        self.popen.communicate.side_effect = communicate
+        self.popen.wait.side_effect = wait
 
         self.redirect = serial_redirection._SerialRedirectionThread('tty', 42)
         self.redirect.start()
@@ -192,7 +191,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
 
         self.redirect = serial_redirection._SerialRedirectionThread('tty', 42)
         self.redirect.start()
-        self.communicate_called.wait()
+        self.wait.wait()
         self.redirect.stop()
 
 

@@ -6,8 +6,8 @@ Module managing the open node serial redirection
 """
 
 import sys
+import os
 import time
-from subprocess import PIPE
 import subprocess
 import threading
 import atexit
@@ -35,8 +35,6 @@ class SerialRedirection(object):
 
         self.redirector_thread = None
         self.is_running = False
-        self.err = None
-        self.out = None
 
         atexit.register(self.stop)  # cleanup in case of error
 
@@ -52,8 +50,6 @@ class SerialRedirection(object):
         self.redirector_thread = _SerialRedirectionThread(
             config.NODES_CFG[self.node]['tty'],
             config.NODES_CFG[self.node]['baudrate'])
-        self.err = ""
-        self.out = ""
         self.is_running = True
         self.redirector_thread.daemon = True
         self.redirector_thread.start()
@@ -70,8 +66,6 @@ class SerialRedirection(object):
         self.redirector_thread.stop()
         self.redirector_thread.join()
 
-        self.err = self.redirector_thread.err
-        self.out = self.redirector_thread.out
         self.is_running = False
         return 0
 
@@ -84,9 +78,6 @@ class _SerialRedirectionThread(threading.Thread):
     def __init__(self, tty, baudrate):
 
         super(_SerialRedirectionThread, self).__init__()
-
-        self.err = ""
-        self.out = ""
 
         # serial link informations
         self.tty = tty
@@ -108,24 +99,23 @@ class _SerialRedirectionThread(threading.Thread):
 
         cmd_list = shlex.split(SOCAT_CMD % (self.tty, self.baudrate))
 
-        while not self.stop_thread:
-            self.redirector_process = subprocess.Popen(
-                cmd_list, stdout=PIPE, stderr=PIPE)
+        with open(os.devnull, 'w') as fnull:
+            while not self.stop_thread:
+                self.redirector_process = subprocess.Popen(
+                    cmd_list, stdout=fnull, stderr=fnull)
 
-            # blocks until socat terminates
-            out, err = self.redirector_process.communicate()
-            self.out += out
-            self.err += err
-            retcode = self.redirector_process.returncode
-            # On exit, socat gives status:
-            #   0 if it terminated due to EOF or inactivity timeout
-            #   a positive value on error
-            #   a negative value on fatal error.
+                # blocks until socat terminates
+                retcode = self.redirector_process.wait()
+                # On exit, socat gives status:
+                #   0 if it terminated due to EOF or inactivity timeout
+                #   a positive value on error
+                #   a negative value on fatal error.
 
-            # don't print error when 'terminate' causes the error
-            if retcode != 0 and (not self.stop_thread):
-                LOGGER.error('Open node serial redirection exit: %d', retcode)
-                time.sleep(0.5)  # prevent quick loop
+                # don't print error when 'terminate' causes the error
+                if retcode and (not self.stop_thread):
+                    LOGGER.error('Open node serial redirection exit: %d',
+                                 retcode)
+                    time.sleep(0.5)  # prevent quick loop
 
     def stop(self):
         """
@@ -196,9 +186,3 @@ def _main(args):
 
     redirect.stop()
     print >> sys.stderr, 'Stopped.'
-    print >> sys.stderr, ''
-    print >> sys.stderr, 'Out log:'
-    print >> sys.stderr, redirect.out,
-    print >> sys.stderr, ''
-    print >> sys.stderr, 'Error log:'
-    print >> sys.stderr, redirect.err,

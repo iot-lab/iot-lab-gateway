@@ -348,7 +348,7 @@ class GatewayManager(object):
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.debug('Node %s reset', node)
 
-        ret, _ = openocd_cmd.reset(node)
+        ret = openocd_cmd.reset(node)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Node %s reset failed: %d', node, ret)
@@ -366,7 +366,7 @@ class GatewayManager(object):
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.debug('Flash firmware on %s: %s', node, firmware_path)
 
-        ret, _ = openocd_cmd.flash(node, firmware_path)
+        ret = openocd_cmd.flash(node, firmware_path)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)

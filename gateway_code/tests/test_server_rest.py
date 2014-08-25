@@ -283,12 +283,10 @@ class TestServerRestMain(unittest.TestCase):
     Cover functions uncovered by unit tests
     """
 
-    @patch('subprocess.Popen')
+    @patch('subprocess.call')
     @patch('bottle.run')
-    def test_main_function(self, run_mock, mock_popen):
-        popen = mock_popen.return_value
-        popen.communicate.return_value = ("OUT_MSG", "")
-        popen.returncode = 0
+    def test_main_function(self, run_mock, call_mock):
+        call_mock.return_value = 0
 
         args = ['server_rest.py', 'localhost', '8080']
         server_rest._main(args)

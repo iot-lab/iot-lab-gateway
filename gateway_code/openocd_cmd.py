@@ -8,7 +8,6 @@ OpenOCD commands
 
 import shlex
 import subprocess
-from subprocess import PIPE
 
 import os
 import gateway_code.config as config
@@ -36,18 +35,13 @@ FLASH_CMD = '''
 '''
 
 
-def reset(node):
-    """
-    Reset
-    """
-    reset_cmd = RESET_CMD
-    return _run_openocd_command(node, reset_cmd)
+def reset(node, verb=False):
+    """ Reset """
+    return _run_openocd_command(node, RESET_CMD, verb)
 
 
-def flash(node, elf_file):
-    """
-    Flash firmware
-    """
+def flash(node, elf_file, verb=False):
+    """ Flash firmware """
     try:
         # get the absolute file path required for openocd
         elf_path = os.path.abspath(elf_file)
@@ -56,11 +50,10 @@ def flash(node, elf_file):
         LOGGER.error('%s', err)
         return 1, ""
 
-    flash_cmd = FLASH_CMD % (elf_path, elf_path)
-    return _run_openocd_command(node, flash_cmd)
+    return _run_openocd_command(node, FLASH_CMD % (elf_path, elf_path), verb)
 
 
-def _run_openocd_command(node, command_str):
+def _run_openocd_command(node, command_str, verb=False):
     """
     Run the given command with init and teardown on openocd for 'node'
     """
@@ -75,11 +68,13 @@ def _run_openocd_command(node, command_str):
         raise ValueError('Unknown node, not in %r', config.NODES_CFG.keys())
 
     args_list = shlex.split(OPENOCD_BASE_CMD % (cfg_file, command_str))
-    # Run openocd
-    openocd = subprocess.Popen(args_list, stderr=PIPE)
-    outputs = openocd.communicate()
-    ret = openocd.returncode
-    return ret, outputs
+
+    with open(os.devnull, 'w') as fnull:
+        # on non verbose, put output to devnull
+        cmd_out = None if verb else fnull
+        ret = subprocess.call(args_list, stdout=cmd_out, stderr=cmd_out)
+
+    return ret
 
 
 #
@@ -122,9 +117,9 @@ def _main(argv):
     namespace = _parse_arguments(argv[1:])
 
     if namespace.cmd == 'reset':
-        ret, outputs = reset(namespace.node)
+        ret = reset(namespace.node, verb=True)
     elif namespace.cmd == 'flash':
-        ret, outputs = flash(namespace.node, namespace.firmware)
+        ret = flash(namespace.node, namespace.firmware, verb=True)
     else:  # pragma: no cover
         raise ValueError('Uknown Command %s', namespace.command)
 
@@ -132,6 +127,5 @@ def _main(argv):
         sys.stderr.write('%s OK\n' % namespace.cmd)
     else:
         sys.stderr.write('%s KO: %d\n' % (namespace.cmd, ret))
-        sys.stderr.write(outputs[1])
 
     return ret

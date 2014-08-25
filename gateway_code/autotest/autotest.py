@@ -7,7 +7,7 @@ import time
 from bisect import bisect
 import re
 
-from subprocess import Popen, PIPE, STDOUT, CalledProcessError
+from subprocess import check_output, STDOUT, CalledProcessError
 from serial import SerialException
 
 from collections import defaultdict
@@ -56,8 +56,7 @@ class AutoTestManager(object):
     @staticmethod
     def get_local_mac_addr():
         """ Get eth0 mac address """
-        process = Popen(MAC_CMD, stdout=PIPE, stderr=STDOUT, shell=True)
-        mac_addr = process.communicate()[0].strip()
+        mac_addr = check_output(MAC_CMD, stderr=STDOUT, shell=True).strip()
         return mac_addr
 
     def setup_control_node(self):
