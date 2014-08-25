@@ -397,18 +397,12 @@ class GatewayManager(object):
         """ Detect if a node ftdi is present """
         LOGGER.debug("Check node %r ftdi", node)
 
-        node_opt = {'ON': '2232', 'CN': '4232'}[node]
-        out = subprocess.check_output(['ftdi-devices-list', '-t', node_opt])
-        output = out.splitlines()
-        LOGGER.debug("Command output: %r", output)
+        opt = {'ON': '2232', 'CN': '4232'}[node]
+        output = subprocess.check_output(['ftdi-devices-list', '-t', opt])
 
-        is_present = 'Found 1 device(s)' in output
-        if not is_present:
-            LOGGER.info("No %r node found")
-        else:
-            LOGGER.info("%r node found")
-
-        return is_present
+        found = 'Found 1 device(s)' in output.splitlines()
+        LOGGER.debug(("" if found else "No ") + "%r node found" % node)
+        return found
 
 #
 # Experiment files and folder management methods
