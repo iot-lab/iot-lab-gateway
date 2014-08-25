@@ -21,6 +21,9 @@ Run the integrations tests on GATEWAY_HOSTNAME.
     -t          run only python tests
     -h          display this help and exit
     -v          verbose mode
+
+Example for TEST_LIST:
+    gateway_code.integration.tests_integration:TestComplexExperimentRunning.test_simple_experiment
 EOF
 }
 

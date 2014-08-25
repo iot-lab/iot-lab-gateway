@@ -224,6 +224,12 @@ class TestRestMethods(unittest.TestCase):
         ret_dict = self.s_r.open_stop()
         self.assertEquals(0, ret_dict['ret'])
 
+    def test_status(self):
+        self.g_m.status.return_value = 0
+
+        ret_dict = self.s_r.status()
+        self.assertEquals(0, ret_dict['ret'])
+
     def auto_tests(self):
         self.g_m.auto_tests.return_value = {
             'ret': 0, 'error': [], 'success': ['test_ok'],

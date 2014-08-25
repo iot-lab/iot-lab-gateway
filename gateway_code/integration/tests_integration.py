@@ -274,6 +274,11 @@ class TestIntegrationOther(ExperimentRunningMock):
         ret = self.app.admin_control_soft_reset()
         self.assertEquals(ret, {'ret': 0})
 
+    def test_status(self):
+        """ Call the status command """
+        ret = self.app.status()
+        self.assertEquals(ret, {'ret': 0})
+
     def tests_non_regular_start_stop(self):
         """ Test start calls when not needed
             * start when started

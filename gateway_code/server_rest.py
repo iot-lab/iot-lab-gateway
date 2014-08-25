@@ -37,6 +37,7 @@ class GatewayRest(object):
         bottle.route('/exp/update', 'PUT')(self.exp_update_profile)
         bottle.route('/open/start', 'PUT')(self.open_start)
         bottle.route('/open/stop', 'PUT')(self.open_stop)
+        bottle.route('/status', 'GET')(self.status)
 
         # query_string: channel=int[11:26]
         bottle.route('/autotest', 'PUT')(self.auto_tests)
@@ -242,6 +243,13 @@ class GatewayRest(object):
 
         ret_dict = self.gateway_manager.auto_tests(channel, blink, flash, gps)
         return ret_dict
+
+    def status(self):
+        """ Return node status
+         * Check nodes ftdi
+        """
+        LOGGER.debug('REST: status')
+        return {'ret': self.gateway_manager.status()}
 
 
 #

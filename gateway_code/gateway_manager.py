@@ -7,6 +7,7 @@
 from threading import RLock, Timer
 import os
 import time
+import subprocess
 
 import gateway_code.config as config
 from gateway_code import common
@@ -378,6 +379,36 @@ class GatewayManager(object):
         """
         autotest_manager = autotest.AutoTestManager(self)
         return autotest_manager.auto_tests(channel, blink, flash, gps)
+
+    @common.syncronous('rlock')
+    def status(self):
+        """ Run a node sanity status check
+         * Checks nodes ftdi
+        """
+        status_ok = True
+        status_ok &= self._ftdi_is_present('CN')
+        # only 'M3' node ftdi can be seen
+        status_ok &= (self.board_type != 'M3') or self._ftdi_is_present('ON')
+
+        return 0 if status_ok else 1
+
+    @staticmethod
+    def _ftdi_is_present(node):
+        """ Detect if a node ftdi is present """
+        LOGGER.debug("Check node %r ftdi", node)
+
+        node_opt = {'ON': '2232', 'CN': '4232'}[node]
+        out = subprocess.check_output(['ftdi-devices-list', '-t', node_opt])
+        output = out.splitlines()
+        LOGGER.debug("Command output: %r", output)
+
+        is_present = 'Found 1 device(s)' in output
+        if not is_present:
+            LOGGER.info("No %r node found")
+        else:
+            LOGGER.info("%r node found")
+
+        return is_present
 
 #
 # Experiment files and folder management methods
