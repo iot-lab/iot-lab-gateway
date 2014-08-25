@@ -57,7 +57,7 @@ class GatewayManager(object):
             'exp_files': {}
         }
         self.experiment_is_running = False
-        self.profile = self.default_profile
+        self.profile = None
         self.open_node_state = "stop"
         self.user_log_handler = None
 
@@ -215,8 +215,7 @@ class GatewayManager(object):
         # Cleanup Control node config #
         # # # # # # # # # # # # # # # #
 
-        self.profile = self.default_profile
-        ret_val += self.configure_cn_profile()
+        ret_val += self.exp_update_profile(None)
         ret_val += self.open_power_start(power='dc')
         ret_val += self.protocol.green_led_on()
 
@@ -268,6 +267,7 @@ class GatewayManager(object):
         Store Profile in 'self.profile' on success
         :raises: ValueError on invalid profile_dict """
         if profile_dict is None:
+            self.profile = self.default_profile
             return
         try:
             self.profile = Profile(board_type=self.board_type, **profile_dict)
