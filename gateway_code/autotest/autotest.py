@@ -639,10 +639,13 @@ class AutoTestManager(object):
         timestamps = measures['consumption']['timestamps']
 
         led_consumption = []
+        LOGGER.debug("t0, tEnd: %r - %r", timestamps[0], timestamps[-1])
+        LOGGER.debug("leds_timestamps: %r", leds_timestamps)
         for led_time in leds_timestamps:
             try:
                 led_consumption.append(values[bisect(timestamps, led_time)])
-            except IndexError:  # pragma: no cover
+            except IndexError as err:  # pragma: no cover
+                LOGGER.debug(err)
                 led_consumption.append(float('NaN'))
 
         # check that consumption is higher with each led than with no leds on
