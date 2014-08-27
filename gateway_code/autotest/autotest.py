@@ -51,6 +51,7 @@ class AutoTestManager(object):
 
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
+        LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
 
     @staticmethod
