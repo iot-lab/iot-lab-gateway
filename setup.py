@@ -45,6 +45,10 @@ from gateway_code import config
 # change to script directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
+# error when putting the option in setup.cfg because of the '%' I think.
+LOGGING_FORMAT_OPT = ('--logging-format=%(asctime)s: %(name)s: ' +
+                      '%(levelname)s: %(message)s')
+
 
 STATIC_FILES_PATH = config.STATIC_FILES_PATH
 STATIC_FILES = ['static/' + item for item in os.listdir('static')]
@@ -208,9 +212,9 @@ class Tests(Command):
 
     def run(self):
         args = ['python', 'setup.py']
-        ret = subprocess.call(
-            args + ['nosetests', '-e=*integration/*', '--cover-html'] +
-            self.test_opt)
+        ret = subprocess.call(args + ['nosetests', '-e=*integration/*',
+                                      '--cover-html', LOGGING_FORMAT_OPT] +
+                              self.test_opt)
         subprocess.call(args + ['lint', '-o', 'pylint.out'])
         subprocess.call(args + ['pep8', '-o', 'pep8.out'])
 
@@ -225,7 +229,7 @@ class TestsRoomba(_EmptyCommand):
         args = ['python', 'setup.py']
         try:
             subprocess.check_call(args + ['nosetests', '-e=*integration/*',
-                                          '-i=*robot/*'])
+                                          LOGGING_FORMAT_OPT, '-i=*robot/*'])
         except subprocess.CalledProcessError as err:
             exit(err.returncode)
 
@@ -268,7 +272,8 @@ class OnlyIntegrationTests(Command):
     def finalize_options(self):
         self.nose_args = ['nosetests',
                           '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
-                          '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
+                          '--xunit-file=%s_nosetests.xml' % os.uname()[1],
+                          LOGGING_FORMAT_OPT]
         self.nose_args += ['--tests=%s' % self.tests] if self.tests else []
         if self.stop:
             self.nose_args.append('--stop')
