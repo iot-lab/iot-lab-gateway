@@ -631,6 +631,7 @@ class AutoTestManager(object):
             leds_timestamps.append(time.time())
             time.sleep(0.5)
             self._on_call(['leds_off', '7'])
+        time.sleep(2)  # Wait some additional time
         ret_val += self.g_m.protocol.config_consumption(None)
         time.sleep(2)  # flush last values
 
