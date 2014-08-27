@@ -631,7 +631,7 @@ class AutoTestManager(object):
             time.sleep(0.5)
             self._on_call(['leds_off', '7'])
         ret_val += self.g_m.protocol.config_consumption(None)
-        time.sleep(0.5)  # flush last values
+        time.sleep(2)  # flush last values
 
         # (0.257343, 3.216250, 0.080003)
         measures = extract_measures(self.cn_measures)
