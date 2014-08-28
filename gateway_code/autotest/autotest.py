@@ -51,7 +51,6 @@ class AutoTestManager(object):
 
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
-        LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
 
     @staticmethod
@@ -553,6 +552,7 @@ class AutoTestManager(object):
         ret_val += self.g_m.protocol.config_consumption(conso)
         time.sleep(2)  # get measures for 2 seconds
         ret_val += self.g_m.protocol.config_consumption(None)
+        time.sleep(2)  # wait 2 seconds for flush
 
         # (0.257343, 3.216250, 0.080003)
         measures = extract_measures(self.cn_measures)
