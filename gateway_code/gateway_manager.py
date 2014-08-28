@@ -124,8 +124,8 @@ class GatewayManager(object):
         self.exp_desc['exp_id'] = exp_id
         self.exp_desc['user'] = user
 
-        if config.robot_type() == 'turtlebot':  # pragma: no cover
-            LOGGER.info("I'm a Turtlebot")
+        if config.robot_type() == 'turtlebot2':  # pragma: no cover
+            LOGGER.info("I'm a Turtlebot2")
             self._create_user_exp_folders(user, exp_id)
 
         self.create_user_exp_files(user=user, exp_id=exp_id)
