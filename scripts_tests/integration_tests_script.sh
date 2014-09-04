@@ -15,7 +15,7 @@ GATEWAY_HOSTNAME=
 usage()
 {
     cat << EOF
-Usage: ${0##*/} [-hv] [-t] [-F CONFFILE] <GATEWAY_HOSTNAME>
+Usage: ${0##*/} [-hv] [-s] [-t] [-F CONFFILE] <GATEWAY_HOSTNAME>
 Run the integrations tests on GATEWAY_HOSTNAME.
     -F CONFFILE ssh configfile see option '-F' in 'man ssh' for details
     -T TEST_LIST Run these tests (comma-separated list)
