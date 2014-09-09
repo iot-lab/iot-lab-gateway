@@ -10,8 +10,8 @@
 #define MSG_OUT   (stderr)
 #define LOG       (stdout)
 
-#define PRINT_MSG(args ...)    fprintf(MSG_OUT, args)
-#define PRINT_ERROR(fmt, ...)  PRINT_MSG("cn_serial_error: " fmt, __VA_ARGS__)
+#define PRINT_MSG(args ...)   fprintf(MSG_OUT, args)
+#define PRINT_ERROR(fmt, ...) PRINT_MSG("cn_serial_error: " fmt, ##__VA_ARGS__)
 
 
 #if DEBUG

@@ -139,9 +139,9 @@ static void append_data(struct command_buffer *cmd_buff, void *data,
 static uint32_t parse_channels_list(char *channels_list);
 
 
-struct state {
+static struct state {
     int       serial_fd;
-    pthread_t reader_thread;
+    pthread_t thread;
 } reader_state;
 
 
@@ -150,7 +150,7 @@ int command_reader_start(int serial_fd)
     int ret;
 
     reader_state.serial_fd = serial_fd;
-    ret = pthread_create(&reader_state.reader_thread, NULL, read_commands,
+    ret = pthread_create(&reader_state.thread, NULL, read_commands,
             &reader_state);
     return ret;
 }
