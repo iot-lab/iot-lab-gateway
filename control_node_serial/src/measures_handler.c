@@ -14,6 +14,7 @@
 #include "constants.h"
 #include "oml_measures.h"
 #include "measures_handler.h"
+#include "sniffer_handler.h"
 
 
 struct consumption_measure {
@@ -110,6 +111,7 @@ static void radio_handler(uint8_t *buf, struct timeval *time)
 
 static void handle_radio_sniffer(uint8_t *data, size_t len)
 {
+    uint8_t payload[128];
     size_t rlen;
     struct timeval timestamp;
     uint8_t channel;
@@ -134,10 +136,10 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
 
     extract_data((uint8_t *)&timestamp, &data_ptr, sizeof(timestamp));
     extract_data((uint8_t *)&channel,   &data_ptr, sizeof(channel));
-    extract_data((uint8_t *)&rssi,    &data_ptr, sizeof(rssi));
-    extract_data((uint8_t *)&lqi,     &data_ptr, sizeof(lqi));
+    extract_data((uint8_t *)&rssi,      &data_ptr, sizeof(rssi));
+    extract_data((uint8_t *)&lqi,       &data_ptr, sizeof(lqi));
     extract_data((uint8_t *)&crc_ok,    &data_ptr, sizeof(crc_ok));
-    extract_data((uint8_t *)&pkt_len, &data_ptr, sizeof(pkt_len));
+    extract_data((uint8_t *)&pkt_len,   &data_ptr, sizeof(pkt_len));
 
     // big enough to get 'payload' value
     rlen += pkt_len;
@@ -145,12 +147,18 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
         PRINT_ERROR("Invalid sniff pkt len: %zu != %zu(payload)\n", len, rlen);
         return;
     }
-    /* Handle payload */
-    // Don't extract payload for the moment.
 
 
     oml_measures_sniffer(timestamp.tv_sec, timestamp.tv_usec,
             channel, rssi, lqi, crc_ok, pkt_len);
+
+    /* Handle payload */
+    if (crc_ok) {
+        // CRC is valid, pass data to sniffer socket
+        extract_data(payload, &data_ptr, pkt_len);
+        measure_sniffer_packet(timestamp.tv_sec, timestamp.tv_usec,
+                channel, rssi, lqi, crc_ok, pkt_len, payload);
+    }
 }
 
 static void consumption_handler(uint8_t *buf, struct timeval *time)
