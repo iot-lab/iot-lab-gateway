@@ -31,13 +31,13 @@ static int create_server_socket()
     memset(&s_addr, 0, sizeof(s_addr));
 
     int s_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    int on = 1;
 
     if (-1 == s_fd) {
         PRINT_ERROR("cannot create socket\n");
         goto cleanup;
     }
 
-    int on = 1;
     if (-1 == setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
                 sizeof(on))) {
         PRINT_ERROR("setsockopt failed");
