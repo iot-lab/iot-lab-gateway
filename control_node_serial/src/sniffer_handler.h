@@ -1,6 +1,8 @@
 #ifndef SNIFFER_HANDLER_H
 #define SNIFFER_HANDLER_H
 
+#include <stdint.h>
+
 int start_sniffer_server(void);
 
 void measure_sniffer_packet(uint32_t timestamp_s, uint32_t timestamp_us,

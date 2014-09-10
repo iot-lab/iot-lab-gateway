@@ -64,6 +64,21 @@ void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
         check_expected(length);
 }
 
+
+void measure_sniffer_packet(uint32_t timestamp_s, uint32_t timestamp_us,
+                            uint8_t channel, int8_t rssi, uint8_t lqi,
+                            uint8_t crc_ok, uint8_t length, uint8_t *payload)
+{
+    (void)timestamp_s;
+    (void)timestamp_us;
+    (void)channel;
+    (void)rssi;
+    (void)lqi;
+    (void)crc_ok;
+    (void)length;
+    (void)payload;
+
+}
 TEST(handle_measure_pkt, test_different_packets)
 {
         unsigned char data[64] = {0};
