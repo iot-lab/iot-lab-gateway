@@ -30,18 +30,18 @@ static int create_server_socket()
     struct sockaddr_in s_addr;
     memset(&s_addr, 0, sizeof(s_addr));
 
-    int s_fd = socket(PF_INET, SOCK_STREAM | SOCK_CLOEXEC, IPPROTO_TCP);
+    int s_fd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if (-1 == s_fd) {
         PRINT_ERROR("cannot create socket\n");
-        return -1;
+        goto cleanup;
     }
 
     int on = 1;
     if (-1 == setsockopt(s_fd, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
                 sizeof(on))) {
         PRINT_ERROR("setsockopt failed");
-        return -1;
+        goto cleanup;
     }
 
     s_addr.sin_family      = AF_INET;
@@ -50,15 +50,19 @@ static int create_server_socket()
 
     if (-1 == bind(s_fd, (struct sockaddr *)&s_addr, sizeof(s_addr))) {
         PRINT_ERROR("error bind failed\n");
-        return -1;
+        goto cleanup;
     }
 
     if (-1 == listen(s_fd, 0)) {
         PRINT_ERROR("error listen failed\n");
-        close(s_fd);
-        return -1;
+        goto cleanup;
     }
     return s_fd;
+
+cleanup:
+    if (s_fd != -1)
+        close(s_fd);
+    return -1;
 }
 
 int start_sniffer_server()
@@ -87,8 +91,7 @@ static void *sniffer_thread(void *attr)
         /* Only one connection is kept at a time.
          * If there is a new connection, the previous one is closed.
          */
-        int connect_fd = accept4(sniffer_state.socket_fd, NULL, NULL,
-                SOCK_CLOEXEC);
+        int connect_fd = accept(sniffer_state.socket_fd, NULL, NULL);
 
         if (0 > connect_fd) {
             PRINT_ERROR("error accept failed\n");
