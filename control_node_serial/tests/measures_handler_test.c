@@ -66,11 +66,13 @@ void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
 
 
 void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
-                            uint8_t channel, int8_t rssi, uint8_t lqi,
-                            uint8_t crc_ok, uint8_t length, uint8_t *payload)
+                      uint16_t rx_time_len, uint8_t channel,
+                      int8_t rssi, uint8_t lqi,
+                      uint8_t crc_ok, uint8_t length, uint8_t *payload)
 {
     (void)timestamp_s;
     (void)timestamp_us;
+    (void)rx_time_len;
     (void)channel;
     (void)rssi;
     (void)lqi;
@@ -336,6 +338,7 @@ TEST_F(test_handle_oml_measure, handle_radio_sniffer)
         size_t meas_size = sizeof(radio);  // channel rssi
 
         struct timeval timestamp = {42, 999999};
+        uint16_t rx_time_len = 4000;
         uint8_t channel = 11;
         int8_t rssi = -91;
         uint8_t lqi = 254;
@@ -347,12 +350,13 @@ TEST_F(test_handle_oml_measure, handle_radio_sniffer)
         uint8_t pkt_len = 0;
         index = 0;
         data[index++] = ((char)RADIO_SNIFFER_FRAME);
-        APPEND_TO_ARRAY(data, index, &timestamp, sizeof(timestamp));
-        APPEND_TO_ARRAY(data, index, &channel,   sizeof(channel));
-        APPEND_TO_ARRAY(data, index, &rssi,      sizeof(rssi));
-        APPEND_TO_ARRAY(data, index, &lqi,       sizeof(lqi));
-        APPEND_TO_ARRAY(data, index, &crc_ok,    sizeof(crc_ok));
-        APPEND_TO_ARRAY(data, index, &pkt_len,   sizeof(pkt_len));
+        APPEND_TO_ARRAY(data, index, &timestamp,   sizeof(timestamp));
+        APPEND_TO_ARRAY(data, index, &rx_time_len, sizeof(rx_time_len));
+        APPEND_TO_ARRAY(data, index, &channel,     sizeof(channel));
+        APPEND_TO_ARRAY(data, index, &rssi,        sizeof(rssi));
+        APPEND_TO_ARRAY(data, index, &lqi,         sizeof(lqi));
+        APPEND_TO_ARRAY(data, index, &crc_ok,      sizeof(crc_ok));
+        APPEND_TO_ARRAY(data, index, &pkt_len,     sizeof(pkt_len));
 
         expect_value(oml_measures_sniffer, timestamp_s,  timestamp.tv_sec);
         expect_value(oml_measures_sniffer, timestamp_us, timestamp.tv_usec);
@@ -383,6 +387,7 @@ TEST_F(test_handle_oml_measure, handle_radio_sniffer)
         index   = 0;
         data[index++] = ((char)RADIO_SNIFFER_FRAME);
         APPEND_TO_ARRAY(data, index, &timestamp, sizeof(timestamp));
+        APPEND_TO_ARRAY(data, index, &rx_time_len, sizeof(rx_time_len));
         APPEND_TO_ARRAY(data, index, &channel,   sizeof(channel));
         APPEND_TO_ARRAY(data, index, &rssi,      sizeof(rssi));
         APPEND_TO_ARRAY(data, index, &lqi,       sizeof(lqi));

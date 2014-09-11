@@ -33,7 +33,8 @@ static void append_data(uint8_t **dst, const uint8_t *src, size_t len);
  * /   8 bytes   | 4 bytes |10 bytes|1 byte|
  */
 void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
-                      uint8_t channel, int8_t rssi, uint8_t lqi,
+                      uint16_t rx_time_len, uint8_t channel,
+                      int8_t rssi, uint8_t lqi,
                       uint8_t crc_ok, uint8_t length, uint8_t *payload)
 {
     (void)crc_ok;
@@ -43,9 +44,10 @@ void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
         return;
 
     static uint32_t seqno = 0;
-    uint32_t ne_seqno = htonl(++seqno);
-    uint32_t ne_t_s = htonl(timestamp_s);
-    uint32_t ne_t_us = htonl(timestamp_us);
+    uint32_t ne_seqno       = htonl(++seqno);
+    uint32_t ne_t_s         = htonl(timestamp_s);
+    uint32_t ne_t_us        = htonl(timestamp_us);
+    uint16_t ne_rx_time_len = htons(rx_time_len);
 
     uint8_t zep_packet[256] = {0};
     uint8_t *pkt = zep_packet;
@@ -62,9 +64,13 @@ void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
 
     append_data(&pkt, (uint8_t *)&ne_seqno, sizeof(uint32_t));
 
-    uint8_t reserved_space[10] = {0};
     // We use reserved_space to put some data
-    reserved_space[0] = rssi;  // put RSSI here for the moment
+    //  * rx_time_len on 2 bytes in us unsigned
+    //  * rssi on 1 byte signed
+    uint8_t reserved_space[10] = {0};
+    uint8_t *ptr = reserved_space;
+    append_data(&ptr, (uint8_t *)&ne_rx_time_len, sizeof(ne_rx_time_len));
+    append_data(&ptr, (uint8_t *)&rssi, sizeof(rssi));
     append_data(&pkt, reserved_space, sizeof(reserved_space));
 
     // Cedric added two bytes after the packet:

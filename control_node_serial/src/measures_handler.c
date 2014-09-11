@@ -114,6 +114,7 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
     uint8_t payload[128];
     size_t rlen;
     struct timeval timestamp;
+    uint16_t rx_time_len;
     uint8_t channel;
     uint8_t crc_ok;
     int8_t rssi;
@@ -128,18 +129,19 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
     rlen = 1;  //header
 
     // Could read captured_length
-    rlen += sizeof(timestamp) + 5 * sizeof(uint8_t);
+    rlen += sizeof(timestamp) + sizeof(uint16_t) + 5 * sizeof(uint8_t);
     if (len < rlen) {
         PRINT_ERROR("Invalid sniff pkt len: %zu < %zu(len)\n", len, rlen);
         return;
     }
 
-    extract_data((uint8_t *)&timestamp, &data_ptr, sizeof(timestamp));
-    extract_data((uint8_t *)&channel,   &data_ptr, sizeof(channel));
-    extract_data((uint8_t *)&rssi,      &data_ptr, sizeof(rssi));
-    extract_data((uint8_t *)&lqi,       &data_ptr, sizeof(lqi));
-    extract_data((uint8_t *)&crc_ok,    &data_ptr, sizeof(crc_ok));
-    extract_data((uint8_t *)&pkt_len,   &data_ptr, sizeof(pkt_len));
+    extract_data((uint8_t *)&timestamp,   &data_ptr, sizeof(timestamp));
+    extract_data((uint8_t *)&rx_time_len, &data_ptr, sizeof(rx_time_len));
+    extract_data((uint8_t *)&channel,     &data_ptr, sizeof(channel));
+    extract_data((uint8_t *)&rssi,        &data_ptr, sizeof(rssi));
+    extract_data((uint8_t *)&lqi,         &data_ptr, sizeof(lqi));
+    extract_data((uint8_t *)&crc_ok,      &data_ptr, sizeof(crc_ok));
+    extract_data((uint8_t *)&pkt_len,     &data_ptr, sizeof(pkt_len));
 
     // big enough to get 'payload' value
     rlen += pkt_len;
@@ -156,7 +158,7 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
     if (crc_ok) {
         // CRC is valid, pass data to sniffer socket
         extract_data(payload, &data_ptr, pkt_len);
-        sniffer_zep_send(timestamp.tv_sec, timestamp.tv_usec,
+        sniffer_zep_send(timestamp.tv_sec, timestamp.tv_usec, rx_time_len,
                 channel, rssi, lqi, crc_ok, pkt_len, payload);
     }
 }
@@ -237,7 +239,6 @@ static void handle_ack_pkt(uint8_t *data, size_t len)
 
 int handle_measure_pkt(uint8_t *data, size_t len)
 {
-
     uint8_t pkt_type = data[0];
     meas_handler_t handler;
 
