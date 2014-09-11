@@ -94,80 +94,70 @@ cleanup:
 }
 
 
+/* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * We want 'active_connection' to be always at 1 when there is a client.
+ * It can be put back to 0 if a 'send' fails.
+ * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ *
+ * The tricky part is when the sending fails exactly at the same moment where a
+ * new connection happens.
+ *
+ * There might be 'active_connection' with no 'real' client, it's not a problem
+ * as it will be updated on the next send.
+ *
+ */
+
 /* http://en.wikipedia.org/wiki/Berkeley_sockets */
 static void *sniffer_thread(void *attr)
 {
     (void)attr;
+    int connect_fd;
     while (sniffer_state.running) {
-        /* Only one connection is kept at a time.
-         * If there is a new connection, the previous one is closed.
-         */
-        int connect_fd = accept(sniffer_state.socket_fd, NULL, NULL);
-
+        connect_fd = accept(sniffer_state.socket_fd, NULL, NULL);
         if (0 > connect_fd) {
             PRINT_ERROR("error accept failed\n");
             sleep(1);
             continue;
         }
-        /* close previous connection at first, losing some packets on
-         * disconnection is OK */
+
+        // Keep only one connection active
         shutdown(sniffer_state.connect_fd, SHUT_RDWR);
         close(sniffer_state.connect_fd);
 
-        /* * * * Update connection
-         * 'active_connection' should be true if there might be an active
-         * connection running.
-         * And it is better if it can be 0 when no connection is active
-         *
-         * It should NEVER be false with an active connection
-         * (when outside of 'send_packet' function)
-         * It should ALWAYS be true with an active connection
-         * (when outside of 'send_packet' function)
-         *
-         */
-        // Keep the order synced with send_packet to ensure active_connection
-        // is never false with active connection
+        // Keep the order synced with send_packet
+        // set active_connection AFTER saving connect_fd
         sniffer_state.connect_fd = connect_fd;
         sniffer_state.active_connection = 1;
     }
     return NULL;
 }
 
+
+/* The following implementation may looks strange. It's 'only' a lock-less
+ * method to ensure the validity of 'active_connection.
+ *
+ * Read the following if you want to understand.
+ *
+ * In normal case we want:
+ *   Put 0 if the send fails
+ *   Let 1 if the send succeeds
+ *
+ * But, to ensure consistency when a new connection happpens during send,
+ * I put it a 0 at first, we send the message and put back to 1 if it succeeds.
+ *
+ * So even if a connection arrives and I'm using the OLD descriptor when
+ * sending, I won't force a 0 with an active connection in background.
+ *
+ *
+ * Other solutions might have been working, but my brain came only with this for
+ * the moment.
+ *
+ */
+
 int sniffer_server_send_packet(const void *data, size_t len)
 {
     int ret;
     int connect_fd;
-
-    /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     * Goal: never ever have 'active_connection' 0 with an active connection
-     * But try to put it to 0 when we detect that a connection is destroyed
-     * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-     *
-     * In normal case:
-     *   Put 'active_connection' to 0. Send message, put it back to 1.
-     *
-     * When connection is closed:
-     *   Put 'active_connection' to 0. Fail to send message, let it at 0.
-     *
-     *
-     * If this happens when a new connection is being created:
-     *   We put 0 in 'active connection'. Then we save 'connect_fd':
-     *
-     * Two cases:
-     *   * We saved the old connect_fd: we are before the server thread updated
-     *   connect_fd, and we won't touch 'active_connection' anymore,
-     *   so the server will put it back to 1 as the line is after the connect_fd
-     *   affectation => OK
-     *
-     *
-     *   * We saved the new connect_fd, so the old one has been destroyed,
-     *   the worst case, it that we wail to send the message on the new
-     *   connection, the server thread already put 1 in active_connection,
-     *   and we don't put it back to 0.
-     *      We end up with 'active_connection' && 'no valid connection'
-     *      But that's OK, it will be corrected on next message sent
-     *
-     */
 
     // Keep the 'active_connection' and 'connect_fd' affectations synced with
     // server thread
@@ -181,4 +171,3 @@ int sniffer_server_send_packet(const void *data, size_t len)
         sniffer_state.active_connection = 1;  // Connection is still active
     return ret;
 }
-
