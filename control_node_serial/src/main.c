@@ -10,7 +10,7 @@
 #include "command_reader.h"
 #include "decode.h"
 #include "measures_handler.h"
-#include "sniffer_handler.h"
+#include "sniffer_server.h"
 
 #define TTY_PATH "/dev/ttyCN"
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[])
     // stdin parsing
     command_reader_start(serial_fd);
     // stdin parsing
-    start_sniffer_server();
+    sniffer_server_start();
 
     // serial reader
     do {

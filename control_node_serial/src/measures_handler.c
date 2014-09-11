@@ -14,7 +14,7 @@
 #include "constants.h"
 #include "oml_measures.h"
 #include "measures_handler.h"
-#include "sniffer_handler.h"
+#include "sniffer_zep.h"
 
 
 struct consumption_measure {
@@ -156,7 +156,7 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
     if (crc_ok) {
         // CRC is valid, pass data to sniffer socket
         extract_data(payload, &data_ptr, pkt_len);
-        measure_sniffer_packet(timestamp.tv_sec, timestamp.tv_usec,
+        sniffer_zep_send(timestamp.tv_sec, timestamp.tv_usec,
                 channel, rssi, lqi, crc_ok, pkt_len, payload);
     }
 }
