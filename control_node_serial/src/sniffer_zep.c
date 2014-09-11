@@ -36,7 +36,7 @@ void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
                       uint8_t channel, int8_t rssi, uint8_t lqi,
                       uint8_t crc_ok, uint8_t length, uint8_t *payload)
 {
-    (void)rssi; (void)crc_ok;
+    (void)crc_ok;
 
     // Don't create the packet if there is no one listening
     if (! sniffer_server_has_active_connection())
@@ -63,6 +63,8 @@ void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
     append_data(&pkt, (uint8_t *)&ne_seqno, sizeof(uint32_t));
 
     uint8_t reserved_space[10] = {0};
+    // We use reserved_space to put some data
+    reserved_space[0] = rssi;  // put RSSI here for the moment
     append_data(&pkt, reserved_space, sizeof(reserved_space));
 
     // Cedric added two bytes after the packet:
