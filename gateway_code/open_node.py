@@ -53,8 +53,8 @@ class NodeA8(object):
         # 15 secs was not always enough
         ret = self.wait_tty_a8(config.OPEN_A8_CFG['tty'], timeout=20)
         if ret == 0:
-            # Timeout 5 minutes for boot
-            self._debug_a8_boot_start(5*60, config.OPEN_A8_CFG)
+            # Timeout 15 minutes for boot (we saw 10minutes boot already)
+            self._debug_a8_boot_start(15*60, config.OPEN_A8_CFG)
         return ret
 
     def teardown(self):
