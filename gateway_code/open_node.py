@@ -4,6 +4,7 @@
 """ Open Node experiment implementation """
 import os
 from threading import Thread
+import time
 
 
 import gateway_code.config as config
@@ -80,13 +81,15 @@ class NodeA8(object):
 
     def _debug_a8_boot_start_thread(self, timeout, open_a8_cfg):
         """ Monitor A8 tty to check if node booted """
+        t_start = time.time()
         self._a8_expect = expect.SerialExpect(logger=LOGGER, **open_a8_cfg)
         match = self._a8_expect.expect(' login: ', timeout=timeout)
+        delta_t = time.time() - t_start
 
         if match != '':
-            LOGGER.info("Boot A8 succeeded in time: %ds", timeout)
+            LOGGER.info("Boot A8 succeeded in time: %ds", delta_t)
         else:
-            LOGGER.error("Boot A8 failed in time: %ds", timeout)
+            LOGGER.error("Boot A8 failed in time: %ds", delta_t)
 
     def _debug_a8_boot_stop_thread(self):
         """ Stop the debug thread """
