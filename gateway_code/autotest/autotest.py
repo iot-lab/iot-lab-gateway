@@ -137,7 +137,7 @@ class AutoTestManager(object):
             ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
             raise FatalError('Setup Open Node failed')
         try:
-            self.a8_connection.ssh_run('flash_a8.sh /tmp/a8_autotest.elf')
+            self.a8_connection.ssh_run('flash_a8_m3 /tmp/a8_autotest.elf')
             time.sleep(5)
         except CalledProcessError as err:  # pragma: no cover
             ret_val += self._check(1, 'Flash A8-M3 fail', str(err))
