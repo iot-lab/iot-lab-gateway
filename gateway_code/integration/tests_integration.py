@@ -88,9 +88,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         elif 'A8' == gateway_code.config.board_type():
             self._run_simple_experiment_a8(m_error)
 
-    def _run_simple_experiment_a8(self, m_error):
+    def _run_simple_experiment_a8(self, _):  # pylint:disable=unused-argument
         """ Run an experiment for A8 nodes """
-        _ = m_error
 
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
 

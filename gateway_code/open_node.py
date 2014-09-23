@@ -43,13 +43,11 @@ class NodeM3(object):
 class NodeA8(object):
     """ Open node A8 implementation """
 
-    def __init__(self, g_m):
-        _ = g_m
+    def __init__(self, g_m):  # pylint: disable=unused-argument
         self._a8_expect = None
 
-    def setup(self, firmware_path):
+    def setup(self, firmware_path):  # pylint: disable=unused-argument
         """ Wait that open nodes tty appears and start A8 boot log """
-        _ = firmware_path
         # 15 secs was not always enough
         ret = self.wait_tty_a8(config.OPEN_A8_CFG['tty'], timeout=20)
         if ret == 0:

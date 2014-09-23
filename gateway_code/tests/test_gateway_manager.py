@@ -99,9 +99,8 @@ class TestGatewayManager(unittest.TestCase):
 # Measures folder and files management  #
 # # # # # # # # # # # # # # # # # # # # #
 
-    def test_create_and_cleanup_user_exp_files(self):
+    def test_create_and_del_user_exp_files(self):  # pylint:disable=no-self-use
         """ Create files and clean them"""
-        _ = self
         with patch('gateway_code.config.EXP_FILES_DIR', './iotlab/'):
             g_m = gateway_manager.GatewayManager()
             g_m._create_user_exp_folders('user', 123)

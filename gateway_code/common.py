@@ -22,7 +22,7 @@ def empty_queue(queue):
     True
     """
     while not queue.empty():
-        _ = queue.get_nowait()
+        queue.get_nowait()
 
 
 def wait_cond(timeout, value, fct, *args, **kwargs):

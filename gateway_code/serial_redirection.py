@@ -132,8 +132,6 @@ class _SerialRedirectionThread(threading.Thread):
                 # errno == 3 'No such proccess'
                 # current process is already terminated not an issue
                 assert err.errno == 3, 'Unknown error num: %d' % err.errno
-                # required instruction if assert disabled
-                _ = err.errno
             time.sleep(0.1)
 
         self.redirector_process = None

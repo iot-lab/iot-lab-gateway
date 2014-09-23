@@ -153,10 +153,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
 
         unlock_popen = threading.Event()
 
-        def blocking_popen(a, stdout, stderr):
-            _ = a
-            _ = stdout
-            _ = stderr
+        def blocking_popen(*args):  # pylint:disable=unused-argument
             unlock_popen.wait()  # block on Popen creation
             return mock.DEFAULT
 

@@ -24,10 +24,10 @@ class TestGetHostname(unittest.TestCase):
 
 class TestDefaultProfile(unittest.TestCase):
 
+    @staticmethod
     @mock.patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
     @mock.patch('gateway_code.config.board_type', lambda: 'M3')
-    def test_default_profile(self):
-        _ = self
+    def test_default_profile():
         config.default_profile()
 
 

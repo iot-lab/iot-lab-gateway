@@ -414,7 +414,7 @@ class AutoTestManager(object):
         else:
             ret_val = self._check(1, 'test_pps_open_node_timeout', 0)
 
-        _ = self._on_call(['test_pps_stop'])
+        self._on_call(['test_pps_stop'])
         return ret_val
 
     def test_gps(self, gps):

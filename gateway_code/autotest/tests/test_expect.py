@@ -29,8 +29,7 @@ class TestSerialExpect(unittest.TestCase):
     def tearDown(self):
         self.serial_patcher.stop()
 
-    def serial_read_mock(self, size):
-        _ = size
+    def serial_read_mock(self, size):  # pylint:disable=unused-argument
         try:
             return self.read_ret.pop(0)
         except IndexError:
