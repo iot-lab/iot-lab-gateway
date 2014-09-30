@@ -55,8 +55,8 @@ class OpenA8Connection(object):
         a8_serial = expect.SerialExpect(logger=LOGGER, **config.OPEN_A8_CFG)
 
         LOGGER.debug("Time before boot %s", datetime.datetime.now())
-        # boot timeout 2 minutes (seen 50 seconds for a boot in tests)
-        ret = a8_serial.expect(' login: ', timeout=120)
+        # boot timeout 5 minutes (seen likely 3minutes loaded server)
+        ret = a8_serial.expect(' login: ', timeout=300)
         LOGGER.debug("Time after boot %s", datetime.datetime.now())
         if not ret:  # pragma: no cover
             raise A8ConnectionError("Open node didn't booted: %r" % ret,
