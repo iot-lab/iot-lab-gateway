@@ -42,10 +42,10 @@ class Profile(object):
 class Consumption(object):
     """ Consumption monitoring configuration """
     consumption_source = {
-        ('M3', 'dc'): '3.3V',
-        ('A8', 'dc'): '5V',
-        ('M3', 'battery'): 'BATT',
-        ('A8', 'battery'): 'BATT',
+        ('m3', 'dc'): '3.3V',
+        ('a8', 'dc'): '5V',
+        ('m3', 'battery'): 'BATT',
+        ('a8', 'battery'): 'BATT',
     }
 
     def __init__(self, source, board_type, period, average,

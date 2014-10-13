@@ -81,7 +81,7 @@ class AutoTestManager(object):
             raise FatalError('Setup control node failed')
 
     def _setup_open_node_m3(self):
-        """ Setup open node M3 connection """
+        """ Setup open node m3 connection """
         ret_val = 0
 
         ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
@@ -90,12 +90,12 @@ class AutoTestManager(object):
 
         self.on_serial = m3_node_interface.OpenNodeSerial()
         ret, err_msg = self.on_serial.start()
-        ret_val += self._check(ret, 'open_M3_serial', err_msg)
+        ret_val += self._check(ret, 'open_m3_serial', err_msg)
 
         return ret_val
 
     def _setup_open_node_a8(self):
-        """ Setup open node A8-M3 connection
+        """ Setup open node a8-m3 connection
 
         * Boot open node
         * Connect through serial and get ip address
@@ -110,13 +110,13 @@ class AutoTestManager(object):
 
             # wait nodes start
             # get ip address using serial
-            # run socats commands to access A8-M3 open node on gateway
+            # run socats commands to access a8-m3 open node on gateway
             self.a8_connection = open_a8_interface.OpenA8Connection()
-            LOGGER.debug("Wait that open A8 node starts")
+            LOGGER.debug("Wait that open a8 node starts")
             self.a8_connection.start()
 
         except SerialException as err:  # pragma: no cover
-            ret_val += self._check(1, 'access_A8_serial_port', str(err))
+            ret_val += self._check(1, 'access_a8_serial_port', str(err))
             raise FatalError('Setup Open Node failed')
         except open_a8_interface.A8ConnectionError as err:  # pragma: no cover
             ret_val += self._check(1, 'open_a8_init_error: %s' % err.err_msg,
@@ -125,7 +125,7 @@ class AutoTestManager(object):
 
         # save mac address
         a8_mac_addr = self.a8_connection.get_mac_addr()
-        self.ret_dict['mac']['A8'] = a8_mac_addr
+        self.ret_dict['mac']['a8'] = a8_mac_addr
         test_ok = (MAC_RE.match(a8_mac_addr) is not None)
         ret_val += self._check(TST_OK(test_ok), 'a8_mac_addr', a8_mac_addr)
 
@@ -140,13 +140,13 @@ class AutoTestManager(object):
             self.a8_connection.ssh_run('flash_a8_m3 /tmp/a8_autotest.elf')
             time.sleep(5)
         except CalledProcessError as err:  # pragma: no cover
-            ret_val += self._check(1, 'Flash A8-M3 fail', str(err))
+            ret_val += self._check(1, 'Flash a8-m3 fail', str(err))
             raise FatalError('Setup Open Node failed')
 
-        # Create open node A8-M3 connection through socat
+        # Create open node a8-m3 connection through socat
         self.on_serial = m3_node_interface.OpenNodeSerial()
         ret, err_msg = self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
-        ret_val += self._check(ret, 'open_A8_serial', err_msg)
+        ret_val += self._check(ret, 'open_a8_serial', err_msg)
 
         return ret_val
 
@@ -159,8 +159,8 @@ class AutoTestManager(object):
         time.sleep(2)  # wait open node ready
 
         # setup open node
-        ret_val += {'M3': self._setup_open_node_m3,
-                    'A8': self._setup_open_node_a8}[board_type]()
+        ret_val += {'m3': self._setup_open_node_m3,
+                    'a8': self._setup_open_node_a8}[board_type]()
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -204,7 +204,7 @@ class AutoTestManager(object):
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         board_type = config.board_type()
 
-        if board_type not in ['M3', 'A8']:
+        if board_type not in ['m3', 'a8']:
             self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
             return self.ret_dict
 
@@ -214,9 +214,9 @@ class AutoTestManager(object):
             #
             # Tests using Battery
             #
-            # dc -> battery: A8 reboot
+            # dc -> battery: a8 reboot
             # battery -> dc: No reboot
-            # A8 may not work with new batteries (not enough power)
+            # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
             ret_val += self.test_consumption_batt(board_type)
 
@@ -236,7 +236,7 @@ class AutoTestManager(object):
             ret_val += self.test_magneto()
             ret_val += self.test_accelero()
 
-            # test M3-ON communication
+            # test m3-on communication
             ret_val += self.test_gpio()
             ret_val += self.test_i2c()
 
@@ -247,9 +247,9 @@ class AutoTestManager(object):
             # test consumption measures
             ret_val += self.test_consumption_dc(board_type)
 
-            # M3 specific tests
-            if 'M3' == board_type:  # pragma: no branch
-                # cannot test this with A8 I think
+            # m3 specific tests
+            if 'm3' == board_type:  # pragma: no branch
+                # cannot test this with a8 I think
                 ret_val += self.test_leds_with_consumption(board_type)
                 # test m3 specific sensors
                 ret_val += self.test_pressure()
@@ -331,7 +331,7 @@ class AutoTestManager(object):
         ret_val = self._check(TST_OK(test_ok), 'm3_comm_with_get_time', answer)
 
         if 0 != ret_val:  # pragma: no cover
-            raise FatalError("get_time failed. Can't communicate with M3 node")
+            raise FatalError("get_time failed. Can't communicate with m3 node")
 
     def get_uid(self):
         """ runs the 'get_uid' command
@@ -391,7 +391,7 @@ class AutoTestManager(object):
 # Test GPS
 #
     def _test_pps_open_node(self, timeout):
-        """ Test the pps on open A8 m3 node"""
+        """ Test the pps on open a8 m3 node"""
         ret_val = 0
 
         # start pps on open node
@@ -570,9 +570,9 @@ class AutoTestManager(object):
         ret_val = 0
         ret_val += self.g_m.open_power_start(power='battery')
 
-        # set a firmware on M3 to ensure corret consumption measures
-        # on A8, linux is consuming enough I think
-        if 'M3' == board_type:  # pragma: no branch
+        # set a firmware on m3 to ensure corret consumption measures
+        # on a8, linux is consuming enough I think
+        if 'm3' == board_type:  # pragma: no branch
             time.sleep(1)
             ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)

@@ -35,8 +35,8 @@ class GatewayManager(object):
     board_type = None
     default_profile = None
 
-    open_nodes = {'M3': gateway_code.open_node.NodeM3,
-                  'A8': gateway_code.open_node.NodeA8}
+    open_nodes = {'m3': gateway_code.open_node.NodeM3,
+                  'a8': gateway_code.open_node.NodeA8}
 
     def __init__(self, log_folder='.'):
 
@@ -387,8 +387,8 @@ class GatewayManager(object):
         """
         status_ok = True
         status_ok &= self._ftdi_is_present('CN')
-        # only 'M3' node ftdi can be seen
-        status_ok &= (self.board_type != 'M3') or self._ftdi_is_present('ON')
+        # only 'm3' node ftdi can be seen
+        status_ok &= (self.board_type != 'm3') or self._ftdi_is_present('ON')
 
         return 0 if status_ok else 1
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Common integration tests M3/A8 """
+""" Common integration tests m3/a8 """
 
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
@@ -83,13 +83,13 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     @patch('gateway_code.control_node_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
         """ Test simple experiment"""
-        if 'M3' == gateway_code.config.board_type():
+        if 'm3' == gateway_code.config.board_type():
             self._run_simple_experiment_m3(m_error)
-        elif 'A8' == gateway_code.config.board_type():
+        elif 'a8' == gateway_code.config.board_type():
             self._run_simple_experiment_a8(m_error)
 
     def _run_simple_experiment_a8(self, _):  # pylint:disable=unused-argument
-        """ Run an experiment for A8 nodes """
+        """ Run an experiment for a8 nodes """
 
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
 
@@ -99,7 +99,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals({'ret': 0}, self.app.exp_stop())
 
     def _run_simple_experiment_m3(self, m_error):
-        """ Run a simple experiment on M3 node without profile
+        """ Run a simple experiment on m3 node without profile
         Try the different node features """
 
         msg = 'HELLO WORLD'
@@ -142,7 +142,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def test_m3_exp_with_measures(self, m_error):
         """ Run an experiment with measures and profile update """
 
-        if 'M3' != gateway_code.config.board_type():
+        if 'm3' != gateway_code.config.board_type():
             return
         t_start = time.time()
 
@@ -302,14 +302,14 @@ class TestIntegrationOther(ExperimentRunningMock):
 
     def tests_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
-        if 'A8' != gateway_code.config.board_type():
+        if 'a8' != gateway_code.config.board_type():
             return
 
         g_m = self.g_m
         g_m.exp_start(**self.exp_conf)
 
         with patch.object(g_m, 'open_power_start', g_m.open_power_stop):
-            # detect error when A8 does not start
+            # detect error when a8 does not start
             self.assertNotEquals(0, g_m.exp_start(**self.exp_conf))
 
         # stop and cleanup

@@ -44,7 +44,7 @@ class GatewayRest(object):
         bottle.route('/autotest/<mode>', 'PUT')(self.auto_tests)
 
         # node specific commands
-        if self.board_type == 'M3':
+        if self.board_type == 'm3':
             bottle.route('/open/flash', 'POST')(self.open_flash)
             bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
         else:  # pragma: no cover
@@ -168,13 +168,13 @@ class GatewayRest(object):
 
     def open_flash(self):
         """ Flash open node """
-        LOGGER.debug('REST: Flash M3')
-        return self._flash('m3')
+        LOGGER.debug('REST: Flash %s', self.board_type)
+        return self._flash(self.board_type)
 
     def open_soft_reset(self):
         """ Soft reset open node """
-        LOGGER.debug('REST: Reset M3')
-        ret = self._reset('m3')
+        LOGGER.debug('REST: Reset %s', self.board_type)
+        ret = self._reset(self.board_type)
         return {'ret': ret}
 
     def open_start(self):
@@ -266,8 +266,7 @@ def _parse_arguments(args):
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('host', type=str,
-                        help="Server address to bind to")
+    parser.add_argument('host', type=str, help="Server address to bind to")
     parser.add_argument('port', type=int, help="Server port to bind to")
     parser.add_argument(
         '--log-folder', default='.',

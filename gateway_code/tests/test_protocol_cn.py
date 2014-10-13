@@ -27,7 +27,7 @@ class TestProtocol(unittest.TestCase):
 
         # with full consumption
         consumption = profile.Consumption(source='dc',
-                                          board_type='M3',
+                                          board_type='m3',
                                           period='140us',
                                           average='1',
                                           power=True,
@@ -41,7 +41,7 @@ class TestProtocol(unittest.TestCase):
 
         # consumption without all elements
         consumption = profile.Consumption(source='battery',
-                                          board_type='M3',
+                                          board_type='m3',
                                           period='8244us',
                                           average='1024',
                                           power=True)
@@ -60,7 +60,7 @@ class TestProtocol(unittest.TestCase):
         self.assertEquals(0, ret)
         # power, voltage, current == False
         consumption = profile.Consumption(source='dc',
-                                          board_type='M3',
+                                          board_type='m3',
                                           period='140us',
                                           average='1')
         ret = self.protocol.config_consumption(consumption)

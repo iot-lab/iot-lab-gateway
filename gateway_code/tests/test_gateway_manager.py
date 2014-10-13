@@ -29,7 +29,7 @@ class TestGatewayManagerInvalidBoardType(unittest.TestCase):
         self.assertRaises(ValueError, gateway_manager.GatewayManager)
 
 
-@patch('gateway_code.config.board_type', (lambda: 'M3'))
+@patch('gateway_code.config.board_type', (lambda: 'm3'))
 @patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
 class TestGatewayManager(unittest.TestCase):
 

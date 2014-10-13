@@ -26,7 +26,7 @@ class TestDefaultProfile(unittest.TestCase):
 
     @staticmethod
     @mock.patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
-    @mock.patch('gateway_code.config.board_type', lambda: 'M3')
+    @mock.patch('gateway_code.config.board_type', lambda: 'm3')
     def test_default_profile():
         config.default_profile()
 
@@ -52,10 +52,10 @@ class TestsBoardAndRobotType(unittest.TestCase):
         self.string_io.seek(0)
         config.board_type()
 
-        self.assertEquals('M3', config.board_type())
+        self.assertEquals('m3', config.board_type())
 
         self.open_mock.side_effect = Exception()
-        self.assertEquals('M3', config.board_type())
+        self.assertEquals('m3', config.board_type())
 
     def test_board_type_not_found(self):
         self.open_mock.side_effect = IOError()

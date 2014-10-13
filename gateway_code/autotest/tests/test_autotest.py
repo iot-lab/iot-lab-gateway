@@ -110,7 +110,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['board_type'], ret_dict['error'])
 
-    @mock.patch('gateway_code.config.board_type', lambda: 'M3')
+    @mock.patch('gateway_code.config.board_type', lambda: 'm3')
     def test_fail_on_setup_control_node(self):
         def setup():
             self.g_v.ret_dict['error'].append('setup')

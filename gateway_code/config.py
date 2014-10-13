@@ -72,7 +72,7 @@ def default_profile():
 
 
 def board_type():
-    """ Return the board type 'M3' or 'A8' """
+    """ Return the board type 'm3' or 'a8' """
     return _get_conf('board_type', GATEWAY_CONFIG_PATH, raise_error=True)
 
 
@@ -93,7 +93,7 @@ def _get_conf(key, path, raise_error=False):
         # load from file
         try:
             _file = open(path + key)
-            _BOARD_CONFIG[key] = _file.read().strip()
+            _BOARD_CONFIG[key] = _file.read().strip().lower()
             _file.close()
         except IOError as err:
             _BOARD_CONFIG[key] = None

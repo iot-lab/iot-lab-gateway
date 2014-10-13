@@ -58,7 +58,7 @@ class TestRestMethods(unittest.TestCase):
 
         self.board_patcher = patch('gateway_code.config.board_type')
         self.board = self.board_patcher.start()
-        self.board.return_value = 'M3'
+        self.board.return_value = 'm3'
 
         self.g_m = mock.Mock()
         self.s_r = server_rest.GatewayRest(self.g_m)
