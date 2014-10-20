@@ -93,7 +93,6 @@ int receive_data(int fd, unsigned char *rx_buff, size_t len,
         if (n_chars > 0) {
                 DEBUG_PRINT_PACKET(rx_buff, n_chars);
                 parse_rx_data(rx_buff, n_chars, handle_pkt);
-
         } else if (n_chars == -1) {
                 PRINT_ERROR("Error serial read: %s\n", strerror(errno));
         }

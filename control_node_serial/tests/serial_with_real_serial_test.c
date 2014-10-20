@@ -31,8 +31,6 @@ int start_socat()
 }
 
 
-
-
 int number_packets = 16;
 void *write_data_thread(void *attr)
 {
@@ -72,16 +70,21 @@ TEST(configure_tty, with_socat)
         pthread_create(&thread, NULL, write_data_thread, &serial_fd);
 
         // read all packets
-        while (1) {
-                if (received_packets < number_packets) {
-                        receive_data(serial_fd, rx_buff, 2048, handle_pkt);
-                } else {
-                        int ret = pthread_tryjoin_np(thread, NULL);
-                        if (ret == 0)
-                                break;
-                        sleep(1);
-                }
+        while (received_packets < number_packets) {
+            int n_chars = receive_data(serial_fd, rx_buff, 2048, handle_pkt);
+            if (n_chars == -1) {
+                // Happend when 'socat' didn't run correctly
+                // Break to prevent infinite loop
+                //
+                // Main code does also quits when ret <= 0
+                fprintf(stderr, "ABORTING: %s\n", strerror(errno));
+                break;
+            }
         }
+        /* wait for writer thread */
+        while (pthread_tryjoin_np(thread, NULL))
+            sleep(1);
+
         ASSERT_EQ(number_packets, received_packets);
         kill(socat_pid, SIGINT);
 }
