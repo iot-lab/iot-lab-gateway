@@ -40,11 +40,28 @@ TEST(test_parse_cmd, simple_commands)
         ASSERT_EQ(0, ret);
         ASSERT_EQ(9, cmd_buff.u.s.len);
         ASSERT_EQ(SET_TIME, cmd_buff.u.s.payload[0]);
-
         // check time stored in the packet is correct
         memcpy(&time_s, &cmd_buff.u.s.payload[1], sizeof(uint32_t));
         ASSERT_TRUE(time_s <= time_now.tv_sec);
         ASSERT_TRUE(time_s + 2 >= time_now.tv_sec);
+
+        uint16_t node_id;
+        strcpy(cmd, "set_node_id m3 1");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(3, cmd_buff.u.s.len);
+        ASSERT_EQ(SET_NODE_ID, cmd_buff.u.s.payload[0]);
+        memcpy(&node_id, &cmd_buff.u.s.payload[1], sizeof(uint16_t));
+        ASSERT_EQ(0x3001, node_id);
+
+        strcpy(cmd, "set_node_id a8 266");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(3, cmd_buff.u.s.len);
+        ASSERT_EQ(SET_NODE_ID, cmd_buff.u.s.payload[0]);
+        memcpy(&node_id, &cmd_buff.u.s.payload[1], sizeof(uint16_t));
+        ASSERT_EQ(0x810A, node_id);
+
 
         strcpy(cmd, "start dc");
         ret = parse_cmd(cmd, &cmd_buff);

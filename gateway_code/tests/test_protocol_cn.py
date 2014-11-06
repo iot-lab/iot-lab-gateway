@@ -99,6 +99,23 @@ class TestProtocol(unittest.TestCase):
         self.sender.assert_called_with(['set_time'])
         self.assertEquals(1, ret)
 
+    @mock.patch('os.uname')
+    def test_set_node_id(self, uname_m):
+
+        uname_m.return_value = (None, 'm3-1')
+
+        self.sender.return_value = ['set_node_id', 'ACK']
+        ret = self.protocol.set_node_id()
+        self.sender.assert_called_with(['set_node_id', 'm3', '1'])
+        self.assertEquals(0, ret)
+
+        uname_m.return_value = (None, 'a8-256')
+
+        self.sender.return_value = ['set_node_id', 'ACK']
+        ret = self.protocol.set_node_id()
+        self.sender.assert_called_with(['set_node_id', 'a8', '256'])
+        self.assertEquals(0, ret)
+
     def test_led_control(self):
 
         self.sender.return_value = ['green_led_blink', 'ACK']

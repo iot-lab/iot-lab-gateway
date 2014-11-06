@@ -3,6 +3,7 @@
 """
 Protocol between python code and the control_node_serial_interface C code
 """
+import os
 
 
 class Protocol(object):
@@ -37,6 +38,29 @@ class Protocol(object):
         """ Set unix time on control node """
         # set_time
         cmd = ['set_time']
+        return self.send_cmd(cmd)
+
+    @staticmethod
+    def _extract_node_id(hostname):
+        """
+        >>> Protocol._extract_node_id('m3-1')
+        ('m3', '1')
+
+        >>> Protocol._extract_node_id('a8-256')
+        ('a8', '256')
+
+        >>> Protocol._extract_node_id('m3-00-ci')
+        ('m3', '0')
+        """
+        archi, num_str = hostname.split('-')[0:2]
+        num = str(int(num_str))
+        return archi, num
+
+    def set_node_id(self):
+        """ Set node id on control node"""
+        # set_node_id
+        node_id = self._extract_node_id(os.uname()[1])
+        cmd = ['set_node_id'] + list(node_id)
         return self.send_cmd(cmd)
 
     def green_led_blink(self):

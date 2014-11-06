@@ -13,6 +13,7 @@ enum frame_type {
     OPEN_NODE_START      = 0x11,
 
     SET_TIME             = 0x20,
+    SET_NODE_ID          = 0x21,
 
     /* LED management */
     GREEN_LED_ON         = 0x35,

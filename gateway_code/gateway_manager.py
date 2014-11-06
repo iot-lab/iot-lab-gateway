@@ -154,6 +154,7 @@ class GatewayManager(object):
         ret_val += self.protocol.green_led_blink()
         ret_val += self.open_power_start(power='dc')
         ret_val += self.set_time()
+        ret_val += self.set_node_id()
         ret_val += self.configure_cn_profile()
 
         # # # # # # # # # # #
@@ -294,15 +295,24 @@ class GatewayManager(object):
 
     @common.syncronous('rlock')
     def set_time(self):
-        """
-        Reset control node time and update absolute time reference
+        """ Set control node time to current time
 
         Updating time reference is propagated to measures handler
         """
-        LOGGER.debug('Reset control node time')
+        LOGGER.debug('Set control node time')
         ret = self.protocol.set_time()
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Reset time failed')
+            LOGGER.error('Set time failed')
+        return ret
+
+    @common.syncronous('rlock')
+    def set_node_id(self):
+        """ Set the node_id on the control node """
+        LOGGER.debug('Set node id')
+        ret = self.protocol.set_node_id()
+
+        if ret != 0:  # pragma: no cover
+            LOGGER.error('Set node id failed')
         return ret
 
     @common.syncronous('rlock')

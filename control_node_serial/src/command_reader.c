@@ -40,6 +40,13 @@ struct dict_entry alim_d[] = {
 };
 
 
+struct dict_entry archi_d[] = {
+    {"m3", 3},
+    {"a8", 8},
+    {NULL, 0},
+};
+
+
 /* Consumption dicts */
 struct dict_entry periods_d[] = {
     {"140",  PERIOD_140us},
@@ -101,9 +108,10 @@ struct dict_entry ack_d[] = {
 struct dict_entry commands_d[] = {
     {"error",      LOGGER_FRAME},
 
-    {"start",      OPEN_NODE_START},
-    {"stop",       OPEN_NODE_STOP},
-    {"set_time",   SET_TIME},
+    {"start",           OPEN_NODE_START},
+    {"stop",            OPEN_NODE_STOP},
+    {"set_time",        SET_TIME},
+    {"set_node_id",     SET_NODE_ID},
 
     {"green_led_on",    GREEN_LED_ON},
     {"green_led_blink", GREEN_LED_BLINK},
@@ -177,6 +185,28 @@ static int cmd_set_time(char *cmd_str, struct command_buffer *cmd_buff,
     append_data(cmd_buff, &set_time_ref.tv_sec,  sizeof(uint32_t));
     append_data(cmd_buff, &set_time_ref.tv_usec, sizeof(uint32_t));
     return 0;
+}
+
+static int cmd_set_node_id(char *cmd_str, struct command_buffer *cmd_buff,
+        struct command_description *command)
+{
+    /* cmd_str == "%s <m3|a8> <node_num>" */
+    int ret = 0;
+    char archi_str[8];
+    uint8_t archi;
+    uint16_t node_num = 0;
+
+    uint16_t node_id = 0;
+
+    sscanf(cmd_str, command->fmt, archi_str, &node_num);
+    // <m3|a8>
+    ret |= get_val(archi_str, archi_d, &archi);
+    node_id |= 0xf000 & (((uint32_t)archi) << 12);
+    // <node_num>
+    node_id |= 0x0fff & (node_num);
+
+    append_data(cmd_buff, &node_id,  sizeof(uint16_t));
+    return ret;
 }
 
 static int cmd_alim(char *cmd_str, struct command_buffer *cmd_buff,
@@ -368,6 +398,7 @@ struct command_description commands[] = {
     {"config_radio_stop",                0, (cmd_fct_t)cmd_no_args},
 
     {"set_time",                         0, (cmd_fct_t)cmd_set_time},
+    {"set_node_id %8s %i",               2, (cmd_fct_t)cmd_set_node_id},
     {"green_led_on",                     0, (cmd_fct_t)cmd_no_args},
     {"green_led_blink",                  0, (cmd_fct_t)cmd_no_args},
 
