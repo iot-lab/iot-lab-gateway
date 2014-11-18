@@ -21,6 +21,8 @@
 
 #include "command_parser.h"
 
+// to pass the node_id
+#include "sniffer_zep.h"
 
 struct command_buffer {
     union {
@@ -205,6 +207,7 @@ static int cmd_set_node_id(char *cmd_str, struct command_buffer *cmd_buff,
     // <node_num>
     node_id |= 0x0fff & (node_num);
 
+    sniffer_zep_node_id = node_id;
     append_data(cmd_buff, &node_id,  sizeof(uint16_t));
     return ret;
 }

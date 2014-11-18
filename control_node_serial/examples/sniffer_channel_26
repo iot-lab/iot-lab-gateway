@@ -4,6 +4,8 @@ set_time
 
 start dc
 
+set_node_id m3 66
+
 config_radio_sniffer 26 0
 
 

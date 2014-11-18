@@ -15,6 +15,8 @@ void mock_exit(int status);
 #include "command_parser.c"  // MAYBE REMOVE LATER
 struct timeval set_time_ref;
 
+uint16_t sniffer_zep_node_id;  // needed by sniffer_zep
+
 
 /* Mock EXTERNAL dependency functions
  * with function definition

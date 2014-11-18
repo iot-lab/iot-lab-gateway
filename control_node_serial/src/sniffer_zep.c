@@ -3,6 +3,14 @@
 #include "sniffer_server.h"
 #include "sniffer_zep.h"
 
+/*
+ * RFC 5905                   NTPv4 Specification                 June 2010
+ */
+/* 1970 - 1900 in seconds */
+#define JAN_1970        2208988800UL
+/* 2^32 as an int */
+#define FRAC       (((uint64_t)1) << 32)
+
 #define ZEP_V2_HEADER_LEN   32
 #define ZEP_V2_ACK_LEN      8
 
@@ -17,9 +25,10 @@ static const struct {
     const uint8_t preamble_2;
     const uint8_t zep_version;
     const uint8_t packet_type;
-} zep_header = {'E', 'X', '2', ZEP_V2_TYPE_DATA};
+} zep_header = {'E', 'X', '\x02', ZEP_V2_TYPE_DATA};
 static const uint8_t lqi_crc_mode = ZEP_V2_MODE_LQI;
-static const uint16_t ne_mote_id = 0;  // TODO
+
+uint16_t sniffer_zep_node_id;
 
 static void append_data(uint8_t **dst, const uint8_t *src, size_t len);
 
@@ -45,9 +54,15 @@ void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
 
     static uint32_t seqno = 0;
     uint32_t ne_seqno       = htonl(++seqno);
-    uint32_t ne_t_s         = htonl(timestamp_s);
-    uint32_t ne_t_us        = htonl(timestamp_us);
     uint16_t ne_rx_time_len = htons(rx_time_len);
+    uint16_t ne_mote_id     = htons(sniffer_zep_node_id);
+
+    uint64_t timestamp_nt = 0;
+    timestamp_nt |= (((uint64_t)timestamp_s + JAN_1970) << 32);
+    timestamp_nt |= (((uint64_t)timestamp_us) * FRAC) / 1000000;
+    uint32_t ne_t_msb       = htonl(timestamp_nt >> 32);
+    uint32_t ne_t_lsb       = htonl(timestamp_nt | 0xFFFFFFFF);
+
 
     uint8_t zep_packet[256] = {0};
     uint8_t *pkt = zep_packet;
@@ -59,8 +74,8 @@ void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
     append_data(&pkt, &lqi_crc_mode, sizeof(uint8_t));
     append_data(&pkt, &lqi, sizeof(uint8_t));
 
-    append_data(&pkt, (uint8_t *)&ne_t_s, sizeof(uint32_t));
-    append_data(&pkt, (uint8_t *)&ne_t_us, sizeof(uint32_t));
+    append_data(&pkt, (uint8_t *)&ne_t_msb, sizeof(uint32_t));
+    append_data(&pkt, (uint8_t *)&ne_t_lsb, sizeof(uint32_t));
 
     append_data(&pkt, (uint8_t *)&ne_seqno, sizeof(uint32_t));
 

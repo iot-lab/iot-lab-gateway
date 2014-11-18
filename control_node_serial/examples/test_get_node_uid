@@ -1,0 +1,29 @@
+start dc
+start dc
+set_time
+
+
+set_node_id m3 0
+
+
+
+set_node_id m3 10
+
+
+
+set_node_id m3 256
+
+
+
+
+set_node_id m3 512
+
+
+
+set_node_id a8 1
+
+
+
+
+set_node_id a8 255
+
