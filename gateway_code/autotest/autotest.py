@@ -105,7 +105,7 @@ class AutoTestManager(object):
         """
         ret_val = 0
         try:
-            ret_val += gateway_code.open_node.NodeA8.wait_tty_a8(
+            ret_val += gateway_code.open_node.wait_tty(
                 config.OPEN_A8_CFG['tty'], timeout=20)
 
             # wait nodes start

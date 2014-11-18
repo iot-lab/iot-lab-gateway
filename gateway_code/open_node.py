@@ -26,6 +26,7 @@ class NodeM3(object):
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
         ret_val = 0
+        ret_val += wait_tty(config.NODES_CFG['m3']['tty'], timeout=1)
         ret_val += self.g_m.node_flash('m3', firmware_path)
         ret_val += self.serial_redirection.start()
         # ret_val += self.gdb_server.start()
@@ -49,7 +50,7 @@ class NodeA8(object):
     def setup(self, firmware_path):  # pylint: disable=unused-argument
         """ Wait that open nodes tty appears and start A8 boot log """
         # 15 secs was not always enough
-        ret = self.wait_tty_a8(config.OPEN_A8_CFG['tty'], timeout=20)
+        ret = wait_tty(config.OPEN_A8_CFG['tty'], timeout=20)
         if ret == 0:
             # Timeout 15 minutes for boot (we saw 10minutes boot already)
             self._debug_a8_boot_start(15*60, config.OPEN_A8_CFG)
@@ -59,16 +60,6 @@ class NodeA8(object):
         """ Stop A8 boot log """
         self._debug_a8_boot_stop_thread()
         return 0
-
-    @staticmethod
-    def wait_tty_a8(a8_tty, timeout=0):
-        """ Procedure to call at a8 startup
-        It runs sanity checks and start debug features """
-        # Test if open a8 tty correctly appeared
-        if common.wait_cond(timeout, True, os.path.exists, a8_tty):
-            return 0
-        LOGGER.error('Error Open A8 tty not visible: %s', a8_tty)
-        return 1
 
     def _debug_a8_boot_start(self, timeout, open_a8_cfg):
         """ A8 boot debug thread start """
@@ -95,3 +86,11 @@ class NodeA8(object):
             self._a8_expect.serial_fd.close()
         except AttributeError:  # pragma: no cover
             pass
+
+
+def wait_tty(dev_tty, timeout=0):
+    """ Wait that tty is present """
+    if common.wait_cond(timeout, True, os.path.exists, dev_tty):
+        return 0
+    LOGGER.error('Error Open Node tty not visible: %s', dev_tty)
+    return 1
