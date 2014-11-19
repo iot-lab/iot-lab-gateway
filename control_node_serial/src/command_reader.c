@@ -527,7 +527,7 @@ int write_answer(unsigned char *data, size_t len)
         }
         PRINT_MSG("%s %s\n", cmd, arg);
     }
-    return 0;
+    return got_error;
 }
 
 
@@ -553,11 +553,10 @@ static void *read_commands(void *attr)
             PRINT_ERROR("Invalid command: '%s'\n", command_save);
         } else {
             DEBUG_PRINT("    ");
-            DEBUG_PRINT_PACKET(cmd_buff.u.pkt,
-                    2 + cmd_buff.u.s.len);
+            DEBUG_PRINT_PACKET(cmd_buff.u.pkt, 2 + cmd_buff.u.s.len);
             ret = write(reader_state->serial_fd, cmd_buff.u.pkt,
                     cmd_buff.u.s.len + 2);
-            DEBUG_PRINT("    write ret: %i\n", ret);
+            DEBUG_PRINT("    write ret: %i\n", ret); (void) ret;
         }
     }
     exit(0);

@@ -464,6 +464,11 @@ TEST(test_write_answer, valid_answers)
         ret = write_answer(data, 2);
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("test_got_pps ACK\n", print_buff);
+
+        data[0] = 0xFF;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_NE(0, ret);
 }
 
 TEST(test_write_answer, invalid_answers)
