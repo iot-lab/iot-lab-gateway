@@ -194,8 +194,8 @@ static int cmd_set_node_id(char *cmd_str, struct command_buffer *cmd_buff,
 {
     /* cmd_str == "%s <m3|a8> <node_num>" */
     int ret = 0;
-    char archi_str[8];
-    uint8_t archi;
+    char archi_str[8] = {0};
+    uint8_t archi = 0;
     uint16_t node_num = 0;
 
     uint16_t node_id = 0;
@@ -217,8 +217,8 @@ static int cmd_alim(char *cmd_str, struct command_buffer *cmd_buff,
 {
     /* cmd_str == "<start|stop> <dc|battery>" */
     int ret = 0;
-    uint8_t val;
-    char arg[32];
+    uint8_t val = 0;
+    char arg[32] = {0};
 
     sscanf(cmd_str, command->fmt, arg);
     // <dc|battery>
@@ -234,8 +234,8 @@ static int cmd_start_stop_args(char *cmd_str, struct command_buffer *cmd_buff,
     /* cmd_str == "%s <start|stop>" */
 
     int ret = 0;
-    uint8_t val;
-    char arg[32];
+    uint8_t val = 0;
+    char arg[32] = {0};
 
     sscanf(cmd_str, command->fmt, arg);
     // <start|stop>
@@ -253,12 +253,12 @@ static int cmd_consumption(char *cmd_str, struct command_buffer *cmd_buff,
      */
 
     int ret = 0;
-    uint8_t val;
+    uint8_t val = 0;
 
-    char start_stop[8];
-    char pw_src[8];
-    int p, v, c;
-    char period[8], average[8];
+    char start_stop[8] = {0};
+    char pw_src[8] = {0};
+    int p = 0, v = 0, c = 0;
+    char period[8] = {0}, average[8] = {0};
     uint8_t state = 0;
 
     sscanf(cmd_str, command->fmt, start_stop, pw_src, &p, &v, &c,
@@ -363,10 +363,10 @@ static int cmd_radio_pp(char *cmd_str, struct command_buffer *cmd_buff,
      */
 
     int ret = 0;
-    uint8_t state;
-    char start_stop[8];
-    char tx_power[8];
-    unsigned int channel;
+    uint8_t state = 0;
+    char start_stop[8] = {0};
+    char tx_power[8] = {0};
+    unsigned int channel = 0;
 
     sscanf(cmd_str, command->fmt, start_stop, &channel, tx_power);
 
@@ -433,7 +433,7 @@ static char *cstrtok(const char *s)
 static int parse_cmd(char *line_buff, struct command_buffer *cmd_buff)
 {
     struct command_description *cmd = NULL;
-    uint8_t cmd_type;
+    uint8_t cmd_type = 0;
     int ret = 0;
 
     cmd = command_parse(line_buff, commands);
