@@ -59,7 +59,7 @@ SCRIPTS += ['control_node_serial/' + config.CONTROL_NODE_SERIAL_INTERFACE]
 
 EXT_MODULES = Extension(config.CONTROL_NODE_SERIAL_INTERFACE, [])
 
-INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'recordtype', 'pyserial']
+INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
 TESTS_REQUIRES = ['nose>=1.3', 'pylint', 'nosexcover', 'mock', 'pep8']
 
 # unload 'gateway_code.config' module
