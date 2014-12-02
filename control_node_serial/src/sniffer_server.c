@@ -21,13 +21,7 @@ static struct {
     volatile int socket_fd;
     volatile int active_connection;
     volatile int connect_fd;
-} sniffer_state = {
-    .thread            = 0,
-    .running           = 0,
-    .socket_fd         = -1,
-    .active_connection = 0,
-    .connect_fd        = -1,
-};
+} sniffer_state = {0, 0, -1, 0, -1};
 
 static void *sniffer_thread(void *attr);
 static int create_server_socket(void);
