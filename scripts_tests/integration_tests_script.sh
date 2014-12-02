@@ -1,12 +1,13 @@
 #! /bin/bash
 
+CUR_DIR="$(readlink -e $(dirname $0))"
 SRC_DIR="$(readlink -e $(dirname $0)/..)"
 DEST="/tmp/fit-dev/"
 
 # options
 
 verbose=0
-SSH_OPT='-o StrictHostKeyChecking=no'
+SSH_OPT='-o StrictHostKeyChecking=no -F '"${CUR_DIR}/ssh_config"''
 tests_only=0
 sync_only=0
 TESTS_ARGS=''
