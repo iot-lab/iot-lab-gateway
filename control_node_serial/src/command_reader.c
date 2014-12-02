@@ -541,13 +541,14 @@ static void *read_commands(void *attr)
     char *command_save  = (char *)malloc(2048);
     int ret;
 
-    int n;
+    int n = 0;
     PRINT_MSG("cn_serial_ready\n");
     while ((n = getline(&line_buff, &buff_size, stdin)) != -1) {
         DEBUG_PRINT("Command: %s: ", line_buff);
         line_buff[n - 1] = '\0'; // remove new line
+
         strncpy(command_save, line_buff, 2048);
-        DEBUG_PRINT("Command: %s: ", line_buff);
+        DEBUG_PRINT("Command: '%s'\n", line_buff);
         ret = parse_cmd(line_buff, &cmd_buff);
         if (ret) {
             PRINT_ERROR("Invalid command: '%s'\n", command_save);

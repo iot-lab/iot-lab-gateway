@@ -15,7 +15,7 @@
 
 
 #if DEBUG
-#define DEBUG_PRINT(args ...) fprintf(LOG, args)
+#define DEBUG_PRINT(args ...) fprintf(LOG, "DEBUG: "args)
 #else
 #define DEBUG_PRINT(args ...)
 #endif

@@ -21,7 +21,13 @@ static struct {
     volatile int socket_fd;
     volatile int active_connection;
     volatile int connect_fd;
-} sniffer_state = {0, 0, 0, 0, 0};
+} sniffer_state = {
+    .thread            = 0,
+    .running           = 0,
+    .active_connection = 0,
+    .socket_fd         = -1,
+    .connect_fd        = -1,
+};
 
 static void *sniffer_thread(void *attr);
 static int create_server_socket(void);
@@ -34,6 +40,8 @@ int sniffer_server_start()
         return 1;
     sniffer_state.socket_fd = socket_fd;
     sniffer_state.running = 1;
+    sniffer_state.active_connection = 0;
+    sniffer_state.connect_fd = -1;  // default to an invalid filedescriptor
     return pthread_create(&sniffer_state.thread, NULL, sniffer_thread, NULL);
 }
 
@@ -44,6 +52,7 @@ void sniffer_server_stop()
     sniffer_state.running = 0;
     close(sniffer_state.connect_fd);
     close(sniffer_state.socket_fd);
+    sniffer_state.connect_fd = -1;  // default to an invalid filenumber
 }
 
 
@@ -88,8 +97,7 @@ static int create_server_socket()
     return s_fd;
 
 cleanup:
-    if (s_fd != -1)
-        close(s_fd);
+    close(s_fd);
     return -1;
 }
 
@@ -111,7 +119,7 @@ cleanup:
 static void *sniffer_thread(void *attr)
 {
     (void)attr;
-    int connect_fd;
+    int connect_fd = -1;
     while (sniffer_state.running) {
         connect_fd = accept(sniffer_state.socket_fd, NULL, NULL);
         if (0 > connect_fd) {
@@ -121,8 +129,10 @@ static void *sniffer_thread(void *attr)
         }
 
         // Keep only one connection active
-        shutdown(sniffer_state.connect_fd, SHUT_RDWR);
-        close(sniffer_state.connect_fd);
+        if (0 > sniffer_state.connect_fd) {
+            shutdown(sniffer_state.connect_fd, SHUT_RDWR);
+            close(sniffer_state.connect_fd);
+        }
 
         // Keep the order synced with send_packet
         // set active_connection AFTER saving connect_fd
@@ -157,7 +167,7 @@ static void *sniffer_thread(void *attr)
 int sniffer_server_send_packet(const void *data, size_t len)
 {
     int ret;
-    int connect_fd;
+    int connect_fd = -1;
 
     // Keep the 'active_connection' and 'connect_fd' affectations synced with
     // server thread
