@@ -24,8 +24,8 @@ static struct {
 } sniffer_state = {
     .thread            = 0,
     .running           = 0,
-    .active_connection = 0,
     .socket_fd         = -1,
+    .active_connection = 0,
     .connect_fd        = -1,
 };
 
