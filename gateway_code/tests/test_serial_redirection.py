@@ -14,7 +14,11 @@ from gateway_code import serial_redirection
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
+# pylint <= 1.3
 # pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-member
 
 
 @mock.patch('sys.stderr', StringIO())

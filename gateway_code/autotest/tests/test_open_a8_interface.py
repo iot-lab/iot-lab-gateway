@@ -1,6 +1,10 @@
 # -*- coding:utf-8 -*-
 # pylint: disable=missing-docstring
+# pylint <= 1.3
 # pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-member
 
 import unittest
 from gateway_code.autotest import open_a8_interface

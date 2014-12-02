@@ -34,12 +34,11 @@ import os
 import subprocess
 
 from gateway_code import config
-# Disable: R0904 - Too many public methods
-# Disable: W0201 - Attribute '%s' defined outside __init__
-# Disable: C0111 - Missing docstring (for Command methods)
-# Disable: R0201 - Method could be a function (Command.run)
-# Disable: W0232 - Class has no __init__ method
-# pylint: disable=R0904,W0201,C0111,R0201,W0232
+# pylint: disable=attribute-defined-outside-init
+# pylint <= 1.3
+# pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
 
 
 # change to script directory
@@ -85,13 +84,12 @@ class _Tee(object):
         self.file.close()
 
     def write(self, data):
-        """
-        Write data to stdout and file
-        """
+        """ Write data to stdout and file """
         self.file.write(data)
         self.stdout.write(data)
 
     def flush(self):
+        """ Flush the two files """
         self.file.flush()
         self.stdout.flush()
 

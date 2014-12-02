@@ -9,8 +9,12 @@ from mock import patch
 from gateway_code.autotest import autotest
 
 # pylint: disable=missing-docstring
-# pylint: disable=too-many-public-methods
 # pylint: disable=protected-access
+# pylint <= 1.3
+# pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-member
 
 
 class TestProtocol(unittest.TestCase):

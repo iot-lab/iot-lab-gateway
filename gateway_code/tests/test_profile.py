@@ -14,8 +14,12 @@ PROFILES_DIR = CURRENT_DIR + 'profiles/'
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
-# pylint: disable=too-many-public-methods
 # pylint: disable=star-args
+# pylint <= 1.3
+# pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-member
 
 
 class TestsSimpleProfile(unittest.TestCase):

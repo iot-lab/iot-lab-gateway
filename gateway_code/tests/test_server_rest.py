@@ -9,7 +9,11 @@ Complement the 'integration' tests
 # too long tests names
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
+# pylint <= 1.3
 # pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-member
 
 from cStringIO import StringIO
 

@@ -17,9 +17,13 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
 
 # pylint: disable=missing-docstring
-# pylint: disable=too-many-public-methods
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
+# pylint <= 1.3
+# pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-member
 
 
 @patch('gateway_code.config.board_type', (lambda: 'NOT_A_BOARD'))

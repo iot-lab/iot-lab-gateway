@@ -10,7 +10,11 @@ from gateway_code.autotest import expect
 import serial
 
 # pylint: disable=missing-docstring
+# pylint <= 1.3
 # pylint: disable=too-many-public-methods
+# pylint >= 1.4
+# pylint: disable=too-few-public-methods
+# pylint: disable=no-member
 
 
 class TestSerialExpect(unittest.TestCase):
