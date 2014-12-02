@@ -1,0 +1,1 @@
+{"nodearch":"m3","power":"dc","consumption":{"period":8244,"average":4,"current":false,"voltage":false,"power":false},"radio":{"period":null,"mode":"sniffer","channels":[15],"num_per_channel":null},"mobility":null,"profilename":"test_sniffer"}
