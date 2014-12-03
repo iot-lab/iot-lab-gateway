@@ -7,7 +7,7 @@ DEST="/tmp/fit-dev/"
 # options
 
 verbose=0
-SSH_OPT='-o StrictHostKeyChecking=no -F '"${CUR_DIR}/ssh_config"''
+SSH_OPT='-o StrictHostKeyChecking=no'
 tests_only=0
 sync_only=0
 TESTS_ARGS=''
