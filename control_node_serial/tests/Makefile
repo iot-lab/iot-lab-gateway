@@ -1,10 +1,19 @@
 .PHONY: all run clean realclean gcovr
 quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
-valgrind_cmd = valgrind \
+
+
+# disable valgrind on gateways
+ifeq ($(shell uname -m), armv7l)
+	# valgrind segfaults on test 'configure_tty.with_socat'
+	# and makes test_parse_cmd.simple_commands fail also
+	valgrind_cmd =
+else
+	valgrind_cmd = valgrind \
 				--tool=memcheck --leak-check=full \
 				--track-origins=yes --suppressions=utils/valgrind.supp \
 				-q
 				# --gen-suppressions=all
+endif
 
 COV          = -fprofile-arcs -ftest-coverage
 OMLFLAGS     = -Wl,-rpath,/usr/local/lib -loml2
