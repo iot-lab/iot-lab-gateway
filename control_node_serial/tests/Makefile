@@ -64,8 +64,8 @@ $(RESULTDIR)/c_code_coverage.xml: $(TEST_RESULTS)
 
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
 	$(call quiet-cmd, \
+		valgrind -q --track-origins=yes --suppressions=utils/valgrind.supp \
 		./$^ --gtest_output=xml:$@, "  $^")
-# valgrind -q --track-origins=yes --suppressions=utils/valgrind.supp \
 
 
 $(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a $(CMOCKA_OBJS)
