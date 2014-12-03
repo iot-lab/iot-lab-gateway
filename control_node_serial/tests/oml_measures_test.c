@@ -177,6 +177,7 @@ TEST(test_oml_measures, init_and_stop_error_cases)
     omlc_init_mock_ret = -1;
     ret_init = oml_measures_start(OML_CONFIG_PATH, 0);
     ASSERT_EQ(-1, ret_init);
+    omlc_start();
 
     // error on omlc_start
     omlc_init_do_mock = 0;

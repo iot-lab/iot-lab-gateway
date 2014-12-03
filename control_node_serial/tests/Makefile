@@ -1,6 +1,10 @@
 .PHONY: all run clean realclean gcovr
 quiet-cmd = $(if $(VERB),$1,$(if $(2),@echo $2 && $1, @$1))
-
+valgrind_cmd = valgrind \
+				--tool=memcheck --leak-check=full \
+				--track-origins=yes --suppressions=utils/valgrind.supp \
+				-q
+				# --gen-suppressions=all
 
 COV          = -fprofile-arcs -ftest-coverage
 OMLFLAGS     = -Wl,-rpath,/usr/local/lib -loml2
@@ -63,9 +67,7 @@ $(RESULTDIR)/c_code_coverage.xml: $(TEST_RESULTS)
 	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -b -x -o $@, "  GCOV  $@")
 
 $(TEST_RESULTS) : $(RESULTDIR)/%.xml : $(BINDIR)/%
-	$(call quiet-cmd, \
-		valgrind -q --track-origins=yes --suppressions=utils/valgrind.supp \
-		./$^ --gtest_output=xml:$@, "  $^")
+	$(call quiet-cmd, $(valgrind_cmd) ./$^ --gtest_output=xml:$@, "  $^")
 
 
 $(TESTS): $(BINDIR)/% : $(OBJDIR)/%.o $(OBJDIR)/gtest_main.a $(CMOCKA_OBJS)

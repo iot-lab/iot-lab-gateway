@@ -162,6 +162,7 @@ int command_reader_start(int serial_fd)
     reader_state.serial_fd = serial_fd;
     ret = pthread_create(&reader_state.thread, NULL, read_commands,
             &reader_state);
+    pthread_detach(reader_state.thread);
     return ret;
 }
 
@@ -560,6 +561,8 @@ static void *read_commands(void *attr)
             DEBUG_PRINT("    write ret: %i\n", ret); (void) ret;
         }
     }
+    free(line_buff);
+    free(command_save);
     exit(0);
     return NULL;
 }
