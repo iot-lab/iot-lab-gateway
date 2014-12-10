@@ -81,7 +81,7 @@ class TestRestMethods(unittest.TestCase):
         self.g_m.exp_start.return_value = 0
 
         self.request.files = {'firmware': idle, 'profile': profile}
-        ret_dict = self.s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', 123)
         self.assertEquals(0, ret_dict['ret'])
 
         # validate arguments
@@ -95,7 +95,7 @@ class TestRestMethods(unittest.TestCase):
         profile = FileUpload('invalid json profile}', 'inval_profile.json')
 
         self.request.files = {'profile': profile}
-        ret_dict = self.s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', 123)
         self.assertNotEquals(0, ret_dict['ret'])
 
     def test_exp_start_no_files(self):
@@ -104,7 +104,7 @@ class TestRestMethods(unittest.TestCase):
         # nothing in files
         self.request.files = {}
         self.request.query = mock.Mock(timeout='')
-        ret_dict = self.s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', 123)
 
         # validate
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
@@ -115,16 +115,16 @@ class TestRestMethods(unittest.TestCase):
         self.request.files = {}
 
         self.request.query = mock.Mock(timeout='12')
-        self.s_r.exp_start('user', '123')
+        self.s_r.exp_start('user', 123)
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 12)
 
         # invalid data
         self.request.query = mock.Mock(timeout='ten_minutes')
-        self.s_r.exp_start('user', '123')
+        self.s_r.exp_start('user', 123)
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
         self.request.query = mock.Mock(timeout='-1')
-        self.s_r.exp_start('user', '123')
+        self.s_r.exp_start('user', 123)
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
     def test_exp_start_multipart_without_files(self):
@@ -134,7 +134,7 @@ class TestRestMethods(unittest.TestCase):
         self.request.files.__contains__ = mock.Mock(side_effect=ValueError())
         self.request.files.__getitem__ = mock.Mock(side_effect=ValueError())
         self.request.query = mock.Mock(timeout='')
-        ret_dict = self.s_r.exp_start('user', '123')
+        ret_dict = self.s_r.exp_start('user', 123)
 
         # validate
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)

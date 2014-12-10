@@ -60,7 +60,6 @@ class GatewayRest(object):
         Query string: 'timeout' int
         """
 
-        exp_id = int(exp_id)
         LOGGER.debug('REST: Start experiment: %s-%i', user, exp_id)
         try:
             timeout = max(0, int(request.query.timeout))
