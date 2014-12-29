@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 #include <sys/time.h>
+#include <arpa/inet.h>
 #include <math.h>
 
 #include "time_ref.h"
@@ -14,7 +15,7 @@
 #include "constants.h"
 #include "oml_measures.h"
 #include "measures_handler.h"
-#include "sniffer_zep.h"
+#include "sniffer_server.h"
 
 
 struct consumption_measure {
@@ -109,40 +110,55 @@ static void radio_handler(uint8_t *buf, struct timeval *time)
             radio.channel, radio.rssi);
 }
 
+
+/*
+ * RFC 5905                   NTPv4 Specification                 June 2010
+ */
+/* 1970 - 1900 in seconds */
+#define JAN_1970        2208988800UL
+/* 2^32 as an int */
+#define FRAC       (((uint64_t)1) << 32)
+
+enum zep_format_t {
+    zep_idx_preamble             = 0,
+    zep_idx_version              = 2,
+    zep_idx_type                 = 3,
+
+    zep_idx_channel              = 4,
+    zep_idx_device_id            = 5,
+    zep_idx_lqi                  = 8,
+    zep_idx_ntp_time_msb         = 9,
+    zep_idx_ntp_time_lsb         = 13,
+    zep_idx_seqno                = 17,
+
+    zep_idx_reserved             = 21,
+    zep_idx_reserved_rx_time_len = 21,
+    zep_idx_reserved_rssi        = 23,
+    zep_idx_len                  = 31,
+};
+
 static void handle_radio_sniffer(uint8_t *data, size_t len)
 {
-    uint8_t payload[128];
     size_t rlen;
     struct timeval timestamp;
-    uint16_t rx_time_len;
+    uint32_t timestamp_ntp_msb;
+    uint32_t timestamp_ntp_lsb;
     uint8_t channel;
-    uint8_t crc_ok;
     int8_t rssi;
     uint8_t lqi;
     uint8_t pkt_len;
 
-
-    /*
-     * header + timestamp, channel, rssi, lqi, crc_ok, [captured length, payload]
-     */
     uint8_t *data_ptr = &data[1];
     rlen = 1;  //header
 
     // Could read captured_length
-    rlen += sizeof(timestamp) + sizeof(uint16_t) + 5 * sizeof(uint8_t);
+    rlen += (zep_idx_len + 1);
     if (len < rlen) {
         PRINT_ERROR("Invalid sniff pkt len: %zu < %zu(len)\n", len, rlen);
         return;
     }
 
-    extract_data((uint8_t *)&timestamp,   &data_ptr, sizeof(timestamp));
-    extract_data((uint8_t *)&rx_time_len, &data_ptr, sizeof(rx_time_len));
-    extract_data((uint8_t *)&channel,     &data_ptr, sizeof(channel));
-    extract_data((uint8_t *)&rssi,        &data_ptr, sizeof(rssi));
-    extract_data((uint8_t *)&lqi,         &data_ptr, sizeof(lqi));
-    extract_data((uint8_t *)&crc_ok,      &data_ptr, sizeof(crc_ok));
-    extract_data((uint8_t *)&pkt_len,     &data_ptr, sizeof(pkt_len));
-
+    pkt_len = data_ptr[zep_idx_len];
     // big enough to get 'payload' value
     rlen += pkt_len;
     if (len != rlen) {
@@ -150,17 +166,21 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
         return;
     }
 
+    sniffer_server_send_packet(data, len);
+
+    // Extract data to put in oml traces
+    channel = data_ptr[zep_idx_channel];
+    lqi = data_ptr[zep_idx_lqi];
+    rssi = data_ptr[zep_idx_reserved_rssi];
+    memcpy(&timestamp_ntp_msb, &data_ptr[zep_idx_ntp_time_msb], sizeof(uint32_t));
+    memcpy(&timestamp_ntp_lsb, &data_ptr[zep_idx_ntp_time_lsb], sizeof(uint32_t));
+
+    timestamp.tv_sec = (uint32_t) (htonl(timestamp_ntp_msb) - JAN_1970);
+    timestamp.tv_usec = (uint32_t) (((uint64_t)htonl(timestamp_ntp_lsb) * 1000000) / FRAC);
 
     oml_measures_sniffer(timestamp.tv_sec, timestamp.tv_usec,
-            channel, rssi, lqi, crc_ok, pkt_len);
-
-    /* Handle payload */
-    if (crc_ok) {
-        // CRC is valid, pass data to sniffer socket
-        extract_data(payload, &data_ptr, pkt_len);
-        sniffer_zep_send(timestamp.tv_sec, timestamp.tv_usec, rx_time_len,
-                channel, rssi, lqi, crc_ok, pkt_len, payload);
-    }
+            channel, rssi, lqi, 1,  // crc_ok
+            pkt_len - 2);  // Added two bytes for ZEP maybe remove later
 }
 
 static void consumption_handler(uint8_t *buf, struct timeval *time)

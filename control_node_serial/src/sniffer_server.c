@@ -50,12 +50,6 @@ void sniffer_server_stop()
 }
 
 
-int sniffer_server_has_active_connection()
-{
-    return sniffer_state.active_connection;
-}
-
-
 static int create_server_socket()
 {
     struct sockaddr_in s_addr;
@@ -162,6 +156,9 @@ int sniffer_server_send_packet(const void *data, size_t len)
 {
     int ret;
     int connect_fd = -1;
+
+    if (!sniffer_state.active_connection)
+        return
 
     // Keep the 'active_connection' and 'connect_fd' affectations synced with
     // server thread
