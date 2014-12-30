@@ -35,8 +35,8 @@ class Profile(object):
                 _current = 'radio'
                 self.radio = Radio(**radio)
 
-        except TypeError:
-            raise ValueError("Error in %s arguments" % _current)
+        except TypeError as err:
+            assert False, "Error in %s arguments %r" % (_current, err)
 
 
 class Consumption(object):
@@ -47,12 +47,23 @@ class Consumption(object):
         ('m3', 'battery'): 'BATT',
         ('a8', 'battery'): 'BATT',
     }
+    choices = {
+        'consumption': {
+            'period': [140, 204, 332, 588, 1100, 2116, 4156, 8244],
+            'average': [1, 4, 16, 64, 128, 256, 512, 1024]},
+    }
 
     def __init__(self, source, board_type, period, average,
                  power=False, voltage=False, current=False):
+        _err = "Required values period/average for consumption measure."
+        assert period is not None and average is not None, _err
+
+        assert int(period) in self.choices['consumption']['period']
+        assert int(average) in self.choices['consumption']['average']
+
         self.source = self.consumption_source[(board_type, source)]
-        self.period = period
-        self.average = average
+        self.period = int(period)
+        self.average = int(average)
 
         self.power = power
         self.voltage = voltage
@@ -61,9 +72,17 @@ class Consumption(object):
 
 class Radio(object):
     """ Radio monitoring configuration """
+    choices = {
+        'radio': {'channels': range(11, 27)},
+        'rssi': {'num_per_channel': range(0, 256), 'period': range(1, 2**16)},
+        'sniffer': {'period': range(0, 2**16)}
+    }
 
     def __init__(self, mode, channels, period=None, num_per_channel=None):
         # power=None, pkt_size=None
+        assert len(channels)
+        for channel in channels:
+            assert channel in self.choices['radio']['channels']
 
         self.mode = mode
         self.channels = channels
@@ -83,35 +102,33 @@ class Radio(object):
         """ raise ValueError if self is not a 'valid' configuration """
 
         # Channels not empty
-        if 0 == len(self.channels):
-            raise ValueError
         # all channels must be in [11, 26]
-        if len(set(self.channels) - set(range(11, 26 + 1))):
-            raise ValueError("Radio->channels %r:" % self.channels)
 
         #
         # Mode
         #
         # RSSI
         if self.mode == "rssi":
-            if self.period not in range(1, 2**16):
-                raise ValueError("Radio->rssi->period %r" % self.period)
-            if self.num_per_channel is None:
-                raise ValueError("Radio->rssi->num_per_channel %r" %
-                                 self.num_per_channel)
+            _err = "Required 'channels/period' for radio rssi measure"
+            assert self.period is not None and self.channels is not None, _err
+
+            # num_per_channels is required when multiple channels are given
+            _err = "Required 'num_per_channels' as multiple channels provided"
+            assert len(self.channels) == 1 or self.num_per_channel != 0, _err
+            assert self.period in self.choices['rssi']['period']
+            assert self.num_per_channel in \
+                self.choices['rssi']['num_per_channel']
+
         # Sniffer
         elif self.mode == "sniffer":
-            if self.period is None:
-                self.period = 0
-            if self.period not in range(0, 2**16):
-                raise ValueError("Radio->sniffer->period %r" % self.period)
+            self.period = self.period or 0
 
-            # There should only be a period if there are many channels
-            if ((self.period == 0) and (len(self.channels) != 1) or
-                    (self.period != 0) and (len(self.channels) == 1)):
-                raise ValueError("Radio->sniffer->period/channels %r %r" %
-                                 (self.period, self.channels))
+            # num_per_channels is required when multiple channels are given
+            _err = "Required 'period' as multiple channels provided"
 
-        # Error
-        else:
-            raise ValueError("Radio->mode %r" % self.mode)
+            assert self.period in self.choices['sniffer']['period']
+            # period only if there are more than 1 channel
+            assert bool(self.period) == (len(self.channels) != 1)
+            assert self.num_per_channel is None
+
+        assert self.mode in ('rssi', 'sniffer')

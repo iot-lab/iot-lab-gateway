@@ -272,7 +272,7 @@ class GatewayManager(object):
             return
         try:
             self.profile = Profile(board_type=self.board_type, **profile_dict)
-        except (ValueError, TypeError) as err:
+        except (ValueError, TypeError, AssertionError) as err:
             LOGGER.error('Invalid profile: %r', err)
             raise ValueError
 

@@ -44,8 +44,13 @@ class TestsSimpleProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(Exception, gateway_code.profile.Profile,
-                                  board_type='m3', **profile_dict)
+                try:
+                    gateway_code.profile.Profile(board_type='m3',
+                                                 **profile_dict)
+                except (AssertionError, TypeError):
+                    pass
+                else:
+                    self.fail('Assertion not raised')
 
 
 class TestsConsumptionProfile(unittest.TestCase):
@@ -69,7 +74,7 @@ class TestsConsumptionProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(Exception, gateway_code.profile.Profile,
+                self.assertRaises(AssertionError, gateway_code.profile.Profile,
                                   board_type='m3', **profile_dict)
 
 
@@ -83,6 +88,7 @@ class TestsRadioProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
+                print profile_dict
                 ret = gateway_code.profile.Profile(board_type='m3',
                                                    **profile_dict)
                 self.assertTrue(ret.radio is not None, str(ret))
@@ -94,7 +100,7 @@ class TestsRadioProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                self.assertRaises(Exception, gateway_code.profile.Profile,
+                self.assertRaises(AssertionError, gateway_code.profile.Profile,
                                   board_type='m3', **profile_dict)
 
 

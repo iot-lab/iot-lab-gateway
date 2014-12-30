@@ -28,8 +28,8 @@ class TestProtocol(unittest.TestCase):
         # with full consumption
         consumption = profile.Consumption(source='dc',
                                           board_type='m3',
-                                          period='140us',
-                                          average='1',
+                                          period=140,
+                                          average=1,
                                           power=True,
                                           voltage=True,
                                           current=True)
@@ -37,19 +37,19 @@ class TestProtocol(unittest.TestCase):
         self.assertEquals(0, ret)
         self.sender.assert_called_with(['config_consumption_measure', 'start',
                                         '3.3V', 'p', '1', 'v', '1', 'c', '1',
-                                        '-p', '140us', '-a', '1'])
+                                        '-p', '140', '-a', '1'])
 
         # consumption without all elements
         consumption = profile.Consumption(source='battery',
                                           board_type='m3',
-                                          period='8244us',
-                                          average='1024',
+                                          period=8244,
+                                          average=1024,
                                           power=True)
         ret = self.protocol.config_consumption(consumption)
         self.assertEquals(0, ret)
         self.sender.assert_called_with(['config_consumption_measure', 'start',
                                         'BATT', 'p', '1', 'v', '0', 'c', '0',
-                                        '-p', '8244us', '-a', '1024'])
+                                        '-p', '8244', '-a', '1024'])
 
     def test_consumption_stop(self):
 
@@ -61,8 +61,8 @@ class TestProtocol(unittest.TestCase):
         # power, voltage, current == False
         consumption = profile.Consumption(source='dc',
                                           board_type='m3',
-                                          period='140us',
-                                          average='1')
+                                          period=140,
+                                          average=1)
         ret = self.protocol.config_consumption(consumption)
         self.sender.assert_called_with(['config_consumption_measure', 'stop'])
         self.assertEquals(0, ret)

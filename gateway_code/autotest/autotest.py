@@ -579,7 +579,7 @@ class AutoTestManager(object):
 
         # configure consumption
         # one measure every ~0.1 seconds
-        conso = Consumption('battery', board_type, '1100', '64',
+        conso = Consumption('battery', board_type, 1100, 64,
                             True, True, True)
         self.cn_measures = []
         ret_val += self.g_m.protocol.config_consumption(conso)

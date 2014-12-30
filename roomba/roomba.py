@@ -7,6 +7,9 @@ updated for Roomba500 by INRIA 07/08/13
 Manage sending commands and receiving messages
 """
 
+# pylint: disable=too-many-locals,bare-except
+# pylint: disable=too-many-branches,too-many-statements
+
 import serial
 import math
 import time
