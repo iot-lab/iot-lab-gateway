@@ -9,6 +9,7 @@
 #include <sys/time.h>
 #include <arpa/inet.h>
 #include <math.h>
+#include <assert.h>
 
 #include "time_ref.h"
 #include "common.h"
@@ -166,7 +167,7 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
         return;
     }
 
-    sniffer_server_send_packet(data, len);
+    sniffer_server_send_packet(data_ptr, len);
 
     // Extract data to put in oml traces
     channel = data_ptr[zep_idx_channel];
@@ -175,8 +176,8 @@ static void handle_radio_sniffer(uint8_t *data, size_t len)
     memcpy(&timestamp_ntp_msb, &data_ptr[zep_idx_ntp_time_msb], sizeof(uint32_t));
     memcpy(&timestamp_ntp_lsb, &data_ptr[zep_idx_ntp_time_lsb], sizeof(uint32_t));
 
-    timestamp.tv_sec = (uint32_t) (htonl(timestamp_ntp_msb) - JAN_1970);
-    timestamp.tv_usec = (uint32_t) (((uint64_t)htonl(timestamp_ntp_lsb) * 1000000) / FRAC);
+    timestamp.tv_sec = (uint32_t) (ntohl(timestamp_ntp_msb) - JAN_1970);
+    timestamp.tv_usec = (uint32_t) (((uint64_t)ntohl(timestamp_ntp_lsb) * 1000000) / FRAC);
 
     oml_measures_sniffer(timestamp.tv_sec, timestamp.tv_usec,
             channel, rssi, lqi, 1,  // crc_ok

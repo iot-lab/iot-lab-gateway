@@ -1,5 +1,8 @@
+#include <assert.h>
 #include <gtest/gtest.h>
 #include <cmocka.h>
+#include <string.h>
+#include <arpa/inet.h>
 
 #include <math.h>
 #include "mock.h"
@@ -65,22 +68,13 @@ void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
 }
 
 
-void sniffer_zep_send(uint32_t timestamp_s, uint32_t timestamp_us,
-                      uint16_t rx_time_len, uint8_t channel,
-                      int8_t rssi, uint8_t lqi,
-                      uint8_t crc_ok, uint8_t length, uint8_t *payload)
+size_t sniffer_server_send_packet(const uint8_t *data, size_t len)
 {
-    (void)timestamp_s;
-    (void)timestamp_us;
-    (void)rx_time_len;
-    (void)channel;
-    (void)rssi;
-    (void)lqi;
-    (void)crc_ok;
-    (void)length;
-    (void)payload;
-
+        int cmp = memcmp(data, "EX\02", 3);
+        check_expected(cmp);
+        return len;
 }
+
 TEST(handle_measure_pkt, test_different_packets)
 {
         unsigned char data[64] = {0};
@@ -329,85 +323,100 @@ TEST_F(test_handle_oml_measure, handle_radio_packet)
         measures_handler_stop();
 }
 
+#define JAN_1970        2208988800UL
+#define FRAC       (((uint64_t)1) << 32)
+
 TEST_F(test_handle_oml_measure, handle_radio_sniffer)
 {
 
         uint8_t data[256];
         int index = 0;
-        struct radio_measure radio;
-        size_t meas_size = sizeof(radio);  // channel rssi
 
-        struct timeval timestamp = {42, 999999};
+        uint16_t device_id = 3042;
+        uint32_t seqno = 1;
+
+        struct timeval timestamp = {42, 500000};
+        uint32_t t_ntp_msb = htonl((uint32_t)((uint64_t)42 + JAN_1970));
+        uint32_t t_ntp_lsb = htonl((uint32_t)(((uint64_t)500000 * FRAC)/1000000));
+
         uint16_t rx_time_len = 4000;
         uint8_t channel = 11;
         int8_t rssi = -91;
         uint8_t lqi = 254;
 
-
-
-        // only crc_ok false
-        uint8_t crc_ok = 0;
-        uint8_t pkt_len = 0;
-        index = 0;
         data[index++] = ((char)RADIO_SNIFFER_FRAME);
-        APPEND_TO_ARRAY(data, index, &timestamp,   sizeof(timestamp));
-        APPEND_TO_ARRAY(data, index, &rx_time_len, sizeof(rx_time_len));
-        APPEND_TO_ARRAY(data, index, &channel,     sizeof(channel));
-        APPEND_TO_ARRAY(data, index, &rssi,        sizeof(rssi));
-        APPEND_TO_ARRAY(data, index, &lqi,         sizeof(lqi));
-        APPEND_TO_ARRAY(data, index, &crc_ok,      sizeof(crc_ok));
-        APPEND_TO_ARRAY(data, index, &pkt_len,     sizeof(pkt_len));
+        data[index++] = 'E';
+        data[index++] = 'X';
+        data[index++] = '\02';
+        data[index++] = '1';  // Type Data
+        data[index++] = channel;
+        APPEND_TO_ARRAY(data, index, &device_id, sizeof(device_id));
+        data[index++] = 0;    // LQI Mode
+        data[index++] = lqi;
 
-        expect_value(oml_measures_sniffer, timestamp_s,  timestamp.tv_sec);
-        expect_value(oml_measures_sniffer, timestamp_us, timestamp.tv_usec);
-        expect_value(oml_measures_sniffer, channel,      channel);
-        expect_value(oml_measures_sniffer, crc_ok,       crc_ok);
-        expect_value(oml_measures_sniffer, rssi,         rssi);
-        expect_value(oml_measures_sniffer, lqi,          lqi);
-        expect_value(oml_measures_sniffer, length,       pkt_len);
+
+        APPEND_TO_ARRAY(data, index, &t_ntp_msb, sizeof(t_ntp_msb));
+        APPEND_TO_ARRAY(data, index, &t_ntp_lsb, sizeof(t_ntp_lsb));
+        APPEND_TO_ARRAY(data, index, &seqno,     sizeof(seqno));
+
+        // Add reserved bytes with our data
+        uint8_t reserved[10] = {0};
+        int idx = 0;
+        APPEND_TO_ARRAY(reserved, idx, &rx_time_len, sizeof(rx_time_len));
+        reserved[idx++] = (uint8_t)rssi;
+        APPEND_TO_ARRAY(data, index, &reserved, sizeof(reserved));
+
+        // Add payload now
+        int header_len = index;
+        uint8_t pkt_len = 0;
+
+
+        // No payload; let only 2 bytes as they are added for 'fake_crc'
+        index = header_len;
+        pkt_len = 2;
+        data[index++] = pkt_len;
+        index += pkt_len;
+
 
         // invalid len
         expect_calls(oml_measures_sniffer, 0);
         handle_radio_sniffer(data, index -1);
 
         // valid len
+        expect_value(oml_measures_sniffer, timestamp_s,  timestamp.tv_sec);
+        expect_value(oml_measures_sniffer, timestamp_us, timestamp.tv_usec);
+        expect_value(oml_measures_sniffer, channel,      channel);
+        expect_value(oml_measures_sniffer, crc_ok,       1);
+        expect_value(oml_measures_sniffer, rssi,         rssi);
+        expect_value(oml_measures_sniffer, lqi,          lqi);
+        expect_value(oml_measures_sniffer, length,       pkt_len -2);
+
+        expect_value(sniffer_server_send_packet, cmp, 0);
         expect_calls(oml_measures_sniffer, 1);
         handle_radio_sniffer(data, index);
 
 
-
-
-        /*
-         * Valid pkt
-         */
-
-        // With crc_ok
-        crc_ok  = 1;
+        // full packet
+        index = header_len;
         pkt_len = 125;
-        index   = 0;
-        data[index++] = ((char)RADIO_SNIFFER_FRAME);
-        APPEND_TO_ARRAY(data, index, &timestamp, sizeof(timestamp));
-        APPEND_TO_ARRAY(data, index, &rx_time_len, sizeof(rx_time_len));
-        APPEND_TO_ARRAY(data, index, &channel,   sizeof(channel));
-        APPEND_TO_ARRAY(data, index, &rssi,      sizeof(rssi));
-        APPEND_TO_ARRAY(data, index, &lqi,       sizeof(lqi));
-        APPEND_TO_ARRAY(data, index, &crc_ok,    sizeof(crc_ok));
-        APPEND_TO_ARRAY(data, index, &pkt_len,   sizeof(pkt_len));
+        data[index++] = pkt_len;
         index += pkt_len;
 
 
-        // Complete packet
-        expect_value(oml_measures_sniffer, timestamp_s, timestamp.tv_sec);
-        expect_value(oml_measures_sniffer, timestamp_us, timestamp.tv_usec);
-        expect_value(oml_measures_sniffer, channel, channel);
-        expect_value(oml_measures_sniffer, crc_ok, crc_ok);
-        expect_value(oml_measures_sniffer, rssi, rssi);
-        expect_value(oml_measures_sniffer, lqi, lqi);
-        expect_value(oml_measures_sniffer, length, pkt_len);
-
+        // invalid len
         expect_calls(oml_measures_sniffer, 0);
         handle_radio_sniffer(data, index -1);
 
+        // valid len
+        expect_value(oml_measures_sniffer, timestamp_s,  timestamp.tv_sec);
+        expect_value(oml_measures_sniffer, timestamp_us, timestamp.tv_usec);
+        expect_value(oml_measures_sniffer, channel,      channel);
+        expect_value(oml_measures_sniffer, crc_ok,       1);
+        expect_value(oml_measures_sniffer, rssi,         rssi);
+        expect_value(oml_measures_sniffer, lqi,          lqi);
+        expect_value(oml_measures_sniffer, length,       pkt_len -2);
+
+        expect_value(sniffer_server_send_packet, cmp, 0);
         expect_calls(oml_measures_sniffer, 1);
         handle_radio_sniffer(data, index);
 

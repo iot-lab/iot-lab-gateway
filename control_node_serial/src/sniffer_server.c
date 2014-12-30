@@ -152,13 +152,13 @@ static void *sniffer_thread(void *attr)
  *
  */
 
-int sniffer_server_send_packet(const void *data, size_t len)
+size_t sniffer_server_send_packet(const uint8_t *data, size_t len)
 {
     int ret;
     int connect_fd = -1;
 
     if (!sniffer_state.active_connection)
-        return
+        return 0;
 
     // Keep the 'active_connection' and 'connect_fd' affectations synced with
     // server thread
