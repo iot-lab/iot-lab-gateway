@@ -120,7 +120,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
             self.g_v.ret_dict['error'].append('setup')
             raise autotest.FatalError('Setup failed')
 
-        def teardown(_):
+        def teardown(blink):  # pylint:disable=unused-argument
             self.g_v.ret_dict['error'].append('teardown')
             return 1
 

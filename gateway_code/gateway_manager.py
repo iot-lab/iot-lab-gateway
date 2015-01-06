@@ -23,10 +23,7 @@ from gateway_code import gateway_logging
 LOGGER = gateway_logging.LOGGER
 
 
-# Disable: I0011 - 'locally disabling warning'
-# too many instance attributes
-# pylint:disable=I0011,R0902
-class GatewayManager(object):
+class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     """
     Gateway Manager class,
 

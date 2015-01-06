@@ -95,9 +95,7 @@ if [[ 1 -eq ${tests_only} ]]; then
     # Run only python tests
     ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "su www-data -c '\
         source /etc/profile; \
-        killall python; \
-        killall socat; \
-        killall control_node_serial_interface; \
+        killall python socat control_node_serial_interface; \
         python ${DEST}/gateway_code_python/setup.py \
         run_integration_tests --stop ${TESTS_ARGS}'"
 else
@@ -105,11 +103,8 @@ else
 
     ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "su www-data -c '\
         source /etc/profile; \
-        killall python; \
-        killall socat; \
-        killall control_node_serial_interface; \
-        python ${DEST}/gateway_code_python/setup.py \
-        integration ${TESTS_ARGS}'"
+        killall python socat control_node_serial_interface; \
+        python ${DEST}/gateway_code_python/setup.py integration ${TESTS_ARGS}'"
 
     # run control_node_serial tests
     ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "\

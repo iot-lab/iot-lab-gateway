@@ -24,6 +24,11 @@ from gateway_code.autotest.autotest import extract_measures
 USER = 'harter'
 
 
+if os.uname()[4] != 'armv7l':
+    import unittest
+    raise unittest.SkipTest("Skip board embedded tests")
+
+
 class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
     """ Create environment for running experiments """
 
@@ -71,7 +76,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
     def _send_command_multiple(self, command, num_times, step=0.5):
         """ Send a command multiple times and return array of answers """
         answers = []
-        for _ in range(0, num_times):
+        for _itr in range(0, num_times):  # pylint:disable=unused-variable
             answers.append(self._send_command_open_node(command))
             time.sleep(step)
         return answers
@@ -88,7 +93,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         elif 'a8' == gateway_code.config.board_type():
             self._run_simple_experiment_a8(m_error)
 
-    def _run_simple_experiment_a8(self, _):  # pylint:disable=unused-argument
+    def _run_simple_experiment_a8(self, moc):  # pylint:disable=unused-argument
         """ Run an experiment for a8 nodes """
 
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))

@@ -103,17 +103,18 @@ class TestGatewayManager(unittest.TestCase):
 # Measures folder and files management  #
 # # # # # # # # # # # # # # # # # # # # #
 
+    @patch('gateway_code.config.EXP_FILES_DIR', './iotlab/')
     def test_create_and_del_user_exp_files(self):  # pylint:disable=no-self-use
         """ Create files and clean them"""
-        with patch('gateway_code.config.EXP_FILES_DIR', './iotlab/'):
-            g_m = gateway_manager.GatewayManager()
-            g_m._create_user_exp_folders('user', 123)
-            g_m._create_user_exp_folders('user', 123)
-            g_m.create_user_exp_files('user', 123)
-            g_m.cleanup_user_exp_files()
-            g_m._destroy_user_exp_folders('user', 123)
-            g_m._destroy_user_exp_folders('user', 123)
+        g_m = gateway_manager.GatewayManager()
+        g_m._create_user_exp_folders('user', 123)
+        g_m._create_user_exp_folders('user', 123)
+        g_m.create_user_exp_files('user', 123)
+        g_m.cleanup_user_exp_files()
+        g_m._destroy_user_exp_folders('user', 123)
+        g_m._destroy_user_exp_folders('user', 123)
 
+    @patch('gateway_code.config.EXP_FILES_DIR', './iotlab/')
     def test__create_user_exp_files_fail(self):
         """ Create user_exp files fail """
         g_m = gateway_manager.GatewayManager()

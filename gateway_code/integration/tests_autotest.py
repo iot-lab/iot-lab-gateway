@@ -13,6 +13,12 @@ import gateway_code.autotest.m3_node_interface
 import gateway_code.autotest.autotest
 
 
+import os
+if os.uname()[4] != 'armv7l':
+    import unittest
+    raise unittest.SkipTest("Skip board embedded tests")
+
+
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
     """ Try running autotests on node """
 

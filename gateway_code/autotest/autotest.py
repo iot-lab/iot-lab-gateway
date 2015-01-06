@@ -297,7 +297,7 @@ class AutoTestManager(object):
         """ Run a test 'num' times.
         In case of success parse answer with 'parse_function' """
         values = []
-        for _ in range(0, num):
+        for _itr in range(0, num):  # pylint:disable=unused-variable
             (ret, answer) = self._on_call(cmd)
             if ret:
                 continue
@@ -324,7 +324,7 @@ class AutoTestManager(object):
         Error on this check are fatal
         """
         # get_time: ['ACK', 'get_time', '122953', 'tick_32khz']
-        (_, answer) = self._on_call(['get_time'])
+        answer = self._on_call(['get_time'])[1]
 
         values = self._run_test(5, ['get_time'], (lambda x: x[2].isdigit()))
         test_ok = (any(values))
@@ -517,7 +517,7 @@ class AutoTestManager(object):
 
         # get RSSI while sending 10 packets length 125
         ret_val += self.g_m.protocol.config_radio(radio)
-        for _ in range(0, 10):
+        for _itr in range(0, 10):  # pylint:disable=unused-variable
             self._on_call(cmd_on)
             time.sleep(0.5)
         ret_val += self.g_m.protocol.config_radio(None)

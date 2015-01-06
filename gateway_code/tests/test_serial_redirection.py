@@ -200,7 +200,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
 class TestSerialRedirectionInit(unittest.TestCase):
     """ Test the SerialRedirection class init """
 
-    def test__init(self, _):
+    def test__init(self, mock_thread):  # pylint:disable=unused-argument
         """ Test init calls"""
         # valid inits
         for node in ('m3', 'gwt', 'a8'):

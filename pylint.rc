@@ -10,8 +10,6 @@ reports = no
 
 
 [MESSAGES CONTROL]
-# W0142 Used * or * magic* Used when a function or method is called using *args or **kwargs to dispatch arguments.
-# W0221 'Argument number differs from overriden method'
 
-disable = I0011,W0142,W0221
+disable = locally-disabled,star-args
 

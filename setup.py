@@ -14,7 +14,6 @@ Tests commands:
 
     python setup.py tests
     python setup.py integration
-    python setup.py test_roomba
 
 Pylint and pep8 checker:
 
@@ -29,7 +28,6 @@ from setuptools.command.build_ext import build_ext
 from setuptools.sandbox import run_setup
 
 import sys
-from sys import stderr
 import os
 import subprocess
 
@@ -45,8 +43,8 @@ from gateway_code import config
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # error when putting the option in setup.cfg because of the '%' I think.
-LOGGING_FORMAT_OPT = ('--logging-format=%(asctime)s: %(name)s: ' +
-                      '%(levelname)s: %(message)s')
+NOSE_LOGFORMAT = '%(asctime)s: %(name)s: %(levelname)s: %(message)s'
+LOGGING_FORMAT_OPT = '--logging-format=%s' % NOSE_LOGFORMAT
 
 
 STATIC_FILES_PATH = config.STATIC_FILES_PATH
@@ -98,6 +96,17 @@ class _Tee(object):
 
     def __exit__(self, _type, _value, _traceback):
         pass
+
+
+def my_run_setup(setup_args, tee_stdout=os.devnull):
+    """ Call 'run_setup' command and protect from SystemExit.
+    If 'tee_stdout' provides file_path, tee the output to it """
+    try:
+        with _Tee(tee_stdout, 'w'):
+            run_setup(sys.argv[0], setup_args)
+    except SystemExit as err:
+        print >> sys.stderr, '%r' % err
+        return err[0]
 
 
 class _EmptyCommand(Command):
@@ -158,13 +167,10 @@ class Release(_EmptyCommand):
 
 class Lint(Command):
     """ Pylint command """
-    user_options = [
-        ('report', 'r', "print errors and report"),
-        ('outfile=', 'o', "duplicate output to file")]
+    user_options = [('report', 'r', "print errors and report")]
 
     def initialize_options(self):
         self.report = False
-        self.outfile = '/dev/null'
 
     def finalize_options(self):
         self.report_opt = ['--reports=y'] if self.report else []
@@ -175,27 +181,18 @@ class Lint(Command):
         lint_args += ['--rcfile=pylint.rc', 'gateway_code/', 'setup.py']
         # 'roomba/'
 
-        with _Tee(self.outfile, 'w'):
-            lint.Run(lint_args, exit=False)
+        return lint.Run(lint_args, exit=False)
 
 
 class Pep8(_EmptyCommand):
     """ Pep8 command """
-    user_options = [('outfile=', 'o', "duplicate output to file")]
-
-    def initialize_options(self):
-        self.exclude = None
-        self.outfile = '/dev/null'
-
     def run(self):
         import pep8
 
         sys.argv = ['./pep8.py', 'setup.py', 'gateway_code/', 'roomba/']
         # scripts don't have .py extension so list them one by one
         sys.argv += ['bin/scripts/' + f for f in os.listdir('bin/scripts')]
-
-        with _Tee(self.outfile, 'w'):
-            pep8._main()  # pylint: disable=W0212
+        return pep8._main()  # pylint: disable=W0212
 
 
 class Tests(Command):
@@ -206,30 +203,13 @@ class Tests(Command):
         self.tests = ''
 
     def finalize_options(self):
-        self.test_opt = ['--tests=%s' % self.tests] if self.tests else []
+        self.tests_args = ['nosetests', LOGGING_FORMAT_OPT]
+        self.tests_args += ['--tests=%s' % self.tests] if self.tests else []
 
     def run(self):
-        args = ['python', 'setup.py']
-        ret = subprocess.call(args + ['nosetests', '-e=*integration/*',
-                                      '--cover-html', LOGGING_FORMAT_OPT] +
-                              self.test_opt)
-        subprocess.call(args + ['lint', '-o', 'pylint.out'])
-        subprocess.call(args + ['pep8', '-o', 'pep8.out'])
-
-        return ret
-
-
-class TestsRoomba(_EmptyCommand):
-    """
-    Run roomba specific tests, should be run on a node with a robot conected
-    """
-    def run(self):
-        args = ['python', 'setup.py']
-        try:
-            subprocess.check_call(args + ['nosetests', '-e=*integration/*',
-                                          LOGGING_FORMAT_OPT, '-i=*robot/*'])
-        except subprocess.CalledProcessError as err:
-            exit(err.returncode)
+        my_run_setup(self.tests_args)
+        my_run_setup(['lint'], 'pylint.out')
+        my_run_setup(['pep8'], 'pep8.out')
 
 
 class IntegrationTests(Command):
@@ -252,10 +232,9 @@ class IntegrationTests(Command):
             self.tests_args.append('--stop')
 
     def run(self):
-        args = ['python', 'setup.py']
-        run_setup(sys.argv[0], self.tests_args)
-        subprocess.call(args + ['lint', '--report', '-o', 'pylint.out'])
-        subprocess.call(args + ['pep8', '-o', 'pep8.out'])
+        my_run_setup(self.tests_args)
+        my_run_setup(['lint', '--report'], 'pylint.out')
+        my_run_setup(['pep8'], 'pep8.out')
 
 
 class OnlyIntegrationTests(Command):
@@ -268,24 +247,24 @@ class OnlyIntegrationTests(Command):
         self.stop = False
 
     def finalize_options(self):
-        self.nose_args = ['nosetests',
+        self.nose_args = ['nosetests', LOGGING_FORMAT_OPT,
                           '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
-                          '--xunit-file=%s_nosetests.xml' % os.uname()[1],
-                          LOGGING_FORMAT_OPT]
+                          '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
         self.nose_args += ['--tests=%s' % self.tests] if self.tests else []
         if self.stop:
             self.nose_args.append('--stop')
 
     def run(self):
         args = ['python', 'setup.py']
-        print ' '.join(self.nose_args)
         print >> sys.stderr, ' '.join(self.nose_args)
 
         env = os.environ.copy()
         env['PATH'] = './control_node_serial/:' + env['PATH']
         if 'www-data' != env['USER']:
-            stderr.write("ERR: Run Integration tests as 'www-data':\n\n")
-            stderr.write("\tsu www-data -c 'python setup.py integration'\n")
+            print >> sys.stderr, (
+                "ERR: Run Integration tests as 'www-data':\n\n",
+                "\tsu www-data -c 'python setup.py integration'\n"
+            )
             exit(1)
 
         ret = subprocess.call(args + self.nose_args, env=env)
@@ -303,13 +282,14 @@ setup(name='gateway_code',
 
       ext_modules=[EXT_MODULES],
 
-      cmdclass={'build_ext': BuildExt,
-                'release': Release,
-                'lint': Lint,
-                'pep8': Pep8,
-                'tests': Tests,
-                'integration': IntegrationTests,
-                'run_integration_tests': OnlyIntegrationTests,
-                'test_roomba': TestsRoomba},
+      cmdclass={
+          'build_ext': BuildExt,
+          'release': Release,
+          'lint': Lint,
+          'pep8': Pep8,
+          'tests': Tests,
+          'integration': IntegrationTests,
+          'run_integration_tests': OnlyIntegrationTests,
+      },
       install_requires=INSTALL_REQUIRES,
       setup_requires=TESTS_REQUIRES + INSTALL_REQUIRES)

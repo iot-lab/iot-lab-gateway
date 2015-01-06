@@ -5,18 +5,14 @@ Profile module, implementing the 'Profile' class
 and methods to convert it to config commands
 """
 
-# Disable: I0011 - 'locally disabling warning'
-# Disable: R0903 - Too few public methods
-# Disable: R0913 - Too many arguments (%d/5)
-# pylint: disable=I0011,R0903,R0913
+# pylint:disable=too-many-arguments,too-few-public-methods
 
 
 class Profile(object):
     """ Experiment monitoring Profile """
 
-    def __init__(self, profilename, power, board_type,
-                 consumption=None, radio=None, **_):
-        # **_ argument for other unused parameters
+    def __init__(self, profilename,  # pylint:disable=unused-argument
+                 power, board_type, consumption=None, radio=None, **_kwargs):
         self.profilename = profilename
         self.power = power
 
