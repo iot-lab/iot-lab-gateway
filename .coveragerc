@@ -1,0 +1,3 @@
+[run]
+# Hide gateway_roomba has it's not tested and unused for the moment
+omit=gateway_code/gateway_roomba.py
