@@ -1,5 +1,5 @@
 Host *-ci
   User root
   StrictHostKeyChecking no
-  ProxyCommand ssh -p 2222 root@fit3-dev.inrialpes.fr -W %h:%p
+  ProxyCommand ssh -p 2222 root@devgrenoble.iot-lab.info -W %h:%p
 
