@@ -29,13 +29,14 @@ class NodeM3(object):
         ret_val += wait_tty(config.NODES_CFG['m3']['tty'], timeout=1)
         ret_val += self.g_m.node_flash('m3', firmware_path)
         ret_val += self.serial_redirection.start()
-        # ret_val += self.gdb_server.start()
         return ret_val
 
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
-        # ret_val += self.gdb_server.stop()
+        # cleanup debugger before flashing
+        ret_val += self.g_m.open_debug_stop()
+
         ret_val += self.serial_redirection.stop()
         ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
         return ret_val
