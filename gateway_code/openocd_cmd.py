@@ -68,7 +68,7 @@ class OpenOCD(object):
     def debug_start(cls, node, verb=False):
         """ Start a debugger process """
         # kill previous process
-        LOGGER.debug('debug_start')
+        LOGGER.info('Debug start')
         cls.debug_stop(node)
 
         args = cls._ocd_args(node, DEBUG_CMD)
@@ -82,19 +82,21 @@ class OpenOCD(object):
         if node not in cls.started:
             cls.started[node] = True
             atexit.register(cls.debug_stop, node)
+        LOGGER.info('Debug started')
         return 0
 
     @classmethod
     def debug_stop(cls, node):
         """ Stop the debugger process """
         try:
-            LOGGER.debug('debug_stop process')
+            LOGGER.info('Debug stop')
             if node in cls.proc:
                 cls.proc[node].terminate()
         except OSError as err:
-            LOGGER.debug('debug_stop process error: %r', err)
+            LOGGER.error('Debug stop error: %r', err)
         finally:
             cls.proc.pop(node, None)
+            LOGGER.info('Debug stopped')
         return 0
 
     @classmethod
