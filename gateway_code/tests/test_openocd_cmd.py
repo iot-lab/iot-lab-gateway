@@ -25,17 +25,6 @@ STATIC_DIR = CURRENT_DIR + 'static/'  # using the 'static' symbolic link
 class TestsMethods(unittest.TestCase):
     """ Tests openocd_cmd methods """
 
-    def test_node_detection(self, call_mock):
-        """ Test node detection """
-        # valid nodes
-        call_mock.return_value = 0
-        for node in ('m3', 'gwt', 'a8'):
-            openocd_cmd.flash(node, STATIC_DIR + 'idle.elf')
-
-        # invalid nodes
-        self.assertRaises(ValueError, openocd_cmd.flash, 'INEXISTANT',
-                          '/dev/null')
-
     def test_flash(self, call_mock):
         """ Test flash """
 

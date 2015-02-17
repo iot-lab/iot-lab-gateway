@@ -47,6 +47,8 @@ class GatewayRest(object):
         if self.board_type == 'm3':
             bottle.route('/open/flash', 'POST')(self.open_flash)
             bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
+            bottle.route('/open/debug/start', 'PUT')(self.open_debug_start)
+            bottle.route('/open/debug/stop', 'PUT')(self.open_debug_stop)
         else:  # pragma: no cover
             pass  # handle A8 nodes here
 
@@ -143,28 +145,9 @@ class GatewayRest(object):
         ret = self.gateway_manager.set_time()
         return {'ret': ret}
 
-    def _flash(self, node):
-        """
-        Flash node
-
-        Requires:
-        request.files contains 'firmware' file argument
-        """
-        ret = 0
-
-        firmware_file = self._extract_firmware()
-        if firmware_file is None:
-            return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
-
-        ret = self.gateway_manager.node_flash(node, firmware_file.name)
-
-        firmware_file.close()
-        return {'ret': ret}
-
-    def _reset(self, node):
-        """ Reset given node with 'reset' pin """
-        return self.gateway_manager.node_soft_reset(node)
-
+    #
+    # Open node commands
+    #
     def open_flash(self):
         """ Flash open node """
         LOGGER.debug('REST: Flash %s', self.board_type)
@@ -188,7 +171,43 @@ class GatewayRest(object):
         ret = self.gateway_manager.open_power_stop(power=None)
         return {'ret': ret}
 
+    def open_debug_start(self):
+        """ Start open node debugger """
+        LOGGER.debug('REST: Open node debugger start')
+        ret = self.gateway_manager.open_debug_start()
+        return {'ret': ret}
+
+    def open_debug_stop(self):
+        """ Stop open node debugger """
+        LOGGER.debug('REST: Open node debugger stop')
+        ret = self.gateway_manager.open_debug_stop()
+        return {'ret': ret}
+
+    def _flash(self, node):
+        """
+        Flash node
+
+        Requires:
+        request.files contains 'firmware' file argument
+        """
+        ret = 0
+
+        firmware_file = self._extract_firmware()
+        if firmware_file is None:
+            return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
+
+        ret = self.gateway_manager.node_flash(node, firmware_file.name)
+
+        firmware_file.close()
+        return {'ret': ret}
+
+    def _reset(self, node):
+        """ Reset given node with 'reset' pin """
+        return self.gateway_manager.node_soft_reset(node)
+
+    #
     # Admins commands
+    #
     def admin_control_soft_reset(self):
         """ Soft reset control node """
         LOGGER.debug('REST: Reset CN')

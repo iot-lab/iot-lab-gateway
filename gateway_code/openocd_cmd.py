@@ -17,22 +17,25 @@ LOGGER = logging.getLogger('gateway_code')
 
 OPENOCD_BASE_CMD = '''
     openocd --debug=0
-        -f "%s"
+        -f "{0}"
         -f "target/stm32f1x.cfg"
         -c "init"
         -c "targets"
-        %s
-        -c "reset run"
-        -c "shutdown"
         '''
 
-RESET_CMD = ''
+RESET_CMD = '''
+        -c "reset run"
+        -c "shutdown"
+'''
 FLASH_CMD = '''
         -c "reset halt"
         -c "reset init"
-        -c "flash write_image erase %s"
-        -c "verify_image %s"
+        -c "flash write_image erase {0}"
+        -c "verify_image {0}"
+        -c "reset run"
+        -c "shutdown"
 '''
+DEBUG_CMD = '-c "reset halt"'
 
 
 def reset(node, verb=False):
@@ -50,24 +53,48 @@ def flash(node, elf_file, verb=False):
         LOGGER.error('%s', err)
         return 1, ""
 
-    return _run_openocd_command(node, FLASH_CMD % (elf_path, elf_path), verb)
+    return _run_openocd_command(node, FLASH_CMD.format(elf_path), verb)
+
+
+class Debug(object):
+    """ Debugger class, implemented as a global variable storage """
+    # I don't want to refactor to a simple class for the moment as it should
+    # require cleaning a lot of other code
+    proc = {}
+
+    @classmethod
+    def start(cls, node, verb=False):
+        """ Start a debugger process """
+        # kill previous process
+        LOGGER.debug('Debug_start')
+        cls.stop(node)
+
+        args = _openocd_args(node, DEBUG_CMD)
+        with open(os.devnull, 'w') as fnull:
+            # on non verbose, put output to devnull
+            out = None if verb else fnull
+            cls.proc[node] = subprocess.Popen(args, stdout=out, stderr=out)
+        return 0
+
+    @classmethod
+    def stop(cls, node):
+        """ Stop the debugger process """
+        try:
+            LOGGER.debug('Debug_stop process')
+            if cls.proc.setdefault(node, None) is not None:
+                cls.proc[node].terminate()
+        except OSError as err:
+            LOGGER.debug('Debug_stop process error: %r', err)
+        finally:
+            del cls.proc[node]
+        return 0
 
 
 def _run_openocd_command(node, command_str, verb=False):
-    """
-    Run the given command with init and teardown on openocd for 'node'
-    """
+    """ Run the given command with init and teardown on openocd for 'node' """
 
     # Get configuration file
-    try:
-        _file = os.path.join(config.STATIC_FILES_PATH,
-                             config.NODES_CFG[node]['openocd_cfg_file'])
-        cfg_file = os.path.abspath(_file)
-        open(cfg_file, 'rb').close()  # exist and can be opened by this user
-    except KeyError:
-        raise ValueError('Unknown node, not in %r', config.NODES_CFG.keys())
-
-    args_list = shlex.split(OPENOCD_BASE_CMD % (cfg_file, command_str))
+    args_list = _openocd_args(node, command_str)
 
     with open(os.devnull, 'w') as fnull:
         # on non verbose, put output to devnull
@@ -77,9 +104,24 @@ def _run_openocd_command(node, command_str, verb=False):
     return ret
 
 
+def _openocd_args(node, command_str):
+    """ Get openocd arguments for given node and command_str """
+    # get config file
+    assert node in config.NODES_CFG.keys()
+    _file = os.path.join(config.STATIC_FILES_PATH,
+                         config.NODES_CFG[node]['openocd_cfg_file'])
+    cfg_file = os.path.abspath(_file)
+    open(cfg_file, 'rb').close()  # exist and can be opened by this user
+
+    # Generate full command arguments
+    args = shlex.split(OPENOCD_BASE_CMD.format(cfg_file) + command_str)
+    return args
+
+
 #
 # Command line functions
 #
+
 def _parse_arguments(args):
     """
     Parse arguments:

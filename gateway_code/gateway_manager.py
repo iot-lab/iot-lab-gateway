@@ -344,9 +344,28 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.open_node_state = "stop"
         return ret
 
-    @common.syncronous('rlock')       # uses `self`
-    def node_soft_reset(self, node):  # pylint: disable=R0201
+    @common.syncronous('rlock')  # uses `self`
+    def open_debug_start(self):  # pylint: disable=no-self-use
+        """ Start open node debugger """
+        LOGGER.debug('Open node debugger start')
 
+        ret = openocd_cmd.Debug.start('m3')
+        if ret != 0:  # pragma: no cover
+            LOGGER.error('Open node debugger start failed')
+        return ret
+
+    @common.syncronous('rlock')  # uses `self`
+    def open_debug_stop(self):   # pylint: disable=no-self-use
+        """ Stop open node debugger """
+        LOGGER.debug('Open node debugger stop')
+
+        ret = openocd_cmd.Debug.stop('m3')
+        if ret != 0:  # pragma: no cover
+            LOGGER.error('Open node debugger stop failed')
+        return ret
+
+    @common.syncronous('rlock')       # uses `self`
+    def node_soft_reset(self, node):  # pylint: disable=no-self-use
         """
         Reset the given node using reset pin
 
