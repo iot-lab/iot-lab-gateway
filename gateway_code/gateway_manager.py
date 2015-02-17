@@ -349,7 +349,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Start open node debugger """
         LOGGER.debug('Open node debugger start')
 
-        ret = openocd_cmd.Debug.start('m3')
+        ret = openocd_cmd.OpenOCD.debug_start('m3')
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger start failed')
         return ret
@@ -359,7 +359,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Stop open node debugger """
         LOGGER.debug('Open node debugger stop')
 
-        ret = openocd_cmd.Debug.stop('m3')
+        ret = openocd_cmd.OpenOCD.debug_stop('m3')
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger stop failed')
         return ret
