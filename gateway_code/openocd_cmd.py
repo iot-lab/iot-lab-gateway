@@ -81,7 +81,7 @@ class OpenOCD(object):
         # should be moved in '__init__' when there will be one
         if node not in cls.started:
             cls.started[node] = True
-            atexit.register(cls.debug_stop(node))
+            atexit.register(cls.debug_stop, node)
         return 0
 
     @classmethod
