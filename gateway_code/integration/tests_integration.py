@@ -157,13 +157,13 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         time.sleep(1)
 
         # Set first profile
-        self.request.files = {'profile': self.files['profile']}
+        self.request.json = self.profile_dict
         self.assertEquals({'ret': 0}, self.app.exp_update_profile())
         time.sleep(5)  # wait measures here
         self.app.set_time()  # test set_time during experiment
         time.sleep(5)  # wait measures here
         # Remove profile
-        self.request.files = {}
+        self.request.json = None
         self.assertEquals({'ret': 0}, self.app.exp_update_profile())
         time.sleep(2)  # wait maybe remaining values
         measures = extract_measures(self.cn_measures)

@@ -6,6 +6,7 @@ import unittest
 import mock
 from mock import patch
 import gateway_code.server_rest
+import json
 
 
 class FileUpload(object):
@@ -106,6 +107,9 @@ class GatewayCodeMock(unittest.TestCase):
 
         self.files = FileUpload.files
         FileUpload.rewind_all()
+
+        with open(CURRENT_DIR + 'profile.json') as prof:
+            self.profile_dict = json.load(prof)
 
     def tearDown(self):
         self.request_patcher.stop()

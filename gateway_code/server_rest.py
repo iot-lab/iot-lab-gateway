@@ -34,7 +34,7 @@ class GatewayRest(object):
         """
         bottle.route('/exp/start/<exp_id:int>/<user>', 'POST')(self.exp_start)
         bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
-        bottle.route('/exp/update', 'PUT')(self.exp_update_profile)
+        bottle.route('/exp/update', 'POST')(self.exp_update_profile)
         bottle.route('/open/start', 'PUT')(self.open_start)
         bottle.route('/open/stop', 'PUT')(self.open_stop)
         bottle.route('/status', 'GET')(self.status)
@@ -102,7 +102,8 @@ class GatewayRest(object):
         """ Update current experiment profile """
         LOGGER.debug('REST: Update profile')
         try:
-            profile = self._extract_profile()
+            profile = request.json
+            LOGGER.debug('Profile json dict: %r', profile)
         except ValueError:
             LOGGER.error('Invalid json for profile')
             return {'ret': 1}

@@ -18,7 +18,7 @@ Complement the 'integration' tests
 from cStringIO import StringIO
 
 import mock
-from mock import patch
+from mock import patch, PropertyMock
 import unittest
 
 from gateway_code import server_rest
@@ -169,10 +169,11 @@ class TestRestMethods(unittest.TestCase):
         self.assertTrue(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
 
-        # profile that cannot be decoded
-        self.request.files = {
-            'profile': FileUpload('{ inval_json', 'invalid_profile.json')
-        }
+        # profile that cannot be decoded, invalid JSON
+        # http://mock.readthedocs.org/en/latest/examples.html \
+        #    #raising-exceptions-on-attribute-access
+        type(self.request).json = PropertyMock(side_effect=ValueError)
+
         self.assertEquals({'ret': 1}, self.s_r.exp_update_profile())
         self.assertFalse(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
