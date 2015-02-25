@@ -56,13 +56,11 @@ empty_test.c: $(wildcard $(SRCDIR)/*.c) $(SRCS)
 
 run: all $(TEST_RESULTS)
 
-# gcovr_root_dir/fit-dev/gateway_code_python/control_node_serial/tests
-GCOVRFLAGS  = --root '../../../../' -e '.*/tests'
+# gcovr_root_dir/control_node_serial/tests
+GCOVRFLAGS  = --root '../../' -e '.*/tests'
 coverage: run gcovr $(RESULTDIR)/c_code_coverage.xml
-	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -f '.*/gateway_code_python/', \
-		"  GCOV  STDOUT")
-	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -b -f '.*/gateway_code_python/', \
-		"  GCOV  STDOUT")
+	$(call quiet-cmd, gcovr $(GCOVRFLAGS) , "  GCOV  STDOUT")
+	$(call quiet-cmd, gcovr $(GCOVRFLAGS) -b , "  GCOV  STDOUT")
 
 
 gcovr:
