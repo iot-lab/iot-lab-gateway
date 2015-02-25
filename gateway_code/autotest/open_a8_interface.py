@@ -73,6 +73,10 @@ class OpenA8Connection(object):
         a8_serial.send('exit')
 
         self.ip_addr = ip_address
+        # I should do some ping to allow ssh to work
+        # maybe because of the restriction on iptables, but it works
+        ping_out = check_output(shlex.split('ping -q -c 5 %s' % self.ip_addr))
+        LOGGER.debug(ping_out)
 
     def start(self):
         """ Start a redirection of open_A8 M3 node serial """
