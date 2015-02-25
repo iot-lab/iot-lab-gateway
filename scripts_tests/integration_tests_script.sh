@@ -2,7 +2,7 @@
 
 CUR_DIR="$(readlink -e $(dirname $0))"
 SRC_DIR="$(readlink -e $(dirname $0)/..)"
-DEST="/tmp/fit-dev/"
+DEST="/tmp/$(basename $SRC_DIR)"
 
 # options
 
@@ -76,11 +76,11 @@ fi
 date
 set -e
 
-# update gateway_code_python to host with www-data:www-data as owner
+# update host with www-data:www-data as owner
 rsync -e "ssh ${SSH_OPT}" -av --delete --exclude='gateway_code.egg-info' \
     --exclude='obj' --exclude='tests/bin' --exclude='tests/results'      \
     --exclude='*pyc' --exclude='cover' \
-    ${SRC_DIR}   ${GATEWAY_HOSTNAME}:${DEST}
+    ${SRC_DIR}/   ${GATEWAY_HOSTNAME}:${DEST}
 set +e
 
 ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "chown -R www-data:www-data ${DEST}"
@@ -96,7 +96,7 @@ if [[ 1 -eq ${tests_only} ]]; then
     ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "su www-data -c '\
         source /etc/profile; \
         killall python socat control_node_serial_interface; \
-        python ${DEST}/gateway_code_python/setup.py \
+        python ${DEST}/setup.py \
         run_integration_tests --stop ${TESTS_ARGS}'"
 else
     # Run all tests, python, style checker, C code tests
@@ -104,12 +104,12 @@ else
     ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "su www-data -c '\
         source /etc/profile; \
         killall python socat control_node_serial_interface; \
-        python ${DEST}/gateway_code_python/setup.py integration ${TESTS_ARGS}'"
+        python ${DEST}/setup.py integration ${TESTS_ARGS}'"
 
     # run control_node_serial tests
     ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "\
         source /etc/profile; \
-        make -C ${DEST}/gateway_code_python/control_node_serial realclean coverage"
+        make -C ${DEST}/control_node_serial realclean coverage"
 fi
 
 #
@@ -117,6 +117,6 @@ fi
 #
 rsync -e "ssh ${SSH_OPT}" -av \
     --include='*/' --include='*xml' --include='*out' --exclude='*'  -av \
-    ${GATEWAY_HOSTNAME}:${DEST} ${SRC_DIR}/.. | grep -v "sender"
+    ${GATEWAY_HOSTNAME}:${DEST}/ ${SRC_DIR} | grep -v "sender"
 
 exit 0
