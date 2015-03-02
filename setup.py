@@ -38,9 +38,12 @@ from gateway_code import config
 # pylint >= 1.4
 # pylint: disable=too-few-public-methods
 
+# pylint: disable=missing-docstring
+
 
 # change to script directory
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
 
 # error when putting the option in setup.cfg because of the '%' I think.
 NOSE_LOGFORMAT = '%(asctime)s: %(name)s: %(levelname)s: %(message)s'

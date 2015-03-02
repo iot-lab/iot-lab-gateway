@@ -9,16 +9,15 @@
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
+import os
 import mock
 import unittest
-
 from cStringIO import StringIO
 
-import os
+from gateway_code import config
+
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
-
-from gateway_code import config
 
 
 class TestGetHostname(unittest.TestCase):

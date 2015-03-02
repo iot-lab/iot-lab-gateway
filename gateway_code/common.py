@@ -1,11 +1,13 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-"""
-Common functions of the module
-"""
+""" Common functions of the module """
 
 import time
+# http://code.activestate.com/recipes/\
+#     577105-synchronization-decorator-for-class-methods/
+# About the `functools.wrap` http://stackoverflow.com/a/309000/395687
+from functools import wraps
 
 
 def empty_queue(queue):
@@ -37,12 +39,6 @@ def wait_cond(timeout, value, fct, *args, **kwargs):
         if time.time() > (time_ref + timeout):
             return False
         time.sleep(0.1)
-
-
-# http://code.activestate.com/recipes/\
-#     577105-synchronization-decorator-for-class-methods/
-# About the `functools.wrap` http://stackoverflow.com/a/309000/395687
-from functools import wraps
 
 
 def syncronous(tlockname):

@@ -34,7 +34,10 @@ class FatalError(Exception):
     def __str__(self):
         return repr(self.value)
 
-TST_OK = lambda bool_value: (0 if bool_value else 1)
+
+def tst_ok(bool_value):
+    """ Standardize to int """
+    return 0 if bool_value else 1
 
 
 class AutoTestManager(object):
@@ -74,7 +77,7 @@ class AutoTestManager(object):
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
         test_ok = (MAC_RE.match(gwt_mac_addr) is not None)
-        ret_val += self._check(TST_OK(test_ok), 'gw_mac_addr', gwt_mac_addr)
+        ret_val += self._check(tst_ok(test_ok), 'gw_mac_addr', gwt_mac_addr)
 
         self._check(ret_val, 'setup_cn_connection', ret_val)
         if 0 != ret_val:  # pragma: no cover
@@ -127,7 +130,7 @@ class AutoTestManager(object):
         a8_mac_addr = self.a8_connection.get_mac_addr()
         self.ret_dict['mac']['a8'] = a8_mac_addr
         test_ok = (MAC_RE.match(a8_mac_addr) is not None)
-        ret_val += self._check(TST_OK(test_ok), 'a8_mac_addr', a8_mac_addr)
+        ret_val += self._check(tst_ok(test_ok), 'a8_mac_addr', a8_mac_addr)
 
         # open A8 flash
         try:
@@ -328,7 +331,7 @@ class AutoTestManager(object):
 
         values = self._run_test(5, ['get_time'], (lambda x: x[2].isdigit()))
         test_ok = (any(values))
-        ret_val = self._check(TST_OK(test_ok), 'm3_comm_with_get_time', answer)
+        ret_val = self._check(tst_ok(test_ok), 'm3_comm_with_get_time', answer)
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError("get_time failed. Can't communicate with m3 node")
@@ -350,7 +353,7 @@ class AutoTestManager(object):
         else:  # pragma: no cover
             pass
 
-        ret_val = self._check(TST_OK(test_ok), 'get_uid', values)
+        ret_val = self._check(tst_ok(test_ok), 'get_uid', values)
         return ret_val
 #
 # sensors and flash
@@ -363,14 +366,14 @@ class AutoTestManager(object):
 
         values = self._run_test(1, ['test_flash'], (lambda x: x))
         test_ok = len(values)
-        return self._check(TST_OK(test_ok), 'test_flash', values)
+        return self._check(tst_ok(test_ok), 'test_flash', values)
 
     def test_pressure(self):
         """ test pressure sensor """
         # ['ACK', 'get_pressure', '9.944219E2', 'mbar']
         values = self._run_test(10, ['get_pressure'], (lambda x: float(x[2])))
         test_ok = 1 < len(set(values))
-        return self._check(TST_OK(test_ok), 'test_pressure', values)
+        return self._check(tst_ok(test_ok), 'test_pressure', values)
 
     def test_light(self):
         """ test light sensor with leds"""
@@ -385,7 +388,7 @@ class AutoTestManager(object):
 
         values = values_on + values_off
         test_ok = 1 < len(set(values))
-        return self._check(TST_OK(test_ok), 'get_light', values)
+        return self._check(tst_ok(test_ok), 'get_light', values)
 
 #
 # Test GPS
@@ -454,7 +457,7 @@ class AutoTestManager(object):
         # Run num times
         values = self._run_test(num, on_cmd + args, (lambda x: 0))
         test_ok = (0 in values)  # at least one success
-        ret_val += self._check(TST_OK(test_ok), debug_str, values)
+        ret_val += self._check(tst_ok(test_ok), debug_str, values)
 
         # teardown
         ret = self.g_m.protocol.send_cmd(cn_command + ['stop'])
@@ -489,7 +492,7 @@ class AutoTestManager(object):
             10, [sensor], (lambda x: tuple([float(val) for val in x[2:5]])))
 
         test_ok = 1 < len(set(values))  # got different values
-        return self._check(TST_OK(test_ok), sensor, values)
+        return self._check(tst_ok(test_ok), sensor, values)
 
 #
 # Radio tests
@@ -529,7 +532,7 @@ class AutoTestManager(object):
 
         # check that there are values other than -91 measured
         test_ok = set([-91]) != set(values)
-        ret_val += self._check(TST_OK(test_ok), 'rssi_measures', set(values))
+        ret_val += self._check(tst_ok(test_ok), 'rssi_measures', set(values))
 
         return ret_val
 
@@ -560,7 +563,7 @@ class AutoTestManager(object):
 
         # Value ranges may be validated with an Idle firmware
         test_ok = 1 < len(set(values))
-        ret_val += self._check(TST_OK(test_ok), 'consumption_dc', values)
+        ret_val += self._check(tst_ok(test_ok), 'consumption_dc', values)
 
         return ret_val
 
@@ -598,7 +601,7 @@ class AutoTestManager(object):
         values = measures['consumption']['values']
 
         test_ok = 1 < len(set(values))
-        ret_val += self._check(TST_OK(test_ok), 'consumption_batt', values)
+        ret_val += self._check(tst_ok(test_ok), 'consumption_batt', values)
 
         # Value ranges may be validated with an Idle firmware
         return ret_val
@@ -652,7 +655,7 @@ class AutoTestManager(object):
         # check that consumption is higher with each led than with no leds on
         led_0 = led_consumption.pop(0)
         test_ok = all([led_0 < v for v in led_consumption])
-        ret_val += self._check(TST_OK(test_ok), 'leds_using_conso',
+        ret_val += self._check(tst_ok(test_ok), 'leds_using_conso',
                                (led_0, led_consumption))
         return ret_val
 

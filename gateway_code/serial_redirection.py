@@ -12,6 +12,7 @@ import subprocess
 import threading
 import atexit
 import logging
+import shlex
 
 from gateway_code import config
 
@@ -95,7 +96,6 @@ class _SerialRedirectionThread(threading.Thread):
 
         It starts a while loop running a socat command
         """
-        import shlex
 
         cmd_list = shlex.split(SOCAT_CMD % (self.tty, self.baudrate))
 
