@@ -44,66 +44,24 @@ import subprocess
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
+def get_version():
+    """ Extract module version without importing file
+    Importing cause issues with coverage,
+        (modules can be removed from sys.modules to prevent this)
+    Importing __init__.py triggers importing rest and then requests too
+
+    Inspired from pep8 setup.py
+    """
+    with open('iotlabcli/__init__.py') as f:
+        for line in f:
+            if line.startswith('__version__'):
+                return eval(line.split('=')[-1])
+
+
 SCRIPTS = ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
 SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
-
-
-class _Tee(object):
-    """
-    File object which mimic 'tee' linux command behaviour
-    It writes to file_path and stdout
-    """
-    def __init__(self, file_path, mode):
-        self.file = open(file_path, mode)
-        self.stdout = sys.stdout
-        sys.stdout = self
-
-    def __del__(self):
-        sys.stdout = self.stdout
-        self.file.close()
-
-    def write(self, data):
-        """ Write data to stdout and file """
-        self.file.write(data)
-        self.stdout.write(data)
-
-    def flush(self):
-        """ Flush the two files """
-        self.file.flush()
-        self.stdout.flush()
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self, _type, _value, _traceback):
-        pass
-
-
-def my_run_setup(setup_args, tee_stdout=os.devnull):
-    """ Call 'run_setup' command and protect from SystemExit.
-    If 'tee_stdout' provides file_path, tee the output to it """
-    try:
-        with _Tee(tee_stdout, 'w'):
-            run_setup(sys.argv[0], setup_args)
-    except SystemExit as err:
-        print >> sys.stderr, '%r' % err
-        return err[0]
-
-
-class _EmptyCommand(Command):
-    """ An empty command doing nothing used for inheritance"""
-    user_options = []
-
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
-
-    def run(self):
-        pass
 
 
 class BuildExt(build_ext):
@@ -121,6 +79,13 @@ class BuildExt(build_ext):
 class Release(_EmptyCommand):
     """ Install and do the 'post installation' procedure too.
     Meant to be used directly on the gateways """
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
 
     def run(self):
         try:
@@ -183,11 +148,11 @@ class Integration(Command):
 
 
 setup(name='gateway_code',
-      version='0.3',
+      version=get_version(),
       description='Linux Gateway code',
-      author='SensLAB Team',
-      author_email='admin@senslab.info',
-      url='http://www.senslab.info',
+      author='IoT-Lab Team',
+      author_email='admin@iot-lab.info',
+      url='http://www.iot-lab.info',
       packages=['gateway_code', 'gateway_code.autotest', 'roomba'],
 
       scripts=SCRIPTS,

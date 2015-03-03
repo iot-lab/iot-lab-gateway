@@ -7,55 +7,56 @@ Code development
 
 ### File hierarchy ###
 
-
-        |
-        +---gateway_code: implementation of gateway_code
-        |       |
-        |       +---tests: unit tests
-        |       +---integration: integration tests that require a real gateway
-        |
-        +---roomba: roomba low level communication implementation
-        |           (not included in the tests suites at the moment)
-        |
-        +---control_node_serial: C program talking to control node over serial
-        |
-        |
-        |
-        +---static: static conf: default profiles, firmwares, openocd conf
-        |
-        +---bin: CLI scripts and init.d script
-        |
-        |
-        |
-        +---tests_utils: stuff useful for tests
-                |
-                +---curl_scripts: curl test examples
+    |
+    +---gateway_code: implementation of gateway_code
+    |       |
+    |       +---tests: unit tests
+    |       +---integration: integration tests that require a real gateway
+    |       +---static: default profiles, firmwares, openocd conf
+    |
+    +---roomba: roomba low level communication implementation
+    |           (not included in the tests suites at the moment)
+    |
+    +---control_node_serial: C program talking to control node over serial
+    |
+    |
+    +---bin: CLI scripts and init.d script
+    |
+    |
+    +---tests_utils: stuff useful for tests
+            |
+            +---curl_scripts: curl test examples
 
 
-### Running tests or deploying ###
+### Deploying manually ###
 
 Install all the `gateway code` on a gateway
 
-        python setup.py release
+    python setup.py release
 
 It runs the `install` command and the `post_install` procedure.
 
 
-Run unit tests, pylint and pep8:
+Testing
+-------
 
-        python setup.py tests
+Tests can be run with the following commands:
 
-Note: unit tests require oml.mytestbed.net v2.11 installed.
+    python setup.py nosetests
+    python setup.py lint
+    python setup.py pep8
 
+They require having installed 'tests-utils/test-requirements.txt' to run
 
-Run full integration tests (should be run on a gateway):
+> Note: unit tests require oml.mytestbed.net v2.11 installed.
 
-        python setup.py integration
+### Automated testing ###
 
+    # runs all tests at once
+    tox
 
-Run the roomba specific integration tests
-
-        python setup.py test_roomba
+    # To run on gateways a 'www-data' user
+    tox -e integration
 
 
 Server REST (testing)
