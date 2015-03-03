@@ -1,0 +1,28 @@
+Changelog
+=========
+
+
+Version 0.4b
+------------
+
+ * Node debugger
+ * Adapt update_profile to experiment handler new request
+
+
+Version 0.3
+-----------
+
+ * Support M3/A8 architecture
+ * Experiment start/stop
+ * Serial port redirection
+ * Node flash/update
+ * Control Node monitoring
+ * Monitoring profile update
+
+### Control Node features ###
+
+ * Power management
+ * Power consumption monitoring
+ * Radio rssi monitoring
+ * Radio sniffer with ZEP encapsulation
+
