@@ -45,11 +45,6 @@ from gateway_code import config
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-# error when putting the option in setup.cfg because of the '%' I think.
-NOSE_LOGFORMAT = '%(asctime)s: %(name)s: %(levelname)s: %(message)s'
-LOGGING_FORMAT_OPT = '--logging-format=%s' % NOSE_LOGFORMAT
-
-
 STATIC_FILES_PATH = config.STATIC_FILES_PATH
 STATIC_FILES = ['static/' + item for item in os.listdir('static')]
 DATA = [(STATIC_FILES_PATH, STATIC_FILES)]
@@ -206,7 +201,7 @@ class Tests(Command):
         self.tests = ''
 
     def finalize_options(self):
-        self.tests_args = ['nosetests', LOGGING_FORMAT_OPT]
+        self.tests_args = ['nosetests']
         self.tests_args += ['--tests=%s' % self.tests] if self.tests else []
 
     def run(self):
@@ -250,7 +245,7 @@ class OnlyIntegrationTests(Command):
         self.stop = False
 
     def finalize_options(self):
-        self.nose_args = ['nosetests', LOGGING_FORMAT_OPT,
+        self.nose_args = ['nosetests',
                           '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
                           '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
         self.nose_args += ['--tests=%s' % self.tests] if self.tests else []
