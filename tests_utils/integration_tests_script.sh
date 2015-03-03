@@ -1,8 +1,7 @@
 #! /bin/bash
 
-CUR_DIR="$(readlink -e $(dirname $0))"
 SRC_DIR="$(readlink -e $(dirname $0)/..)"
-DEST="/tmp/$(basename $SRC_DIR)"
+DEST="/tmp/iot-lab-gateway"
 
 # options
 
