@@ -79,7 +79,7 @@ set -e
 # update host with www-data:www-data as owner
 rsync -e "ssh ${SSH_OPT}" -av --delete --exclude='gateway_code.egg-info' \
     --exclude='obj' --exclude='tests/bin' --exclude='tests/results'      \
-    --exclude='*pyc' --exclude='cover' \
+    --exclude='*pyc' --exclude='cover' --exclude='.git' \
     ${SRC_DIR}/   ${GATEWAY_HOSTNAME}:${DEST}
 set +e
 

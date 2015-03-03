@@ -13,8 +13,6 @@ from textwrap import dedent
 from mock import patch
 
 from gateway_code import gateway_manager
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
 
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
@@ -34,7 +32,6 @@ class TestGatewayManagerInvalidBoardType(unittest.TestCase):
 
 
 @patch('gateway_code.config.board_type', (lambda: 'm3'))
-@patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
 class TestGatewayManager(unittest.TestCase):
 
     def test_setup(self):

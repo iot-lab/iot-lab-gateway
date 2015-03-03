@@ -11,10 +11,11 @@ Common static configuration for the application and `OpenOCD`
 """
 
 import stat
+from os.path import dirname, abspath, join
 STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
              stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
 
-STATIC_FILES_PATH = '/usr/lib/gateway_code/'
+STATIC_FILES_PATH = join(abspath(dirname(__file__)), 'static')
 GATEWAY_CONFIG_PATH = '/var/local/config/'
 
 NODES_CFG = {
@@ -41,10 +42,10 @@ ROOMBA_CFG = {'tty': '/dev/ttyROOMBA'}
 CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 
 FIRMWARES = {
-    'idle': STATIC_FILES_PATH + 'idle.elf',
-    'control_node': STATIC_FILES_PATH + 'control_node.elf',
-    'm3_autotest': STATIC_FILES_PATH + 'm3_autotest.elf',
-    'a8_autotest': STATIC_FILES_PATH + 'a8_autotest.elf'
+    'idle': join(STATIC_FILES_PATH, 'idle.elf'),
+    'control_node': join(STATIC_FILES_PATH, 'control_node.elf'),
+    'm3_autotest': join(STATIC_FILES_PATH, 'm3_autotest.elf'),
+    'a8_autotest': join(STATIC_FILES_PATH, 'a8_autotest.elf'),
     }
 
 _BOARD_CONFIG = {}
@@ -92,7 +93,7 @@ def _get_conf(key, path, raise_error=False):
     if key not in _BOARD_CONFIG:
         # load from file
         try:
-            _file = open(path + key)
+            _file = open(join(path, key))
             _BOARD_CONFIG[key] = _file.read().strip().lower()
             _file.close()
         except IOError as err:

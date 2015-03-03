@@ -31,7 +31,6 @@ import sys
 import os
 import subprocess
 
-from gateway_code import config
 # pylint: disable=attribute-defined-outside-init
 # pylint <= 1.3
 # pylint: disable=too-many-public-methods
@@ -45,24 +44,11 @@ from gateway_code import config
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
-STATIC_FILES_PATH = config.STATIC_FILES_PATH
-STATIC_FILES = ['static/' + item for item in os.listdir('static')]
-DATA = [(STATIC_FILES_PATH, STATIC_FILES)]
-
 SCRIPTS = ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
-SCRIPTS += ['control_node_serial/' + config.CONTROL_NODE_SERIAL_INTERFACE]
-
-EXT_MODULES = Extension(config.CONTROL_NODE_SERIAL_INTERFACE, [])
+SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
 TESTS_REQUIRES = ['nose>=1.3', 'pylint', 'nosexcover', 'mock', 'pep8']
-
-# unload 'gateway_code.config' module
-# either it's not included in the coverage report...
-try:
-    del sys.modules['gateway_code.config']
-except KeyError:
-    pass
 
 
 class _Tee(object):
@@ -275,10 +261,10 @@ setup(name='gateway_code',
       author_email='admin@senslab.info',
       url='http://www.senslab.info',
       packages=['gateway_code', 'gateway_code.autotest', 'roomba'],
-      scripts=SCRIPTS,
-      data_files=DATA,
 
-      ext_modules=[EXT_MODULES],
+      scripts=SCRIPTS,
+      package_data={'static': ['static/*']},
+      ext_modules=[Extension('control_node_serial_interface', [])],
 
       cmdclass={
           'build_ext': BuildExt,

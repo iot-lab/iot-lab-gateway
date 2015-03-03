@@ -8,19 +8,14 @@
 # serial mock note correctly detected
 # pylint: disable=maybe-no-member
 
-from mock import patch
+import sys
+
 import unittest
-from cStringIO import StringIO
+from mock import patch
 
-from os.path import dirname, abspath
-
-from gateway_code import openocd_cmd
-
-CURRENT_DIR = dirname(abspath(__file__)) + '/'
-STATIC_DIR = CURRENT_DIR + 'static/'  # using the 'static' symbolic link
+from gateway_code import openocd_cmd, config
 
 
-@patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
 @patch('subprocess.call')
 class TestsMethods(unittest.TestCase):
     """ Tests openocd_cmd methods """
@@ -28,7 +23,7 @@ class TestsMethods(unittest.TestCase):
     def test_flash(self, call_mock):
         """ Test flash """
 
-        filename = STATIC_DIR + 'idle.elf'
+        filename = config.FIRMWARES['idle']
         call_mock.return_value = 0
         self.assertEquals(0, openocd_cmd.flash('m3', filename))
 
@@ -49,13 +44,12 @@ class TestsFlashInvalidPaths(unittest.TestCase):
     def test_invalid_config_file_path(self):
         self.assertRaises(IOError, openocd_cmd.flash, 'm3', '/dev/null')
 
-    @patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
     def test_invalid_firmware_path(self):
         self.assertNotEqual(0, openocd_cmd.flash('m3', '/invalid/path'))
 
 
 # Command line tests
-@patch('sys.stderr', StringIO())
+@patch('sys.stderr', sys.stdout)
 class TestsCommandLineCalls(unittest.TestCase):
 
     @patch('gateway_code.openocd_cmd.flash')

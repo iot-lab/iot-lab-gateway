@@ -9,15 +9,10 @@
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
-import os
 import mock
 import unittest
 from cStringIO import StringIO
-
 from gateway_code import config
-
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = CURRENT_DIR + '/static/'  # 'static' symbolic link
 
 
 class TestGetHostname(unittest.TestCase):
@@ -28,7 +23,6 @@ class TestGetHostname(unittest.TestCase):
 class TestDefaultProfile(unittest.TestCase):
 
     @staticmethod
-    @mock.patch('gateway_code.config.STATIC_FILES_PATH', STATIC_DIR)
     @mock.patch('gateway_code.config.board_type', lambda: 'm3')
     def test_default_profile():
         config.default_profile()

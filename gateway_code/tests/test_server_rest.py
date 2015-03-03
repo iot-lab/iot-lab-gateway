@@ -25,7 +25,6 @@ from gateway_code import server_rest
 
 import os
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-STATIC_DIR = CURRENT_DIR + '/static/'  # using the 'static' symbolic link
 
 
 # Bottle FileUpload class stub
@@ -271,22 +270,10 @@ class TestRestMethods(unittest.TestCase):
         self.assertNotEquals(0, ret_dict['ret'])
 
 
-# Patch to find idle.elf
-# Patch to find control_node.elf at start
 # Patch to find '/var/log/config/board_type' -> tests/config_m3/board_type
-MOCK_FIRMWARES = {
-    'idle': STATIC_DIR + 'idle.elf',
-    'control_node': STATIC_DIR + 'control_node.elf',
-    }
-
-
-@patch('gateway_code.config.STATIC_FILES_PATH', new=STATIC_DIR)
-@patch('gateway_code.config.FIRMWARES', MOCK_FIRMWARES)
 @patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
 class TestServerRestMain(unittest.TestCase):
-    """
-    Cover functions uncovered by unit tests
-    """
+    """ Cover functions uncovered by unit tests """
 
     @patch('subprocess.call')
     @patch('bottle.run')
