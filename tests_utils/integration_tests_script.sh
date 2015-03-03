@@ -79,7 +79,7 @@ set -e
 # update host with www-data:www-data as owner
 rsync -e "ssh ${SSH_OPT}" -av --delete --exclude='gateway_code.egg-info' \
     --exclude='obj' --exclude='tests/bin' --exclude='tests/results'      \
-    --exclude='*pyc' --exclude='cover' --exclude='.git' \
+    --exclude='*pyc' --exclude='cover' --exclude='.git' --exclude='.tox' \
     ${SRC_DIR}/   ${GATEWAY_HOSTNAME}:${DEST}
 set +e
 
@@ -96,15 +96,16 @@ if [[ 1 -eq ${tests_only} ]]; then
     ssh ${SSH_OPT} ${GATEWAY_HOSTNAME} "su www-data -c '\
         source /etc/profile; \
         killall python socat control_node_serial_interface; \
-        python ${DEST}/setup.py \
-        run_integration_tests --stop ${TESTS_ARGS}'"
+        cd ${DEST};
+        tox -e test'"
 else
     # Run all tests, python, style checker, C code tests
 
     ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "su www-data -c '\
         source /etc/profile; \
         killall python socat control_node_serial_interface; \
-        python ${DEST}/setup.py integration ${TESTS_ARGS}'"
+        cd ${DEST};
+        tox -e integration'"
 
     # run control_node_serial tests
     ssh ${SSH_OPT}   ${GATEWAY_HOSTNAME} "\
@@ -116,7 +117,7 @@ fi
 # Get results files
 #
 rsync -e "ssh ${SSH_OPT}" -av \
-    --include='*/' --include='*xml' --include='*out' --exclude='*'  -av \
+    --exclude='.tox' --exclude='*egg' --include='*/' --include='*xml' --include='*out' --exclude='*'  -av \
     ${GATEWAY_HOSTNAME}:${DEST}/ ${SRC_DIR} | grep -v "sender"
 
 exit 0

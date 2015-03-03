@@ -27,11 +27,9 @@ Code development
         |
         |
         |
-        +---scripts_tests: scripts usefull for tests
+        +---tests_utils: stuff useful for tests
                 |
                 +---curl_scripts: curl test examples
-                +---install_pylint_with_brain.sh: install pylint and
-                                                  pylint-brain extensions
 
 
 ### Running tests or deploying ###

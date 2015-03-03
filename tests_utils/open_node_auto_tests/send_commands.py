@@ -3,9 +3,6 @@
 
 import sys
 import time
-
-
-sys.path.append('../../')
 from gateway_code.autotest import m3_node_interface
 
 

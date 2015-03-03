@@ -14,6 +14,10 @@ import atexit
 import logging
 import shlex
 
+# direct import of Event to be able to mock it to test main function
+# without mocking the 'threading.Event' used in the threading class
+from threading import Event
+
 from gateway_code import config
 
 SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s,b%d,echo=0,raw '''
@@ -152,10 +156,6 @@ def _parse_arguments(args):
     arguments = parser.parse_args(args)
 
     return arguments.node
-
-# direct import of Event to be able to mock it to test main function
-# without mocking the 'threading.Event' used in the threading class
-from threading import Event
 
 
 def _main(args):

@@ -1,0 +1,5 @@
+# Additionnal data needed for tests
+include tests_utils/*
+include control_node_serial/Makefile
+include control_node_serial/src/*
+include control_node_serial/tests/Makefile
