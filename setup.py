@@ -25,7 +25,6 @@ Pylint and pep8 checker:
 
 from setuptools import setup, Command, Extension
 from setuptools.command.build_ext import build_ext
-from setuptools.sandbox import run_setup
 
 import sys
 import os
@@ -37,25 +36,21 @@ import subprocess
 # pylint >= 1.4
 # pylint: disable=too-few-public-methods
 
-# pylint: disable=missing-docstring
+PACKAGE = 'gateway_code'
 
 
-# change to script directory
-os.chdir(os.path.dirname(os.path.abspath(__file__)))
-
-
-def get_version():
-    """ Extract module version without importing file
+def get_version(package):
+    """ Extract package version without importing file
     Importing cause issues with coverage,
         (modules can be removed from sys.modules to prevent this)
     Importing __init__.py triggers importing rest and then requests too
 
     Inspired from pep8 setup.py
     """
-    with open('iotlabcli/__init__.py') as f:
-        for line in f:
+    with open(os.path.join(package, '__init__.py')) as init_fd:
+        for line in init_fd:
             if line.startswith('__version__'):
-                return eval(line.split('=')[-1])
+                return eval(line.split('=')[-1])  # pylint:disable=eval-used
 
 
 SCRIPTS = ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
@@ -76,7 +71,7 @@ class BuildExt(build_ext):
             exit(err.returncode)
 
 
-class Release(_EmptyCommand):
+class Release(Command):
     """ Install and do the 'post installation' procedure too.
     Meant to be used directly on the gateways """
     user_options = []
@@ -147,13 +142,13 @@ class Integration(Command):
         return ret
 
 
-setup(name='gateway_code',
-      version=get_version(),
+setup(name=PACKAGE,
+      version=get_version(PACKAGE),
       description='Linux Gateway code',
       author='IoT-Lab Team',
       author_email='admin@iot-lab.info',
       url='http://www.iot-lab.info',
-      packages=['gateway_code', 'gateway_code.autotest', 'roomba'],
+      packages=[PACKAGE, '%s.autotest' % PACKAGE, 'roomba'],
 
       scripts=SCRIPTS,
       package_data={'static': ['static/*']},
