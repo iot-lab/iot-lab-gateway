@@ -1,3 +1,3 @@
 """ gateway_code package """
 
-__version__ = '0.4.1b'
+__version__ = '0.4.2b'

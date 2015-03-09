@@ -151,6 +151,7 @@ setup(name=PACKAGE,
       packages=[PACKAGE, '%s.autotest' % PACKAGE, 'roomba'],
 
       scripts=SCRIPTS,
+      include_package_data=True,
       package_data={'static': ['static/*']},
       ext_modules=[Extension('control_node_serial_interface', [])],
 

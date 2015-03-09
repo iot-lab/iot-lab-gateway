@@ -1,4 +1,5 @@
 # Additionnal data needed for tests
+include gateway_code/static/*
 include tests_utils/*
 include control_node_serial/Makefile
 include control_node_serial/src/*
