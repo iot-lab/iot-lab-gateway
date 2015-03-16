@@ -1,12 +1,13 @@
 #! /bin/bash
 
-SRC_DIR="$(readlink -e $(dirname $0)/..)"
+SCRIPT_DIR="$(dirname $0)"
+SRC_DIR="$(readlink -e ${SCRIPT_DIR}/..)"
 DEST="/tmp/iot-lab-gateway"
 
 # options
 
 verbose=0
-SSH_OPT='-o StrictHostKeyChecking=no'
+SSH_OPT="-F $(readlink -e ${SCRIPT_DIR}/ssh_config)"
 tests_only=0
 sync_only=0
 TESTS_ARGS=''
@@ -15,9 +16,8 @@ GATEWAY_HOSTNAME=
 usage()
 {
     cat << EOF
-Usage: ${0##*/} [-hv] [-s] [-t] [-F CONFFILE] <GATEWAY_HOSTNAME>
+Usage: ${0##*/} [-hv] [-s] [-t] <GATEWAY_HOSTNAME>
 Run the integrations tests on GATEWAY_HOSTNAME.
-    -F CONFFILE ssh configfile see option '-F' in 'man ssh' for details
     -T TEST_LIST Run these tests (comma-separated list)
     -t          run only python tests
     -s          sync code only and exit
@@ -32,10 +32,8 @@ EOF
 parse_arguments()
 {
     local OPTIND=1
-    while getopts "hvsF:tT:" opt; do
+    while getopts "hvstT:" opt; do
         case "$opt" in
-            F) SSH_OPT="${SSH_OPT} -F $(readlink -e $OPTARG)"
-                ;;
             T) TESTS_ARGS="--tests=$OPTARG"
                 ;;
             h) usage
@@ -67,7 +65,6 @@ parse_arguments $@
 if [[ 1 -eq $verbose ]]; then
     echo "Verbose output"
     echo "GATEWAY_HOSTNAME: ${GATEWAY_HOSTNAME}"
-    echo "SSH_OPT: ${SSH_OPT}"
     echo "tests_only: ${tests_only}"
     set -x
 fi

@@ -108,40 +108,6 @@ class Release(Command):
         subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
 
 
-class Integration(Command):
-    """ Run unit tests and integration tests.  Should be run on a gateway """
-    user_options = [('stop', None, "Stop tests after a failed test"),
-                    ('tests=', None, "Run these tests (comma-separated-list)")]
-
-    def initialize_options(self):
-        self.tests = ''
-        self.stop = False
-
-    def finalize_options(self):
-        self.nose_args = ['nosetests',
-                          '--xcoverage-file=%s_coverage.xml' % os.uname()[1],
-                          '--xunit-file=%s_nosetests.xml' % os.uname()[1]]
-        self.nose_args += ['--tests=%s' % self.tests] if self.tests else []
-        if self.stop:
-            self.nose_args.append('--stop')
-
-    def run(self):
-        args = ['python', 'setup.py']
-        print >> sys.stderr, ' '.join(self.nose_args)
-
-        env = os.environ.copy()
-        env['PATH'] = './control_node_serial/:' + env['PATH']
-        if 'www-data' != env['USER']:
-            print >> sys.stderr, (
-                "ERR: Run Integration tests as 'www-data':\n\n",
-                "\tsu www-data -c 'python setup.py integration'\n"
-            )
-            exit(1)
-
-        ret = subprocess.call(args + self.nose_args, env=env)
-        return ret
-
-
 setup(name=PACKAGE,
       version=get_version(PACKAGE),
       description='Linux Gateway code',
@@ -158,6 +124,5 @@ setup(name=PACKAGE,
       cmdclass={
           'build_ext': BuildExt,
           'release': Release,
-          'integration': Integration,
       },
       install_requires=INSTALL_REQUIRES)
