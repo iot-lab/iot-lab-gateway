@@ -173,9 +173,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         Should stop only if experiment is the same as the experiment
         that started the timer """
-        LOGGER.debug("Timeout experiment: %r %r", user, exp_id)
+        LOGGER.info("Timeout experiment: %r %r", user, exp_id)
         if self.exp_desc['exp_id'] == exp_id and self.exp_desc['user'] == user:
-            LOGGER.debug("Still running. Stop exp")
+            LOGGER.info("Still running. Stop exp")
             self.exp_stop()
 
     @common.syncronous('rlock')
@@ -275,7 +275,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     def configure_cn_profile(self):
         """ Configure the control node profile """
-        LOGGER.debug('Configure profile on control node')
+        LOGGER.info('Configure profile on control node')
 
         ret = 0
         # power_mode (keep open node started/stoped state)
@@ -315,11 +315,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     @common.syncronous('rlock')
     def open_power_start(self, power=None):
         """ Power on the open node """
-        LOGGER.debug('Open power start')
-        if power is None:
-            assert self.profile is not None
-            power = self.profile.power
-
+        LOGGER.info('Open power start')
+        power = power or self.profile.power
         ret = self.protocol.start_stop('start', power)
 
         if ret != 0:  # pragma: no cover
@@ -331,10 +328,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     @common.syncronous('rlock')
     def open_power_stop(self, power=None):
         """ Power off the open node """
-        LOGGER.debug('Open power stop')
-        if power is None:
-            assert self.profile is not None
-            power = self.profile.power
+        LOGGER.info('Open power stop')
+        power = power or self.profile.power
 
         ret = self.protocol.start_stop('stop', power)
 
@@ -347,7 +342,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     @common.syncronous('rlock')  # uses `self`
     def open_debug_start(self):  # pylint: disable=no-self-use
         """ Start open node debugger """
-        LOGGER.debug('Open node debugger start')
+        LOGGER.info('Open node debugger start')
 
         ret = openocd_cmd.OpenOCD.debug_start('m3')
         if ret != 0:  # pragma: no cover
@@ -357,7 +352,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     @common.syncronous('rlock')  # uses `self`
     def open_debug_stop(self):   # pylint: disable=no-self-use
         """ Stop open node debugger """
-        LOGGER.debug('Open node debugger stop')
+        LOGGER.info('Open node debugger stop')
 
         ret = openocd_cmd.OpenOCD.debug_stop('m3')
         if ret != 0:  # pragma: no cover
@@ -372,7 +367,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         :param node: Node name in {'gwt', 'm3'}
         """
         assert node in ['gwt', 'm3'], "Invalid node name"
-        LOGGER.debug('Node %s reset', node)
+        LOGGER.info('Node %s reset', node)
 
         ret = openocd_cmd.reset(node)
 
@@ -390,7 +385,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         :param firmware_path: Path to the firmware to be flashed on `node`.
         """
         assert node in ['gwt', 'm3'], "Invalid node name"
-        LOGGER.debug('Flash firmware on %s: %s', node, firmware_path)
+        LOGGER.info('Flash firmware on %s: %s', node, firmware_path)
 
         ret = openocd_cmd.flash(node, firmware_path)
 
@@ -421,13 +416,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     @staticmethod
     def _ftdi_is_present(node):
         """ Detect if a node ftdi is present """
-        LOGGER.debug("Check node %r ftdi", node)
+        LOGGER.info("Check node %r ftdi", node)
 
         opt = {'ON': '2232', 'CN': '4232'}[node]
         output = subprocess.check_output(['ftdi-devices-list', '-t', opt])
 
         found = 'Found 1 device(s)' in output.splitlines()
-        LOGGER.debug(("" if found else "No ") + "%r node found" % node)
+        LOGGER.info(("" if found else "No ") + "%r node found" % node)
         return found
 
 #

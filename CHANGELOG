@@ -2,6 +2,8 @@ Changelog
 =========
 
 
+Version 0.4.3b: Replace log debug by log info on gateway_manager commands
+Version 0.4.2b: Fix static files not released at install
 Version 0.4.1b: Fix setup.py
 
 Version 0.4.0b
