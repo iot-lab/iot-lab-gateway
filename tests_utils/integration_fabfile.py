@@ -48,6 +48,7 @@ def download():
     rsync_project(remote_dir=REMOTE + '/', local_dir=LOCAL, upload=False,
                   ssh_opts=SSH_OPTS, extra_opts=extra_opts)
 
+
 def kill():
     """ Kill remote tests artifacts """
     with settings(warn_only=True):
