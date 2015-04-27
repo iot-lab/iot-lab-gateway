@@ -20,99 +20,6 @@ from gateway_code.utils import serial_redirection
 # pylint: disable=no-member
 
 
-@mock.patch('sys.stderr', StringIO())
-class TestMainFunction(unittest.TestCase):
-
-    def setUp(self):
-        self.popen_patcher = mock.patch('subprocess.Popen')
-        self.popen_class = self.popen_patcher.start()
-        self.popen = self.popen_class.return_value
-
-        self.popen.wait.side_effect = self._wait
-        self.popen.wait.return_value = 0
-        self.popen.terminate.side_effect = self._terminate
-
-        self.unlock_wait = threading.Event()
-        self.wait = threading.Event()
-
-        self.redirect = None
-
-    def tearDown(self):
-        self.popen.stop()
-        if self.redirect is not None:
-            self.redirect.stop()  # last chance cleanup
-
-    def _wait(self):
-        self.wait.set()
-        self.unlock_wait.wait()
-        self.unlock_wait.clear()
-        return mock.DEFAULT
-
-    def _terminate(self):
-        self.unlock_wait.set()
-
-    def test_simple_start(self):
-
-        redirection = serial_redirection.SerialRedirection('m3')
-
-        self.assertEquals(redirection.stop(), 1)  # cannot stop before start
-        self.assertEquals(redirection.start(), 0)
-        self.assertEquals(redirection.start(), 1)  # only one start
-
-        self.wait.wait()
-
-        redirection.stop()
-
-        self.assertTrue(self.popen.wait.call_count >= 1)
-        self.assertTrue(self.popen.terminate.call_count >= 1)
-
-    def test_program_error(self):
-        """ Test program error """
-        # on first call 'wait' is called
-        # on second call, 'self._wait' is called
-        def wait():
-            self.popen.wait.side_effect = self._wait
-            return mock.DEFAULT
-
-        # Popen mock
-        self.popen.wait.side_effect = wait
-        self.popen.wait.return_value = 42
-
-        with mock.patch('gateway_code.utils.serial_redirection.LOGGER.error') \
-                as mock_logger:
-            redirection = serial_redirection.SerialRedirection('m3')
-
-            self.assertEquals(redirection.start(), 0)
-            self.wait.wait()
-            redirection.stop()
-
-            mock_logger.assert_called_with(
-                'Open node serial redirection exit: %d', 42)
-
-    def test_simple_case(self):
-        def wait_mock():
-            """ 'wait' will call the ctrl+c handler has if a ctrl+c was got """
-            import signal
-            handler = signal.getsignal(signal.SIGINT)  # get ctrl+c handler
-            handler(None, None)
-
-        with mock.patch('gateway_code.utils.serial_redirection.Event'
-                        ) as mock_event:
-            event = mock_event.return_value
-            event.wait.side_effect = wait_mock
-
-            serial_redirection._main(['serial_redirection.py', 'm3'])
-            self.assertEquals(event.wait.call_count, 1)
-
-    @mock.patch('gateway_code.utils.serial_redirection.SerialRedirection')
-    def test_error_with_start_redirection(self, mock_serial_class):
-        # start SerialRedirection fail
-        (mock_serial_class.return_value).start.return_value = 1
-        self.assertRaises(SystemExit,
-                          serial_redirection._main,
-                          ['serial_redirection.py', 'm3'])
-
-
 class TestSerialRedirectionAndThread(unittest.TestCase):
 
     def setUp(self):
@@ -196,30 +103,105 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         self.redirect.stop()
 
 
-@mock.patch('gateway_code.utils.serial_redirection._SerialRedirectionThread')
-class TestSerialRedirectionInit(unittest.TestCase):
-    """ Test the SerialRedirection class init """
+# TODO: simplify Main function tests, move them in a standard test
+@mock.patch('sys.stderr', StringIO())
+class TestMainFunction(unittest.TestCase):
 
-    def test__init(self, mock_thread):  # pylint:disable=unused-argument
-        """ Test init calls"""
-        # valid inits
-        for node in ('m3', 'gwt', 'a8'):
-            serial_redirection.SerialRedirection(node)
+    def setUp(self):
+        self.popen_patcher = mock.patch('subprocess.Popen')
+        self.popen_class = self.popen_patcher.start()
+        self.popen = self.popen_class.return_value
 
-        # invalid node name
-        self.assertRaises(ValueError,
-                          serial_redirection.SerialRedirection, 'INVALID_NODE')
+        self.popen.wait.side_effect = self._wait
+        self.popen.wait.return_value = 0
+        self.popen.terminate.side_effect = self._terminate
+
+        self.unlock_wait = threading.Event()
+        self.wait = threading.Event()
+
+        self.redirect = None
+
+    def tearDown(self):
+        self.popen.stop()
+        if self.redirect is not None:
+            self.redirect.stop()  # last chance cleanup
+
+    def _wait(self):
+        self.wait.set()
+        self.unlock_wait.wait()
+        self.unlock_wait.clear()
+        return mock.DEFAULT
+
+    def _terminate(self):
+        self.unlock_wait.set()
+
+    def test_simple_start(self):
+
+        redirection = serial_redirection.SerialRedirection('tty', 500000)
+
+        self.assertEquals(redirection.stop(), 1)  # cannot stop before start
+        self.assertEquals(redirection.start(), 0)
+        self.assertEquals(redirection.start(), 1)  # only one start
+
+        self.wait.wait()
+
+        redirection.stop()
+
+        self.assertTrue(self.popen.wait.call_count >= 1)
+        self.assertTrue(self.popen.terminate.call_count >= 1)
+
+    def test_program_error(self):
+        """ Test program error """
+        # on first call 'wait' is called
+        # on second call, 'self._wait' is called
+        def wait():
+            self.popen.wait.side_effect = self._wait
+            return mock.DEFAULT
+
+        # Popen mock
+        self.popen.wait.side_effect = wait
+        self.popen.wait.return_value = 42
+
+        with mock.patch('gateway_code.utils.serial_redirection.LOGGER.error') \
+                as mock_logger:
+            redirection = serial_redirection.SerialRedirection('tty', 500000)
+
+            self.assertEquals(redirection.start(), 0)
+            self.wait.wait()
+            redirection.stop()
+
+            mock_logger.assert_called_with(
+                'Open node serial redirection exit: %d', 42)
+
+    def test_simple_case(self):
+        def wait_mock():
+            """ 'wait' will call the ctrl+c handler has if a ctrl+c was got """
+            import signal
+            handler = signal.getsignal(signal.SIGINT)  # get ctrl+c handler
+            handler(None, None)
+
+        with mock.patch('gateway_code.utils.serial_redirection.Event'
+                        ) as mock_event:
+            event = mock_event.return_value
+            event.wait.side_effect = wait_mock
+
+            serial_redirection._main(['serial_redirection.py', 'tty', '96200'])
+            self.assertEquals(event.wait.call_count, 1)
+
+    @mock.patch('gateway_code.utils.serial_redirection.SerialRedirection')
+    def test_error_with_start_redirection(self, mock_serial_class):
+        # start SerialRedirection fail
+        (mock_serial_class.return_value).start.return_value = 1
+        self.assertRaises(SystemExit,
+                          serial_redirection._main,
+                          ['serial_redirection.py', 'm3'])
 
 
 @mock.patch('sys.stderr', StringIO())
 class TestParseArguments(unittest.TestCase):
     def test_command_line_calls(self):
-        from gateway_code import config
         # valid
-        for node in config.NODES:
-            self.assertEquals(serial_redirection._parse_arguments([node]),
-                              node)
-        # invalid calls
-        args = ['INEXISTANT_NODE']
-        self.assertRaises(SystemExit,
-                          serial_redirection._parse_arguments, args)
+        args = ['tty', '500000']
+        opts = serial_redirection._parse_arguments(args)
+        self.assertEquals('tty', opts.tty)
+        self.assertEquals(500000, opts.baudrate)

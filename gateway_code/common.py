@@ -3,6 +3,7 @@
 
 """ Common functions of the module """
 
+import os
 import time
 # http://code.activestate.com/recipes/\
 #     577105-synchronization-decorator-for-class-methods/
@@ -39,6 +40,14 @@ def wait_cond(timeout, value, fct, *args, **kwargs):
         if time.time() > (time_ref + timeout):
             return False
         time.sleep(0.1)
+
+
+def wait_tty(dev_tty, logger, timeout=0):
+    """ Wait that tty is present """
+    if wait_cond(timeout, True, os.path.exists, dev_tty):
+        return 0
+    logger.error('Error Open Node tty not visible: %s', dev_tty)
+    return 1
 
 
 def syncronous(tlockname):

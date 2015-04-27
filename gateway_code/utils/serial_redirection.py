@@ -1,9 +1,7 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-"""
-Module managing the open node serial redirection
-"""
+""" Module managing the open node serial redirection """
 
 import sys
 import os
@@ -18,25 +16,19 @@ import shlex
 # without mocking the 'threading.Event' used in the threading class
 from threading import Event
 
-from gateway_code import config
-
-SOCAT_CMD = ''' socat -d TCP4-LISTEN:20000,reuseaddr open:%s,b%d,echo=0,raw '''
+SOCAT = 'socat -d TCP4-LISTEN:20000,reuseaddr open:{tty},b{baud},echo=0,raw'
 LOGGER = logging.getLogger('gateway_code')
 
 
 class SerialRedirection(object):
-    """
-    Class providing node serial redirection to a tcp socket
-    """
+    """ Class providing node serial redirection to a tcp socket """
 
-    def __init__(self, node):
+    def __init__(self, tty, baudrate):
         """
         Init SerialRedirection
         """
-        if node not in config.NODES_CFG:
-            raise ValueError('Unknown node, not in %r',
-                             config.NODES_CFG.keys())
-        self.node = node
+        self.tty = tty
+        self.baudrate = baudrate
 
         self.redirector_thread = None
         self.is_running = False
@@ -53,8 +45,7 @@ class SerialRedirection(object):
             return 1
 
         self.redirector_thread = _SerialRedirectionThread(
-            config.NODES_CFG[self.node]['tty'],
-            config.NODES_CFG[self.node]['baudrate'])
+            self.tty, self.baudrate)
         self.is_running = True
         self.redirector_thread.daemon = True
         self.redirector_thread.start()
@@ -81,45 +72,42 @@ class _SerialRedirectionThread(threading.Thread):
     """
 
     def __init__(self, tty, baudrate):
-
+        # threading.Thread init
         super(_SerialRedirectionThread, self).__init__()
 
-        # serial link informations
         self.tty = tty
         self.baudrate = baudrate
+        self.proc = None  # Socat process
 
-        # Stopping thread
+        # Thread management
         self.stop_thread = False
 
-        # Current process running socat
-        self.redirector_process = None
-
     def run(self):
-        """
-        Run the thread
+        """ Starts a while loop running a socat command """
 
-        It starts a while loop running a socat command
-        """
-
-        cmd_list = shlex.split(SOCAT_CMD % (self.tty, self.baudrate))
+        socat_cmd = shlex.split(SOCAT.format(tty=self.tty, baud=self.baudrate))
 
         with open(os.devnull, 'w') as fnull:
             while not self.stop_thread:
-                self.redirector_process = subprocess.Popen(
-                    cmd_list, stdout=fnull, stderr=fnull)
+                self._call(socat_cmd, fnull)
 
-                # blocks until socat terminates
-                retcode = self.redirector_process.wait()
-                # On exit, socat gives status:
-                #   0 if it terminated due to EOF or inactivity timeout
-                #   a positive value on error
-                #   a negative value on fatal error.
+    def _call(self, socat_cmd, out):
+        """ Call 'socat_cmd' and wait until it finishes
+        'self.proc' is updated with the current socat process
+        Logs an error if it terminates with a non-null return value """
+        self.proc = subprocess.Popen(socat_cmd, stdout=out, stderr=out)
 
-                # don't print error when 'terminate' causes the error
-                if retcode and (not self.stop_thread):
-                    LOGGER.error('Open node serial redirection exit: %d',
-                                 retcode)
-                    time.sleep(0.5)  # prevent quick loop
+        # blocks until socat terminates
+        retcode = self.proc.wait()
+        # On exit, socat gives status:
+        #   0 if it terminated due to EOF or inactivity timeout
+        #   a positive value on error
+        #   a negative value on fatal error.
+
+        # don't print error when 'terminate' causes the error
+        if retcode and (not self.stop_thread):
+            LOGGER.error('Open node serial redirection exit: %d', retcode)
+            time.sleep(0.5)  # prevent quick loop
 
     def stop(self):
         """
@@ -130,32 +118,33 @@ class _SerialRedirectionThread(threading.Thread):
         # kill
         while self.is_alive():
             try:
-                if self.redirector_process is not None:
-                    self.redirector_process.terminate()
+                self.proc.terminate()
+            except AttributeError:
+                pass  # proc is None
             except OSError as err:
                 # errno == 3 'No such proccess'
                 # current process is already terminated not an issue
                 assert err.errno == 3, 'Unknown error num: %d' % err.errno
             time.sleep(0.1)
 
-        self.redirector_process = None
+        self.proc = None
 
 
 def _parse_arguments(args):
     """
     Parsing arguments:
 
-    script.py node
+    script.py <tty> <baudrate>
     Only pass arguments to function without script name
 
     """
     import argparse
     parser = argparse.ArgumentParser()
-    parser.add_argument('node', type=str, choices=config.NODES,
-                        help="Node selection")
-    arguments = parser.parse_args(args)
+    parser.add_argument('tty', type=str, help="Serial device")
+    parser.add_argument('baudrate', type=int, help="Serial baudrate")
+    opts = parser.parse_args(args)
 
-    return arguments.node
+    return opts
 
 
 def _main(args):
@@ -164,11 +153,11 @@ def _main(args):
     """
     import signal
 
-    node = _parse_arguments(args[1:])
+    opts = _parse_arguments(args[1:])
     unlock_main_thread = Event()
 
     # Create the redirector
-    redirect = SerialRedirection(node)
+    redirect = SerialRedirection(opts.tty, opts.baudrate)
     if redirect.start() != 0:
         print >> sys.stderr, "Could not start redirection"
         exit(1)

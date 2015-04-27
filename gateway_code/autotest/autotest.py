@@ -13,7 +13,8 @@ from serial import SerialException
 from collections import defaultdict
 
 import gateway_code.config as config
-import gateway_code.open_node
+from gateway_code import common
+from gateway_code import open_node
 from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
@@ -108,8 +109,8 @@ class AutoTestManager(object):
         """
         ret_val = 0
         try:
-            ret_val += gateway_code.open_node.wait_tty(
-                config.OPEN_A8_CFG['tty'], timeout=20)
+            ret_val += common.wait_tty(open_node.NodeA8.tty, LOGGER,
+                                       timeout=20)
 
             # wait nodes start
             # get ip address using serial
