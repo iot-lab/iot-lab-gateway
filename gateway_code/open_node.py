@@ -9,7 +9,7 @@ import time
 
 import gateway_code.config as config
 from gateway_code import common
-from gateway_code.serial_redirection import SerialRedirection
+from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.autotest import expect
 
 from gateway_code import gateway_logging

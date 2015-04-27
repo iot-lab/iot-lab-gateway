@@ -8,8 +8,7 @@ import unittest
 from cStringIO import StringIO
 import threading
 
-from gateway_code.serial_redirection import SerialRedirection
-from gateway_code import serial_redirection
+from gateway_code.utils import serial_redirection
 
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
@@ -54,7 +53,7 @@ class TestMainFunction(unittest.TestCase):
 
     def test_simple_start(self):
 
-        redirection = SerialRedirection('m3')
+        redirection = serial_redirection.SerialRedirection('m3')
 
         self.assertEquals(redirection.stop(), 1)  # cannot stop before start
         self.assertEquals(redirection.start(), 0)
@@ -79,9 +78,9 @@ class TestMainFunction(unittest.TestCase):
         self.popen.wait.side_effect = wait
         self.popen.wait.return_value = 42
 
-        with mock.patch('gateway_code.serial_redirection.LOGGER.error') \
+        with mock.patch('gateway_code.utils.serial_redirection.LOGGER.error') \
                 as mock_logger:
-            redirection = SerialRedirection('m3')
+            redirection = serial_redirection.SerialRedirection('m3')
 
             self.assertEquals(redirection.start(), 0)
             self.wait.wait()
@@ -97,14 +96,15 @@ class TestMainFunction(unittest.TestCase):
             handler = signal.getsignal(signal.SIGINT)  # get ctrl+c handler
             handler(None, None)
 
-        with mock.patch('gateway_code.serial_redirection.Event') as mock_event:
+        with mock.patch('gateway_code.utils.serial_redirection.Event'
+                        ) as mock_event:
             event = mock_event.return_value
             event.wait.side_effect = wait_mock
 
             serial_redirection._main(['serial_redirection.py', 'm3'])
             self.assertEquals(event.wait.call_count, 1)
 
-    @mock.patch('gateway_code.serial_redirection.SerialRedirection')
+    @mock.patch('gateway_code.utils.serial_redirection.SerialRedirection')
     def test_error_with_start_redirection(self, mock_serial_class):
         # start SerialRedirection fail
         (mock_serial_class.return_value).start.return_value = 1
@@ -196,7 +196,7 @@ class TestSerialRedirectionAndThread(unittest.TestCase):
         self.redirect.stop()
 
 
-@mock.patch('gateway_code.serial_redirection._SerialRedirectionThread')
+@mock.patch('gateway_code.utils.serial_redirection._SerialRedirectionThread')
 class TestSerialRedirectionInit(unittest.TestCase):
     """ Test the SerialRedirection class init """
 
@@ -204,10 +204,11 @@ class TestSerialRedirectionInit(unittest.TestCase):
         """ Test init calls"""
         # valid inits
         for node in ('m3', 'gwt', 'a8'):
-            SerialRedirection(node)
+            serial_redirection.SerialRedirection(node)
 
         # invalid node name
-        self.assertRaises(ValueError, SerialRedirection, 'INVALID_NODE')
+        self.assertRaises(ValueError,
+                          serial_redirection.SerialRedirection, 'INVALID_NODE')
 
 
 @mock.patch('sys.stderr', StringIO())
