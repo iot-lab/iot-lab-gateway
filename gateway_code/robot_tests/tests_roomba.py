@@ -5,13 +5,12 @@ Test module for Roomba code with the real robot
 """
 
 import time
-import gateway_code.config
 from gateway_code import gateway_logging
 from gateway_code import gateway_roomba
 
 
 import os
-if not os.path.exists(gateway_code.config.ROOMBA_CFG['tty']):
+if not os.path.exists(gateway_roomba.TTY):
     import unittest
     raise unittest.SkipTest("Skip roomba tests")
 

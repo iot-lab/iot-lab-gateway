@@ -37,8 +37,6 @@ OPEN_A8_CFG = {
 
 NODES = NODES_CFG.keys()
 
-ROOMBA_CFG = {'tty': '/dev/ttyROOMBA'}
-
 CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 
 FIRMWARES = {

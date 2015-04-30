@@ -7,7 +7,6 @@ Manage the robot start/stop experiment, robot behavior and status
 """
 
 from roomba import roomba
-from gateway_code import config
 import logging
 import time
 import threading
@@ -18,7 +17,7 @@ STATUS = {'error': -1, 'closed': 0, 'init': 1, 'docked': 2,
 ENERGY = {'charged': 0, 'discharged': 1}
 # Parameters
 LOGGER = logging.getLogger('gateway_code')
-SERIAL_TTY = config.ROOMBA_CFG['tty']
+TTY = '/dev/ttyROOMBA'
 BATTERY_LOW_LEVEL = 20
 BATTERY_HIGH_LEVEL = 80
 
@@ -51,7 +50,7 @@ class GatewayRoomba(object):
         self.status = 'init'
         LOGGER.info('Init Roomba communication')
         # Open the serial to communicate with Roomba
-        self.robot = roomba.Roomba500(SERIAL_TTY)
+        self.robot = roomba.Roomba500(TTY)
         if self.robot.connect is False:
             self.status = 'error'
             st_return = 1
