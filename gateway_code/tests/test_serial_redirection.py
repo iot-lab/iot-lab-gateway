@@ -180,8 +180,8 @@ class TestMainFunction(unittest.TestCase):
             handler = signal.getsignal(signal.SIGINT)  # get ctrl+c handler
             handler(None, None)
 
-        with mock.patch('gateway_code.utils.serial_redirection.Event'
-                        ) as mock_event:
+        with mock.patch('gateway_code.utils.serial_redirection.Event') \
+                as mock_event:
             event = mock_event.return_value
             event.wait.side_effect = wait_mock
 

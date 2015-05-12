@@ -69,7 +69,7 @@ class AutoTestManager(object):
         ret_val = 0
 
         # configure Control Node
-        ret_val += self.g_m.node_soft_reset('gwt')
+        ret_val += self.g_m.control_node.reset()
         self.g_m.cn_serial.start(None, ['-d'], self._measures_handler)
         time.sleep(1)
         ret_val += self.g_m.set_time()
@@ -88,7 +88,7 @@ class AutoTestManager(object):
         """ Setup open node m3 connection """
         ret_val = 0
 
-        ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+        ret = self.g_m.open_node.flash(config.FIRMWARES['m3_autotest'])
         ret_val += self._check(ret, 'flash_m3', ret)
         time.sleep(2)
 
@@ -578,7 +578,7 @@ class AutoTestManager(object):
         # on a8, linux is consuming enough I think
         if 'm3' == board_type:  # pragma: no branch
             time.sleep(1)
-            ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+            ret = self.g_m.open_node.flash(config.FIRMWARES['m3_autotest'])
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption

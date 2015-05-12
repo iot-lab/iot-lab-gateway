@@ -4,7 +4,6 @@
 
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
-# pylint: disable=star-args
 
 import os
 import time

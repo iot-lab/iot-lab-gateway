@@ -11,9 +11,9 @@ import subprocess
 
 import gateway_code.config as config
 from gateway_code import common
-from gateway_code import openocd_cmd
 from gateway_code.profile import Profile
 from gateway_code.autotest import autotest
+from gateway_code.control_node import cn
 
 import gateway_code.open_node
 
@@ -66,7 +66,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.cn_serial = control_node_interface.ControlNodeSerial()
         self.protocol = protocol_cn.Protocol(self.cn_serial.send_command)
 
-        self.open_node = GatewayManager.open_nodes[self.board_type](self)
+        self.open_node = GatewayManager.open_nodes[self.board_type]()
+        self.control_node = cn.ControlNode()
+
+        self.nodes = {
+            'control': self.control_node,
+            'open': self.open_node,
+        }
 
     def setup(self):
         """ Run commands that might crash
@@ -339,28 +345,28 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.open_node_state = "stop"
         return ret
 
-    @common.syncronous('rlock')  # uses `self`
-    def open_debug_start(self):  # pylint: disable=no-self-use
+    @common.syncronous('rlock')
+    def open_debug_start(self):
         """ Start open node debugger """
         LOGGER.info('Open node debugger start')
 
-        ret = openocd_cmd.OpenOCD.debug_start('m3')
+        ret = self.nodes['open'].debug_start()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger start failed')
         return ret
 
-    @common.syncronous('rlock')  # uses `self`
-    def open_debug_stop(self):   # pylint: disable=no-self-use
+    @common.syncronous('rlock')
+    def open_debug_stop(self):
         """ Stop open node debugger """
         LOGGER.info('Open node debugger stop')
 
-        ret = openocd_cmd.OpenOCD.debug_stop('m3')
+        ret = self.nodes['open'].debug_stop()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger stop failed')
         return ret
 
-    @common.syncronous('rlock')       # uses `self`
-    def node_soft_reset(self, node):  # pylint: disable=no-self-use
+    @common.syncronous('rlock')
+    def node_soft_reset(self, node):
         """
         Reset the given node using reset pin
 
@@ -369,15 +375,18 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.info('Node %s reset', node)
 
-        ret = openocd_cmd.reset(node)
+        if node == 'gwt':
+            ret = self.nodes['control'].reset()
+        elif node == 'm3':
+            ret = self.nodes['open'].reset()
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Node %s reset failed: %d', node, ret)
 
         return ret
 
-    @common.syncronous('rlock')                 # uses `self`
-    def node_flash(self, node, firmware_path):  # pylint: disable=R0201
+    @common.syncronous('rlock')
+    def node_flash(self, node, firmware_path):
         """
         Flash the given firmware on the given node
 
@@ -387,7 +396,10 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         assert node in ['gwt', 'm3'], "Invalid node name"
         LOGGER.info('Flash firmware on %s: %s', node, firmware_path)
 
-        ret = openocd_cmd.flash(node, firmware_path)
+        if node == 'gwt':
+            ret = self.nodes['control'].flash(firmware_path)
+        elif node == 'm3':
+            ret = self.nodes['open'].flash(firmware_path)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s: %d', node, ret)

@@ -14,7 +14,6 @@ PROFILES_DIR = CURRENT_DIR + 'profiles/'
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
-# pylint: disable=star-args
 # pylint <= 1.3
 # pylint: disable=too-many-public-methods
 # pylint >= 1.4

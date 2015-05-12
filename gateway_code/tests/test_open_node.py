@@ -21,7 +21,7 @@ class TestNodeA8(unittest.TestCase):
         serial_expect = expect_class.return_value
         serial_expect.expect.return_value = ''
 
-        a8_node = open_node.NodeA8(None)
+        a8_node = open_node.NodeA8()
 
         serial_expect.expect.return_value = ''
         a8_node._debug_boot_start(0)
@@ -32,5 +32,5 @@ class TestNodeA8(unittest.TestCase):
     @staticmethod
     def test_error_cases():
         """ Coverage cases execution """
-        a8_node = open_node.NodeA8(None)
+        a8_node = open_node.NodeA8()
         a8_node._debug_boot_stop()

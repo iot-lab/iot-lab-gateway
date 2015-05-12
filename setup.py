@@ -23,7 +23,7 @@ Pylint and pep8 checker:
 
 """
 
-from setuptools import setup, Command, Extension
+from setuptools import setup, Command, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
 import sys
@@ -114,7 +114,7 @@ setup(name=PACKAGE,
       author='IoT-Lab Team',
       author_email='admin@iot-lab.info',
       url='http://www.iot-lab.info',
-      packages=[PACKAGE, '%s.autotest' % PACKAGE, 'roomba'],
+      packages=find_packages(),
 
       scripts=SCRIPTS,
       include_package_data=True,

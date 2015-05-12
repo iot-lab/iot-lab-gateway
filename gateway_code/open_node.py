@@ -5,6 +5,7 @@ from threading import Thread
 import time
 
 import gateway_code.config as config
+from gateway_code import openocd_cmd
 from gateway_code import common
 from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.autotest import expect
@@ -19,15 +20,14 @@ class NodeM3(object):
     baudrate = 500000
     openocd_cfg_file = 'iot-lab-m3.cfg'
 
-    def __init__(self, g_m):
-        self.g_m = g_m
+    def __init__(self):
         self.serial_redirection = SerialRedirection(self.tty, self.baudrate)
 
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
         ret_val = 0
         ret_val += common.wait_tty(self.tty, LOGGER, timeout=1)
-        ret_val += self.g_m.node_flash('m3', firmware_path)
+        ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
         return ret_val
 
@@ -35,11 +35,37 @@ class NodeM3(object):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
         # cleanup debugger before flashing
-        ret_val += self.g_m.open_debug_stop()
+        ret_val += self.debug_stop()
 
         ret_val += self.serial_redirection.stop()
-        ret_val += self.g_m.node_flash('m3', config.FIRMWARES['idle'])
+        ret_val += self.flash(config.FIRMWARES['idle'])
         return ret_val
+
+    @staticmethod
+    def flash(firmware_path):
+        """ Flash the given firmware on M3 node
+        :param firmware_path: Path to the firmware to be flashed on `node`.
+        """
+        LOGGER.debug('Flash firmware on M3: %s', firmware_path)
+        return openocd_cmd.flash('m3', firmware_path)
+
+    @staticmethod
+    def reset():
+        """ Reset the M3 node using jtag """
+        LOGGER.info('Reset M3 node')
+        return openocd_cmd.reset('m3')
+
+    @staticmethod
+    def debug_start():
+        """ Start M3 node debugger """
+        LOGGER.info('M3 Node debugger start')
+        return openocd_cmd.OpenOCD.debug_start('m3')
+
+    @staticmethod
+    def debug_stop():   # pylint: disable=no-self-use
+        """ Stop M3 node debugger """
+        LOGGER.info('M3 Node debugger stop')
+        return openocd_cmd.OpenOCD.debug_stop('m3')
 
 
 class NodeA8(object):
@@ -47,7 +73,7 @@ class NodeA8(object):
     tty = '/dev/ttyON_A8'
     baudrate = 115200
 
-    def __init__(self, g_m):  # pylint: disable=unused-argument
+    def __init__(self):
         self._a8_expect = None
 
     def setup(self, firmware_path):  # pylint: disable=unused-argument
