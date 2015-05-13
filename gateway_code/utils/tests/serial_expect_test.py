@@ -5,9 +5,9 @@
 import unittest
 import mock
 import time
-
-from gateway_code.autotest import expect
 import serial
+
+from .. import serial_expect
 
 # pylint: disable=missing-docstring
 # pylint <= 1.3
@@ -26,7 +26,7 @@ class TestSerialExpect(unittest.TestCase):
         self.serial = self.serial_class.return_value
         self.serial.read = self.serial_read_mock
 
-        self.expect = expect.SerialExpect('TTY', 1234)
+        self.expect = serial_expect.SerialExpect('TTY', 1234)
 
         self.read_ret = []
 
@@ -101,7 +101,7 @@ class TestSerialExpect(unittest.TestCase):
     def test_verbose_mode(self):
         logger = mock.Mock()
         logger.debug = mock.Mock(side_effet=ValueError(""))
-        self.expect = expect.SerialExpect('TTY', 1234, logger=logger)
+        self.expect = serial_expect.SerialExpect('TTY', 1234, logger=logger)
 
         self.read_ret = ['123\n456', '789\n', 'abcd']
         ret = self.expect.expect('a.*d')

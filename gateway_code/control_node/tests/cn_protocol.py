@@ -8,14 +8,14 @@
 import unittest
 import mock
 
-from gateway_code import protocol_cn
+from gateway_code.control_node import cn_protocol
 from gateway_code import profile
 
 
 class TestProtocol(unittest.TestCase):
 
     def setUp(self):
-        self.protocol = protocol_cn.Protocol(self._sender_wrapper)
+        self.protocol = cn_protocol.Protocol(self._sender_wrapper)
         self.sender = mock.Mock()
 
     def _sender_wrapper(self, command_list):
@@ -132,7 +132,7 @@ class TestProtocol(unittest.TestCase):
 class TestProtocolRadio(unittest.TestCase):
 
     def setUp(self):
-        self.protocol = protocol_cn.Protocol(self._sender_wrapper)
+        self.protocol = cn_protocol.Protocol(self._sender_wrapper)
         self.sender = mock.Mock()
 
     def _sender_wrapper(self, command_list):

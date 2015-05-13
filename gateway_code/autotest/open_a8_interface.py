@@ -6,12 +6,13 @@
 import shlex
 import time
 import datetime
-
-from gateway_code.config import static_path
-from gateway_code.autotest import expect
-from gateway_code.open_node import NodeA8
 from subprocess import check_output, check_call, Popen
 from subprocess import STDOUT, CalledProcessError
+
+from gateway_code.config import static_path
+from gateway_code.open_node import NodeA8
+from gateway_code.utils.serial_expect import SerialExpect
+
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -50,7 +51,7 @@ class OpenA8Connection(object):
 
     def wait_boot_and_get_ip_address(self):
         """ Wait until open node is booted and get its ip address"""
-        a8_serial = expect.SerialExpect(NodeA8.TTY, NodeA8.BAUDRATE, LOGGER)
+        a8_serial = SerialExpect(NodeA8.TTY, NodeA8.BAUDRATE, LOGGER)
 
         LOGGER.debug("Time before boot %s", datetime.datetime.now())
         # boot timeout 5 minutes (seen likely 3minutes loaded server)

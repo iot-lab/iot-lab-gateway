@@ -15,7 +15,7 @@ from mock import patch
 
 # all modules should be imported and not only the package
 from gateway_code.integration import test_integration_mock
-import gateway_code.control_node_interface
+import gateway_code.control_node.cn_interface
 import gateway_code.config
 
 from gateway_code.common import wait_cond
@@ -78,7 +78,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
-        gateway_code.control_node_interface.LOGGER.debug(measure_str)
+        gateway_code.control_node.cn_interface.LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
 
     @staticmethod
@@ -112,7 +112,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 class TestComplexExperimentRunning(ExperimentRunningMock):
     """ Run complete experiment test """
 
-    @patch('gateway_code.control_node_interface.LOGGER.error')
+    @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
         """ Test simple experiment"""
         if 'm3' == gateway_code.config.board_type():
@@ -170,7 +170,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)
 
-    @patch('gateway_code.control_node_interface.LOGGER.error')
+    @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_m3_exp_with_measures(self, m_error):
         """ Run an experiment with measures and profile update """
 

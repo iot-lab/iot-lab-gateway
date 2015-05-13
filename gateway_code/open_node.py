@@ -5,10 +5,13 @@ from threading import Thread
 import time
 
 from gateway_code.config import static_path
-from gateway_code import openocd_cmd
 from gateway_code import common
+
+from gateway_code.utils.openocd import OpenOCD
+from gateway_code.utils.serial_expect import SerialExpect
 from gateway_code.utils.serial_redirection import SerialRedirection
-from gateway_code.autotest import expect
+
+from gateway_code.utils import openocd
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -50,22 +53,22 @@ class NodeM3(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.debug('Flash firmware on M3: %s', firmware_path)
-        return openocd_cmd.flash(self.OPENOCD_CFG_FILE, firmware_path)
+        return openocd.flash(self.OPENOCD_CFG_FILE, firmware_path)
 
     def reset(self):
         """ Reset the M3 node using jtag """
         LOGGER.info('Reset M3 node')
-        return openocd_cmd.reset(self.OPENOCD_CFG_FILE)
+        return openocd.reset(self.OPENOCD_CFG_FILE)
 
     def debug_start(self):
         """ Start M3 node debugger """
         LOGGER.info('M3 Node debugger start')
-        return openocd_cmd.OpenOCD.debug_start(self.OPENOCD_CFG_FILE)
+        return OpenOCD.debug_start(self.OPENOCD_CFG_FILE)
 
     def debug_stop(self):
         """ Stop M3 node debugger """
         LOGGER.info('M3 Node debugger stop')
-        return openocd_cmd.OpenOCD.debug_stop(self.OPENOCD_CFG_FILE)
+        return OpenOCD.debug_stop(self.OPENOCD_CFG_FILE)
 
 
 class NodeA8(object):
@@ -103,7 +106,7 @@ class NodeA8(object):
     def _debug_thread(self, timeout):
         """ Monitor A8 tty to check if node booted """
         t_start = time.time()
-        self._a8_expect = expect.SerialExpect(self.TTY, self.BAUDRATE, LOGGER)
+        self._a8_expect = SerialExpect(self.TTY, self.BAUDRATE, LOGGER)
         match = self._a8_expect.expect(' login: ', timeout=timeout)
         delta_t = time.time() - t_start
 

@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """ Control Node experiment implementation """
 
-from gateway_code import openocd_cmd
+from gateway_code.utils import openocd
 from gateway_code.config import static_path
 
 import logging
@@ -43,9 +43,9 @@ class ControlNode(object):
         """
         firmware_path = firmware_path or self.FW_CONTROL_NODE
         LOGGER.debug('Flash firmware on Control Node %s', firmware_path)
-        return openocd_cmd.flash(self.OPENOCD_CFG_FILE, firmware_path)
+        return openocd.flash(self.OPENOCD_CFG_FILE, firmware_path)
 
     def reset(self):
         """ Reset the Control Node using jtag """
         LOGGER.info('Reset Control Node')
-        return openocd_cmd.reset(self.OPENOCD_CFG_FILE)
+        return openocd.reset(self.OPENOCD_CFG_FILE)

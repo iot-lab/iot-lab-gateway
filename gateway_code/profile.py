@@ -38,7 +38,7 @@ class Profile(object):
 class Consumption(object):
     """ Consumption monitoring configuration """
     consumption_source = {
-        ('m3', 'dc'): '3.3V',
+        ('m3', 'dc'): '3.3V',  # TODO move this in 'open_node'
         ('a8', 'dc'): '5V',
         ('m3', 'battery'): 'BATT',
         ('a8', 'battery'): 'BATT',

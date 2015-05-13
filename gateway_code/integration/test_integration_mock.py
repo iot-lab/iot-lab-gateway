@@ -8,7 +8,7 @@ import json
 
 from mock import patch
 
-import gateway_code.server_rest
+import gateway_code.rest_server
 import gateway_code.config
 
 
@@ -22,11 +22,12 @@ class GatewayCodeMock(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         # print measures
-        patch('gateway_code.control_node_interface.TESTS_ARGS', ['-d']).start()
+        patch('gateway_code.control_node.cn_interface.TESTS_ARGS',
+              ['-d']).start()
 
-        g_m = gateway_code.server_rest.GatewayManager('.')
+        g_m = gateway_code.rest_server.GatewayManager('.')
         g_m.setup()
-        cls.app = gateway_code.server_rest.GatewayRest(g_m)
+        cls.app = gateway_code.rest_server.GatewayRest(g_m)
 
     @classmethod
     def tearDownClass(cls):
@@ -37,7 +38,7 @@ class GatewayCodeMock(unittest.TestCase):
         self.app = type(self).app
         self.g_m = self.app.gateway_manager
 
-        self.request_patcher = patch('gateway_code.server_rest.request')
+        self.request_patcher = patch('gateway_code.rest_server.request')
         self.request = self.request_patcher.start()
         self.request.query = mock.Mock(timeout='0')  # no timeout by default
 

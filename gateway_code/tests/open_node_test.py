@@ -14,7 +14,7 @@ import gateway_code.open_node as open_node
 
 class TestNodeA8(unittest.TestCase):
 
-    @patch('gateway_code.open_node.expect.SerialExpect')
+    @patch('gateway_code.open_node.SerialExpect')
     def test__debug_boot_thread(self, expect_class):
         """ Run both cases for coverage """
         serial_expect = expect_class.return_value

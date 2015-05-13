@@ -21,7 +21,7 @@ import mock
 from mock import patch, PropertyMock
 import unittest
 
-from gateway_code import server_rest
+from gateway_code import rest_server
 
 import os
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -52,7 +52,7 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
 class TestRestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.request_patcher = patch('gateway_code.server_rest.request')
+        self.request_patcher = patch('gateway_code.rest_server.request')
         self.request = self.request_patcher.start()
 
         self.board_patcher = patch('gateway_code.config.board_type')
@@ -60,7 +60,7 @@ class TestRestMethods(unittest.TestCase):
         self.board.return_value = 'm3'
 
         self.g_m = mock.Mock()
-        self.s_r = server_rest.GatewayRest(self.g_m)
+        self.s_r = rest_server.GatewayRest(self.g_m)
 
     def tearDown(self):
         self.request_patcher.stop()
@@ -276,6 +276,6 @@ class TestServerRestMain(unittest.TestCase):
     def test_main_function(self, run_mock, call_mock):
         call_mock.return_value = 0
 
-        args = ['server_rest.py', 'localhost', '8080']
-        server_rest._main(args)
+        args = ['rest_server.py', 'localhost', '8080']
+        rest_server._main(args)
         self.assertTrue(run_mock.called)

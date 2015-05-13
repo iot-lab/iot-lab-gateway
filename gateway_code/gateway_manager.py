@@ -13,11 +13,10 @@ import gateway_code.config as config
 from gateway_code import common
 from gateway_code.profile import Profile
 from gateway_code.autotest import autotest
-from gateway_code.control_node import cn
 
 import gateway_code.open_node
 
-from gateway_code import control_node_interface, protocol_cn
+from gateway_code.control_node import cn_interface, cn_protocol, cn
 from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER
@@ -63,8 +62,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         gateway_logging.init_logger(log_folder)  # logger config
 
-        self.cn_serial = control_node_interface.ControlNodeSerial()
-        self.protocol = protocol_cn.Protocol(self.cn_serial.send_command)
+        self.cn_serial = cn_interface.ControlNodeSerial()
+        self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
 
         self.open_node = GatewayManager.open_nodes[self.board_type]()
         self.control_node = cn.ControlNode()
