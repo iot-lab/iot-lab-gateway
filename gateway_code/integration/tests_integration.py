@@ -17,10 +17,38 @@ from mock import patch
 from gateway_code.integration import test_integration_mock
 import gateway_code.control_node_interface
 import gateway_code.config
+
 from gateway_code.common import wait_cond
 from gateway_code.autotest.autotest import extract_measures
 
+from gateway_code.open_node import NodeM3
+from gateway_code.control_node.cn import ControlNode
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
+
 USER = 'harter'
+
+
+# Bottle FileUpload class stub
+class FileUpload(object):  # pylint: disable=too-few-public-methods
+    """ Bottle FileUpload class stub """
+    files = {}
+
+    def __init__(self, file_path):
+        self.file = None
+        self.filename = None
+        self.name = None
+        self.headers = None
+
+        self.filename = os.path.basename(file_path)
+        _ext = os.path.splitext(self.filename)[1]
+
+        try:
+            self.name = {'.json': 'profile', '.elf': 'firmware'}[_ext]
+        except KeyError:
+            raise ValueError("Uknown file type %r: %r" % (_ext, file_path))
+
+        self.file = open(file_path)
 
 
 if os.uname()[4] != 'armv7l':
@@ -109,7 +137,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         msg = 'HELLO WORLD'
 
         # start exp with idle firmware
-        self.request.files = {'firmware': self.files['idle']}
+        self.request.files = {'firmware': FileUpload(NodeM3.FW_IDLE)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
         time.sleep(1)
 
@@ -117,7 +145,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
 
         # flash echo firmware
-        self.request.files = {'firmware': self.files['m3_autotest']}
+        self.request.files = {'firmware': FileUpload(NodeM3.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)
 
@@ -150,7 +178,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             return
         t_start = time.time()
 
-        self.request.files = {'firmware': self.files['m3_autotest']}
+        self.request.files = {'firmware': FileUpload(NodeM3.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
         exp_files = self.g_m.exp_desc['exp_files'].copy()
         time.sleep(1)
@@ -273,7 +301,9 @@ class TestIntegrationOther(ExperimentRunningMock):
     def test_admin_commands(self):
         """ Try running the admin commands """
         # flash Control Node
-        self.request.files = {'firmware': self.files['control_node']}
+        self.request.files = {
+            'firmware': FileUpload(ControlNode.FW_CONTROL_NODE)
+        }
         ret = self.app.admin_control_flash()
         self.assertEquals(ret, {'ret': 0})
         ret = self.app.admin_control_soft_reset()
@@ -326,14 +356,17 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     def tests_invalid_profile_at_start(self):
         """ Run experiments with invalid profiles """
 
-        self.request.files = {'profile': self.files['invalid_profile']}
+        self.request.files = {'profile': FileUpload(
+            CURRENT_DIR + 'invalid_profile.json')}
         self.assertNotEquals({'ret': 0}, self.app.exp_start(USER, 123))
 
-        self.request.files = {'profile': self.files['invalid_profile_2']}
+        self.request.files = {'profile': FileUpload(
+            CURRENT_DIR + 'invalid_profile_2.json')}
         self.assertNotEquals({'ret': 0}, self.app.exp_start(USER, 123))
 
     def tests_invalid_files(self):
         """ Test invalid flash files """
 
-        self.request.files = {'profile': self.files['profile']}
+        self.request.files = {'profile': FileUpload(
+            CURRENT_DIR + 'profile.json')}
         self.assertNotEquals({'ret': 0}, self.app.open_flash())

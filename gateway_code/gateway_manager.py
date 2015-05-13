@@ -78,10 +78,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Run commands that might crash
         Must be run before running other commands """
         # Setup control node
-        ret = self.node_flash('gwt', config.FIRMWARES['control_node'])
+        ret = self.node_flash('gwt', None)  # Flash default
         if ret != 0:
-            raise StandardError("Control node flash failed: {ret:%d, '%s')",
-                                ret, config.FIRMWARES['control_node'])
+            raise StandardError("Control node flash failed: {ret:%d}", ret)
 
     # R0913 too many arguments 6/5
     @common.syncronous('rlock')
@@ -139,8 +138,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Print log after creating user logs
         LOGGER.info('Start experiment: %s-%i', user, exp_id)
 
-        firmware_path = firmware_path or config.FIRMWARES['idle']
-
         # start steps described in docstring
         ret_val = 0
 
@@ -163,6 +160,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # # # # # # # # # # #
         # Prepare Open Node #
         # # # # # # # # # # #
+        # If firmware_path is None, it uses default firmware
         ret_val += self.open_node.setup(firmware_path)
 
         if timeout != 0:

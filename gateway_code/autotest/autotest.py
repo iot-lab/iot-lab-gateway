@@ -88,11 +88,12 @@ class AutoTestManager(object):
         """ Setup open node m3 connection """
         ret_val = 0
 
-        ret = self.g_m.open_node.flash(config.FIRMWARES['m3_autotest'])
+        ret = self.g_m.open_node.flash(open_node.NodeM3.FW_AUTOTEST)
         ret_val += self._check(ret, 'flash_m3', ret)
         time.sleep(2)
 
-        self.on_serial = m3_node_interface.OpenNodeSerial()
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            open_node.NodeM3.TTY, open_node.NodeM3.BAUDRATE)
         ret, err_msg = self.on_serial.start()
         ret_val += self._check(ret, 'open_m3_serial', err_msg)
 
@@ -109,7 +110,7 @@ class AutoTestManager(object):
         """
         ret_val = 0
         try:
-            ret_val += common.wait_tty(open_node.NodeA8.tty, LOGGER,
+            ret_val += common.wait_tty(open_node.NodeA8.TTY, LOGGER,
                                        timeout=20)
 
             # wait nodes start
@@ -135,7 +136,7 @@ class AutoTestManager(object):
 
         # open A8 flash
         try:
-            self.a8_connection.scp(config.FIRMWARES['a8_autotest'],
+            self.a8_connection.scp(open_node.NodeA8.A8_M3_FW_AUTOTEST,
                                    '/tmp/a8_autotest.elf')
         except CalledProcessError as err:  # pragma: no cover
             ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
@@ -148,8 +149,10 @@ class AutoTestManager(object):
             raise FatalError('Setup Open Node failed')
 
         # Create open node a8-m3 connection through socat
-        self.on_serial = m3_node_interface.OpenNodeSerial()
-        ret, err_msg = self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            open_node.NodeA8.LOCAL_A8_M3_TTY, open_node.NodeA8.A8_M3_BAUDRATE)
+
+        ret, err_msg = self.on_serial.start()
         ret_val += self._check(ret, 'open_a8_serial', err_msg)
 
         return ret_val
@@ -578,7 +581,7 @@ class AutoTestManager(object):
         # on a8, linux is consuming enough I think
         if 'm3' == board_type:  # pragma: no branch
             time.sleep(1)
-            ret = self.g_m.open_node.flash(config.FIRMWARES['m3_autotest'])
+            ret = self.g_m.open_node.flash(open_node.NodeM3.FW_AUTOTEST)
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption

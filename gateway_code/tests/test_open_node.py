@@ -14,20 +14,20 @@ import gateway_code.open_node as open_node
 
 class TestNodeA8(unittest.TestCase):
 
-    @staticmethod
-    @patch('gateway_code.autotest.expect.SerialExpect')
-    def test__debug_boot_start_thread(expect_class):
+    @patch('gateway_code.open_node.expect.SerialExpect')
+    def test__debug_boot_thread(self, expect_class):
         """ Run both cases for coverage """
         serial_expect = expect_class.return_value
-        serial_expect.expect.return_value = ''
 
         a8_node = open_node.NodeA8()
 
         serial_expect.expect.return_value = ''
-        a8_node._debug_boot_start(0)
+        ret = a8_node._debug_thread(0)
+        self.assertEquals(ret, '')
 
         serial_expect.expect.return_value = ' login: '
-        a8_node._debug_boot_start(0)
+        ret = a8_node._debug_thread(0)
+        self.assertIn('login:', ret)
 
     @staticmethod
     def test_error_cases():

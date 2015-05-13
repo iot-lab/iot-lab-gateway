@@ -7,18 +7,16 @@ import shlex
 import time
 import datetime
 
-from gateway_code import config
+from gateway_code.config import static_path
 from gateway_code.autotest import expect
+from gateway_code.open_node import NodeA8
 from subprocess import check_output, check_call, Popen
 from subprocess import STDOUT, CalledProcessError
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
-A8_TTY_PATH = '/tmp/tty_open_a8_m3'
-
-# cannot specify static_files_path at import to allow testing
-_SSH_OPTS = '-F   {static_files_path}/ssh_a8_config'
+_SSH_OPTS = '-F {ssh_cfg}'.format(ssh_cfg=static_path('ssh_a8_config'))
 SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "source /etc/profile; {cmd}"'
 SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 
@@ -52,7 +50,7 @@ class OpenA8Connection(object):
 
     def wait_boot_and_get_ip_address(self):
         """ Wait until open node is booted and get its ip address"""
-        a8_serial = expect.SerialExpect(logger=LOGGER, **config.OPEN_A8_CFG)
+        a8_serial = expect.SerialExpect(NodeA8.TTY, NodeA8.BAUDRATE, LOGGER)
 
         LOGGER.debug("Time before boot %s", datetime.datetime.now())
         # boot timeout 5 minutes (seen likely 3minutes loaded server)
@@ -81,7 +79,6 @@ class OpenA8Connection(object):
     def start(self):
         """ Start a redirection of open_A8 M3 node serial """
         port = 20000
-        config_a8 = config.NODES_CFG['a8']
 
         # wait until boot
         self.wait_boot_and_get_ip_address()
@@ -111,19 +108,20 @@ class OpenA8Connection(object):
                                     "Open_A8_m3_ftdi_not_configured")
 
         # remote TTY
-        socat_cmd = SOCAT_CMD.format(port=port, tty=config_a8['tty'],
-                                     baudrate=config_a8['baudrate'])
+        socat_cmd = SOCAT_CMD.format(port=port,
+                                     tty=NodeA8.A8_M3_TTY,
+                                     baudrate=NodeA8.A8_M3_BAUDRATE)
         remote_tty_cmd = 'killall socat 2>/dev/null; ' + socat_cmd
-        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=remote_tty_cmd,
-                             static_files_path=config.STATIC_FILES_PATH)
+        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=remote_tty_cmd)
         LOGGER.debug(cmd)
         self.remote_tty = Popen(shlex.split(cmd))
         time.sleep(10)
 
         # local_tty
-        local_tty = LOCAL_TTY.format(ip_addr=self.ip_addr,
-                                     port=port, tty=A8_TTY_PATH,
-                                     baudrate=config_a8['baudrate'])
+        local_tty = LOCAL_TTY.format(ip_addr=self.ip_addr, port=port,
+                                     tty=NodeA8.LOCAL_A8_M3_TTY,
+                                     baudrate=NodeA8.A8_M3_BAUDRATE)
+
         self.local_tty = Popen(shlex.split(local_tty))
         time.sleep(2)
 
@@ -157,8 +155,7 @@ class OpenA8Connection(object):
 
     def ssh_run(self, command):
         """ Run SSH command on A8 node """
-        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=command,
-                             static_files_path=config.STATIC_FILES_PATH)
+        cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=command)
         LOGGER.debug(cmd)
 
         output = check_output(shlex.split(cmd), stderr=STDOUT)
@@ -166,7 +163,6 @@ class OpenA8Connection(object):
 
     def scp(self, src, dest):
         """ SCP scr to A8 node at dest """
-        cmd = SCP_CMD.format(ip_addr=self.ip_addr, path=src, remote_path=dest,
-                             static_files_path=config.STATIC_FILES_PATH)
+        cmd = SCP_CMD.format(ip_addr=self.ip_addr, path=src, remote_path=dest)
         LOGGER.debug(cmd)
         check_call(shlex.split(cmd))

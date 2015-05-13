@@ -11,10 +11,10 @@ import subprocess
 import atexit
 
 import os
-import gateway_code.config as config
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
+
 
 OPENOCD_BASE_CMD = '''
     openocd --debug=0
@@ -39,12 +39,12 @@ FLASH_CMD = '''
 DEBUG_CMD = '-c "reset halt"'
 
 
-def reset(node, verb=False):
+def reset(config_file, verb=False):
     """ Reset """
-    return OpenOCD.call_cmd(node, RESET_CMD, verb)
+    return OpenOCD.call_cmd(config_file, RESET_CMD, verb)
 
 
-def flash(node, elf_file, verb=False):
+def flash(config_file, elf_file, verb=False):
     """ Flash firmware """
     try:
         # get the absolute file path required for openocd
@@ -54,7 +54,7 @@ def flash(node, elf_file, verb=False):
         LOGGER.error('%s', err)
         return 1
     else:
-        return OpenOCD.call_cmd(node, FLASH_CMD.format(elf_path), verb)
+        return OpenOCD.call_cmd(config_file, FLASH_CMD.format(elf_path), verb)
 
 
 class OpenOCD(object):
@@ -65,50 +65,51 @@ class OpenOCD(object):
     started = {}
 
     @classmethod
-    def debug_start(cls, node, verb=False):
+    def debug_start(cls, config_file, verb=False):
         """ Start a debugger process """
         # kill previous process
         LOGGER.info('Debug start')
-        cls.debug_stop(node)
+        cls.debug_stop(config_file)
 
-        args = cls._ocd_args(node, DEBUG_CMD)
+        args = cls._ocd_args(config_file, DEBUG_CMD)
         with open(os.devnull, 'w') as fnull:
             # on non verbose, put output to devnull
             out = None if verb else fnull
-            cls.proc[node] = subprocess.Popen(args, stdout=out, stderr=out)
+            cls.proc[config_file] = subprocess.Popen(
+                args, stdout=out, stderr=out)
 
         # Add atexit for debug_stop in case we close it abruptly
         # should be moved in '__init__' when there will be one
-        if node not in cls.started:
-            cls.started[node] = True
-            atexit.register(cls.debug_stop, node)
+        if config_file not in cls.started:
+            cls.started[config_file] = True
+            atexit.register(cls.debug_stop, config_file)
         LOGGER.info('Debug started')
         return 0
 
     @classmethod
-    def debug_stop(cls, node):
+    def debug_stop(cls, config_file):
         """ Stop the debugger process """
         try:
             LOGGER.info('Debug stop')
-            if node in cls.proc:
-                cls.proc[node].terminate()
+            if config_file in cls.proc:
+                cls.proc[config_file].terminate()
         except OSError as err:
             LOGGER.error('Debug stop error: %r', err)
         finally:
-            cls.proc.pop(node, None)
+            cls.proc.pop(config_file, None)
             LOGGER.info('Debug stopped')
         return 0
 
     @classmethod
-    def call_cmd(cls, node, command_str, verb=False):
-        """ Run the given command_str with init on openocd for 'node'.
+    def call_cmd(cls, config_file, command_str, verb=False):
+        """ Run the given command_str with init on openocd for config_file.
         If openocd is in 'debug' mode, return an error """
-        if node in cls.proc:
+        if config_file in cls.proc:
             LOGGER.error("OpenOCD is in 'debug' mode, stop it to flash/reset")
             return 1
 
         # Get configuration file
-        args_list = cls._ocd_args(node, command_str)
+        args_list = cls._ocd_args(config_file, command_str)
 
         with open(os.devnull, 'w') as fnull:
             # on non verbose, put output to devnull
@@ -116,13 +117,10 @@ class OpenOCD(object):
             return subprocess.call(args_list, stdout=cmd_out, stderr=cmd_out)
 
     @staticmethod
-    def _ocd_args(node, command_str):
-        """ Get openocd arguments for given node and command_str """
+    def _ocd_args(config_file, command_str):
+        """ Get openocd arguments for given config_file and command_str """
         # get config file
-        assert node in config.NODES_CFG.keys()
-        _file = os.path.join(config.STATIC_FILES_PATH,
-                             config.NODES_CFG[node]['openocd_cfg_file'])
-        cfg_file = os.path.abspath(_file)
+        cfg_file = os.path.abspath(config_file)
         open(cfg_file, 'rb').close()  # exist and can be opened by this user
 
         # Generate full command arguments
@@ -133,6 +131,7 @@ class OpenOCD(object):
 #
 # Command line functions
 #
+
 
 def _parse_arguments(args):
     """
@@ -151,12 +150,12 @@ def _parse_arguments(args):
 
     flash_p = sub.add_parser('flash')
     flash_p.set_defaults(cmd='flash')
-    flash_p.add_argument('node', type=str, choices=config.NODES)
+    flash_p.add_argument('node', type=str, choices=('CN', 'M3'),)
     flash_p.add_argument('firmware', type=str, help="Firmware name")
 
     flash_p = sub.add_parser('reset')
     flash_p.set_defaults(cmd='reset')
-    flash_p.add_argument('node', type=str, choices=config.NODES)
+    flash_p.add_argument('node', type=str, choices=('CN', 'M3'))
 
     arguments = parser.parse_args(args)
     return arguments
@@ -166,14 +165,22 @@ def _main(argv):
     """
     Command line main function
     """
+    # This is a HACK for the moment, Move the main function outside of here
+    from gateway_code import open_node
+    from gateway_code.control_node import cn
 
     import sys
     namespace = _parse_arguments(argv[1:])
+    _config_files = {
+        'CN': cn.ControlNode.OPENOCD_CFG_FILE,
+        'M3': open_node.NodeM3.OPENOCD_CFG_FILE,
+    }
+    cfg_file = _config_files[namespace.node]
 
     if namespace.cmd == 'reset':
-        ret = reset(namespace.node, verb=True)
+        ret = reset(cfg_file, verb=True)
     elif namespace.cmd == 'flash':
-        ret = flash(namespace.node, namespace.firmware, verb=True)
+        ret = flash(cfg_file, namespace.firmware, verb=True)
     else:  # pragma: no cover
         raise ValueError('Uknown Command %s', namespace.command)
 

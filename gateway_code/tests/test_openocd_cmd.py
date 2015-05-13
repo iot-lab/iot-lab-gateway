@@ -13,7 +13,8 @@ import sys
 import unittest
 from mock import patch
 
-from gateway_code import openocd_cmd, config
+from gateway_code import openocd_cmd
+from gateway_code.open_node import NodeM3
 
 
 @patch('subprocess.call')
@@ -22,30 +23,33 @@ class TestsMethods(unittest.TestCase):
 
     def test_flash(self, call_mock):
         """ Test flash """
-
-        filename = config.FIRMWARES['idle']
         call_mock.return_value = 0
-        self.assertEquals(0, openocd_cmd.flash('m3', filename))
+        ret = openocd_cmd.flash(NodeM3.OPENOCD_CFG_FILE, NodeM3.FW_IDLE)
+        self.assertEquals(0, ret)
 
         call_mock.return_value = 42
-        self.assertEquals(42, openocd_cmd.flash('m3', filename))
+        ret = openocd_cmd.flash(NodeM3.OPENOCD_CFG_FILE, NodeM3.FW_IDLE)
+        self.assertEquals(42, ret)
 
     def test_reset(self, call_mock):
         """ Test reset"""
         call_mock.return_value = 0
-        self.assertEquals(0, openocd_cmd.reset('m3'))
+        ret = openocd_cmd.reset(NodeM3.OPENOCD_CFG_FILE)
+        self.assertEquals(0, ret)
 
         call_mock.return_value = 42
-        self.assertEquals(42, openocd_cmd.reset('m3'))
+        ret = openocd_cmd.reset(NodeM3.OPENOCD_CFG_FILE)
+        self.assertEquals(42, ret)
 
 
 class TestsFlashInvalidPaths(unittest.TestCase):
-    @patch('gateway_code.config.STATIC_FILES_PATH', new='/invalid/path/')
     def test_invalid_config_file_path(self):
-        self.assertRaises(IOError, openocd_cmd.flash, 'm3', '/dev/null')
+        self.assertRaises(IOError, openocd_cmd.flash,
+                          '/invalid/path', '/dev/null')
 
     def test_invalid_firmware_path(self):
-        self.assertNotEqual(0, openocd_cmd.flash('m3', '/invalid/path'))
+        ret = openocd_cmd.flash(NodeM3.OPENOCD_CFG_FILE, '/invalid/path')
+        self.assertNotEqual(0, ret)
 
 
 # Command line tests
@@ -56,20 +60,20 @@ class TestsCommandLineCalls(unittest.TestCase):
     def test_flash(self, mock_fct):
         """ Running command line flash """
         mock_fct.return_value = 0
-        ret = openocd_cmd._main(['openocd_cmd.py', 'flash', 'm3', '/dev/null'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'flash', 'M3', '/dev/null'])
         self.assertEquals(ret, 0)
 
         mock_fct.return_value = 42
-        ret = openocd_cmd._main(['openocd_cmd.py', 'flash', 'm3', '/dev/null'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'flash', 'M3', '/dev/null'])
         self.assertEquals(ret, 42)
 
     @patch('gateway_code.openocd_cmd.reset')
     def test_reset(self, mock_fct):
         """ Running command line reset """
         mock_fct.return_value = 0
-        ret = openocd_cmd._main(['openocd_cmd.py', 'reset', 'm3'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'reset', 'M3'])
         self.assertEquals(ret, 0)
 
         mock_fct.return_value = 42
-        ret = openocd_cmd._main(['openocd_cmd.py', 'reset', 'm3'])
+        ret = openocd_cmd._main(['openocd_cmd.py', 'reset', 'M3'])
         self.assertEquals(ret, 42)

@@ -48,10 +48,6 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
 
         self.file = StringIO(file_content)
 
-    def rewind(self):
-        """ Rewind at start position """
-        self.file.seek(0)
-
 
 class TestRestMethods(unittest.TestCase):
 
