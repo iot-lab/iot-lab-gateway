@@ -5,7 +5,7 @@
 import mock
 import unittest
 
-from gateway_code.utils.cli import serial_redirection
+from ..cli import serial_redirection
 
 # pylint <= 1.3
 # pylint: disable=too-many-public-methods

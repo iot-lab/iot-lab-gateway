@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
 # pylint: disable=missing-docstring
@@ -8,15 +7,14 @@
 # serial mock note correctly detected
 # pylint: disable=maybe-no-member
 
-import sys
+import mock
 import unittest
-from mock import patch
 
 from .. import openocd
-from gateway_code.open_node import NodeM3
+from gateway_code.open_node import NodeM3  # config file
 
 
-@patch('subprocess.call')
+@mock.patch('subprocess.call')
 class TestsMethods(unittest.TestCase):
     """ Tests openocd methods """
 
@@ -49,30 +47,3 @@ class TestsFlashInvalidPaths(unittest.TestCase):
     def test_invalid_firmware_path(self):
         ret = openocd.flash(NodeM3.OPENOCD_CFG_FILE, '/invalid/path')
         self.assertNotEqual(0, ret)
-
-
-# Command line tests
-@patch('sys.stderr', sys.stdout)
-class TestsCommandLineCalls(unittest.TestCase):
-
-    @patch('gateway_code.utils.openocd.flash')
-    def test_flash(self, mock_fct):
-        """ Running command line flash """
-        mock_fct.return_value = 0
-        ret = openocd._main(['openocd.py', 'flash', 'M3', '/dev/null'])
-        self.assertEquals(ret, 0)
-
-        mock_fct.return_value = 42
-        ret = openocd._main(['openocd.py', 'flash', 'M3', '/dev/null'])
-        self.assertEquals(ret, 42)
-
-    @patch('gateway_code.utils.openocd.reset')
-    def test_reset(self, mock_fct):
-        """ Running command line reset """
-        mock_fct.return_value = 0
-        ret = openocd._main(['openocd.py', 'reset', 'M3'])
-        self.assertEquals(ret, 0)
-
-        mock_fct.return_value = 42
-        ret = openocd._main(['openocd.py', 'reset', 'M3'])
-        self.assertEquals(ret, 42)
