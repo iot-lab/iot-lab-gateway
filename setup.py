@@ -64,6 +64,10 @@ class BuildExt(build_ext):
 
     def run(self):
         """ Build control node serial interface """
+        # Don't build for Pylint
+        if self.distribution.script_args == ['lint']:
+            return
+
         args = ['make', '-C', 'control_node_serial', 'realclean', 'all']
         try:
             subprocess.check_call(args)
