@@ -4,13 +4,15 @@
 
 import mock
 import unittest
+import time
 
-from cStringIO import StringIO
-import threading
+import logging
+import socket
+from subprocess import Popen, PIPE
 
-from gateway_code.utils import serial_redirection
+from gateway_code.common import wait_tty
+from ..serial_redirection import SerialRedirection
 
-# pylint: disable=missing-docstring
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
 # pylint <= 1.3
@@ -20,188 +22,109 @@ from gateway_code.utils import serial_redirection
 # pylint: disable=no-member
 
 
-class TestSerialRedirectionAndThread(unittest.TestCase):
+def wait_connect(host, port, tries=10, step=1):
+    """ Try connecting 'tries' time to host:port.
+    Sleep 'step' between each tries.
+
+    If last trial fails, the IOError is raised
+    """
+    # Do 'tries - 1' connection with exception catching
+    for _ in range(0, tries - 1):
+        try:
+            return socket.create_connection((host, port))
+        except IOError:
+            time.sleep(step)
+    # Do last try without exception catching to raise exception on error
+    return socket.create_connection((host, port))
+
+
+class TestSerialRedirection(unittest.TestCase):
+    """ SerialRedirection class test """
 
     def setUp(self):
-        self.popen_patcher = mock.patch('subprocess.Popen')
-        self.popen_class = self.popen_patcher.start()
-        self.popen = self.popen_class.return_value
-
-        self.popen.wait.side_effect = self._wait
-        self.popen.wait.return_value = 0
-        self.popen.terminate.side_effect = self._terminate
-
-        self.unlock_wait = threading.Event()
-        self.wait = threading.Event()
-
+        self.tty = '/tmp/ttySRT'
+        self.baud = 500000
         self.redirect = None
 
-    def tearDown(self):
-        self.popen.stop()
-        if self.redirect is not None:
-            self.redirect.stop()  # last chance cleanup
-
-    def _wait(self):
-        self.wait.set()
-        self.unlock_wait.wait()
-        self.unlock_wait.clear()
-        return mock.DEFAULT
-
-    def _terminate(self):
-        self.unlock_wait.set()
-
-    def test_terminate_on_non_started_process(self):
-        """
-        Test terminate with self.redirector_process is None
-        """
-
-        # Start thread
-        # blocks on Popen
-        # run stop
-        # sigalarm unlocks popen so that terminate will work on next call
-
-        import signal
-
-        unlock_popen = threading.Event()
-
-        def blocking_popen(*args, **kwarks):  # pylint:disable=unused-argument
-            unlock_popen.wait()  # block on Popen creation
-            return mock.DEFAULT
-
-        def wait():
-            self.popen_class.side_effect = None
-            return self._wait()
-
-        self.popen_class.side_effect = blocking_popen
-        self.popen.wait.side_effect = wait
-
-        self.redirect = serial_redirection._SerialRedirectionThread('tty', 42)
-        self.redirect.start()
-
-        signal.signal(signal.SIGALRM, (lambda a, b: unlock_popen.set()))
-        signal.alarm(1)  # alarm will release popen
-        self.redirect.stop()
-        signal.alarm(0)          # Disable the alarm
-
-    def test_process_allready_terminated_os_error(self):
-        #
-        # Does not represent the real case, where terminate would have
-        # been called when the process would allready be terminated
-        # but it's here for coverage
-        #
-
-        def terminate():
-            self.popen.terminate.side_effect = self._terminate
-            self._terminate()
-            raise OSError(3, 'No such proccess')
-
-        self.popen.terminate.side_effect = terminate
-
-        self.redirect = serial_redirection._SerialRedirectionThread('tty', 42)
-        self.redirect.start()
-        self.wait.wait()
-        self.redirect.stop()
-
-
-# TODO: simplify Main function tests, move them in a standard test
-@mock.patch('sys.stderr', StringIO())
-class TestMainFunction(unittest.TestCase):
-
-    def setUp(self):
-        self.popen_patcher = mock.patch('subprocess.Popen')
-        self.popen_class = self.popen_patcher.start()
-        self.popen = self.popen_class.return_value
-
-        self.popen.wait.side_effect = self._wait
-        self.popen.wait.return_value = 0
-        self.popen.terminate.side_effect = self._terminate
-
-        self.unlock_wait = threading.Event()
-        self.wait = threading.Event()
-
-        self.redirect = None
+        cmd = ['socat', '-', 'pty,link=%s,raw,b%d,echo=0' % (self.tty,
+                                                             self.baud)]
+        self.serial = Popen(cmd, stdout=PIPE, stdin=PIPE)
+        wait_tty(self.tty, mock.Mock(side_effect=RuntimeError()), 5)
 
     def tearDown(self):
-        self.popen.stop()
-        if self.redirect is not None:
-            self.redirect.stop()  # last chance cleanup
+        self.serial.terminate()
+        self.redirect.stop()
 
-    def _wait(self):
-        self.wait.set()
-        self.unlock_wait.wait()
-        self.unlock_wait.clear()
-        return mock.DEFAULT
+    def test_serialredirection_execution(self):
+        """ Test a standard SerialRedirection execution """
+        self.redirect = SerialRedirection(self.tty, self.baud)
+        self.redirect.start()
 
-    def _terminate(self):
-        self.unlock_wait.set()
+        for i in range(0, 3):
+            # connect to port 20000
+            conn = wait_connect('0.0.0.0', 20000)
 
-    def test_simple_start(self):
+            # TCP send
+            sock_txt = 'HelloFromSock: %u\n' % i
+            conn.send(sock_txt)
+            ret = self.serial.stdout.read(len(sock_txt))
+            self.assertEquals(ret, sock_txt)
+            logging.debug(ret)
 
-        redirection = serial_redirection.SerialRedirection('tty', 500000)
+            # Serial send
+            serial_txt = 'HelloFromSerial %u\n' % i
+            self.serial.stdin.write(serial_txt)
+            ret = conn.recv(len(serial_txt))
+            self.assertEquals(ret, serial_txt)
+            logging.debug(ret)
 
-        self.assertEquals(redirection.stop(), 1)  # cannot stop before start
-        self.assertEquals(redirection.start(), 0)
-        self.assertEquals(redirection.start(), 1)  # only one start
+            conn.close()
 
-        self.wait.wait()
+        self.redirect.stop()
 
-        redirection.stop()
+    def test_serialredirection_multiple_uses(self):
+        """ Test calling multiple times start-stop """
+        self.redirect = SerialRedirection(self.tty, self.baud)
+        self.assertEquals(0, self.redirect.start())
+        self.assertEquals(0, self.redirect.stop())
+        self.assertEquals(0, self.redirect.start())
+        self.assertEquals(0, self.redirect.stop())
+        self.assertEquals(0, self.redirect.start())
+        self.assertEquals(0, self.redirect.stop())
 
-        self.assertTrue(self.popen.wait.call_count >= 1)
-        self.assertTrue(self.popen.terminate.call_count >= 1)
+    def test_serialredirection_exclusion(self):
+        """ Check the exclusion of multiple connection on SerialRedirection """
+        self.redirect = SerialRedirection(self.tty, self.baud)
+        self.redirect.start()
 
-    def test_program_error(self):
-        """ Test program error """
-        # on first call 'wait' is called
-        # on second call, 'self._wait' is called
-        def wait():
-            self.popen.wait.side_effect = self._wait
-            return mock.DEFAULT
+        conn = wait_connect('0.0.0.0', 20000)
+        # Second connection should fail
+        self.assertRaises(IOError,
+                          socket.create_connection, ('0.0.0.0', 20000))
+        conn.close()
+        self.redirect.stop()
 
-        # Popen mock
-        self.popen.wait.side_effect = wait
-        self.popen.wait.return_value = 42
+    @mock.patch('subprocess.Popen')
+    def test_terminate_non_running_process(self, m_popen):
+        """ Test the case where 'stop' is called on a process that is currently
+        being restarted.
+        It can happen if stop is called after an error """
 
-        with mock.patch('gateway_code.utils.serial_redirection.LOGGER.error') \
-                as mock_logger:
-            redirection = serial_redirection.SerialRedirection('tty', 500000)
+        m_socat = m_popen.return_value
+        m_socat.terminate.side_effect = OSError(3, "No such process")
 
-            self.assertEquals(redirection.start(), 0)
-            self.wait.wait()
-            redirection.stop()
+        self.redirect = SerialRedirection(self.tty, self.baud)
+        self.redirect.start()
+        self.redirect.stop()
 
-            mock_logger.assert_called_with(
-                'Open node serial redirection exit: %d', 42)
+        m_socat.terminate.assert_called()
 
-    def test_simple_case(self):
-        def wait_mock():
-            """ 'wait' will call the ctrl+c handler has if a ctrl+c was got """
-            import signal
-            handler = signal.getsignal(signal.SIGINT)  # get ctrl+c handler
-            handler(None, None)
+    @mock.patch('subprocess.Popen')
+    def test__call_socat_error(self, m_popen):
+        """ Test the _call_socat error case """
+        m_popen.return_value.wait.return_value = -1
+        self.redirect = SerialRedirection(self.tty, self.baud)
+        self.redirect._run = True
 
-        with mock.patch('gateway_code.utils.serial_redirection.Event') \
-                as mock_event:
-            event = mock_event.return_value
-            event.wait.side_effect = wait_mock
-
-            serial_redirection._main(['serial_redirection.py', 'tty', '96200'])
-            self.assertEquals(event.wait.call_count, 1)
-
-    @mock.patch('gateway_code.utils.serial_redirection.SerialRedirection')
-    def test_error_with_start_redirection(self, mock_serial_class):
-        # start SerialRedirection fail
-        (mock_serial_class.return_value).start.return_value = 1
-        self.assertRaises(SystemExit,
-                          serial_redirection._main,
-                          ['serial_redirection.py', 'm3'])
-
-
-@mock.patch('sys.stderr', StringIO())
-class TestParseArguments(unittest.TestCase):
-    def test_command_line_calls(self):
-        # valid
-        args = ['tty', '500000']
-        opts = serial_redirection._parse_arguments(args)
-        self.assertEquals('tty', opts.tty)
-        self.assertEquals(500000, opts.baudrate)
+        ret = self.redirect._call_socat(self.redirect.DEVNULL)
+        self.assertEquals(-1, ret)

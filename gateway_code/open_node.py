@@ -41,7 +41,6 @@ class NodeM3(object):
         ret_val = 0
         # cleanup debugger before flashing
         ret_val += self.debug_stop()
-
         ret_val += self.serial_redirection.stop()
         ret_val += self.flash(None)
         return ret_val
