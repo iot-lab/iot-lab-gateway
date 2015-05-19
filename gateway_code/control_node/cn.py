@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 """ Control Node experiment implementation """
 
-from gateway_code.utils import openocd
+from gateway_code.utils.openocd import OpenOCD
 from gateway_code.config import static_path
 
 import logging
@@ -16,7 +16,7 @@ class ControlNode(object):
     FW_CONTROL_NODE = static_path('control_node.elf')
 
     def __init__(self):
-        pass
+        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
 
     # def setup(self, firmware_path):
     #     """ Flash Control Node, create serial redirection """
@@ -42,10 +42,10 @@ class ControlNode(object):
             If None, flash 'control_node' firmware
         """
         firmware_path = firmware_path or self.FW_CONTROL_NODE
-        LOGGER.debug('Flash firmware on Control Node %s', firmware_path)
-        return openocd.flash(self.OPENOCD_CFG_FILE, firmware_path)
+        LOGGER.info('Flash firmware on Control Node %s', firmware_path)
+        return self.openocd.flash(firmware_path)
 
     def reset(self):
         """ Reset the Control Node using jtag """
         LOGGER.info('Reset Control Node')
-        return openocd.reset(self.OPENOCD_CFG_FILE)
+        return self.openocd.reset()

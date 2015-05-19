@@ -11,7 +11,6 @@ from gateway_code.utils.openocd import OpenOCD
 from gateway_code.utils.serial_expect import SerialExpect
 from gateway_code.utils.serial_redirection import SerialRedirection
 
-from gateway_code.utils import openocd
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -27,6 +26,7 @@ class NodeM3(object):
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
+        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
 
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
@@ -51,23 +51,23 @@ class NodeM3(object):
             If None, flash 'idle' firmware.
         """
         firmware_path = firmware_path or self.FW_IDLE
-        LOGGER.debug('Flash firmware on M3: %s', firmware_path)
-        return openocd.flash(self.OPENOCD_CFG_FILE, firmware_path)
+        LOGGER.info('Flash firmware on M3: %s', firmware_path)
+        return self.openocd.flash(firmware_path)
 
     def reset(self):
         """ Reset the M3 node using jtag """
         LOGGER.info('Reset M3 node')
-        return openocd.reset(self.OPENOCD_CFG_FILE)
+        return self.openocd.reset()
 
     def debug_start(self):
         """ Start M3 node debugger """
         LOGGER.info('M3 Node debugger start')
-        return OpenOCD.debug_start(self.OPENOCD_CFG_FILE)
+        return self.openocd.debug_start()
 
     def debug_stop(self):
         """ Stop M3 node debugger """
         LOGGER.info('M3 Node debugger stop')
-        return OpenOCD.debug_stop(self.OPENOCD_CFG_FILE)
+        return self.openocd.debug_stop()
 
 
 class NodeA8(object):

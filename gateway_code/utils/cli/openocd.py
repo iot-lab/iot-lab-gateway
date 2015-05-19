@@ -39,11 +39,12 @@ def main():
     """ openocd main function """
     opts = PARSER.parse_args()
     cfg_file = _node_config(opts.node)
+    ocd = openocd.OpenOCD(cfg_file, verb=True)
 
     if opts.cmd == 'reset':
-        ret = openocd.reset(cfg_file, verb=True)
+        ret = ocd.reset()
     elif opts.cmd == 'flash':
-        ret = openocd.flash(cfg_file, opts.firmware, verb=True)
+        ret = ocd.flash(opts.firmware)
     else:  # pragma: no cover
         raise ValueError('Uknown Command %s', opts.command)
 
