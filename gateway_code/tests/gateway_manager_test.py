@@ -62,13 +62,13 @@ class TestGatewayManager(unittest.TestCase):
         g_m._ftdi_is_present = mock.Mock(return_value=True)
         self.assertEquals(0, g_m.status())
 
-        # no CN
+        # no control node
         g_m._ftdi_is_present = mock.Mock(
-            side_effect=(lambda x: {'CN': False, 'ON': True}[x]))
+            side_effect=(lambda x: {'control': False, 'open': True}[x]))
         self.assertEquals(1, g_m.status())
-        # no ON
+        # no open node
         g_m._ftdi_is_present = mock.Mock(
-            side_effect=(lambda x: {'CN': True, 'ON': False}[x]))
+            side_effect=(lambda x: {'control': True, 'open': False}[x]))
         self.assertEquals(1, g_m.status())
 
     @patch('subprocess.check_output')
@@ -86,7 +86,7 @@ class TestGatewayManager(unittest.TestCase):
                 Serial:
             All done, success!
             ''')
-        self.assertEquals(True, g_m._ftdi_is_present('CN'))
+        self.assertEquals(True, g_m._ftdi_is_present('control'))
 
         check_output_mock.return_value = dedent('''\
             FTx232 devices lister by IoT-LAB
@@ -94,7 +94,7 @@ class TestGatewayManager(unittest.TestCase):
             No FTDI device found
             All done, success!
             ''')
-        self.assertEquals(False, g_m._ftdi_is_present('ON'))
+        self.assertEquals(False, g_m._ftdi_is_present('open'))
 
 # # # # # # # # # # # # # # # # # # # # #
 # Measures folder and files management  #

@@ -298,17 +298,6 @@ class TestExperimentTimeout(ExperimentRunningMock):
 class TestIntegrationOther(ExperimentRunningMock):
     """ Group other tests cases"""
 
-    def test_admin_commands(self):
-        """ Try running the admin commands """
-        # flash Control Node
-        self.request.files = {
-            'firmware': FileUpload(ControlNode.FW_CONTROL_NODE)
-        }
-        ret = self.app.admin_control_flash()
-        self.assertEquals(ret, {'ret': 0})
-        ret = self.app.admin_control_soft_reset()
-        self.assertEquals(ret, {'ret': 0})
-
     def test_status(self):
         """ Call the status command """
         ret = self.app.status()

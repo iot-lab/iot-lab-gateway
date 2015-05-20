@@ -23,6 +23,7 @@ class NodeM3(object):
     OPENOCD_CFG_FILE = static_path('iot-lab-m3.cfg')
     FW_IDLE = static_path('idle.elf')
     FW_AUTOTEST = static_path('m3_autotest.elf')
+    ALIM = '3.3V'
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
@@ -78,6 +79,7 @@ class NodeA8(object):
     A8_M3_TTY = '/dev/ttyA8_M3'
     A8_M3_BAUDRATE = 500000
     A8_M3_FW_AUTOTEST = static_path('a8_autotest.elf')
+    ALIM = '5V'
 
     def __init__(self):
         self._a8_expect = None

@@ -77,7 +77,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Run commands that might crash
         Must be run before running other commands """
         # Setup control node
-        ret = self.node_flash('gwt', None)  # Flash default
+        ret = self.node_flash('control', None)  # Flash default
         if ret != 0:
             raise StandardError("Control node flash failed: {ret:%d}", ret)
 
@@ -143,7 +143,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # # # # # # # # # #
         # Prepare Gateway #
         # # # # # # # # # #
-        ret_val += self.node_soft_reset('gwt')
+        ret_val += self.node_soft_reset('control')
         time.sleep(1)  # wait CN started
         ret_val += self.cn_serial.start(exp_desc=self.exp_desc)
 
@@ -367,19 +367,15 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """
         Reset the given node using reset pin
 
-        :param node: Node name in {'gwt', 'm3'}
+        :param node: Node type in {'control', 'open'}
         """
-        assert node in ['gwt', 'm3'], "Invalid node name"
+        assert node in ['control', 'open'], "Invalid node type"
         LOGGER.info('Node %s reset', node)
 
-        if node == 'gwt':
-            ret = self.nodes['control'].reset()
-        elif node == 'm3':
-            ret = self.nodes['open'].reset()
+        ret = self.nodes[node].reset()
 
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Node %s reset failed: %d', node, ret)
-
+            LOGGER.error('Reset failed on %s node: %d', node, ret)
         return ret
 
     @common.syncronous('rlock')
@@ -387,19 +383,16 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """
         Flash the given firmware on the given node
 
-        :param node: Node name in {'gwt', 'm3'}
+        :param node: Node name in {'control', 'open'}
         :param firmware_path: Path to the firmware to be flashed on `node`.
         """
-        assert node in ['gwt', 'm3'], "Invalid node name"
-        LOGGER.info('Flash firmware on %s: %s', node, firmware_path)
+        assert node in ['control', 'open'], "Invalid node name"
+        LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
 
-        if node == 'gwt':
-            ret = self.nodes['control'].flash(firmware_path)
-        elif node == 'm3':
-            ret = self.nodes['open'].flash(firmware_path)
+        ret = self.nodes[node].flash(firmware_path)
 
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Flash firmware failed on %s: %d', node, ret)
+            LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret
 
     @common.syncronous('rlock')
@@ -416,9 +409,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
          * Checks nodes ftdi
         """
         status_ok = True
-        status_ok &= self._ftdi_is_present('CN')
+        status_ok &= self._ftdi_is_present('control')
         # only 'm3' node ftdi can be seen
-        status_ok &= (self.board_type != 'm3') or self._ftdi_is_present('ON')
+        status_ok &= (self.board_type != 'm3') or self._ftdi_is_present('open')
 
         return 0 if status_ok else 1
 
@@ -427,7 +420,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Detect if a node ftdi is present """
         LOGGER.info("Check node %r ftdi", node)
 
-        opt = {'ON': '2232', 'CN': '4232'}[node]
+        opt = {'open': '2232', 'control': '4232'}[node]
         output = subprocess.check_output(['ftdi-devices-list', '-t', opt])
 
         found = 'Found 1 device(s)' in output.splitlines()

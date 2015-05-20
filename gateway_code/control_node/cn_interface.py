@@ -104,7 +104,6 @@ class ControlNodeSerial(object):
 
         # Extract configuration
         oml_cfg = exp_desc['exp_files'].copy()
-        oml_cfg['user'] = exp_desc['user']
         oml_cfg['exp_id'] = exp_desc['exp_id']
         oml_cfg['node_id'] = config.hostname()
 

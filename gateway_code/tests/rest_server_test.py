@@ -180,36 +180,22 @@ class TestRestMethods(unittest.TestCase):
 
     def test_flash_function(self):
         idle = FileUpload('elf32arm0X1234', 'idle.elf')
-
         self.g_m.node_flash.return_value = 0
-
-        self.request.files = {}
-        ret_dict = self.s_r._flash('m3')
-        self.assertNotEquals(0, ret_dict['ret'])
 
         # valid command
         self.request.files = {'firmware': idle}
-        ret_dict = self.s_r._flash('gwt')
-        self.assertEquals(0, ret_dict['ret'])
-
-        call_args = self.g_m.node_flash.call_args[0]
-        self.assertEquals('gwt', call_args[0])
-        self.assertTrue(idle.filename in call_args[1])
-
-    def test_generic_flash_wrappers(self):
-        self.s_r._flash = mock.Mock(return_value={'ret': 0})
-
         ret_dict = self.s_r.open_flash()
         self.assertEquals(0, ret_dict['ret'])
-        ret_dict = self.s_r.admin_control_flash()
-        self.assertEquals(0, ret_dict['ret'])
+
+        # Error no firmware
+        self.request.files = {}
+        ret_dict = self.s_r.open_flash()
+        self.assertNotEquals(0, ret_dict['ret'])
 
     def test_reset_wrappers(self):
         self.g_m.node_soft_reset.return_value = 0
 
         ret_dict = self.s_r.open_soft_reset()
-        self.assertEquals(0, ret_dict['ret'])
-        ret_dict = self.s_r.admin_control_soft_reset()
         self.assertEquals(0, ret_dict['ret'])
 
     def test_open_start(self):
