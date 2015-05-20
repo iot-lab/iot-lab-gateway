@@ -1,13 +1,11 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-
 """ Gateway manager """
 
 from threading import RLock, Timer
 import os
 import time
-import subprocess
 
 import gateway_code.config as config
 from gateway_code import common
@@ -405,27 +403,11 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     @common.syncronous('rlock')
     def status(self):
-        """ Run a node sanity status check
-         * Checks nodes ftdi
-        """
-        status_ok = True
-        status_ok &= self._ftdi_is_present('control')
-        # only 'm3' node ftdi can be seen
-        status_ok &= (self.board_type != 'm3') or self._ftdi_is_present('open')
-
-        return 0 if status_ok else 1
-
-    @staticmethod
-    def _ftdi_is_present(node):
-        """ Detect if a node ftdi is present """
-        LOGGER.info("Check node %r ftdi", node)
-
-        opt = {'open': '2232', 'control': '4232'}[node]
-        output = subprocess.check_output(['ftdi-devices-list', '-t', opt])
-
-        found = 'Found 1 device(s)' in output.splitlines()
-        LOGGER.info(("" if found else "No ") + "%r node found" % node)
-        return found
+        """ Run a node sanity status check """
+        ret = 0
+        ret += self.control_node.status()
+        ret += self.open_node.status()
+        return ret
 
 #
 # Experiment files and folder management methods

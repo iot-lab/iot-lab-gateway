@@ -98,6 +98,7 @@ class TestSerialRedirection(unittest.TestCase):
         self.redirect.start()
 
         conn = wait_connect('0.0.0.0', 20000)
+        time.sleep(1)
         # Second connection should fail
         self.assertRaises(IOError,
                           socket.create_connection, ('0.0.0.0', 20000))

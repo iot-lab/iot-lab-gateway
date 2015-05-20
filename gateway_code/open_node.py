@@ -7,6 +7,7 @@ import time
 from gateway_code.config import static_path
 from gateway_code import common
 
+from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.utils.serial_expect import SerialExpect
 from gateway_code.utils.serial_redirection import SerialRedirection
@@ -70,6 +71,11 @@ class NodeM3(object):
         LOGGER.info('M3 Node debugger stop')
         return self.openocd.debug_stop()
 
+    @staticmethod
+    def status():
+        """ Check M3 node status """
+        return ftdi_check('m3', '2232')
+
 
 class NodeA8(object):
     """ Open node A8 implementation """
@@ -123,3 +129,9 @@ class NodeA8(object):
             self._a8_expect.serial_fd.close()
         except AttributeError:  # pragma: no cover
             pass
+
+    @staticmethod
+    def status():
+        """ Check A8 node status """
+        # No check done for the moment
+        return 0

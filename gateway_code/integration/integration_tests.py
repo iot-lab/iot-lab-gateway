@@ -22,7 +22,6 @@ from gateway_code.common import wait_cond
 from gateway_code.autotest.autotest import extract_measures
 
 from gateway_code.open_node import NodeM3
-from gateway_code.control_node.cn import ControlNode
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 

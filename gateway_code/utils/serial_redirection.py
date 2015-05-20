@@ -5,11 +5,11 @@
 import os
 import time
 import subprocess
+import shlex
 import threading
 import atexit
-import logging
-import shlex
 
+import logging
 LOGGER = logging.getLogger('gateway_code')
 
 

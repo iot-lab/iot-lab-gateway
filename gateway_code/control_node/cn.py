@@ -1,6 +1,7 @@
 # -*- coding:utf-8 -*-
 """ Control Node experiment implementation """
 
+from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.config import static_path
 
@@ -49,3 +50,8 @@ class ControlNode(object):
         """ Reset the Control Node using jtag """
         LOGGER.info('Reset Control Node')
         return self.openocd.reset()
+
+    @staticmethod
+    def status():
+        """ Check Control node status """
+        return ftdi_check('control', '4232')
