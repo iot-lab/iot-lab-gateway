@@ -70,7 +70,8 @@ class AutoTestManager(object):
 
         # configure Control Node
         ret_val += self.g_m.control_node.reset()
-        self.g_m.cn_serial.start(None, ['-d'], self._measures_handler)
+        self.g_m.cn_serial.start(self.g_m.control_node.TTY, None,
+                                 ['-d'], self._measures_handler)
         time.sleep(1)
         ret_val += self.g_m.set_time()
 

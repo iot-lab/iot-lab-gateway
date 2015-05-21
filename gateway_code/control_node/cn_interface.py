@@ -15,8 +15,6 @@ from tempfile import NamedTemporaryFile
 import atexit
 from gateway_code import config
 from gateway_code import common
-from gateway_code.control_node import cn
-
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -66,7 +64,7 @@ class ControlNodeSerial(object):
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, exp_desc=None, _args=None, _measures_handler=None):
+    def start(self, tty, exp_desc=None, _args=None, _measures_handler=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
@@ -78,7 +76,7 @@ class ControlNodeSerial(object):
         self.measures_handler = _measures_handler or \
             self.measures_handler or LOGGER.error
 
-        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', cn.ControlNode.TTY]
+        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', tty]
         args += self._config_oml(exp_desc)
 
         # add arguments, used by tests

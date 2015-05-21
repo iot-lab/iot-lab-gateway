@@ -143,7 +143,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # # # # # # # # # #
         ret_val += self.node_soft_reset('control')
         time.sleep(1)  # wait CN started
-        ret_val += self.cn_serial.start(exp_desc=self.exp_desc)
+        ret_val += self.cn_serial.start(cn.ControlNode.TTY,
+                                        exp_desc=self.exp_desc)
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #
