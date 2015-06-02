@@ -5,6 +5,7 @@ import os
 import unittest
 import mock
 import json
+from nose.plugins.attrib import attr
 
 from mock import patch
 
@@ -16,6 +17,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 
 # pylint: disable=too-many-public-methods
+@attr('integration')
 class GatewayCodeMock(unittest.TestCase):
     """ gateway_code mock for integration tests  """
 

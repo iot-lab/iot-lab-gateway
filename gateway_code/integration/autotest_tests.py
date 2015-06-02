@@ -7,6 +7,8 @@
 from sys import stderr
 import mock
 
+from nose.plugins.attrib import attr
+
 from gateway_code.integration import test_integration_mock
 
 import gateway_code.autotest.m3_node_interface
@@ -20,6 +22,7 @@ if os.uname()[4] != 'armv7l':
     raise unittest.SkipTest("Skip board embedded tests")
 
 
+@attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
     """ Try running autotests on node """
 
