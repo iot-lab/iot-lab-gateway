@@ -27,22 +27,21 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     Manages experiments, open node and control node
     """
     board_type = None
+    open_node_type = None
     default_profile = None
 
-    open_nodes = {'m3': gateway_code.open_node.NodeM3,
-                  'a8': gateway_code.open_node.NodeA8}
+    _OPEN_NODES = {'m3': gateway_code.open_node.NodeM3,
+                   'a8': gateway_code.open_node.NodeA8}
 
     def __init__(self, log_folder='.'):
+        self.cls_init()
 
-        _board_type = config.board_type()
-        if _board_type not in GatewayManager.open_nodes:
-            raise ValueError('Board type not managed %r' % _board_type)
+        gateway_logging.init_logger(log_folder)
 
-        # Init class arguments when creating gateway_manager
-        # Allows mocking config.board_type in tests
-        GatewayManager.board_type = _board_type
-        GatewayManager.default_profile = Profile(board_type=_board_type,
-                                                 **config.default_profile())
+        self.rlock = RLock()
+        self.open_node = GatewayManager.open_node_type()
+        self.control_node = cn.ControlNode()
+        self.nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
         self.exp_desc = {
@@ -54,22 +53,23 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.profile = None
         self.open_node_state = "stop"
         self.user_log_handler = None
-
-        self.rlock = RLock()
         self.timeout_timer = None
-
-        gateway_logging.init_logger(log_folder)  # logger config
 
         self.cn_serial = cn_interface.ControlNodeSerial()
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
 
-        self.open_node = GatewayManager.open_nodes[self.board_type]()
-        self.control_node = cn.ControlNode()
-
-        self.nodes = {
-            'control': self.control_node,
-            'open': self.open_node,
-        }
+    @classmethod
+    def cls_init(cls):
+        """ Init GatewayManager attributes.
+        It's done on dynamic init to allow mocking config.board_type in tests
+        """
+        try:
+            cls.board_type = config.board_type()
+            cls.open_node_type = cls._OPEN_NODES[cls.board_type]
+            cls.default_profile = Profile(board_type=cls.board_type,
+                                          **config.default_profile())
+        except KeyError:
+            raise ValueError('Board type not managed %r' % cls.board_type)
 
     def setup(self):
         """ Run commands that might crash

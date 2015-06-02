@@ -36,9 +36,8 @@ def hostname():
 def default_profile():
     """ Return the default profile """
     import json
-    _profile_str = _get_conf('default_profile.json', STATIC_DIR,
-                             raise_error=True)
-    return json.loads(_profile_str)
+    with open(static_path('default_profile.json')) as prof:
+        return json.loads(prof.read())
 
 
 def board_type():
