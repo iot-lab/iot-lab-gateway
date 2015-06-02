@@ -133,6 +133,7 @@ class ControlNodeSerial(object):
         # cleanup oml
         if self.oml_cfg_file is not None:
             self.oml_cfg_file.close()
+        return 0
 
     def _handle_answer(self, line):
         """Handle control node answers

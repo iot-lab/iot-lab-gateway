@@ -70,8 +70,8 @@ class AutoTestManager(object):
 
         # configure Control Node
         ret_val += self.g_m.control_node.reset()
-        self.g_m.cn_serial.start(self.g_m.control_node.TTY, None,
-                                 ['-d'], self._measures_handler)
+        self.g_m.control_node.cn_serial.start(self.g_m.control_node.TTY, None,
+                                              ['-d'], self._measures_handler)
         time.sleep(1)
         ret_val += self.g_m.set_time()
 
@@ -194,7 +194,7 @@ class AutoTestManager(object):
         else:
             LOGGER.debug("Set status on LEDs")
 
-        self.g_m.cn_serial.stop()
+        self.g_m.control_node.cn_serial.stop()
         LOGGER.debug("cn_serial stopped")
 
         try:
@@ -271,7 +271,7 @@ class AutoTestManager(object):
             self._on_call(['leds_off', '7'])
             if ret_val == 0:
                 self._on_call(['leds_blink', '7', '500'])
-                self.g_m.protocol.green_led_blink()
+                self.g_m.control_node.protocol.green_led_blink()
             else:  # pragma: no cover
                 pass
         except FatalError as err:
@@ -457,7 +457,8 @@ class AutoTestManager(object):
         ret_val = 0
 
         # setup control node
-        ret_val += self.g_m.protocol.send_cmd(cn_command + ['start'] + args)
+        ret_val += self.g_m.control_node.protocol.send_cmd(
+            cn_command + ['start'] + args)
 
         # Run num times
         values = self._run_test(num, on_cmd + args, (lambda x: 0))
@@ -465,7 +466,7 @@ class AutoTestManager(object):
         ret_val += self._check(tst_ok(test_ok), debug_str, values)
 
         # teardown
-        ret = self.g_m.protocol.send_cmd(cn_command + ['stop'])
+        ret = self.g_m.control_node.protocol.send_cmd(cn_command + ['stop'])
         ret_val += self._check(ret, debug_str, 'cleanup error')
 
         return ret_val
@@ -524,11 +525,11 @@ class AutoTestManager(object):
         cmd_on = ['radio_pkt', str(channel), '3dBm']
 
         # get RSSI while sending 10 packets length 125
-        ret_val += self.g_m.protocol.config_radio(radio)
+        ret_val += self.g_m.control_node.protocol.config_radio(radio)
         for _itr in range(0, 10):  # pylint:disable=unused-variable
             self._on_call(cmd_on)
             time.sleep(0.5)
-        ret_val += self.g_m.protocol.config_radio(None)
+        ret_val += self.g_m.control_node.protocol.config_radio(None)
 
         # ('11', '-91')
         # -91 == no radio detected
@@ -557,9 +558,9 @@ class AutoTestManager(object):
 
         self.cn_measures = []
         # store 2 secs of measures
-        ret_val += self.g_m.protocol.config_consumption(conso)
+        ret_val += self.g_m.control_node.protocol.config_consumption(conso)
         time.sleep(2)  # get measures for 2 seconds
-        ret_val += self.g_m.protocol.config_consumption(None)
+        ret_val += self.g_m.control_node.protocol.config_consumption(None)
         time.sleep(2)  # wait 2 seconds for flush
 
         # (0.257343, 3.216250, 0.080003)
@@ -590,7 +591,7 @@ class AutoTestManager(object):
         conso = Consumption('battery', board_type, 1100, 64,
                             True, True, True)
         self.cn_measures = []
-        ret_val += self.g_m.protocol.config_consumption(conso)
+        ret_val += self.g_m.control_node.protocol.config_consumption(conso)
 
         ret_val += self.g_m.open_power_stop(power='battery')
         time.sleep(1)
@@ -598,7 +599,7 @@ class AutoTestManager(object):
         time.sleep(1)
 
         # stop
-        ret_val += self.g_m.protocol.config_consumption(None)
+        ret_val += self.g_m.control_node.protocol.config_consumption(None)
         time.sleep(1)  # Flush last values
 
         # (0.257343, 3.216250, 0.080003)
@@ -632,14 +633,14 @@ class AutoTestManager(object):
         leds_timestamps = []
         # get consumption for all leds mode:
         #     no leds, each led, all leds
-        ret_val += self.g_m.protocol.config_consumption(conso)
+        ret_val += self.g_m.control_node.protocol.config_consumption(conso)
         for leds in ['0', '1', '2', '4', '7']:
             self._on_call(['leds_on', leds])
             time.sleep(0.5)
             leds_timestamps.append(time.time())
             time.sleep(0.5)
             self._on_call(['leds_off', '7'])
-        ret_val += self.g_m.protocol.config_consumption(None)
+        ret_val += self.g_m.control_node.protocol.config_consumption(None)
         time.sleep(1)  # wait last values
 
         # (0.257343, 3.216250, 0.080003)

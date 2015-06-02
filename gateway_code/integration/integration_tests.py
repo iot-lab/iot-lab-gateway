@@ -61,7 +61,8 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
     def setUp(self):
         super(ExperimentRunningMock, self).setUp()
         self.cn_measures = []
-        self.g_m.cn_serial.measures_handler = self._measures_handler
+        self.g_m.control_node.cn_serial.measures_handler = \
+            self._measures_handler
 
         # no timeout
         self.request.query = mock.Mock(timeout='')

@@ -14,7 +14,7 @@ from gateway_code.autotest import autotest
 
 import gateway_code.open_node
 
-from gateway_code.control_node import cn_interface, cn_protocol, cn
+from gateway_code.control_node import cn
 from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER
@@ -40,8 +40,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         self.rlock = RLock()
         self.open_node = GatewayManager.open_node_type()
-        self.control_node = cn.ControlNode()
-        self.nodes = {'control': self.control_node, 'open': self.open_node}
+        self.control_node = cn.ControlNode(GatewayManager.default_profile)
+        self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
         self.exp_desc = {
@@ -54,9 +54,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.open_node_state = "stop"
         self.user_log_handler = None
         self.timeout_timer = None
-
-        self.cn_serial = cn_interface.ControlNodeSerial()
-        self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
 
     @classmethod
     def cls_init(cls):
@@ -82,31 +79,23 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     # R0913 too many arguments 6/5
     @common.syncronous('rlock')
     def exp_start(self, user, exp_id,  # pylint: disable=R0913
-                  firmware_path=None, profile=None, timeout=0):
+                  firmware_path=None, profile_dict=None, timeout=0):
         """
         Start an experiment
 
         :param exp_id: experiment id
-        :param user: user owning the experiment
-        :param firmware_path: path of the firmware file to flash
-        :param profile: profile to configure the experiment
-        :type profile: class Profile
+        :param user: user running the experiment
+        :param firmware_path: path of the firmware file to use, can be None
+        :param profile_dict: monitoring profile
+        :param timeout: Experiment expiration timeout. On 0 no timeout.
 
         Experiment start steps
 
-        1) Prepare Gateway
-            a) Reset control node
-            b) Start control node serial communication
-            c) Start measures handler (OML thread)
-        2) Prepare Control node
-            a) Start Open Node DC (stopped before)
-            b) Reset time control node, and update time reference
-            c) Configure profile
-        3) Prepare Open node
-            a) Flash open node
-            b) Start open node serial redirection
-            c) Start GDB server
-        4) Experiment Started
+        1) Prepare Gateway: User experiment files and log:
+        2) Prepare Control node: Start communication and power on open node
+        3) Prepare Open node: Check OK, setup firmware and serial redirection
+        4) Configure Control Node Profile and experiment
+        5) Set Experiment expiration timer
 
         """
         if self.experiment_is_running:
@@ -114,12 +103,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_stop()
 
         try:
-            self.decode_and_store_profile(profile)
+            self.decode_and_store_profile(profile_dict)
         except ValueError:
             return 1
 
-        self.experiment_is_running = True
+        ret_val = 0
 
+        self.experiment_is_running = True
         self.exp_desc['exp_id'] = exp_id
         self.exp_desc['user'] = user
 
@@ -127,12 +117,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.info("I'm a Turtlebot2")
             self._create_user_exp_folders(user, exp_id)
 
+        # Create the experiment files with correct permissions
         self.create_user_exp_files(user=user, exp_id=exp_id)
+
+        # Create user log
         self.user_log_handler = gateway_logging.user_logger(
             self.exp_desc['exp_files']['log'])
         LOGGER.addHandler(self.user_log_handler)
-
-        # Print log after creating user logs
         LOGGER.info('Start experiment: %s-%i', user, exp_id)
 
         # start steps described in docstring
@@ -143,13 +134,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # # # # # # # # # #
         ret_val += self.node_soft_reset('control')
         time.sleep(1)  # wait CN started
-        ret_val += self.cn_serial.start(cn.ControlNode.TTY,
-                                        exp_desc=self.exp_desc)
+        ret_val += self.control_node.cn_serial.start(cn.ControlNode.TTY,
+                                                     exp_desc=self.exp_desc)
 
         # # # # # # # # # # # # #
         # Prepare Control Node  #
         # # # # # # # # # # # # #
-        ret_val += self.protocol.green_led_blink()
+        ret_val += self.control_node.protocol.green_led_blink()
         ret_val += self.open_power_start(power='dc')
         ret_val += self.set_time()
         ret_val += self.set_node_id()
@@ -187,19 +178,11 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         Experiment stop steps
 
-        1) Cleanup Control node config
-            a) Stop measures Control Node, Configure profile == None
-            b) Start Open Node DC (may be running on battery)
-        2) Cleanup open node
-            a) Stop GDB server
-            b) Stop open node serial redirection
-            c) Flash Idle open node (when DC)
-            d) Shutdown open node (DC)
-        3) Cleanup control node interraction
-            a) Stop control node serial communication
-        4) Cleanup Manager state
-        5) Experiment Stopped
-
+        1) Clear expiration timeout
+        2) Stop OpenNode experiment and reset profile
+        3) Cleanup OpenNode
+        4) Stop control node
+        5) Cleanup empty user experiment files
         """
         LOGGER.info("Stop experiment")
 
@@ -217,7 +200,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         ret_val += self.exp_update_profile(None)
         ret_val += self.open_power_start(power='dc')
-        ret_val += self.protocol.green_led_on()
+        ret_val += self.control_node.protocol.green_led_on()
 
         if config.robot_type() == 'roomba':  # pragma: no cover
             LOGGER.info("I'm a roomba")
@@ -232,7 +215,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
         # # # # # # # # # # # # # # # # # # #
-        self.cn_serial.stop()
+        self.control_node.cn_serial.stop()
 
         # Remove empty user experiment files
         self.cleanup_user_exp_files()
@@ -241,9 +224,11 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_desc['exp_id'] = None
         self.exp_desc['user'] = None
         self.experiment_is_running = False
+        self.profile = None
 
         LOGGER.info("Stop experiment succeeded")
         LOGGER.removeHandler(self.user_log_handler)
+        self.user_log_handler = None
 
         return ret_val
 
@@ -281,12 +266,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         ret = 0
         # power_mode (keep open node started/stoped state)
-        ret += self.protocol.start_stop(
+        ret += self.control_node.protocol.start_stop(
             self.open_node_state, self.profile.power)
         # Consumption
-        ret += self.protocol.config_consumption(self.profile.consumption)
+        ret += self.control_node.protocol.config_consumption(
+            self.profile.consumption)
         # Radio
-        ret += self.protocol.config_radio(self.profile.radio)
+        ret += self.control_node.protocol.config_radio(self.profile.radio)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Profile update failed')
@@ -299,7 +285,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         Updating time reference is propagated to measures handler
         """
         LOGGER.debug('Set control node time')
-        ret = self.protocol.set_time()
+        ret = self.control_node.protocol.set_time()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Set time failed')
         return ret
@@ -308,7 +294,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     def set_node_id(self):
         """ Set the node_id on the control node """
         LOGGER.debug('Set node id')
-        ret = self.protocol.set_node_id()
+        ret = self.control_node.protocol.set_node_id()
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Set node id failed')
@@ -319,7 +305,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Power on the open node """
         LOGGER.info('Open power start')
         power = power or self.profile.power
-        ret = self.protocol.start_stop('start', power)
+        ret = self.control_node.protocol.start_stop('start', power)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power start failed')
@@ -333,7 +319,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info('Open power stop')
         power = power or self.profile.power
 
-        ret = self.protocol.start_stop('stop', power)
+        ret = self.control_node.protocol.start_stop('stop', power)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power stop failed')
@@ -346,7 +332,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Start open node debugger """
         LOGGER.info('Open node debugger start')
 
-        ret = self.nodes['open'].debug_start()
+        ret = self._nodes['open'].debug_start()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger start failed')
         return ret
@@ -356,7 +342,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Stop open node debugger """
         LOGGER.info('Open node debugger stop')
 
-        ret = self.nodes['open'].debug_stop()
+        ret = self._nodes['open'].debug_stop()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger stop failed')
         return ret
@@ -371,7 +357,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         assert node in ['control', 'open'], "Invalid node type"
         LOGGER.info('Node %s reset', node)
 
-        ret = self.nodes[node].reset()
+        ret = self._nodes[node].reset()
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Reset failed on %s node: %d', node, ret)
@@ -388,7 +374,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         assert node in ['control', 'open'], "Invalid node name"
         LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
 
-        ret = self.nodes[node].flash(firmware_path)
+        ret = self._nodes[node].flash(firmware_path)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
