@@ -253,12 +253,12 @@ class AutoTestManager(object):
             ret_val += self.test_radio_with_rssi(channel)
 
             # test consumption measures
-            ret_val += self.test_consumption_dc(board_type)
+            ret_val += self.test_consumption_dc()
 
             # m3 specific tests
             if 'm3' == board_type:  # pragma: no branch
                 # cannot test this with a8 I think
-                ret_val += self.test_leds_with_consumption(board_type)
+                ret_val += self.test_leds_with_consumption()
                 # test m3 specific sensors
                 ret_val += self.test_pressure()
                 ret_val += self.test_light()
@@ -546,14 +546,15 @@ class AutoTestManager(object):
 # Consumption tests
 #
 
-    def test_consumption_dc(self, board_type):
+    def test_consumption_dc(self):
         """ Try consumption for DC """
 
         ret_val = 0
 
         # one measure every ~0.1 seconds
 
-        conso = Consumption('dc', board_type, '1100', '64', True, True, True)
+        conso = Consumption(self.g_m.open_node.ALIM, 'dc',
+                            '1100', '64', True, True, True)
         ret_val += self.g_m.open_power_start(power='dc')
 
         self.cn_measures = []
@@ -588,7 +589,8 @@ class AutoTestManager(object):
 
         # configure consumption
         # one measure every ~0.1 seconds
-        conso = Consumption('battery', board_type, 1100, 64,
+        conso = Consumption(self.g_m.open_node.ALIM, 'battery',
+                            1100, 64,
                             True, True, True)
         self.cn_measures = []
         ret_val += self.g_m.control_node.protocol.config_consumption(conso)
@@ -612,7 +614,7 @@ class AutoTestManager(object):
         # Value ranges may be validated with an Idle firmware
         return ret_val
 
-    def test_leds_with_consumption(self, board_type):
+    def test_leds_with_consumption(self):
         """ Test Leds with consumption
 
         Start consumption measure
@@ -626,7 +628,8 @@ class AutoTestManager(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption('dc', board_type, '1100', '64', True, True, True)
+        conso = Consumption(self.g_m.open_node.ALIM, 'dc',
+                            '1100', '64', True, True, True)
         ret_val += self.g_m.open_power_start(power='dc')
 
         self.cn_measures = []

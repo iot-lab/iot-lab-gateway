@@ -63,7 +63,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         try:
             cls.board_type = config.board_type()
             cls.open_node_type = cls._OPEN_NODES[cls.board_type]
-            cls.default_profile = Profile(board_type=cls.board_type,
+            cls.default_profile = Profile(cls.open_node_type,
                                           **config.default_profile())
         except KeyError:
             raise ValueError('Board type not managed %r' % cls.board_type)
@@ -255,7 +255,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.profile = self.default_profile
             return
         try:
-            self.profile = Profile(board_type=self.board_type, **profile_dict)
+            self.profile = Profile(self.open_node_type, **profile_dict)
         except (ValueError, TypeError, AssertionError) as err:
             LOGGER.error('Invalid profile: %r', err)
             raise ValueError

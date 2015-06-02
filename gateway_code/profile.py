@@ -11,8 +11,9 @@ and methods to convert it to config commands
 class Profile(object):
     """ Experiment monitoring Profile """
 
-    def __init__(self, profilename,  # pylint:disable=unused-argument
-                 power, board_type, consumption=None, radio=None, **_kwargs):
+    def __init__(self, open_node_type,  # pylint:disable=unused-argument
+                 profilename, power,
+                 consumption=None, radio=None, **_kwargs):
         self.profilename = profilename
         self.power = power
 
@@ -21,11 +22,11 @@ class Profile(object):
 
         _current = None
         try:
-            # add consumption (it needs power_source and board_type)
+            # add consumption (it needs power_source and alim)
             if consumption is not None:
                 _current = 'consumption'
-                self.consumption = Consumption(
-                    source=power, board_type=board_type, **consumption)
+                self.consumption = Consumption(open_node_type.ALIM,
+                                               source=power, **consumption)
             # add radio
             if radio is not None:
                 _current = 'radio'
@@ -37,29 +38,27 @@ class Profile(object):
 
 class Consumption(object):
     """ Consumption monitoring configuration """
-    consumption_source = {
-        ('m3', 'dc'): '3.3V',  # TODO move this in 'open_node'
-        ('a8', 'dc'): '5V',
-        ('m3', 'battery'): 'BATT',
-        ('a8', 'battery'): 'BATT',
-    }
     choices = {
         'consumption': {
             'period': [140, 204, 332, 588, 1100, 2116, 4156, 8244],
             'average': [1, 4, 16, 64, 128, 256, 512, 1024]},
+        'alim': ('3.3V', '5V'),
     }
 
-    def __init__(self, source, board_type, period, average,
+    def __init__(self, alim, source, period, average,
                  power=False, voltage=False, current=False):
         _err = "Required values period/average for consumption measure."
         assert period is not None and average is not None, _err
+        period = int(period)
+        average = int(average)
 
-        assert int(period) in self.choices['consumption']['period']
-        assert int(average) in self.choices['consumption']['average']
+        assert period in self.choices['consumption']['period']
+        assert average in self.choices['consumption']['average']
+        assert alim in self.choices['alim']
 
-        self.source = self.consumption_source[(board_type, source)]
-        self.period = int(period)
-        self.average = int(average)
+        self.source = alim if source == 'dc' else 'BATT'
+        self.period = period
+        self.average = average
 
         self.power = power
         self.voltage = voltage
