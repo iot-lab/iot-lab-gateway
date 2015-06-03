@@ -16,12 +16,29 @@ class ControlNode(object):
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')
     FW_CONTROL_NODE = static_path('control_node.elf')
+    default_profile = None
 
     def __init__(self, default_profile):
+        self.default_profile = default_profile
+
         self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
         self.cn_serial = cn_interface.ControlNodeSerial()
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
-        self.default_profile = default_profile
+        self.open_node_state = 'stop'
+        self.profile = self.default_profile
+
+    def configure_profile(self, profile=None):
+        """ Configure the given profile on the control node """
+        LOGGER.info('Configure profile on Control Node')
+        self.profile = profile or self.default_profile
+        ret_val = 0
+        # power_mode (start|stop dc|batt)
+        ret_val += self.protocol.start_stop(self.open_node_state,
+                                            self.profile.power)
+        # Monitoring
+        ret_val += self.protocol.config_consumption(self.profile.consumption)
+        ret_val += self.protocol.config_radio(self.profile.radio)
+        return ret_val
 
     def flash(self, firmware_path=None):
         """ Flash the given firmware on Control Node

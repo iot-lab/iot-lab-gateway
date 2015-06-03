@@ -50,8 +50,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             'exp_files': {}
         }
         self.experiment_is_running = False
-        self.profile = None
-        self.open_node_state = "stop"
         self.user_log_handler = None
         self.timeout_timer = None
 
@@ -103,8 +101,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_stop()
 
         try:
-            self.decode_and_store_profile(profile_dict)
-        except ValueError:
+            profile = Profile.from_dict(self.open_node_type, profile_dict)
+        except ValueError as err:
+            LOGGER.error('%r', err)
             return 1
 
         ret_val = 0
@@ -144,7 +143,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         ret_val += self.open_power_start(power='dc')
         ret_val += self.control_node.protocol.set_time()
         ret_val += self.set_node_id()
-        ret_val += self.configure_cn_profile()
+        ret_val += self.control_node.configure_profile(profile)
 
         # # # # # # # # # # #
         # Prepare Open Node #
@@ -198,7 +197,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Cleanup Control node config #
         # # # # # # # # # # # # # # # #
 
-        ret_val += self.exp_update_profile(None)
+        ret_val += self.control_node.configure_profile(None)
         ret_val += self.open_power_start(power='dc')
         ret_val += self.control_node.protocol.green_led_on()
 
@@ -224,7 +223,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_desc['exp_id'] = None
         self.exp_desc['user'] = None
         self.experiment_is_running = False
-        self.profile = None
 
         LOGGER.info("Stop experiment succeeded")
         LOGGER.removeHandler(self.user_log_handler)
@@ -233,49 +231,20 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         return ret_val
 
     @common.syncronous('rlock')
-    def exp_update_profile(self, profile):
+    def exp_update_profile(self, profile_dict):
         """ Update the experiment profile """
         LOGGER.info('Update experiment profile')
 
         try:
-            self.decode_and_store_profile(profile)
-            ret = self.configure_cn_profile()
-        except ValueError:
+            profile = Profile.from_dict(self.open_node_type, profile_dict)
+        except ValueError as err:
+            LOGGER.error('%r', err)
             ret = 1
+        else:
+            ret = self.control_node.configure_profile(profile)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Update experiment profile failed')
-        return ret
-
-    def decode_and_store_profile(self, profile_dict):
-        """ Create Profile object from `profile_dict`
-        Store Profile in 'self.profile' on success
-        :raises: ValueError on invalid profile_dict """
-        if profile_dict is None:
-            self.profile = self.default_profile
-            return
-        try:
-            self.profile = Profile(self.open_node_type, **profile_dict)
-        except (ValueError, TypeError, AssertionError) as err:
-            LOGGER.error('Invalid profile: %r', err)
-            raise ValueError
-
-    def configure_cn_profile(self):
-        """ Configure the control node profile """
-        LOGGER.info('Configure profile on control node')
-
-        ret = 0
-        # power_mode (keep open node started/stoped state)
-        ret += self.control_node.protocol.start_stop(
-            self.open_node_state, self.profile.power)
-        # Consumption
-        ret += self.control_node.protocol.config_consumption(
-            self.profile.consumption)
-        # Radio
-        ret += self.control_node.protocol.config_radio(self.profile.radio)
-
-        if ret != 0:  # pragma: no cover
-            LOGGER.error('Profile update failed')
         return ret
 
     @common.syncronous('rlock')
@@ -292,27 +261,27 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     def open_power_start(self, power=None):
         """ Power on the open node """
         LOGGER.info('Open power start')
-        power = power or self.profile.power
+        power = power or self.control_node.profile.power
         ret = self.control_node.protocol.start_stop('start', power)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power start failed')
         else:
-            self.open_node_state = "start"
+            self.control_node.open_node_state = "start"
         return ret
 
     @common.syncronous('rlock')
     def open_power_stop(self, power=None):
         """ Power off the open node """
         LOGGER.info('Open power stop')
-        power = power or self.profile.power
+        power = power or self.control_node.profile.power
 
         ret = self.control_node.protocol.start_stop('stop', power)
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power stop failed')
         else:
-            self.open_node_state = "stop"
+            self.control_node.open_node_state = "stop"
         return ret
 
     @common.syncronous('rlock')

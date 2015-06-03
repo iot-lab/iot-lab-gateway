@@ -35,6 +35,19 @@ class Profile(object):
         except TypeError as err:
             assert False, "Error in %s arguments %r" % (_current, err)
 
+    @classmethod
+    def from_dict(cls, open_node_type, profile_dict):
+        """ Create Profile object from `profile_dict` and `open_node_type`
+        If profile_dict is None, None is returned
+        :raises: ValueError on invalid profile_dict """
+        try:
+            if profile_dict is None:
+                return None
+            else:
+                return Profile(open_node_type, **profile_dict)
+        except (ValueError, TypeError, AssertionError) as err:
+            raise ValueError('Invalid profile: %r', err)
+
 
 class Consumption(object):
     """ Consumption monitoring configuration """
