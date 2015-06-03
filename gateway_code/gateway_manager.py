@@ -140,7 +140,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Prepare Control Node  #
         # # # # # # # # # # # # #
         ret_val += self.control_node.protocol.green_led_blink()
-        ret_val += self.open_power_start(power='dc')
+        ret_val += self.control_node.open_start('dc')
         ret_val += self.control_node.protocol.set_time()
         ret_val += self.set_node_id()
         ret_val += self.control_node.configure_profile(profile)
@@ -198,7 +198,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # # # # # # # # # # # # # # # #
 
         ret_val += self.control_node.configure_profile(None)
-        ret_val += self.open_power_start(power='dc')
+        ret_val += self.control_node.open_start('dc')
         ret_val += self.control_node.protocol.green_led_on()
 
         if config.robot_type() == 'roomba':  # pragma: no cover
@@ -209,7 +209,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Cleanup open node #
         # # # # # # # # # # #
         ret_val += self.open_node.teardown()
-        ret_val += self.open_power_stop(power='dc')
+        ret_val += self.control_node.open_stop('dc')
 
         # # # # # # # # # # # # # # # # # # #
         # Cleanup control node interraction #
@@ -261,27 +261,18 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     def open_power_start(self, power=None):
         """ Power on the open node """
         LOGGER.info('Open power start')
-        power = power or self.control_node.profile.power
-        ret = self.control_node.protocol.start_stop('start', power)
-
+        ret = self.control_node.open_start(power)
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power start failed')
-        else:
-            self.control_node.open_node_state = "start"
         return ret
 
     @common.syncronous('rlock')
     def open_power_stop(self, power=None):
         """ Power off the open node """
         LOGGER.info('Open power stop')
-        power = power or self.control_node.profile.power
-
-        ret = self.control_node.protocol.start_stop('stop', power)
-
+        ret = self.control_node.open_stop(power)
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open power stop failed')
-        else:
-            self.control_node.open_node_state = "stop"
         return ret
 
     @common.syncronous('rlock')

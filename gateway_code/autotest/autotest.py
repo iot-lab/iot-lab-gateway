@@ -163,7 +163,7 @@ class AutoTestManager(object):
         Should be done on DC"""
 
         ret_val = 0
-        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.control_node.open_start('dc')
         time.sleep(2)  # wait open node ready
 
         # setup open node
@@ -179,7 +179,7 @@ class AutoTestManager(object):
         LOGGER.info("Teardown autotests")
 
         # ensure DC alim
-        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.control_node.open_start('dc')
 
         try:
             self.on_serial.stop()
@@ -190,7 +190,7 @@ class AutoTestManager(object):
 
         if not blink:
             LOGGER.debug("Stop open node, no blinking")
-            ret_val += self.g_m.open_power_stop(power='dc')
+            ret_val += self.g_m.control_node.open_stop('dc')
         else:
             LOGGER.debug("Set status on LEDs")
 
@@ -236,7 +236,7 @@ class AutoTestManager(object):
             #
             # Other tests, run on DC
             #
-            ret = self.g_m.open_power_start(power='dc')
+            ret = self.g_m.control_node.open_start('dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
             # test IMU
@@ -555,7 +555,7 @@ class AutoTestManager(object):
 
         conso = Consumption(self.g_m.open_node.ALIM, 'dc',
                             '1100', '64', True, True, True)
-        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.control_node.open_start('dc')
 
         self.cn_measures = []
         # store 2 secs of measures
@@ -578,7 +578,7 @@ class AutoTestManager(object):
         """ Try consumption for Battery """
 
         ret_val = 0
-        ret_val += self.g_m.open_power_start(power='battery')
+        ret_val += self.g_m.control_node.open_start('battery')
 
         # set a firmware on m3 to ensure corret consumption measures
         # on a8, linux is consuming enough I think
@@ -595,9 +595,9 @@ class AutoTestManager(object):
         self.cn_measures = []
         ret_val += self.g_m.control_node.protocol.config_consumption(conso)
 
-        ret_val += self.g_m.open_power_stop(power='battery')
+        ret_val += self.g_m.control_node.open_stop('battery')
         time.sleep(1)
-        ret_val += self.g_m.open_power_start(power='battery')
+        ret_val += self.g_m.control_node.open_start('battery')
         time.sleep(1)
 
         # stop
@@ -630,7 +630,7 @@ class AutoTestManager(object):
         ret_val = 0
         conso = Consumption(self.g_m.open_node.ALIM, 'dc',
                             '1100', '64', True, True, True)
-        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.control_node.open_start('dc')
 
         self.cn_measures = []
         leds_timestamps = []

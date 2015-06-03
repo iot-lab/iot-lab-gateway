@@ -40,6 +40,22 @@ class ControlNode(object):
         ret_val += self.protocol.config_radio(self.profile.radio)
         return ret_val
 
+    def open_start(self, power=None):
+        """ Start open node with 'power' source """
+        power = power or self.profile.power
+        ret = self.protocol.start_stop('start', power)
+        if ret == 0:
+            self.open_node_state = 'start'
+        return ret
+
+    def open_stop(self, power=None):
+        """ Stop open node with 'power' source """
+        power = power or self.profile.power
+        ret = self.protocol.start_stop('stop', power)
+        if ret == 0:
+            self.open_node_state = 'stop'
+        return ret
+
     def flash(self, firmware_path=None):
         """ Flash the given firmware on Control Node
         :param firmware_path: Path to the firmware to be flashed on `node`.

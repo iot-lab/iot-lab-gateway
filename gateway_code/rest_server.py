@@ -166,13 +166,13 @@ class GatewayRest(object):
     def open_start(self):
         """ Start open node. Alimentation mode stays the same """
         LOGGER.debug('REST: Open node start')
-        ret = self.gateway_manager.open_power_start(power=None)
+        ret = self.gateway_manager.open_power_start()
         return {'ret': ret}
 
     def open_stop(self):
         """ Stop open node. Alimentation mode stays the same """
         LOGGER.debug('REST: Open node stop')
-        ret = self.gateway_manager.open_power_stop(power=None)
+        ret = self.gateway_manager.open_power_stop()
         return {'ret': ret}
 
     def open_debug_start(self):
