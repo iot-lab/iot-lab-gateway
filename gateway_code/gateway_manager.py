@@ -3,9 +3,8 @@
 
 """ Gateway manager """
 
-from threading import RLock, Timer
 import os
-import time
+from threading import RLock, Timer
 
 import gateway_code.config as config
 from gateway_code import common
@@ -125,31 +124,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.addHandler(self.user_log_handler)
         LOGGER.info('Start experiment: %s-%i', user, exp_id)
 
-        # start steps described in docstring
-        ret_val = 0
-
-        # # # # # # # # # #
-        # Prepare Gateway #
-        # # # # # # # # # #
-        ret_val += self.node_soft_reset('control')
-        time.sleep(1)  # wait CN started
-        ret_val += self.control_node.cn_serial.start(cn.ControlNode.TTY,
-                                                     exp_desc=self.exp_desc)
-
-        # # # # # # # # # # # # #
-        # Prepare Control Node  #
-        # # # # # # # # # # # # #
-        ret_val += self.control_node.protocol.green_led_blink()
-        ret_val += self.control_node.open_start('dc')
-        ret_val += self.control_node.protocol.set_time()
-        ret_val += self.control_node.protocol.set_node_id()
-        ret_val += self.control_node.configure_profile(profile)
-
-        # # # # # # # # # # #
-        # Prepare Open Node #
-        # # # # # # # # # # #
-        # If firmware_path is None, it uses default firmware
+        # Init ControlNode
+        ret_val += self.control_node.start(self.exp_desc)
+        # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
+        # Configure experiment and monitoring on ControlNode
+        ret_val += self.control_node.start_experiment(profile)
 
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
@@ -193,28 +173,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.timeout_timer.cancel()
             self.timeout_timer = None
 
-        # # # # # # # # # # # # # # # #
-        # Cleanup Control node config #
-        # # # # # # # # # # # # # # # #
-
-        ret_val += self.control_node.configure_profile(None)
-        ret_val += self.control_node.open_start('dc')
-        ret_val += self.control_node.protocol.green_led_on()
-
-        if config.robot_type() == 'roomba':  # pragma: no cover
-            LOGGER.info("I'm a roomba")
-            LOGGER.info("Running stop Roomba")
-
-        # # # # # # # # # # #
-        # Cleanup open node #
-        # # # # # # # # # # #
+        # Cleanup Control node Monitoring and experiment #
+        ret_val += self.control_node.stop_experiment()
+        # Cleanup open node
         ret_val += self.open_node.teardown()
-        ret_val += self.control_node.open_stop('dc')
-
-        # # # # # # # # # # # # # # # # # # #
-        # Cleanup control node interraction #
-        # # # # # # # # # # # # # # # # # # #
-        self.control_node.cn_serial.stop()
+        # Stop control node interaction
+        self.control_node.stop()
 
         # Remove empty user experiment files
         self.cleanup_user_exp_files()

@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 """ Control Node experiment implementation """
 
+import time
+
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.config import static_path
@@ -26,6 +28,41 @@ class ControlNode(object):
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
         self.open_node_state = 'stop'
         self.profile = self.default_profile
+
+    def start(self, exp_desc):
+        """ Start ControlNode serial interface """
+        ret_val = 0
+        ret_val += self.reset()
+        time.sleep(1)  # wait CN started
+        ret_val += self.cn_serial.start(self.TTY, exp_desc=exp_desc)
+        ret_val += self.open_start('dc')
+        return ret_val
+
+    def stop(self):
+        """ Start ControlNode """
+        ret_val = 0
+        ret_val += self.open_stop('dc')
+        ret_val += self.cn_serial.stop()
+        ret_val += self.reset()
+        return ret_val
+
+    def start_experiment(self, profile):
+        """ Configure the experiment """
+        ret_val = 0
+        ret_val += self.protocol.green_led_blink()
+        ret_val += self.protocol.set_time()
+        ret_val += self.protocol.set_node_id()
+        ret_val += self.configure_profile(profile)
+        return ret_val
+
+    def stop_experiment(self):
+        """ Cleanup the control node configuration
+        Also start open node for cleanup """
+        ret_val = 0
+        ret_val += self.configure_profile(None)
+        ret_val += self.open_start('dc')
+        ret_val += self.protocol.green_led_on()
+        return ret_val
 
     def configure_profile(self, profile=None):
         """ Configure the given profile on the control node """

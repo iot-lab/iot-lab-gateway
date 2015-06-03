@@ -328,15 +328,13 @@ class TestIntegrationOther(ExperimentRunningMock):
         if 'a8' != gateway_code.config.board_type():
             return
 
-        g_m = self.g_m
-        g_m.exp_start(**self.exp_conf)
-
-        with patch.object(g_m, 'open_power_start', g_m.open_power_stop):
+        c_n = self.g_m.control_node
+        with patch.object(c_n, 'open_start', c_n.open_stop):
             # detect error when a8 does not start
-            self.assertNotEquals(0, g_m.exp_start(**self.exp_conf))
+            self.assertNotEquals(0, self.g_m.exp_start(**self.exp_conf))
 
         # stop and cleanup
-        self.assertEquals(0, g_m.exp_stop())
+        self.assertEquals(0, self.g_m.exp_stop())
 
 
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):
