@@ -142,7 +142,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         ret_val += self.control_node.protocol.green_led_blink()
         ret_val += self.control_node.open_start('dc')
         ret_val += self.control_node.protocol.set_time()
-        ret_val += self.set_node_id()
+        ret_val += self.control_node.protocol.set_node_id()
         ret_val += self.control_node.configure_profile(profile)
 
         # # # # # # # # # # #
@@ -245,16 +245,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Update experiment profile failed')
-        return ret
-
-    @common.syncronous('rlock')
-    def set_node_id(self):
-        """ Set the node_id on the control node """
-        LOGGER.debug('Set node id')
-        ret = self.control_node.protocol.set_node_id()
-
-        if ret != 0:  # pragma: no cover
-            LOGGER.error('Set node id failed')
         return ret
 
     @common.syncronous('rlock')
