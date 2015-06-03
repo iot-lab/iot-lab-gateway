@@ -13,8 +13,8 @@ from ..ftdi_check import ftdi_check
 class TestFtdiCheck(unittest.TestCase):
     """ Test utils.ftdi_check """
 
-    def test__ftdi_is_present(self, m_check_output):
-        """ Test the '_ftdi_is_present' method """
+    def test_ftdi_present(self, m_check_output):
+        """ Test the 'ftdi_check' method when it is present """
 
         m_check_output.return_value = textwrap.dedent('''\
             FTx232 devices lister by IoT-LAB
@@ -29,6 +29,8 @@ class TestFtdiCheck(unittest.TestCase):
         self.assertEquals(0, ftdi_check('control', '4232'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '4232'])
 
+    def test__ftdi_is_absent(self, m_check_output):
+        """ Test the 'ftdi_check' method when it is absent """
         m_check_output.return_value = textwrap.dedent('''\
             FTx232 devices lister by IoT-LAB
             Listing FT2232 devices...
