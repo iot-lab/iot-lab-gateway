@@ -149,7 +149,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)
 
-        self.app.set_time()  # test set_time during experiment
+        # self.app.set_time()  # test set_time during experiment
 
         # Should echo <message>, do it multiple times for reliability
         self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
@@ -187,7 +187,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.request.json = self.profile_dict
         self.assertEquals({'ret': 0}, self.app.exp_update_profile())
         time.sleep(5)  # wait measures here
-        self.app.set_time()  # test set_time during experiment
+        # self.app.set_time()  # test set_time during experiment
         time.sleep(5)  # wait measures here
         # Remove profile
         self.request.json = None

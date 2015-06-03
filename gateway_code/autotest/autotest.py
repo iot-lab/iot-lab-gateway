@@ -73,7 +73,7 @@ class AutoTestManager(object):
         self.g_m.control_node.cn_serial.start(self.g_m.control_node.TTY, None,
                                               ['-d'], self._measures_handler)
         time.sleep(1)
-        ret_val += self.g_m.set_time()
+        ret_val += self.g_m.control_node.protocol.set_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr

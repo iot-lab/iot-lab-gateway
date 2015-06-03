@@ -142,7 +142,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # # # # # # # # # # # # #
         ret_val += self.control_node.protocol.green_led_blink()
         ret_val += self.open_power_start(power='dc')
-        ret_val += self.set_time()
+        ret_val += self.control_node.protocol.set_time()
         ret_val += self.set_node_id()
         ret_val += self.configure_cn_profile()
 
@@ -276,18 +276,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         if ret != 0:  # pragma: no cover
             LOGGER.error('Profile update failed')
-        return ret
-
-    @common.syncronous('rlock')
-    def set_time(self):
-        """ Set control node time to current time
-
-        Updating time reference is propagated to measures handler
-        """
-        LOGGER.debug('Set control node time')
-        ret = self.control_node.protocol.set_time()
-        if ret != 0:  # pragma: no cover
-            LOGGER.error('Set time failed')
         return ret
 
     @common.syncronous('rlock')

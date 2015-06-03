@@ -140,12 +140,6 @@ class GatewayRest(object):
         firmware_file.flush()
         return firmware_file
 
-    def set_time(self):
-        """ Reset Control node time and update time reference """
-        LOGGER.debug('REST: Set time')
-        ret = self.gateway_manager.set_time()
-        return {'ret': ret}
-
     #
     # Open node commands
     #

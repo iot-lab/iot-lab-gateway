@@ -173,11 +173,6 @@ class TestRestMethods(unittest.TestCase):
         self.assertFalse(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
 
-    def test_set_time(self):
-        self.g_m.set_time.return_value = 0
-        ret_dict = self.s_r.set_time()
-        self.assertEquals(0, ret_dict['ret'])
-
     def test_flash_function(self):
         idle = FileUpload('elf32arm0X1234', 'idle.elf')
         self.g_m.node_flash.return_value = 0
