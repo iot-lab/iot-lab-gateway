@@ -166,6 +166,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals([], m_error.call_args_list)
 
         # node is correctly shutdown
+        time.sleep(2)  # wait control node is really reset
         # reset firmware should fail and logger error will be called
         self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)
