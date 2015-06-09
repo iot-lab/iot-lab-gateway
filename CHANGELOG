@@ -2,19 +2,6 @@ Changelog
 =========
 
 
-Version 0.4.3b: Replace log debug by log info on gateway_manager commands
-Version 0.4.2b: Fix static files not released at install
-Version 0.4.1b: Fix setup.py
-
-Version 0.4.0b
---------------
-
- * Node debugger
- * Adapt update_profile to experiment handler new request
-
- * Cleanup setup.py and use tox for managing tests
-
-
 Version 0.3
 -----------
 
@@ -32,3 +19,25 @@ Version 0.3
  * Radio rssi monitoring
  * Radio sniffer with ZEP encapsulation
 
+
+Version 0.4.0b
+--------------
+
+ * Node debugger
+ * Adapt update_profile to experiment handler new request
+
+ * Cleanup setup.py and use tox for managing tests
+
+- 0.4.1b: Fix setup.py
+- 0.4.2b: Fix static files not released at install
++ 0.4.3b: Replace log debug by log info on gateway_manager commands
+
+
+Version 1.0.0
+-------------
+
+ + Reorganize code so `gateway_manager` depends on `nodes` which then depends
+   on `utils`
+ * Clean tests for new classes.
+ * Allow select tests with nose attribute
+ * Move 'cli' implementations in a 'utils' submodule
