@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import os
-from os.path import splitext, basename
-import re
-import sys
+import os.path
+from subprocess import check_output, check_call
+import logging
 
 
 HEADER = '''
@@ -21,99 +20,127 @@ digraph g {
     ];
 
 '''
-FOOTER = '''}'''
+FOOTER = '}'
 NODE = '''    "%s" [
         label = "<f0> %s"
     ];
 '''
-NODE_LINK = '''    "%s" -> "%s"'''
+NODE_LINK = '    "%s" -> "%s"'
 
 
-SOURCE_FILES = ['gateway_code/' + py_file for py_file in
-                os.listdir('gateway_code') if
-                re.search('.py$', py_file) and py_file != '__init__.py']
-
-
-print >> sys.stderr, SOURCE_FILES
-
-nodes_assoc_list = []
-i = 0
-for current in SOURCE_FILES:
-
-    # process each source file
-    current_file = splitext(basename(current))[0]
-    other_files = [splitext(basename(_f))[0] for _f in SOURCE_FILES]
-    other_files.remove(current_file)
-
-    # line containing 'import'
-    import_lines = [line for line in open(current) if 'import' in line]
-
-    for cur_line in import_lines:
-        # for each dependency
-        for dep_file in [deps for deps in other_files if deps in cur_line]:
-
-            node_str = NODE_LINK % (current_file, dep_file)
-            print >> sys.stderr, current_file, dep_file
-
-            # lots of magic is done here to get the visually wanted result
-            if dep_file in ('config', 'common'):
-                node_str += ' [style=invis, constraint=false]'
-            elif dep_file in ('gateway_logging', ):
-                node_str += ' [constraint=false, minlen=4]'
-            else:
-                if ('gateway_validation', 'profile') != \
-                        (current_file, dep_file):
-                    node_str += ' [headport="w"]'
-
-            nodes_assoc_list.append(node_str)
-
-
-nodes_assoc_list.append(
-    NODE_LINK % ('profile', 'open_node_validation_interface') +
-    ' [style=invis]')
-nodes_assoc_list.append(
-    NODE_LINK % ('config', 'gateway_logging') + ' [style=invis]')
-
-nodes_assoc_list.append(NODE_LINK % ('gateway_roomba', 'roomba/roomba.py'))
-nodes_assoc_list.append(NODE_LINK % ('control_node_interface',
-                                     'control_node_serial'))
-
-
-print HEADER,
-for file_path in SOURCE_FILES:
-    file_name = splitext(basename(file_path))[0]
-    print NODE % (file_name, file_name),
-
-print '    "control_node_serial" [shape="Mrecord"];'
-for node_ass in nodes_assoc_list:
-    print node_ass
-
-# Add clusters to be more readable
-print """    subgraph cluster_config {
-        config;
-        common;
-        style = invis;
-    }
-"""
-print """    subgraph cluster_control_node {
-        label = control_node;
-        control_node_interface;
-        protocol_cn;
+CLUSTER_FMT = """
+    subgraph cluster_%s {
+        label = %s;
+        %s
         style = dotted;
     }
 """
-print """    subgraph cluster_auto_tests {
-        label = auto_tests;
-        gateway_validation;
-        open_node_validation_interface;
-        open_a8_interface;
-        style = dotted;
-    }
-"""
-print """    subgraph cluster_subprocess {
-        label = open_node;
-        openocd_cmd;
-        serial_redirection;
-        style = dotted;
-    }"""
-print FOOTER,
+
+
+def mod_name(path):
+    return os.path.splitext(os.path.basename(path))[0]
+
+
+def extract_associations(files):
+    modules = {mod_name(_f) for _f in files}
+
+    associations = []
+
+    for current in files:
+
+        # process each source file
+        cur_module = mod_name(current)
+        other_modules = modules.copy()
+        other_modules.remove(cur_module)
+
+        # line containing 'import'
+        import_lines = [line for line in open(current) if 'import' in line]
+
+        for line in import_lines:
+            # for each dependency
+            for dep_module in [deps for deps in other_modules if deps in line]:
+                associations.append((cur_module, dep_module))
+
+    return associations
+
+
+def extract_subpackage(path):
+    """
+    >>> extract_subpackage('gateway_code/control_node/cn.py')
+    'control_node'
+
+    >>> extract_subpackage('gateway_code/utils/serial_expect.py')
+    'utils'
+
+    >>> extract_subpackage('gateway_code/common.py')
+
+    """
+    parts = path.split('/')
+    if len(parts) == 2:
+        return None
+    else:
+        assert len(parts) == 3
+        return parts[1]
+
+
+def extract_clusters(files):
+
+    clusters = {}
+    for current in files:
+        cur_module = mod_name(current)
+        subpackage = extract_subpackage(current)
+        if subpackage is not None:
+            clusters.setdefault(subpackage, []).append(cur_module)
+    return clusters
+
+
+def str_cluster(cluster, nodes):
+    nodes_str = ''
+    for node in nodes:
+        nodes_str += 8 * ' ' + node + ';\n'
+
+    return CLUSTER_FMT % (cluster, cluster, nodes_str)
+
+def generate_dot(files):
+    ret = ''
+    ret += HEADER
+    for associations in extract_associations(files):
+        ret += NODE_LINK % associations
+        if associations[1] in ('config', 'common'):
+             ret += ' [style=invis, constraint=false]'
+        ret += '\n'
+
+    for cluster, nodes in extract_clusters(files).iteritems():
+        ret += str_cluster(cluster, nodes)
+
+    # clusters
+    ret += FOOTER
+    return ret
+
+
+FILE = 'gateway_code'
+def main():
+    dot_path = '%s.dot' % FILE
+    png_path = '%s.png' % FILE
+
+    files = check_output('find gateway_code/ -name \*py'
+                         ' ! -name __init__.py'
+                         ' -not -path "*integration/*"'
+                         ' -not -path "*cli/*"'
+                         ' -not -path "*tests*"', shell=True).splitlines()
+
+    dot = generate_dot(files)
+    with open('%s.dot' % FILE, 'w+') as dot_file:
+        dot_file.write(dot)
+        logging.debug("Dot written to %r", dot_path)
+    try:
+        check_call(['dot', '-T', 'png', dot_path, '-o', png_path])
+    except OSError as err:
+        logging.error("Cand find 'dot'. Graphviz is not installed")
+        logging.error("%s", err)
+    else:
+        logging.debug("PNG written to %r", dot_path)
+
+if __name__ == '__main__':
+    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+    main()
