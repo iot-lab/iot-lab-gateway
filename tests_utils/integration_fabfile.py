@@ -63,12 +63,19 @@ def safe_su(command, user='root'):
 
 
 @task(default=True)
-def python_test():
-    """ Execute python integration tests """
+def python_test(*attrs):
+    """ Execute python integration tests
+    http://nose.readthedocs.org/en/latest/plugins/attrib.html
+
+    :param attr: nosetets 'attr' option 'attribute=5,!other_attribute'
+    """
     execute(upload)
     execute(kill)
+    cmd = 'tox -e integration'
+    if attrs:
+        cmd += " -- --attr '%s'" % ','.join(attrs)
     with cd(REMOTE):
-        ret = safe_su('tox -e integration', user='www-data')
+        ret = safe_su(cmd, user='www-data')
     execute(download)
     return ret.return_code
 

@@ -7,10 +7,13 @@
 from sys import stderr
 import mock
 
+from nose.plugins.attrib import attr
+
 from gateway_code.integration import test_integration_mock
 
 import gateway_code.autotest.m3_node_interface
 import gateway_code.autotest.autotest
+from gateway_code import open_node
 
 
 import os
@@ -19,6 +22,7 @@ if os.uname()[4] != 'armv7l':
     raise unittest.SkipTest("Skip board embedded tests")
 
 
+@attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
     """ Try running autotests on node """
 
@@ -39,7 +43,8 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         # test that ON still on => should be blinking and answering
         if gateway_code.config.board_type() != 'm3':
             return
-        open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial()
+        open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial(
+            open_node.NodeM3.TTY, open_node.NodeM3.BAUDRATE)
         open_serial.start()
         self.assertIsNotNone(open_serial.send_command(['get_time']))
         open_serial.stop()

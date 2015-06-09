@@ -23,7 +23,7 @@ Pylint and pep8 checker:
 
 """
 
-from setuptools import setup, Command, Extension
+from setuptools import setup, Command, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 
 import sys
@@ -64,6 +64,10 @@ class BuildExt(build_ext):
 
     def run(self):
         """ Build control node serial interface """
+        # Don't build for Pylint
+        if self.distribution.script_args == ['lint']:
+            return
+
         args = ['make', '-C', 'control_node_serial', 'realclean', 'all']
         try:
             subprocess.check_call(args)
@@ -114,7 +118,7 @@ setup(name=PACKAGE,
       author='IoT-Lab Team',
       author_email='admin@iot-lab.info',
       url='http://www.iot-lab.info',
-      packages=[PACKAGE, '%s.autotest' % PACKAGE, 'roomba'],
+      packages=find_packages(),
 
       scripts=SCRIPTS,
       include_package_data=True,

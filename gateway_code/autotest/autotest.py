@@ -13,7 +13,8 @@ from serial import SerialException
 from collections import defaultdict
 
 import gateway_code.config as config
-import gateway_code.open_node
+from gateway_code import common
+from gateway_code import open_node
 from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
@@ -68,10 +69,11 @@ class AutoTestManager(object):
         ret_val = 0
 
         # configure Control Node
-        ret_val += self.g_m.node_soft_reset('gwt')
-        self.g_m.cn_serial.start(None, ['-d'], self._measures_handler)
+        ret_val += self.g_m.control_node.reset()
+        self.g_m.control_node.cn_serial.start(self.g_m.control_node.TTY, None,
+                                              ['-d'], self._measures_handler)
         time.sleep(1)
-        ret_val += self.g_m.set_time()
+        ret_val += self.g_m.control_node.protocol.set_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
@@ -87,11 +89,12 @@ class AutoTestManager(object):
         """ Setup open node m3 connection """
         ret_val = 0
 
-        ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+        ret = self.g_m.open_node.flash(open_node.NodeM3.FW_AUTOTEST)
         ret_val += self._check(ret, 'flash_m3', ret)
         time.sleep(2)
 
-        self.on_serial = m3_node_interface.OpenNodeSerial()
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            open_node.NodeM3.TTY, open_node.NodeM3.BAUDRATE)
         ret, err_msg = self.on_serial.start()
         ret_val += self._check(ret, 'open_m3_serial', err_msg)
 
@@ -108,8 +111,8 @@ class AutoTestManager(object):
         """
         ret_val = 0
         try:
-            ret_val += gateway_code.open_node.wait_tty(
-                config.OPEN_A8_CFG['tty'], timeout=20)
+            ret_val += common.wait_tty(open_node.NodeA8.TTY, LOGGER,
+                                       timeout=20)
 
             # wait nodes start
             # get ip address using serial
@@ -134,7 +137,7 @@ class AutoTestManager(object):
 
         # open A8 flash
         try:
-            self.a8_connection.scp(config.FIRMWARES['a8_autotest'],
+            self.a8_connection.scp(open_node.NodeA8.A8_M3_FW_AUTOTEST,
                                    '/tmp/a8_autotest.elf')
         except CalledProcessError as err:  # pragma: no cover
             ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
@@ -147,8 +150,10 @@ class AutoTestManager(object):
             raise FatalError('Setup Open Node failed')
 
         # Create open node a8-m3 connection through socat
-        self.on_serial = m3_node_interface.OpenNodeSerial()
-        ret, err_msg = self.on_serial.start(tty=open_a8_interface.A8_TTY_PATH)
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            open_node.NodeA8.LOCAL_A8_M3_TTY, open_node.NodeA8.A8_M3_BAUDRATE)
+
+        ret, err_msg = self.on_serial.start()
         ret_val += self._check(ret, 'open_a8_serial', err_msg)
 
         return ret_val
@@ -158,7 +163,7 @@ class AutoTestManager(object):
         Should be done on DC"""
 
         ret_val = 0
-        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.control_node.open_start('dc')
         time.sleep(2)  # wait open node ready
 
         # setup open node
@@ -174,7 +179,7 @@ class AutoTestManager(object):
         LOGGER.info("Teardown autotests")
 
         # ensure DC alim
-        ret_val += self.g_m.open_power_start(power='dc')
+        ret_val += self.g_m.control_node.open_start('dc')
 
         try:
             self.on_serial.stop()
@@ -185,11 +190,11 @@ class AutoTestManager(object):
 
         if not blink:
             LOGGER.debug("Stop open node, no blinking")
-            ret_val += self.g_m.open_power_stop(power='dc')
+            ret_val += self.g_m.control_node.open_stop('dc')
         else:
             LOGGER.debug("Set status on LEDs")
 
-        self.g_m.cn_serial.stop()
+        self.g_m.control_node.cn_serial.stop()
         LOGGER.debug("cn_serial stopped")
 
         try:
@@ -231,7 +236,7 @@ class AutoTestManager(object):
             #
             # Other tests, run on DC
             #
-            ret = self.g_m.open_power_start(power='dc')
+            ret = self.g_m.control_node.open_start('dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
             # test IMU
@@ -248,12 +253,12 @@ class AutoTestManager(object):
             ret_val += self.test_radio_with_rssi(channel)
 
             # test consumption measures
-            ret_val += self.test_consumption_dc(board_type)
+            ret_val += self.test_consumption_dc()
 
             # m3 specific tests
             if 'm3' == board_type:  # pragma: no branch
                 # cannot test this with a8 I think
-                ret_val += self.test_leds_with_consumption(board_type)
+                ret_val += self.test_leds_with_consumption()
                 # test m3 specific sensors
                 ret_val += self.test_pressure()
                 ret_val += self.test_light()
@@ -266,7 +271,7 @@ class AutoTestManager(object):
             self._on_call(['leds_off', '7'])
             if ret_val == 0:
                 self._on_call(['leds_blink', '7', '500'])
-                self.g_m.protocol.green_led_blink()
+                self.g_m.control_node.protocol.green_led_blink()
             else:  # pragma: no cover
                 pass
         except FatalError as err:
@@ -452,7 +457,8 @@ class AutoTestManager(object):
         ret_val = 0
 
         # setup control node
-        ret_val += self.g_m.protocol.send_cmd(cn_command + ['start'] + args)
+        ret_val += self.g_m.control_node.protocol.send_cmd(
+            cn_command + ['start'] + args)
 
         # Run num times
         values = self._run_test(num, on_cmd + args, (lambda x: 0))
@@ -460,7 +466,7 @@ class AutoTestManager(object):
         ret_val += self._check(tst_ok(test_ok), debug_str, values)
 
         # teardown
-        ret = self.g_m.protocol.send_cmd(cn_command + ['stop'])
+        ret = self.g_m.control_node.protocol.send_cmd(cn_command + ['stop'])
         ret_val += self._check(ret, debug_str, 'cleanup error')
 
         return ret_val
@@ -519,11 +525,11 @@ class AutoTestManager(object):
         cmd_on = ['radio_pkt', str(channel), '3dBm']
 
         # get RSSI while sending 10 packets length 125
-        ret_val += self.g_m.protocol.config_radio(radio)
+        ret_val += self.g_m.control_node.protocol.config_radio(radio)
         for _itr in range(0, 10):  # pylint:disable=unused-variable
             self._on_call(cmd_on)
             time.sleep(0.5)
-        ret_val += self.g_m.protocol.config_radio(None)
+        ret_val += self.g_m.control_node.protocol.config_radio(None)
 
         # ('11', '-91')
         # -91 == no radio detected
@@ -540,21 +546,22 @@ class AutoTestManager(object):
 # Consumption tests
 #
 
-    def test_consumption_dc(self, board_type):
+    def test_consumption_dc(self):
         """ Try consumption for DC """
 
         ret_val = 0
 
         # one measure every ~0.1 seconds
 
-        conso = Consumption('dc', board_type, '1100', '64', True, True, True)
-        ret_val += self.g_m.open_power_start(power='dc')
+        conso = Consumption(self.g_m.open_node.ALIM, 'dc',
+                            '1100', '64', True, True, True)
+        ret_val += self.g_m.control_node.open_start('dc')
 
         self.cn_measures = []
         # store 2 secs of measures
-        ret_val += self.g_m.protocol.config_consumption(conso)
+        ret_val += self.g_m.control_node.protocol.config_consumption(conso)
         time.sleep(2)  # get measures for 2 seconds
-        ret_val += self.g_m.protocol.config_consumption(None)
+        ret_val += self.g_m.control_node.protocol.config_consumption(None)
         time.sleep(2)  # wait 2 seconds for flush
 
         # (0.257343, 3.216250, 0.080003)
@@ -571,29 +578,30 @@ class AutoTestManager(object):
         """ Try consumption for Battery """
 
         ret_val = 0
-        ret_val += self.g_m.open_power_start(power='battery')
+        ret_val += self.g_m.control_node.open_start('battery')
 
         # set a firmware on m3 to ensure corret consumption measures
         # on a8, linux is consuming enough I think
         if 'm3' == board_type:  # pragma: no branch
             time.sleep(1)
-            ret = self.g_m.node_flash('m3', config.FIRMWARES['m3_autotest'])
+            ret = self.g_m.open_node.flash(open_node.NodeM3.FW_AUTOTEST)
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption
         # one measure every ~0.1 seconds
-        conso = Consumption('battery', board_type, 1100, 64,
+        conso = Consumption(self.g_m.open_node.ALIM, 'battery',
+                            1100, 64,
                             True, True, True)
         self.cn_measures = []
-        ret_val += self.g_m.protocol.config_consumption(conso)
+        ret_val += self.g_m.control_node.protocol.config_consumption(conso)
 
-        ret_val += self.g_m.open_power_stop(power='battery')
+        ret_val += self.g_m.control_node.open_stop('battery')
         time.sleep(1)
-        ret_val += self.g_m.open_power_start(power='battery')
+        ret_val += self.g_m.control_node.open_start('battery')
         time.sleep(1)
 
         # stop
-        ret_val += self.g_m.protocol.config_consumption(None)
+        ret_val += self.g_m.control_node.protocol.config_consumption(None)
         time.sleep(1)  # Flush last values
 
         # (0.257343, 3.216250, 0.080003)
@@ -606,7 +614,7 @@ class AutoTestManager(object):
         # Value ranges may be validated with an Idle firmware
         return ret_val
 
-    def test_leds_with_consumption(self, board_type):
+    def test_leds_with_consumption(self):
         """ Test Leds with consumption
 
         Start consumption measure
@@ -620,21 +628,22 @@ class AutoTestManager(object):
 
         # one measure every ~0.1 seconds
         ret_val = 0
-        conso = Consumption('dc', board_type, '1100', '64', True, True, True)
-        ret_val += self.g_m.open_power_start(power='dc')
+        conso = Consumption(self.g_m.open_node.ALIM, 'dc',
+                            '1100', '64', True, True, True)
+        ret_val += self.g_m.control_node.open_start('dc')
 
         self.cn_measures = []
         leds_timestamps = []
         # get consumption for all leds mode:
         #     no leds, each led, all leds
-        ret_val += self.g_m.protocol.config_consumption(conso)
+        ret_val += self.g_m.control_node.protocol.config_consumption(conso)
         for leds in ['0', '1', '2', '4', '7']:
             self._on_call(['leds_on', leds])
             time.sleep(0.5)
             leds_timestamps.append(time.time())
             time.sleep(0.5)
             self._on_call(['leds_off', '7'])
-        ret_val += self.g_m.protocol.config_consumption(None)
+        ret_val += self.g_m.control_node.protocol.config_consumption(None)
         time.sleep(1)  # wait last values
 
         # (0.257343, 3.216250, 0.080003)

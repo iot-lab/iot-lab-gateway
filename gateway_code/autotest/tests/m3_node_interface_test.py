@@ -8,6 +8,7 @@ import mock
 import threading
 import Queue
 from gateway_code.autotest import m3_node_interface
+from gateway_code.open_node import NodeM3
 
 # errors when analysing self.serial
 # pylint: disable=maybe-no-member
@@ -20,7 +21,8 @@ class TestOpenNodeSerial(unittest.TestCase):
     """ Test the open node autotest interface """
 
     def setUp(self):
-        self.on_interface = m3_node_interface.OpenNodeSerial()
+        self.on_interface = m3_node_interface.OpenNodeSerial(
+            NodeM3.TTY, NodeM3.BAUDRATE)
         self.serial_patcher = mock.patch('serial.Serial')
         serial_class = self.serial_patcher.start()
         self.serial = serial_class.return_value
@@ -54,7 +56,8 @@ class TestOpenNodeSerial(unittest.TestCase):
     def test_serial_send_cmd(self, mock_queue_class):
         mock_queue = mock_queue_class.return_value
         # reinit interface to apply mock
-        self.on_interface = m3_node_interface.OpenNodeSerial()
+        self.on_interface = m3_node_interface.OpenNodeSerial(
+            NodeM3.TTY, NodeM3.BAUDRATE)
         self.on_interface.start()
 
         # got answer
@@ -88,7 +91,8 @@ class TestOpenNodeSerial(unittest.TestCase):
         self.serial.readline.side_effect = readline_mock
 
         # reinit interface to apply mock
-        self.on_interface = m3_node_interface.OpenNodeSerial()
+        self.on_interface = m3_node_interface.OpenNodeSerial(
+            NodeM3.TTY, NodeM3.BAUDRATE)
         self.on_interface.start()
         self.readline_called.wait(5)
         self.assertTrue(self.readline_called.is_set())

@@ -11,7 +11,7 @@ import unittest
 import mock
 
 import Queue
-from gateway_code.control_node_interface import ControlNodeSerial
+from gateway_code.control_node import cn_interface
 
 
 class TestControlNodeSerial(unittest.TestCase):
@@ -28,17 +28,17 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stderr.readline.side_effect = self.readline_ret_vals.get
         self.readline_ret_vals.put('cn_serial_ready\n')
 
-        self.cn = ControlNodeSerial()
+        self.cn = cn_interface.ControlNodeSerial()
 
     def tearDown(self):
         self.cn.stop()
-        self.popen.stop()
+        mock.patch.stopall()
 
     def _terminate(self):
         self.readline_ret_vals.put('')
 
     def test_normal_start_stop(self):
-        ret_start = self.cn.start()
+        ret_start = self.cn.start('tty')
         self.assertEquals(0, ret_start)
         self.popen.stderr.readline.assert_called()
 
@@ -46,13 +46,13 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.terminate.assert_called()
         self.assertTrue(self.readline_ret_vals.empty())
 
-    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_start_error_in_cn_serial(self, mock_logger):
 
         # poll should return an error
         self.popen.poll.return_value = 2
 
-        ret_start = self.cn.start()
+        ret_start = self.cn.start('tty')
         self.assertNotEquals(0, ret_start)
         mock_logger.assert_called_with(
             'Control node serial reader thread ended prematurely')
@@ -61,7 +61,7 @@ class TestControlNodeSerial(unittest.TestCase):
     def test_stop_before_start(self):
         self.cn.stop()
 
-    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_stop_with_cn_interface_allready_stopped(self, mock_logger):
 
         # Simulate cn_interface stopped
@@ -69,7 +69,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stdin.write.side_effect = IOError()
         self.popen.terminate.side_effect = OSError()
 
-        self.cn.start()
+        self.cn.start('tty')
 
         # try sending command
         ret = self.cn.send_command(['test', 'cmd'])
@@ -88,13 +88,13 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stdin.write.side_effect = \
             (lambda *x: self.readline_ret_vals.put('start ACK\n'))
 
-        self.cn.start()
+        self.cn.start('tty')
         ret = self.cn.send_command(['start', 'DC'])
         self.assertEquals(['start', 'ACK'], ret)
         self.cn.stop()
 
     def test_send_command_no_answer(self):
-        self.cn.start()
+        self.cn.start('tty')
         ret = self.cn.send_command(['start', 'DC'])
         self.assertIsNone(ret)
         self.cn.stop()
@@ -103,13 +103,13 @@ class TestControlNodeSerial(unittest.TestCase):
         ret = self.cn.send_command(['lala'])
         self.assertIsNone(ret)
 
-    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_answer_and_answer_with_queue_full(self, mock_logger):
         # get two answers without sending command
         self.readline_ret_vals.put('set ACK\n')
         self.readline_ret_vals.put('start ACK\n')
 
-        self.cn.start()
+        self.cn.start('tty')
         self.cn.stop()
 
         mock_logger.assert_called_with('Control node answer queue full: %r',
@@ -133,7 +133,7 @@ class TestControlNodeSerial(unittest.TestCase):
                           'log': '/tmp/log'}
         }
 
-        self.cn.start(exp_desc=exp_desc)
+        self.cn.start('tty', exp_desc=exp_desc)
         self.assertIsNotNone(self.cn.oml_cfg_file)
         self.cn.stop()
 
@@ -141,10 +141,10 @@ class TestControlNodeSerial(unittest.TestCase):
 class TestHandleAnswer(unittest.TestCase):
 
     def setUp(self):
-        self.cn = ControlNodeSerial()
+        self.cn = cn_interface.ControlNodeSerial()
 
-    @mock.patch('gateway_code.control_node_interface.LOGGER.info')
-    @mock.patch('gateway_code.control_node_interface.LOGGER.debug')
+    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.info')
+    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.debug')
     def test_config_ack(self, mock_logger, mock_logger_info):
         self.cn._handle_answer('config_ack set_time 0.123456')
         mock_logger.assert_called_with('config_ack %s', 'set_time')
@@ -154,12 +154,12 @@ class TestHandleAnswer(unittest.TestCase):
         self.cn._handle_answer('config_ack anything')
         mock_logger.assert_called_with('config_ack %s', 'anything')
 
-    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_error(self, mock_logger):
         self.cn._handle_answer('error 42')
         mock_logger.assert_called_with('Control node error: %r', '42')
 
-    @mock.patch('gateway_code.control_node_interface.LOGGER.error')
+    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_cn_serial_error(self, mock_logger):
         self.cn._handle_answer('cn_serial_error: any error msg')
         mock_logger.assert_called_with('cn_serial_error: any error msg')

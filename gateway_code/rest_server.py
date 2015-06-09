@@ -70,7 +70,7 @@ class GatewayRest(object):
 
         # Extract firmware file
         firmware_file = self._extract_firmware()
-        firmware = firmware_file.name if firmware_file is not None else None
+        firmware = firmware_file.name if firmware_file else None
 
         # Extract profile to a dict
         try:
@@ -140,36 +140,39 @@ class GatewayRest(object):
         firmware_file.flush()
         return firmware_file
 
-    def set_time(self):
-        """ Reset Control node time and update time reference """
-        LOGGER.debug('REST: Set time')
-        ret = self.gateway_manager.set_time()
-        return {'ret': ret}
-
     #
     # Open node commands
     #
     def open_flash(self):
-        """ Flash open node """
+        """ Flash open node
+        Requires: request.files contains 'firmware' file argument """
         LOGGER.debug('REST: Flash %s', self.board_type)
-        return self._flash(self.board_type)
+
+        firmware_file = self._extract_firmware()
+        if firmware_file is None:
+            return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
+
+        ret = self.gateway_manager.node_flash('open', firmware_file.name)
+
+        firmware_file.close()
+        return {'ret': ret}
 
     def open_soft_reset(self):
         """ Soft reset open node """
         LOGGER.debug('REST: Reset %s', self.board_type)
-        ret = self._reset(self.board_type)
+        ret = self.gateway_manager.node_soft_reset('open')
         return {'ret': ret}
 
     def open_start(self):
         """ Start open node. Alimentation mode stays the same """
         LOGGER.debug('REST: Open node start')
-        ret = self.gateway_manager.open_power_start(power=None)
+        ret = self.gateway_manager.open_power_start()
         return {'ret': ret}
 
     def open_stop(self):
         """ Stop open node. Alimentation mode stays the same """
         LOGGER.debug('REST: Open node stop')
-        ret = self.gateway_manager.open_power_stop(power=None)
+        ret = self.gateway_manager.open_power_stop()
         return {'ret': ret}
 
     def open_debug_start(self):
@@ -183,42 +186,6 @@ class GatewayRest(object):
         LOGGER.debug('REST: Open node debugger stop')
         ret = self.gateway_manager.open_debug_stop()
         return {'ret': ret}
-
-    def _flash(self, node):
-        """
-        Flash node
-
-        Requires:
-        request.files contains 'firmware' file argument
-        """
-        ret = 0
-
-        firmware_file = self._extract_firmware()
-        if firmware_file is None:
-            return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
-
-        ret = self.gateway_manager.node_flash(node, firmware_file.name)
-
-        firmware_file.close()
-        return {'ret': ret}
-
-    def _reset(self, node):
-        """ Reset given node with 'reset' pin """
-        return self.gateway_manager.node_soft_reset(node)
-
-    #
-    # Admins commands
-    #
-    def admin_control_soft_reset(self):
-        """ Soft reset control node """
-        LOGGER.debug('REST: Reset CN')
-        ret = self._reset('gwt')
-        return {'ret': ret}
-
-    def admin_control_flash(self):
-        """ Flash control node """
-        LOGGER.debug('REST: Flash CN')
-        return self._flash('gwt')
 
     def auto_tests(self, mode=None):
         """ Run auto-tests

@@ -16,13 +16,14 @@ import atexit
 from gateway_code import config
 from gateway_code import common
 
-
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
 # use for tests
 TESTS_ARGS = []
+
+CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 
 
 OML_XML = '''
@@ -63,7 +64,7 @@ class ControlNodeSerial(object):
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, exp_desc=None, _args=None, _measures_handler=None):
+    def start(self, tty, exp_desc=None, _args=None, _measures_handler=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
@@ -75,8 +76,7 @@ class ControlNodeSerial(object):
         self.measures_handler = _measures_handler or \
             self.measures_handler or LOGGER.error
 
-        args = [config.CONTROL_NODE_SERIAL_INTERFACE]
-        args += ['-t', config.NODES_CFG['gwt']['tty']]
+        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', tty]
         args += self._config_oml(exp_desc)
 
         # add arguments, used by tests
@@ -102,7 +102,6 @@ class ControlNodeSerial(object):
 
         # Extract configuration
         oml_cfg = exp_desc['exp_files'].copy()
-        oml_cfg['user'] = exp_desc['user']
         oml_cfg['exp_id'] = exp_desc['exp_id']
         oml_cfg['node_id'] = config.hostname()
 
@@ -134,6 +133,7 @@ class ControlNodeSerial(object):
         # cleanup oml
         if self.oml_cfg_file is not None:
             self.oml_cfg_file.close()
+        return 0
 
     def _handle_answer(self, line):
         """Handle control node answers

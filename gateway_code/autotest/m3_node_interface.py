@@ -1,7 +1,6 @@
 #! /usr/bin/python
 # -*- coding:utf-8 -*-
 
-
 """
 Open node validation interface
 
@@ -15,7 +14,6 @@ import Queue
 import time
 
 from gateway_code import common
-from gateway_code import config
 
 
 class OpenNodeSerial(object):
@@ -23,20 +21,21 @@ class OpenNodeSerial(object):
     OpenNodeSerial class implementing the interface with open node auto-test
     """
 
-    def __init__(self):
+    def __init__(self, tty, baudrate):
+        self.tty = tty
+        self.baudrate = baudrate
         self.serial_fd = None
         self.stop_reader = threading.Event()
         self.msg_queue = Queue.Queue(0)
 
         self.reader_thread = None
 
-    def start(self, tty=None):
+    def start(self):
         """ Start serial interface """
         # open serial
-        tty = tty or config.NODES_CFG['m3']['tty']
-        baudrate = config.NODES_CFG['m3']['baudrate']
         try:
-            self.serial_fd = serial.Serial(tty, baudrate, timeout=0.5)
+            self.serial_fd = serial.Serial(
+                self.tty, self.baudrate, timeout=0.5)
             self.serial_fd.flushInput()
 
             # start reader thread

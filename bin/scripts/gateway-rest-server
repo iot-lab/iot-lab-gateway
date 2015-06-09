@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from gateway_code import server_rest
+from gateway_code import rest_server
 import sys
 
-server_rest._main(sys.argv)
+rest_server._main(sys.argv)

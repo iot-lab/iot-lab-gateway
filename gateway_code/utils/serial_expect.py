@@ -21,9 +21,6 @@ class SerialExpect(object):
         self.serial_fd.flushInput()
         self.logger = logger
 
-    def __del__(self):
-        self.serial_fd.close()
-
     def send(self, data):
         """ Write given data to serial with newline"""
         self.serial_fd.write(data + '\n')

@@ -10,8 +10,11 @@
 import unittest
 import time
 from threading import Thread, RLock
+from mock import Mock
 
 from gateway_code import common
+import logging
+LOGGER = logging.getLogger('gateway_code')
 
 
 class TestWaitCond(unittest.TestCase):
@@ -38,6 +41,16 @@ class TestWaitCond(unittest.TestCase):
 
         self.assertTrue(common.wait_cond(0, True, lambda x: x, True))
         self.assertTrue(common.wait_cond(0, True, lambda x: x, x=True))
+
+
+class TestWaitTTY(unittest.TestCase):
+    def test_wait_tty(self):
+        """ Test running wait_tty fct """
+        logger = Mock()
+        self.assertEquals(0, common.wait_tty('/dev/null', logger))
+        logger.assertNotCalled()
+        self.assertNotEquals(0, common.wait_tty('no_tty_file', logger))
+        logger.assertCalledOnce()
 
 
 class TestSyncronousDecorator(unittest.TestCase):

@@ -4,7 +4,6 @@
 
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
-# pylint: disable=star-args
 
 import os
 import time
@@ -16,12 +15,39 @@ from mock import patch
 
 # all modules should be imported and not only the package
 from gateway_code.integration import test_integration_mock
-import gateway_code.control_node_interface
+import gateway_code.control_node.cn_interface
 import gateway_code.config
+
 from gateway_code.common import wait_cond
 from gateway_code.autotest.autotest import extract_measures
 
+from gateway_code.open_node import NodeM3
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
+
 USER = 'harter'
+
+
+# Bottle FileUpload class stub
+class FileUpload(object):  # pylint: disable=too-few-public-methods
+    """ Bottle FileUpload class stub """
+    files = {}
+
+    def __init__(self, file_path):
+        self.file = None
+        self.filename = None
+        self.name = None
+        self.headers = None
+
+        self.filename = os.path.basename(file_path)
+        _ext = os.path.splitext(self.filename)[1]
+
+        try:
+            self.name = {'.json': 'profile', '.elf': 'firmware'}[_ext]
+        except KeyError:
+            raise ValueError("Uknown file type %r: %r" % (_ext, file_path))
+
+        self.file = open(file_path)
 
 
 if os.uname()[4] != 'armv7l':
@@ -35,7 +61,8 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
     def setUp(self):
         super(ExperimentRunningMock, self).setUp()
         self.cn_measures = []
-        self.g_m.cn_serial.measures_handler = self._measures_handler
+        self.g_m.control_node.cn_serial.measures_handler = \
+            self._measures_handler
 
         # no timeout
         self.request.query = mock.Mock(timeout='')
@@ -51,7 +78,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
     def _measures_handler(self, measure_str):
         """ control node measures Handler """
-        gateway_code.control_node_interface.LOGGER.debug(measure_str)
+        gateway_code.control_node.cn_interface.LOGGER.debug(measure_str)
         self.cn_measures.append(measure_str.split(' '))
 
     @staticmethod
@@ -85,7 +112,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 class TestComplexExperimentRunning(ExperimentRunningMock):
     """ Run complete experiment test """
 
-    @patch('gateway_code.control_node_interface.LOGGER.error')
+    @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
         """ Test simple experiment"""
         if 'm3' == gateway_code.config.board_type():
@@ -110,7 +137,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         msg = 'HELLO WORLD'
 
         # start exp with idle firmware
-        self.request.files = {'firmware': self.files['idle']}
+        self.request.files = {'firmware': FileUpload(NodeM3.FW_IDLE)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
         time.sleep(1)
 
@@ -118,11 +145,11 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
 
         # flash echo firmware
-        self.request.files = {'firmware': self.files['m3_autotest']}
+        self.request.files = {'firmware': FileUpload(NodeM3.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)
 
-        self.app.set_time()  # test set_time during experiment
+        # self.app.set_time()  # test set_time during experiment
 
         # Should echo <message>, do it multiple times for reliability
         self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
@@ -139,11 +166,12 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals([], m_error.call_args_list)
 
         # node is correctly shutdown
+        time.sleep(2)  # wait control node is really reset
         # reset firmware should fail and logger error will be called
         self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)
 
-    @patch('gateway_code.control_node_interface.LOGGER.error')
+    @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_m3_exp_with_measures(self, m_error):
         """ Run an experiment with measures and profile update """
 
@@ -151,7 +179,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             return
         t_start = time.time()
 
-        self.request.files = {'firmware': self.files['m3_autotest']}
+        self.request.files = {'firmware': FileUpload(NodeM3.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
         exp_files = self.g_m.exp_desc['exp_files'].copy()
         time.sleep(1)
@@ -160,7 +188,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.request.json = self.profile_dict
         self.assertEquals({'ret': 0}, self.app.exp_update_profile())
         time.sleep(5)  # wait measures here
-        self.app.set_time()  # test set_time during experiment
+        # self.app.set_time()  # test set_time during experiment
         time.sleep(5)  # wait measures here
         # Remove profile
         self.request.json = None
@@ -271,15 +299,6 @@ class TestExperimentTimeout(ExperimentRunningMock):
 class TestIntegrationOther(ExperimentRunningMock):
     """ Group other tests cases"""
 
-    def test_admin_commands(self):
-        """ Try running the admin commands """
-        # flash Control Node
-        self.request.files = {'firmware': self.files['control_node']}
-        ret = self.app.admin_control_flash()
-        self.assertEquals(ret, {'ret': 0})
-        ret = self.app.admin_control_soft_reset()
-        self.assertEquals(ret, {'ret': 0})
-
     def test_status(self):
         """ Call the status command """
         ret = self.app.status()
@@ -310,15 +329,13 @@ class TestIntegrationOther(ExperimentRunningMock):
         if 'a8' != gateway_code.config.board_type():
             return
 
-        g_m = self.g_m
-        g_m.exp_start(**self.exp_conf)
-
-        with patch.object(g_m, 'open_power_start', g_m.open_power_stop):
+        c_n = self.g_m.control_node
+        with patch.object(c_n, 'open_start', c_n.open_stop):
             # detect error when a8 does not start
-            self.assertNotEquals(0, g_m.exp_start(**self.exp_conf))
+            self.assertNotEquals(0, self.g_m.exp_start(**self.exp_conf))
 
         # stop and cleanup
-        self.assertEquals(0, g_m.exp_stop())
+        self.assertEquals(0, self.g_m.exp_stop())
 
 
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):
@@ -327,14 +344,17 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     def tests_invalid_profile_at_start(self):
         """ Run experiments with invalid profiles """
 
-        self.request.files = {'profile': self.files['invalid_profile']}
+        self.request.files = {'profile': FileUpload(
+            CURRENT_DIR + 'invalid_profile.json')}
         self.assertNotEquals({'ret': 0}, self.app.exp_start(USER, 123))
 
-        self.request.files = {'profile': self.files['invalid_profile_2']}
+        self.request.files = {'profile': FileUpload(
+            CURRENT_DIR + 'invalid_profile_2.json')}
         self.assertNotEquals({'ret': 0}, self.app.exp_start(USER, 123))
 
     def tests_invalid_files(self):
         """ Test invalid flash files """
 
-        self.request.files = {'profile': self.files['profile']}
+        self.request.files = {'profile': FileUpload(
+            CURRENT_DIR + 'profile.json')}
         self.assertNotEquals({'ret': 0}, self.app.open_flash())

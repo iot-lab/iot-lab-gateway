@@ -21,7 +21,7 @@ import mock
 from mock import patch, PropertyMock
 import unittest
 
-from gateway_code import server_rest
+from gateway_code import rest_server
 
 import os
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -48,15 +48,11 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
 
         self.file = StringIO(file_content)
 
-    def rewind(self):
-        """ Rewind at start position """
-        self.file.seek(0)
-
 
 class TestRestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.request_patcher = patch('gateway_code.server_rest.request')
+        self.request_patcher = patch('gateway_code.rest_server.request')
         self.request = self.request_patcher.start()
 
         self.board_patcher = patch('gateway_code.config.board_type')
@@ -64,7 +60,7 @@ class TestRestMethods(unittest.TestCase):
         self.board.return_value = 'm3'
 
         self.g_m = mock.Mock()
-        self.s_r = server_rest.GatewayRest(self.g_m)
+        self.s_r = rest_server.GatewayRest(self.g_m)
 
     def tearDown(self):
         self.request_patcher.stop()
@@ -177,43 +173,24 @@ class TestRestMethods(unittest.TestCase):
         self.assertFalse(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
 
-    def test_set_time(self):
-        self.g_m.set_time.return_value = 0
-        ret_dict = self.s_r.set_time()
-        self.assertEquals(0, ret_dict['ret'])
-
     def test_flash_function(self):
         idle = FileUpload('elf32arm0X1234', 'idle.elf')
-
         self.g_m.node_flash.return_value = 0
-
-        self.request.files = {}
-        ret_dict = self.s_r._flash('m3')
-        self.assertNotEquals(0, ret_dict['ret'])
 
         # valid command
         self.request.files = {'firmware': idle}
-        ret_dict = self.s_r._flash('gwt')
-        self.assertEquals(0, ret_dict['ret'])
-
-        call_args = self.g_m.node_flash.call_args[0]
-        self.assertEquals('gwt', call_args[0])
-        self.assertTrue(idle.filename in call_args[1])
-
-    def test_generic_flash_wrappers(self):
-        self.s_r._flash = mock.Mock(return_value={'ret': 0})
-
         ret_dict = self.s_r.open_flash()
         self.assertEquals(0, ret_dict['ret'])
-        ret_dict = self.s_r.admin_control_flash()
-        self.assertEquals(0, ret_dict['ret'])
+
+        # Error no firmware
+        self.request.files = {}
+        ret_dict = self.s_r.open_flash()
+        self.assertNotEquals(0, ret_dict['ret'])
 
     def test_reset_wrappers(self):
         self.g_m.node_soft_reset.return_value = 0
 
         ret_dict = self.s_r.open_soft_reset()
-        self.assertEquals(0, ret_dict['ret'])
-        ret_dict = self.s_r.admin_control_soft_reset()
         self.assertEquals(0, ret_dict['ret'])
 
     def test_open_start(self):
@@ -280,6 +257,6 @@ class TestServerRestMain(unittest.TestCase):
     def test_main_function(self, run_mock, call_mock):
         call_mock.return_value = 0
 
-        args = ['server_rest.py', 'localhost', '8080']
-        server_rest._main(args)
+        args = ['rest_server.py', 'localhost', '8080']
+        rest_server._main(args)
         self.assertTrue(run_mock.called)
