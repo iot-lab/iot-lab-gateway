@@ -101,13 +101,14 @@ def str_cluster(cluster, nodes):
 
     return CLUSTER_FMT % (cluster, cluster, nodes_str)
 
+
 def generate_dot(files):
     ret = ''
     ret += HEADER
     for associations in extract_associations(files):
         ret += NODE_LINK % associations
         if associations[1] in ('config', 'common'):
-             ret += ' [style=invis, constraint=false]'
+            ret += ' [style=invis, constraint=false]'
         ret += '\n'
 
     for cluster, nodes in extract_clusters(files).iteritems():
@@ -119,6 +120,8 @@ def generate_dot(files):
 
 
 FILE = 'gateway_code'
+
+
 def main():
     dot_path = '%s.dot' % FILE
     png_path = '%s.png' % FILE
@@ -140,6 +143,7 @@ def main():
         logging.error("%s", err)
     else:
         logging.debug("PNG written to %r", dot_path)
+
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(message)s', level=logging.DEBUG)
