@@ -15,4 +15,8 @@ Current received measures types are deducted from commands sent before.
 Handles packets decoding.
 
 
+Compiling
+=========
+
+Install 'oml' as described in 'OML.md'
 
