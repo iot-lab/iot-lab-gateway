@@ -65,7 +65,7 @@ class OpenOCD(object):
         """ Start a debugger process """
         LOGGER.debug('Debug start')
         self.debug_stop()  # kill previous process
-        self._debug = subprocess.Popen(self.openocd_args(self.DEBUG))
+        self._debug = subprocess.Popen(self._openocd_args(self.DEBUG))
         LOGGER.debug('Debug started')
         return 0
 
@@ -91,9 +91,9 @@ class OpenOCD(object):
             LOGGER.error("OpenOCD is in 'debug' mode, stop it to flash/reset")
             return 1
 
-        return subprocess.call(**self.openocd_args(command_str))
+        return subprocess.call(**self._openocd_args(command_str))
 
-    def openocd_args(self, command_str):
+    def _openocd_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
         cmd = self.OPENOCD.format(cfg=self.cfg_file, cmd=command_str)
