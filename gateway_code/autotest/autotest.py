@@ -157,6 +157,7 @@ class AutoTestManager(object):
         ret_val += self._check(ret, 'open_a8_serial', err_msg)
 
         return ret_val
+    # TODO board_type presence
 
     def _setup_open_node_connection(self, board_type):
         """ Setup the connection with Open Node
@@ -167,6 +168,7 @@ class AutoTestManager(object):
         time.sleep(2)  # wait open node ready
 
         # setup open node
+        # TODO board_type detected
         ret_val += {'m3': self._setup_open_node_m3,
                     'a8': self._setup_open_node_a8}[board_type]()
 
@@ -209,6 +211,7 @@ class AutoTestManager(object):
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
+        # TODO board_type
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         board_type = config.board_type()
 
@@ -227,7 +230,7 @@ class AutoTestManager(object):
             # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
             ret_val += self.test_consumption_batt(board_type)
-
+            # TODO board type
             # switch to DC and configure open node
             self._setup_open_node_connection(board_type)
             self.check_get_time()
@@ -254,7 +257,7 @@ class AutoTestManager(object):
 
             # test consumption measures
             ret_val += self.test_consumption_dc()
-
+            # TODO board_type
             # m3 specific tests
             if 'm3' == board_type:  # pragma: no branch
                 # cannot test this with a8 I think

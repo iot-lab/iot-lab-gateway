@@ -17,6 +17,72 @@ import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
+class NodeFox(object):
+    """ Open node FOX implemention """
+    # TODO : Set the good tty ...
+    TTY = '/dev/ttyON_FOX'
+    # TODO : set the good baudrate
+    BAUDRATE = 500000
+    # TODO : create de cfg
+    OPENOCD_CFG_FILE = static_path('iot-lab-fox.cfg')
+    # TODO : compile with the good target
+    FW_IDLE = static_path('idle.elf')
+    # TODO : same
+    FW_AUTOTEST = static_path('fox_autotest.elf')
+    # TODO : check alim
+    ALIM = '3.3V'
+
+    def __init__(self):
+        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
+        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
+
+    def setup(self, firmware_path):
+        """ Flash open node, create serial redirection """
+        ret_val = 0
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=1)
+        ret_val += self.flash(firmware_path)
+        ret_val += self.serial_redirection.start()
+        return ret_val
+
+    def teardown(self):
+        """ Stop serial redirection and flash idle firmware """
+        ret_val = 0
+        # cleanup debugger before flashing
+        ret_val += self.debug_stop()
+        ret_val += self.serial_redirection.stop()
+        ret_val += self.flash(None)
+        return ret_val
+
+    def flash(self, firmware_path=None):
+        """ Flash the given firmware on M3 node
+        :param firmware_path: Path to the firmware to be flashed on `node`.
+            If None, flash 'idle' firmware.
+        """
+        firmware_path = firmware_path or self.FW_IDLE
+        LOGGER.info('Flash firmware on FOX: %s', firmware_path)
+        return self.openocd.flash(firmware_path)
+
+    def reset(self):
+        """ Reset the M3 node using jtag """
+        LOGGER.info('Reset M3 node')
+        return self.openocd.reset()
+
+    def debug_start(self):
+        """ Start M3 node debugger """
+        LOGGER.info('M3 Node debugger start')
+        return self.openocd.debug_start()
+
+    def debug_stop(self):
+        """ Stop M3 node debugger """
+        LOGGER.info('M3 Node debugger stop')
+        return self.openocd.debug_stop()
+
+    @staticmethod
+    def status():
+        """ Check M3 node status """
+        return ftdi_check('m3', '2232')
+
+
 class NodeM3(object):
     """ Open node M3 implemenation """
     TTY = '/dev/ttyON_M3'

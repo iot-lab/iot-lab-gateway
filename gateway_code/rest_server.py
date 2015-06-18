@@ -25,6 +25,7 @@ class GatewayRest(object):
     """
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
+        # TODO board_type
         self.board_type = config.board_type()
         self._app_routing()
 
@@ -42,7 +43,7 @@ class GatewayRest(object):
         # query_string: channel=int[11:26]
         bottle.route('/autotest', 'PUT')(self.auto_tests)
         bottle.route('/autotest/<mode>', 'PUT')(self.auto_tests)
-
+        # TODO board_type
         # node specific commands
         if self.board_type == 'm3':
             bottle.route('/open/flash', 'POST')(self.open_flash)

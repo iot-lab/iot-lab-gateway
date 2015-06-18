@@ -30,7 +30,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     default_profile = None
 
     _OPEN_NODES = {'m3': gateway_code.open_node.NodeM3,
-                   'a8': gateway_code.open_node.NodeA8}
+                   'a8': gateway_code.open_node.NodeA8,
+                   # TODO not implemented yet
+                   'fox': gateway_code.open_node.NodeM3}
 
     def __init__(self, log_folder='.'):
         self.cls_init()

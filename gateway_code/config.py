@@ -41,6 +41,7 @@ def default_profile():
 
 
 def board_type():
+    # TODO change comment
     """ Return the board type 'm3' or 'a8' """
     return _get_conf('board_type', GATEWAY_CONFIG_PATH, raise_error=True)
 
