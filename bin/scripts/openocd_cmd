@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from gateway_code.utils import openocd
-import sys
+from gateway_code.utils.cli import openocd
 
-sys.exit(openocd._main(sys.argv))
+exit(openocd.main())
+

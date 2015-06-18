@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 
-from gateway_code.utils import serial_redirection
-import sys
+from gateway_code.utils.cli import serial_redirection
 
-sys.exit(serial_redirection._main(sys.argv))
+exit(serial_redirection.main())
