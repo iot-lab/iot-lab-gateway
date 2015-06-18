@@ -62,6 +62,15 @@ def safe_su(command, user='root'):
             user=user, cmd=command))
 
 
+@task()
+def release():
+    """ Release python package """
+    execute(upload)
+    execute(kill)
+    with cd(REMOTE):
+        run('source /etc/profile; python setup.py release')
+
+
 @task(default=True)
 def python_test(*attrs):
     """ Execute python integration tests
