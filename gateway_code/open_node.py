@@ -19,18 +19,17 @@ LOGGER = logging.getLogger('gateway_code')
 
 class NodeFox(object):
     """ Open node FOX implemention """
-    # TODO : Set the good tty ...
     TTY = '/dev/ttyON_FOX'
     # TODO : set the good baudrate
     BAUDRATE = 500000
     # TODO : create de cfg
-    OPENOCD_CFG_FILE = static_path('iot-lab-fox.cfg')
+    OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')
     # TODO : compile with the good target
-    FW_IDLE = static_path('idle.elf')
+    FW_IDLE = static_path('idle_fox.elf')
     # TODO : same
-    FW_AUTOTEST = static_path('fox_autotest.elf')
+    #FW_AUTOTEST = static_path('fox_autotest.elf')
     # TODO : check alim
-    ALIM = '3.3V'
+    ALIM = '5V'
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
@@ -54,7 +53,7 @@ class NodeFox(object):
         return ret_val
 
     def flash(self, firmware_path=None):
-        """ Flash the given firmware on M3 node
+        """ Flash the given firmware on FOX node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware.
         """
@@ -63,24 +62,24 @@ class NodeFox(object):
         return self.openocd.flash(firmware_path)
 
     def reset(self):
-        """ Reset the M3 node using jtag """
-        LOGGER.info('Reset M3 node')
+        """ Reset the FOX node using jtag """
+        LOGGER.info('Reset FOX node')
         return self.openocd.reset()
 
     def debug_start(self):
-        """ Start M3 node debugger """
-        LOGGER.info('M3 Node debugger start')
+        """ Start FOX node debugger """
+        LOGGER.info('FOX Node debugger start')
         return self.openocd.debug_start()
 
     def debug_stop(self):
-        """ Stop M3 node debugger """
-        LOGGER.info('M3 Node debugger stop')
+        """ Stop FOX node debugger """
+        LOGGER.info('FOX Node debugger stop')
         return self.openocd.debug_stop()
 
     @staticmethod
     def status():
         """ Check M3 node status """
-        return ftdi_check('m3', '2232')
+        return ftdi_check('fox', '2232')
 
 
 class NodeM3(object):
