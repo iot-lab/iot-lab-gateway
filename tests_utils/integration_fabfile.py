@@ -69,6 +69,7 @@ def release():
     execute(kill)
     with cd(REMOTE):
         run('source /etc/profile; python setup.py release')
+    run('/etc/init.d/gateway-server-daemon restart', pty=False)
 
 
 @task(default=True)
