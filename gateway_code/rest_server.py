@@ -45,7 +45,7 @@ class GatewayRest(object):
         bottle.route('/autotest/<mode>', 'PUT')(self.auto_tests)
         # TODO board_type
         # node specific commands
-        if self.board_type == 'm3':
+        if self.board_type in ('m3', 'fox'):
             bottle.route('/open/flash', 'POST')(self.open_flash)
             bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
             bottle.route('/open/debug/start', 'PUT')(self.open_debug_start)

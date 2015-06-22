@@ -39,8 +39,8 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         self.assertEquals([], ret_dict['error'])
         self.assertTrue('GWT' in ret_dict['mac'])
         self.assertEquals(0, ret_dict['ret'])
-
         # test that ON still on => should be blinking and answering
+        # TODO add fox
         if gateway_code.config.board_type() != 'm3':
             return
         open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial(

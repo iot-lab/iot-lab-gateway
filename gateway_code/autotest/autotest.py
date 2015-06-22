@@ -100,6 +100,21 @@ class AutoTestManager(object):
 
         return ret_val
 
+    def _setup_open_node_fox(self):
+        """ Setup open node fox connection """
+        ret_val = 0
+        ret = self.g_m.open_node.flash(open_node.NodeFox.FW_AUTOTEST)
+        ret_val += self._check(ret, 'flash_fox', ret)
+        time.sleep(2)
+
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            open_node.NodeFox.TTY, open_node.NodeFox.BAUDRATE)
+
+        ret, err_msg = self.on_serial.start()
+        ret_val += self._check(ret, 'open_fox_serial', err_msg)
+
+        return ret_val
+
     def _setup_open_node_a8(self):
         """ Setup open node a8-m3 connection
 
@@ -170,7 +185,8 @@ class AutoTestManager(object):
         # setup open node
         # TODO board_type detected
         ret_val += {'m3': self._setup_open_node_m3,
-                    'a8': self._setup_open_node_a8}[board_type]()
+                    'a8': self._setup_open_node_a8,
+                    'fox': self._setup_open_node_fox}[board_type]()
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -215,7 +231,7 @@ class AutoTestManager(object):
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         board_type = config.board_type()
 
-        if board_type not in ['m3', 'a8']:
+        if board_type not in ['m3', 'a8', 'fox']:
             self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
             return self.ret_dict
 

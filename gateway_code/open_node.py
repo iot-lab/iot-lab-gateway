@@ -20,15 +20,12 @@ LOGGER = logging.getLogger('gateway_code')
 class NodeFox(object):
     """ Open node FOX implemention """
     TTY = '/dev/ttyON_FOX'
-    # TODO : set the good baudrate
     BAUDRATE = 500000
-    # TODO : create de cfg
+    # TODO : change name
     OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')
-    # TODO : compile with the good target
-    FW_IDLE = static_path('idle_fox.elf')
-    # TODO : same
-    #FW_AUTOTEST = static_path('fox_autotest.elf')
-    # TODO : check alim
+    FW_IDLE = static_path('simple_idle.elf')
+    # TODO : create the firmware for autotest
+    FW_AUTOTEST = static_path('simple_idle.elf')
     ALIM = '5V'
 
     def __init__(self):
@@ -38,7 +35,9 @@ class NodeFox(object):
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
         ret_val = 0
-        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=1)
+        # it appears that /dev/ttyON_FOX need some time to be detected
+        
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
         return ret_val
@@ -78,7 +77,7 @@ class NodeFox(object):
 
     @staticmethod
     def status():
-        """ Check M3 node status """
+        """ Check FOX node status """
         return ftdi_check('fox', '2232')
 
 
@@ -87,7 +86,7 @@ class NodeM3(object):
     TTY = '/dev/ttyON_M3'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-m3.cfg')
-    FW_IDLE = static_path('idle.elf')
+    FW_IDLE = static_path('idle_m3.elf')
     FW_AUTOTEST = static_path('m3_autotest.elf')
     ALIM = '3.3V'
 
