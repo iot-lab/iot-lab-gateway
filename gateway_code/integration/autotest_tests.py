@@ -14,12 +14,16 @@ from gateway_code.integration import test_integration_mock
 import gateway_code.autotest.m3_node_interface
 import gateway_code.autotest.autotest
 from gateway_code import open_node
-
+import gateway_code.config
 
 import os
 if os.uname()[4] != 'armv7l':
     import unittest
     raise unittest.SkipTest("Skip board embedded tests")
+if gateway_code.config.board_type() == 'fox':
+    import unittest
+    raise unittest.SkipTest("Skip fox autotest")
+    # TODO : Manage fox autotest
 
 
 @attr('autotest', 'integration')

@@ -39,7 +39,6 @@ class TestProtocol(unittest.TestCase):
     @mock.patch('gateway_code.autotest.autotest.LOGGER.error')
     def test_run_test(self, mock_error):
         self.g_v.on_serial = mock.Mock()
-
         send_ret = []
         self.g_v.on_serial.send_command.side_effect = \
             lambda x: send_ret.pop(0)
