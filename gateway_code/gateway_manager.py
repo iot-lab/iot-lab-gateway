@@ -130,7 +130,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
-        ret_val += self.control_node.start_experiment(profile)
+        # TODO : disable id for fox
+        ret_val += self.control_node.start_experiment(profile, self.board_type)
 
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
