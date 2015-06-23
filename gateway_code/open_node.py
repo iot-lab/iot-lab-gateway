@@ -46,6 +46,7 @@ class NodeFox(object):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
         # cleanup debugger before flashing
+        common.wait_tty(self.TTY, LOGGER, timeout=3)
         ret_val += self.debug_stop()
         ret_val += self.serial_redirection.stop()
         ret_val += self.flash(None)
