@@ -22,6 +22,7 @@ from gateway_code.common import wait_cond
 from gateway_code.autotest.autotest import extract_measures
 
 from gateway_code.open_node import NodeM3
+from gateway_code.open_node import NodeFox
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -115,10 +116,15 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
         """ Test simple experiment"""
-        if 'm3' == gateway_code.config.board_type():
+        board_type = gateway_code.config.board_type()
+        if 'm3' == board_type:
             self._run_simple_experiment_m3(m_error)
-        elif 'a8' == gateway_code.config.board_type():
+        elif 'a8' == board_type:
             self._run_simple_experiment_a8(m_error)
+        elif 'fox' == board_type:
+            self._run_simple_experiment_fox(m_error)
+        else:
+            self.fail('Experiment Running not implemented for %r' % board_type)
 
     def _run_simple_experiment_a8(self, moc):  # pylint:disable=unused-argument
         """ Run an experiment for a8 nodes """
@@ -129,6 +135,49 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         time.sleep(60)  # maybe do something here later
 
         self.assertEquals({'ret': 0}, self.app.exp_stop())
+
+    def _run_simple_experiment_fox(self, m_error):
+        """ Run a simple experiment on fox node without profile
+        Try the different node features """
+
+        msg = 'HELLO WORLD'
+
+        # start exp with idle firmware
+        self.request.files = {'firmware': FileUpload(NodeFox.FW_IDLE)}
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        time.sleep(1)
+
+        # idle firmware, there should be no reply
+        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+
+        # flash echo firmware
+        # TODO : create autotest firmware
+        self.request.files = {'firmware': FileUpload(NodeFox.FW_AUTOTEST)}
+        self.assertEquals({'ret': 0}, self.app.open_flash())
+        time.sleep(1)
+
+        # Should echo <message>, do it multiple times for reliability
+        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+        time.sleep(5)
+        # open node reset and start stop
+        self.assertEquals({'ret': 0}, self.app.open_soft_reset())
+        
+        self.assertEquals({'ret': 0}, self.app.open_start())
+
+        self.assertEquals({'ret': 0}, self.app.open_stop())
+
+        # stop exp
+        self.assertEquals({'ret': 0}, self.app.exp_stop())
+
+        # Got no error during tests (use call_args_list for printing on error)
+        self.assertEquals([], m_error.call_args_list)
+
+        # node is correctly shutdown
+        time.sleep(2)  # wait control node is really reset
+        # reset firmware should fail and logger error will be called
+        self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
+        self.assertTrue(m_error.called)
+
 
     def _run_simple_experiment_m3(self, m_error):
         """ Run a simple experiment on m3 node without profile
