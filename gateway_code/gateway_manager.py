@@ -4,6 +4,7 @@
 """ Gateway manager """
 
 import os
+import time
 from threading import RLock, Timer
 
 import gateway_code.config as config
@@ -177,6 +178,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # Cleanup Control node Monitoring and experiment #
         ret_val += self.control_node.stop_experiment()
+        # This time can be increased if others node need to wait a longer time before being visible
+        time.sleep(5)
         # Cleanup open node
         ret_val += self.open_node.teardown()
         # Stop control node interaction
