@@ -21,7 +21,6 @@ class NodeFox(object):
     """ Open node FOX implemention """
     TTY = '/dev/ttyON_FOX'
     BAUDRATE = 500000
-    # TODO : change name
     OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')
     FW_IDLE = static_path('simple_idle.elf')
     # TODO : create the firmware for autotest
