@@ -47,7 +47,7 @@ class NodeFox(object):
         # cleanup debugger before flashing
         ret_val += self.debug_stop()
         ret_val += self.serial_redirection.stop()
-        common.wait_tty(self.TTY, LOGGER, timeout=3)
+        common.wait_tty(self.TTY, LOGGER, timeout=5)
         ret_val += self.flash(None)
         return ret_val
 
