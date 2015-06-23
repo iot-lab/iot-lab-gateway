@@ -4,7 +4,6 @@
 """ Gateway manager """
 
 import os
-import time
 from threading import RLock, Timer
 
 import gateway_code.config as config

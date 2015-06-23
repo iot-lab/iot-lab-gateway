@@ -161,7 +161,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         time.sleep(5)
         # open node reset and start stop
         self.assertEquals({'ret': 0}, self.app.open_soft_reset())
-        
+
         self.assertEquals({'ret': 0}, self.app.open_start())
 
         self.assertEquals({'ret': 0}, self.app.open_stop())
@@ -177,7 +177,6 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # reset firmware should fail and logger error will be called
         self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)
-
 
     def _run_simple_experiment_m3(self, m_error):
         """ Run a simple experiment on m3 node without profile

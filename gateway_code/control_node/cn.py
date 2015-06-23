@@ -51,8 +51,8 @@ class ControlNode(object):
         ret_val += self.protocol.green_led_blink()
         ret_val += self.protocol.set_time()
 
-        #can't be done if we can't use i2C connection
-        if(board_type in ('m3', 'a8')):
+        # can't be done if we can't use i2C connection
+        if board_type in ('m3', 'a8'):
             ret_val += self.protocol.set_node_id()
         ret_val += self.configure_profile(profile)
         return ret_val
