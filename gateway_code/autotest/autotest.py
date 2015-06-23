@@ -263,9 +263,10 @@ class AutoTestManager(object):
             ret_val += self.test_magneto()
             ret_val += self.test_accelero()
 
-            # test m3-on communication
-            ret_val += self.test_gpio()
-            ret_val += self.test_i2c()
+            if board_type != 'fox'
+                # test m3-on communication
+                ret_val += self.test_gpio()
+                ret_val += self.test_i2c()
 
             # radio tests
             ret_val += self.test_radio_ping_pong(channel)
