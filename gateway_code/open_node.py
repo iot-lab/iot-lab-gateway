@@ -25,7 +25,7 @@ class NodeFox(object):
     OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')
     FW_IDLE = static_path('simple_idle.elf')
     # TODO : create the firmware for autotest
-    FW_AUTOTEST = static_path('simple_idle.elf')
+    FW_AUTOTEST = static_path('fox_autotest.elf')
     ALIM = '5V'
 
     def __init__(self):
@@ -36,7 +36,7 @@ class NodeFox(object):
         """ Flash open node, create serial redirection """
         ret_val = 0
         # it appears that /dev/ttyON_FOX need some time to be detected
-        
+
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
