@@ -263,7 +263,7 @@ class AutoTestManager(object):
             ret_val += self.test_magneto()
             ret_val += self.test_accelero()
 
-            if board_type != 'fox'
+            if board_type != 'fox':
                 # test m3-on communication
                 ret_val += self.test_gpio()
                 ret_val += self.test_i2c()
