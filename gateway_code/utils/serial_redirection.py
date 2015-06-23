@@ -28,7 +28,7 @@ class SerialRedirection(threading.Thread):
 
     def __init__(self, tty, baudrate):  # pylint:disable=super-init-not-called
         self._thread_init()  # threading.Thread init and set daemon
-
+        self.tty = tty
         self._started = threading.Event()
         self.socat_cmd = shlex.split(self.SOCAT.format(tty=tty, baud=baudrate))
         self.redirector = None
@@ -99,7 +99,10 @@ class SerialRedirection(threading.Thread):
         #   a negative value on fatal error.
 
         # don't print error when 'terminate' causes the error
+
         if retcode and self._run:
             LOGGER.error('SerialRedirection exit: %d', retcode)
+            if not os.path.exists(self.tty):
+                LOGGER.warning('%s not found' % self.tty)
             time.sleep(0.5)  # prevent quick loop
         return retcode
