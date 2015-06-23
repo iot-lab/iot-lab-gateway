@@ -20,11 +20,6 @@ import os
 if os.uname()[4] != 'armv7l':
     import unittest
     raise unittest.SkipTest("Skip board embedded tests")
-if gateway_code.config.board_type() == 'fox':
-    import unittest
-    raise unittest.SkipTest("Skip fox autotest")
-    # TODO : Manage fox autotest
-
 
 @attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
