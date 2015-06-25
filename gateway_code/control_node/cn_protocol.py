@@ -56,8 +56,10 @@ class Protocol(object):
         num = str(int(num_str))
         return archi, num
 
-    def set_node_id(self):
+    def set_node_id(self, board_type):
         """ Set node id on control node"""
+        if board_type == 'fox':
+            return 0
         # set_node_id
         node_id = self._extract_node_id(os.uname()[1])
         cmd = ['set_node_id'] + list(node_id)
