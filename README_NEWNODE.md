@@ -12,3 +12,8 @@ Your system
 # Allow testing on your node
 1/. Write some integration tests
 2/. Write an autotest firmware for the self-checking of the good working of the node's embedded compenents
+
+# Case of Arduino
+
+Warning : some arduino can't be reset by serial if your firmware don't support it (Mega and leonardo have a reset which can be done with any software)
+stop /start serial with a specific beforme programming

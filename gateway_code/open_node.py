@@ -57,9 +57,12 @@ class NodeFox(object):
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware.
         """
+        ret_val = 0
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on FOX: %s', firmware_path)
-        return self.openocd.flash(firmware_path)
+        ret_val += self.openocd.flash(firmware_path)
+        return ret_val
 
     def reset(self):
         """ Reset the FOX node using jtag """
