@@ -44,10 +44,10 @@ class NodeFox(object):
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=5)
         # cleanup debugger before flashing
         ret_val += self.debug_stop()
         ret_val += self.serial_redirection.stop()
-        common.wait_tty(self.TTY, LOGGER, timeout=5)
         ret_val += self.flash(None)
         return ret_val
 
@@ -105,6 +105,7 @@ class NodeM3(object):
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=1)
         # cleanup debugger before flashing
         ret_val += self.debug_stop()
         ret_val += self.serial_redirection.stop()
