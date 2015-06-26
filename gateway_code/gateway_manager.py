@@ -277,9 +277,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """
         assert node in ['control', 'open'], "Invalid node name"
         LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
-
+        self.open_power_start()
         ret = self._nodes[node].flash(firmware_path)
-
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret
