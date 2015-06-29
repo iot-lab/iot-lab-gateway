@@ -101,6 +101,7 @@ class NodeM3(object):
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
         ret_val = 0
+
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=1)
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()

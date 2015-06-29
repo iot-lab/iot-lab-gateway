@@ -82,11 +82,9 @@ class GatewayRest(object):
 
         ret = self.gateway_manager.exp_start(
             user, exp_id, firmware, profile, timeout)
-
         # cleanup of temp file
         if firmware_file is not None:
             firmware_file.close()
-
         if ret:  # pragma: no cover
             LOGGER.error('Start experiment with errors: ret: %d', ret)
         return {'ret': ret}
@@ -152,9 +150,7 @@ class GatewayRest(object):
         firmware_file = self._extract_firmware()
         if firmware_file is None:
             return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
-
         ret = self.gateway_manager.node_flash('open', firmware_file.name)
-
         firmware_file.close()
         return {'ret': ret}
 
