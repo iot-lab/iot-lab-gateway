@@ -105,14 +105,14 @@ class TestProtocol(unittest.TestCase):
         uname_m.return_value = (None, 'm3-1')
 
         self.sender.return_value = ['set_node_id', 'ACK']
-        ret = self.protocol.set_node_id()
+        ret = self.protocol.set_node_id('m3')
         self.sender.assert_called_with(['set_node_id', 'm3', '1'])
         self.assertEquals(0, ret)
 
         uname_m.return_value = (None, 'a8-256')
 
         self.sender.return_value = ['set_node_id', 'ACK']
-        ret = self.protocol.set_node_id()
+        ret = self.protocol.set_node_id('a8')
         self.sender.assert_called_with(['set_node_id', 'a8', '256'])
         self.assertEquals(0, ret)
 

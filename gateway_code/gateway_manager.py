@@ -124,14 +124,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_desc['exp_files']['log'])
         LOGGER.addHandler(self.user_log_handler)
         LOGGER.info('Start experiment: %s-%i', user, exp_id)
-
         # Init ControlNode
         ret_val += self.control_node.start(self.exp_desc)
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
         ret_val += self.control_node.start_experiment(profile, self.board_type)
-
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
             self.timeout_timer = Timer(timeout, self._timeout_exp_stop,
@@ -260,9 +258,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """
         assert node in ['control', 'open'], "Invalid node type"
         LOGGER.info('Node %s reset', node)
-
         ret = self._nodes[node].reset()
-
         if ret != 0:  # pragma: no cover
             LOGGER.error('Reset failed on %s node: %d', node, ret)
         return ret

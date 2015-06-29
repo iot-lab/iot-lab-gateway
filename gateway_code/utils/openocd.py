@@ -9,15 +9,9 @@ import subprocess
 import atexit
 
 import logging
+
+from gateway_code import common
 LOGGER = logging.getLogger('gateway_code')
-
-
-# Better crash in Python than in OpenOCD, so check files access here
-def _abspath(path):
-    """ Return abspath of given `path` and check the file can be opened """
-    abspath = os.path.abspath(path)
-    open(abspath, 'rb').close()  # can be open by this user
-    return abspath
 
 
 class OpenOCD(object):
@@ -42,7 +36,7 @@ class OpenOCD(object):
     DEBUG = ' -c "reset halt"'
 
     def __init__(self, config_file, verb=False):
-        self.cfg_file = _abspath(config_file)
+        self.cfg_file = common.abspath(config_file)
         self.out = None if verb else self.DEVNULL
 
         self._debug = None
@@ -55,7 +49,7 @@ class OpenOCD(object):
     def flash(self, elf_file):
         """ Flash firmware """
         try:
-            elf_path = _abspath(elf_file)
+            elf_path = common.abspath(elf_file)
             return self._call_cmd(self.FLASH.format(elf_path))
         except IOError as err:
             LOGGER.error('%s', err)

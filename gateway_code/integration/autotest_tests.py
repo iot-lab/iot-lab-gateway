@@ -21,8 +21,10 @@ if os.uname()[4] != 'armv7l':
     import unittest
     raise unittest.SkipTest("Skip board embedded tests")
 
+
 @attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
+
     """ Try running autotests on node """
 
     def test_complete_auto_tests(self):
