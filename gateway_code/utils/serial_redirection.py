@@ -103,6 +103,6 @@ class SerialRedirection(threading.Thread):
         if retcode and self._run:
             LOGGER.error('SerialRedirection exit: %d', retcode)
             if not os.path.exists(self.tty):
-                LOGGER.warning('%s not found' % self.tty)
+                LOGGER.warning('%s not found', self.tty)
             time.sleep(0.5)  # prevent quick loop
         return retcode
