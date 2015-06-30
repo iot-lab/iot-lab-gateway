@@ -32,6 +32,7 @@ USER = 'harter'
 
 # Bottle FileUpload class stub
 class FileUpload(object):  # pylint: disable=too-few-public-methods
+
     """ Bottle FileUpload class stub """
     files = {}
 
@@ -58,6 +59,7 @@ if os.uname()[4] != 'armv7l':
 
 
 class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
+
     """ Create environment for running experiments """
 
     def setUp(self):
@@ -112,6 +114,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
 
 class TestComplexExperimentRunning(ExperimentRunningMock):
+
     """ Run complete experiment test """
 
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
@@ -331,6 +334,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
 
 class TestExperimentTimeout(ExperimentRunningMock):
+
     """ Test the 'timeout' feature of experiments """
 
     def setUp(self):
@@ -384,6 +388,7 @@ class TestExperimentTimeout(ExperimentRunningMock):
 
 
 class TestIntegrationOther(ExperimentRunningMock):
+
     """ Group other tests cases"""
 
     def test_status(self):
@@ -426,6 +431,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 
 
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):
+
     """ Invalid calls """
 
     def tests_invalid_profile_at_start(self):

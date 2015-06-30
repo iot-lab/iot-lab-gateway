@@ -170,6 +170,7 @@ class NodeFox(object):
 
 
 class NodeM3(object):
+
     """ Open node M3 implemenation """
     TTY = '/dev/ttyON_M3'
     BAUDRATE = 500000
@@ -232,6 +233,7 @@ class NodeM3(object):
 
 
 class NodeA8(object):
+
     """ Open node A8 implementation """
     TTY = '/dev/ttyON_A8'
     BAUDRATE = 115200
@@ -250,7 +252,7 @@ class NodeA8(object):
         ret = common.wait_tty(self.TTY, LOGGER, timeout=20)
         if ret == 0:
             # Timeout 15 minutes for boot (we saw 10minutes boot already)
-            self._debug_boot_start(15*60)
+            self._debug_boot_start(15 * 60)
         return ret
 
     def teardown(self):
