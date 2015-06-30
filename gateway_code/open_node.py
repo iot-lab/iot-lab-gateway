@@ -25,10 +25,8 @@ class NodeLeonardo(object):
     TTY = '/dev/ttyON_LEONARDO'
     # The Leonardo node need a special open/close and then appear on a new TTY
     TTY_PROG = '/dev/ttyON_LEONARDO_PROG'
-    # TODO : find the good baudrate
     BAUDRATE = 57600
     AVRDUDE_CFG_FILE = static_path('avrdude.conf')
-    # TODO : find the good idle program
     FW_IDLE = static_path('Idle.cpp.hex')
     # TODO : create the firmware for autotest
     FW_AUTOTEST = static_path('Idle.cpp.hex')
@@ -36,7 +34,6 @@ class NodeLeonardo(object):
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        # TODO : change
         self.avrdude = AvrDude(self.AVRDUDE_CFG_FILE, self.TTY_PROG)
 
     def setup(self, firmware_path):
