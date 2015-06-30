@@ -151,7 +151,6 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
 
         # flash echo firmware
-        # TODO : create autotest firmware
         self.request.files = {'firmware': FileUpload(NodeFox.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)

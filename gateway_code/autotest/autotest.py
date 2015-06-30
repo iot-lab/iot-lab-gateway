@@ -172,7 +172,6 @@ class AutoTestManager(object):
         ret_val += self._check(ret, 'open_a8_serial', err_msg)
 
         return ret_val
-    # TODO board_type presence
 
     def _setup_open_node_connection(self, board_type):
         """ Setup the connection with Open Node

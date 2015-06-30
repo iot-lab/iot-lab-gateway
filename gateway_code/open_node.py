@@ -23,7 +23,6 @@ class NodeFox(object):
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')
     FW_IDLE = static_path('simple_idle.elf')
-    # TODO : create the firmware for autotest
     FW_AUTOTEST = static_path('fox_autotest.elf')
     ALIM = '5V'
 
@@ -44,7 +43,7 @@ class NodeFox(object):
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
-        # TODO : check the timeout
+        # TODO: check the timeout
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=15)
         # cleanup debugger before flashing
         ret_val += self.debug_stop()
@@ -183,6 +182,10 @@ class NodeA8(object):
     def _debug_thread(self, timeout):
         """ Monitor A8 tty to check if node booted """
         t_start = time.time()
+        # TODO : error case when self.TTY is not detected
+        #    OSError: [Errno 2] No such file or directory: '/dev/ttyON_A8'
+        # Happend in tests that it disappeared between the first 'wait_tty' and
+        # in this thread
         self._a8_expect = SerialExpect(self.TTY, self.BAUDRATE, LOGGER)
         match = self._a8_expect.expect(' login: ', timeout=timeout)
         delta_t = time.time() - t_start

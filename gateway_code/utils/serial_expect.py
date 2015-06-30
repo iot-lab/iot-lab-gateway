@@ -17,7 +17,6 @@ class SerialExpect(object):
     """ Simple Expect implementation for serial """
 
     def __init__(self, tty, baudrate, logger=None):
-        # TODO : error case when not detected
         self.serial_fd = serial.Serial(tty, baudrate, timeout=0.1)
         self.serial_fd.flushInput()
         self.logger = logger
