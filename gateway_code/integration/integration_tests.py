@@ -23,6 +23,7 @@ from gateway_code.autotest.autotest import extract_measures
 
 from gateway_code.open_node import NodeM3
 from gateway_code.open_node import NodeFox
+from gateway_code.open_node import NodeLeonardo
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -123,6 +124,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             self._run_simple_experiment_a8(m_error)
         elif 'fox' == board_type:
             self._run_simple_experiment_fox(m_error)
+        elif 'leonardo' == board_type:
+            self._run_simple_experiment_leonardo
         else:
             self.fail('Experiment Running not implemented for %r' % board_type)
 
@@ -171,6 +174,47 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # Got no error during tests (use call_args_list for printing on error)
         self.assertEquals([], m_error.call_args_list)
 
+        # reset firmware should fail and logger error will be called
+        self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
+        self.assertTrue(m_error.called)
+
+    def _run_simple_experiment_leonardo(self, m_error):
+        """ Run a simple experiment on leonardo node without profile
+        Try the different node features """
+
+        msg = 'HELLO WORLD'
+
+        # start exp with idle firmware
+        self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_IDLE)}
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        time.sleep(1)
+
+        # idle firmware, there should be no reply
+        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+
+        # flash echo firmware
+        self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_AUTOTEST)}
+        self.assertEquals({'ret': 0}, self.app.open_flash())
+        time.sleep(1)
+
+        # self.app.set_time()  # test set_time during experiment
+
+        # Should echo <message>, do it multiple times for reliability
+        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+
+        # open node reset and start stop
+        self.assertEquals({'ret': 0}, self.app.open_soft_reset())
+        self.assertEquals({'ret': 0}, self.app.open_start())
+        self.assertEquals({'ret': 0}, self.app.open_stop())
+
+        # stop exp
+        self.assertEquals({'ret': 0}, self.app.exp_stop())
+
+        # Got no error during tests (use call_args_list for printing on error)
+        self.assertEquals([], m_error.call_args_list)
+
+        # node is correctly shutdown
+        time.sleep(2)  # wait control node is really reset
         # reset firmware should fail and logger error will be called
         self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)

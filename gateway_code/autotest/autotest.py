@@ -119,6 +119,11 @@ class AutoTestManager(object):
 
         return ret_val
 
+    def _setup_open_node_leonardo(self):
+        # TODO : DO !
+        ret_val = 0
+        return ret_val
+
     def _setup_open_node_a8(self):
         """ Setup open node a8-m3 connection
 
@@ -188,7 +193,8 @@ class AutoTestManager(object):
         # setup open node
         ret_val += {'m3': self._setup_open_node_m3,
                     'a8': self._setup_open_node_a8,
-                    'fox': self._setup_open_node_fox}[board_type]()
+                    'fox': self._setup_open_node_fox,
+                    'leonardo': self._setup_open_node_leonardo}[board_type]()
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -232,7 +238,7 @@ class AutoTestManager(object):
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         board_type = config.board_type()
 
-        if board_type not in ['m3', 'a8', 'fox']:
+        if board_type not in ['m3', 'a8', 'fox', 'leonardo']:
             self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
             return self.ret_dict
 
