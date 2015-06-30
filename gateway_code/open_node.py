@@ -11,15 +11,91 @@ from gateway_code import common
 
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
+from gateway_code.utils.avrdude import AvrDude
 from gateway_code.utils.serial_expect import SerialExpect
 from gateway_code.utils.serial_redirection import SerialRedirection
-
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
+class NodeLeonardo(object):
+
+    """ Open node Leonardo implemention """
+    TTY = '/dev/ttyON_LEONARDO'
+    # The Leonardo node need a special open/close and then appear on a new TTY
+    TTY_PROG = '/dev/ttyON_LEONARDO_PROG'
+    # TODO : find the good baudrate
+    BAUDRATE = 57600
+    AVRDUDE_CFG_FILE = static_path('avrdude.conf')
+    # TODO : find the good idle program
+    FW_IDLE = static_path('Idle.cpp.hex')
+    # TODO : create the firmware for autotest
+    FW_AUTOTEST = static_path('Idle.cpp.hex')
+    ALIM = '5V'
+
+    def __init__(self):
+        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
+        # TODO : change
+        self.avrdude = AvrDude(self.AVRDUDE_CFG_FILE, self.TTY_PROG)
+
+    def setup(self, firmware_path):
+        """ Flash open node, create serial redirection """
+        ret_val = 0
+        # it appears that /dev/ttyON_FOX need some time to be detected
+
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
+        ret_val += self.flash(firmware_path)
+        ret_val += self.serial_redirection.start()
+        return ret_val
+
+    def teardown(self):
+        """ Stop serial redirection and flash idle firmware """
+        ret_val = 0
+        ret_val += self.serial_redirection.stop()
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
+        ret_val += self.flash(None)
+        return ret_val
+
+    def flash(self, firmware_path=None):
+        """ Flash the given firmware on Leonardo node
+        :param firmware_path: Path to the firmware to be flashed on `node`.
+            If None, flash 'idle' firmware """
+
+        if AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG):
+            LOGGER.error("FLASH : Leonardo's jtag port not available")
+            return 1
+
+        firmware_path = firmware_path or self.FW_IDLE
+        LOGGER.info('Flash firmware on Leonardo: %s', firmware_path)
+        return self.avrdude.flash(firmware_path)
+
+    def reset(self):
+        """ Reset the Leonardo node using jtag """
+        LOGGER.info('Reset Leonardo node')
+        return AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG)
+
+    def debug_start(self):
+        """ Start Leonardo node debugger """
+        LOGGER.info('Leonardo Node debugger start')
+        # TODO : DO !
+        return 1
+
+    def debug_stop(self):
+        """ Stop Leonardo node debugger """
+        LOGGER.info('Leonardo Node debugger stop')
+        # TODO : DO !
+        return 1
+
+    @staticmethod
+    def status():
+        """ Check Leonardo node status """
+        # TODO : DO !
+        return 0
+
+
 class NodeFox(object):
+
     """ Open node FOX implemention """
     # Contrary to m3 node, fox node need some time to be visible.
     # ALso it may fail for user flash/reset after a node start_dc but don't
