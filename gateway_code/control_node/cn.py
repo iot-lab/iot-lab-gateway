@@ -33,7 +33,6 @@ class ControlNode(object):
         """ Start ControlNode serial interface """
         ret_val = 0
         ret_val += self.reset()
-        time.sleep(1)  # wait CN started
         ret_val += self.cn_serial.start(self.TTY, exp_desc=exp_desc)
         ret_val += self.open_start('dc')
         return ret_val
@@ -100,12 +99,25 @@ class ControlNode(object):
         """
         firmware_path = firmware_path or self.FW_CONTROL_NODE
         LOGGER.info('Flash firmware on Control Node %s', firmware_path)
-        return self.openocd.flash(firmware_path)
+        ret = self.openocd.flash(firmware_path)
+        self._wait_control_node_ready()
+        return ret
 
     def reset(self):
         """ Reset the Control Node using jtag """
         LOGGER.info('Reset Control Node')
-        return self.openocd.reset()
+        ret = self.openocd.reset()
+        self._wait_control_node_ready()
+        return ret
+
+    @staticmethod
+    def _wait_control_node_ready():
+        """ Wait that the ControlNode firmware starts.
+
+        It waits one second when starting, and may also trigger udev when
+        restarting a node. This take a bit more than 1.1 second.
+        So wait 2 seconds to be safe.  """
+        time.sleep(2)
 
     @staticmethod
     def status():
