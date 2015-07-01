@@ -39,6 +39,7 @@ class NodeFox(object):
         ret_val = 0
         # it appears that /dev/ttyON_FOX need some time to be detected
 
+        # Found 1.333 seconds for timeout, so let some margin
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
@@ -47,8 +48,12 @@ class NodeFox(object):
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
-        # TODO: check the timeout
-        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=15)
+        # ON may have been stopped at the end of the experiment.
+        # And then restarted again in cn teardown.
+        # This leads to problem where the TTY disappears and reappears during
+        # the first 2 seconds. So let some time if it wants to disappear first.
+        time.sleep(2)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
         # cleanup debugger before flashing
         ret_val += self.debug_stop()
         ret_val += self.serial_redirection.stop()
@@ -82,7 +87,10 @@ class NodeFox(object):
     @staticmethod
     def status():
         """ Check FOX node status """
-        return ftdi_check('fox', '2232')
+        # Status is called when open node is not powered
+        # So can't check for FTDI
+        # ftdi_check('fox', '2232')
+        return 0
 
 
 class NodeM3(object):
