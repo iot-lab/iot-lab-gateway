@@ -19,9 +19,13 @@ LOGGER = logging.getLogger('gateway_code')
 
 class NodeFox(object):
     """ Open node FOX implemention """
+    # TODO Add note in docstring about 'tty' management and 'wait_tty' on
+    # start/stop experiment
+    # ALso it may fail for user flash/reset after a node start_dc but don't
+    # care!
     TTY = '/dev/ttyON_FOX'
     BAUDRATE = 500000
-    OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')
+    OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')  # TODO
     FW_IDLE = static_path('simple_idle.elf')
     FW_AUTOTEST = static_path('fox_autotest.elf')
     ALIM = '5V'
@@ -56,12 +60,9 @@ class NodeFox(object):
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware.
         """
-        ret_val = 0
-        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on FOX: %s', firmware_path)
-        ret_val += self.openocd.flash(firmware_path)
-        return ret_val
+        return self.openocd.flash(firmware_path)
 
     def reset(self):
         """ Reset the FOX node using jtag """

@@ -150,7 +150,9 @@ class GatewayRest(object):
         firmware_file = self._extract_firmware()
         if firmware_file is None:
             return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
+
         ret = self.gateway_manager.node_flash('open', firmware_file.name)
+
         firmware_file.close()
         return {'ret': ret}
 
