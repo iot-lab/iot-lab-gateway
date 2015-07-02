@@ -14,7 +14,7 @@ from gateway_code.integration import test_integration_mock
 import gateway_code.autotest.m3_node_interface
 import gateway_code.autotest.autotest
 from gateway_code import open_node
-
+import gateway_code.config
 
 import os
 if os.uname()[4] != 'armv7l':
@@ -24,6 +24,7 @@ if os.uname()[4] != 'armv7l':
 
 @attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
+
     """ Try running autotests on node """
 
     def test_complete_auto_tests(self):

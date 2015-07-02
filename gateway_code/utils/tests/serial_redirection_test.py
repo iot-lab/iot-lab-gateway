@@ -129,3 +129,13 @@ class TestSerialRedirection(unittest.TestCase):
 
         ret = self.redirect._call_socat(self.redirect.DEVNULL)
         self.assertEquals(-1, ret)
+
+    @mock.patch('subprocess.Popen')
+    def test__call_socat_error_tty_not_found(self, m_popen):
+        """ Test the _call_socat error case when path can't be found"""
+        m_popen.return_value.wait.return_value = -1
+        self.redirect = SerialRedirection('/dev/NotATty', self.baud)
+        self.redirect._run = True
+
+        ret = self.redirect._call_socat(self.redirect.DEVNULL)
+        self.assertEquals(-1, ret)

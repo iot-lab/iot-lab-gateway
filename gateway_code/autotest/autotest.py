@@ -27,7 +27,9 @@ MAC_RE = re.compile(r'([0-9a-f]{2}:){5}[0-9a-f]{2}')
 
 
 class FatalError(Exception):
+
     """ FatalError during tests """
+
     def __init__(self, value):
         super(FatalError, self).__init__()
         self.value = value
@@ -42,7 +44,9 @@ def tst_ok(bool_value):
 
 
 class AutoTestManager(object):
+
     """ Gateway and open node auto tests """
+
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
 
@@ -97,6 +101,21 @@ class AutoTestManager(object):
             open_node.NodeM3.TTY, open_node.NodeM3.BAUDRATE)
         ret, err_msg = self.on_serial.start()
         ret_val += self._check(ret, 'open_m3_serial', err_msg)
+
+        return ret_val
+
+    def _setup_open_node_fox(self):
+        """ Setup open node fox connection """
+        ret_val = 0
+        ret = self.g_m.open_node.flash(open_node.NodeFox.FW_AUTOTEST)
+        ret_val += self._check(ret, 'flash_fox', ret)
+        time.sleep(2)
+
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            open_node.NodeFox.TTY, open_node.NodeFox.BAUDRATE)
+
+        ret, err_msg = self.on_serial.start()
+        ret_val += self._check(ret, 'open_fox_serial', err_msg)
 
         return ret_val
 
@@ -168,7 +187,8 @@ class AutoTestManager(object):
 
         # setup open node
         ret_val += {'m3': self._setup_open_node_m3,
-                    'a8': self._setup_open_node_a8}[board_type]()
+                    'a8': self._setup_open_node_a8,
+                    'fox': self._setup_open_node_fox}[board_type]()
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -212,7 +232,7 @@ class AutoTestManager(object):
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         board_type = config.board_type()
 
-        if board_type not in ['m3', 'a8']:
+        if board_type not in ['m3', 'a8', 'fox']:
             self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
             return self.ret_dict
 
@@ -227,7 +247,6 @@ class AutoTestManager(object):
             # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
             ret_val += self.test_consumption_batt(board_type)
-
             # switch to DC and configure open node
             self._setup_open_node_connection(board_type)
             self.check_get_time()
@@ -244,9 +263,10 @@ class AutoTestManager(object):
             ret_val += self.test_magneto()
             ret_val += self.test_accelero()
 
-            # test m3-on communication
-            ret_val += self.test_gpio()
-            ret_val += self.test_i2c()
+            if board_type != 'fox':
+                # test m3-on communication
+                ret_val += self.test_gpio()
+                ret_val += self.test_i2c()
 
             # radio tests
             ret_val += self.test_radio_ping_pong(channel)
@@ -254,7 +274,6 @@ class AutoTestManager(object):
 
             # test consumption measures
             ret_val += self.test_consumption_dc()
-
             # m3 specific tests
             if 'm3' == board_type:  # pragma: no branch
                 # cannot test this with a8 I think
@@ -352,7 +371,7 @@ class AutoTestManager(object):
         if test_ok:
             uid_str = values[0]
             # UID: split every 4 char
-            uid_split = [''.join(x) for x in zip(*[iter(uid_str)]*4)]
+            uid_split = [''.join(x) for x in zip(*[iter(uid_str)] * 4)]
             uid = ':'.join(uid_split)
             self.ret_dict['open_node_m3_uid'] = uid
         else:  # pragma: no cover

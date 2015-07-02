@@ -65,3 +65,10 @@ def syncronous(tlockname):
                 tlock.release()
         return _synchronizer
     return _synched
+
+
+def abspath(path):
+    """ Return abspath of given `path` and check the file can be opened """
+    abs_path = os.path.abspath(path)
+    open(abs_path, 'rb').close()  # can be open by this user
+    return abs_path

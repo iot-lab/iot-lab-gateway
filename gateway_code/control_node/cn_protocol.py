@@ -56,9 +56,14 @@ class Protocol(object):
         num = str(int(num_str))
         return archi, num
 
-    def set_node_id(self):
+    def set_node_id(self, board_type):
         """ Set node id on control node"""
         # set_node_id
+        if board_type == 'fox':
+            return 0
+        # TODO don't read hostname directly here.
+        # Should get board_type and hostname at the same time in config
+        # (dependency on 'gateway_code.config')
         node_id = self._extract_node_id(os.uname()[1])
         cmd = ['set_node_id'] + list(node_id)
         return self.send_cmd(cmd)

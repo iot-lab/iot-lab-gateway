@@ -42,9 +42,8 @@ class GatewayRest(object):
         # query_string: channel=int[11:26]
         bottle.route('/autotest', 'PUT')(self.auto_tests)
         bottle.route('/autotest/<mode>', 'PUT')(self.auto_tests)
-
         # node specific commands
-        if self.board_type == 'm3':
+        if self.board_type in ('m3', 'fox'):
             bottle.route('/open/flash', 'POST')(self.open_flash)
             bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
             bottle.route('/open/debug/start', 'PUT')(self.open_debug_start)
@@ -81,11 +80,9 @@ class GatewayRest(object):
 
         ret = self.gateway_manager.exp_start(
             user, exp_id, firmware, profile, timeout)
-
         # cleanup of temp file
         if firmware_file is not None:
             firmware_file.close()
-
         if ret:  # pragma: no cover
             LOGGER.error('Start experiment with errors: ret: %d', ret)
         return {'ret': ret}

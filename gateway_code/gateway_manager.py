@@ -30,7 +30,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     default_profile = None
 
     _OPEN_NODES = {'m3': gateway_code.open_node.NodeM3,
-                   'a8': gateway_code.open_node.NodeA8}
+                   'a8': gateway_code.open_node.NodeA8,
+                   'fox': gateway_code.open_node.NodeFox}
 
     def __init__(self, log_folder='.'):
         self.cls_init()
@@ -123,14 +124,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_desc['exp_files']['log'])
         LOGGER.addHandler(self.user_log_handler)
         LOGGER.info('Start experiment: %s-%i', user, exp_id)
-
         # Init ControlNode
         ret_val += self.control_node.start(self.exp_desc)
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
-        ret_val += self.control_node.start_experiment(profile)
-
+        ret_val += self.control_node.start_experiment(profile, self.board_type)
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
             self.timeout_timer = Timer(timeout, self._timeout_exp_stop,
