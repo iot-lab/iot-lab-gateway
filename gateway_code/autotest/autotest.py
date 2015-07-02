@@ -120,8 +120,15 @@ class AutoTestManager(object):
         return ret_val
 
     def _setup_open_node_leonardo(self):
-        # TODO : DO !
         ret_val = 0
+        ret = self.g_m.open_node.flash(open_node.NodeLeonardo.FW_AUTOTEST)
+        ret_val += self._check(ret, 'flash_leonardo', ret)
+        time.sleep(2)
+
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            open_node.NodeLeonardo.TTY, open_node.NodeLeonardo.BAUDRATE)
+        ret, err_msg = self.on_serial.start()
+        ret_val += self._check(ret, 'open_leonardo_serial', err_msg)
         return ret_val
 
     def _setup_open_node_a8(self):
@@ -264,41 +271,43 @@ class AutoTestManager(object):
             ret = self.g_m.control_node.open_start('dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
-            # test IMU
-            ret_val += self.test_gyro()
-            ret_val += self.test_magneto()
-            ret_val += self.test_accelero()
+            if board_type != 'leonardo':
+                # test IMU
+                ret_val += self.test_gyro()
+                ret_val += self.test_magneto()
+                ret_val += self.test_accelero()
 
-            if board_type != 'fox':
-                # test m3-on communication
-                ret_val += self.test_gpio()
-                ret_val += self.test_i2c()
+                if board_type != 'fox':
+                    # test m3-on communication
+                    ret_val += self.test_gpio()
+                    ret_val += self.test_i2c()
 
-            # radio tests
-            ret_val += self.test_radio_ping_pong(channel)
-            ret_val += self.test_radio_with_rssi(channel)
+                # radio tests
+                ret_val += self.test_radio_ping_pong(channel)
+                ret_val += self.test_radio_with_rssi(channel)
 
-            # test consumption measures
-            ret_val += self.test_consumption_dc()
-            # m3 specific tests
-            if 'm3' == board_type:  # pragma: no branch
-                # cannot test this with a8 I think
-                ret_val += self.test_leds_with_consumption()
-                # test m3 specific sensors
-                ret_val += self.test_pressure()
-                ret_val += self.test_light()
-                ret_val += self.test_flash(flash)
+                # test consumption measures
+                ret_val += self.test_consumption_dc()
+                # TODO board_type
+                # m3 specific tests
+                if 'm3' == board_type:  # pragma: no branch
+                    # cannot test this with a8 I think
+                    ret_val += self.test_leds_with_consumption()
+                    # test m3 specific sensors
+                    ret_val += self.test_pressure()
+                    ret_val += self.test_light()
+                    ret_val += self.test_flash(flash)
 
-            # run test_gps if requested
-            ret_val += self.test_gps(gps)
+                # run test_gps if requested
+                ret_val += self.test_gps(gps)
 
-            # set_leds
-            self._on_call(['leds_off', '7'])
-            if ret_val == 0:
-                self._on_call(['leds_blink', '7', '500'])
-                self.g_m.control_node.protocol.green_led_blink()
-            else:  # pragma: no cover
-                pass
+                # set_leds
+                self._on_call(['leds_off', '7'])
+                if ret_val == 0:
+                    self._on_call(['leds_blink', '7', '500'])
+                    self.g_m.control_node.protocol.green_led_blink()
+                else:  # pragma: no cover
+                    pass
         except FatalError as err:
             # Fatal Error during test, don't run further tests
             LOGGER.error("Fatal Error in tests, stop further tests: %s",

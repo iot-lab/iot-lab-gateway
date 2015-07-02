@@ -21,10 +21,6 @@ if os.uname()[4] != 'armv7l':
     import unittest
     raise unittest.SkipTest("Skip board embedded tests")
 
-if gateway_code.config.board_type() == 'leonardo':
-    import unittest
-    raise unittest.SkipTest("Skip tests Leonardo")
-
 
 @attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
