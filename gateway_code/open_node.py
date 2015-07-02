@@ -25,8 +25,8 @@ class NodeFox(object):
     # care!
     TTY = '/dev/ttyON_FOX'
     BAUDRATE = 500000
-    OPENOCD_CFG_FILE = static_path('mysticjtag.cfg')  # TODO
-    FW_IDLE = static_path('simple_idle.elf')
+    OPENOCD_CFG_FILE = static_path('iot-lab-fox.cfg')
+    FW_IDLE = static_path('idle_fox.elf')
     FW_AUTOTEST = static_path('fox_autotest.elf')
     ALIM = '5V'
 
