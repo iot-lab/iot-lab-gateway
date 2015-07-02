@@ -10,11 +10,27 @@
 import unittest
 import time
 from threading import Thread, RLock
-from mock import Mock
+import mock
 
 from gateway_code import common
-import logging
-LOGGER = logging.getLogger('gateway_code')
+
+
+class TestLogger(unittest.TestCase):
+
+    @mock.patch('gateway_code.common.LOGGER')
+    def test_ret_logger_with_ret(self, m_logger):
+
+        @common.logger_call("test value", 'info', 'error')
+        def simple_ret(value):
+            return value
+
+        simple_ret(0)
+        self.assertEqual(1, m_logger.info.call_count)
+        self.assertEqual(0, m_logger.error.call_count)
+
+        simple_ret(1)
+        self.assertEqual(2, m_logger.info.call_count)
+        self.assertEqual(1, m_logger.error.call_count)
 
 
 class TestWaitCond(unittest.TestCase):
@@ -46,7 +62,7 @@ class TestWaitCond(unittest.TestCase):
 class TestWaitTTY(unittest.TestCase):
     def test_wait_tty(self):
         """ Test running wait_tty fct """
-        logger = Mock()
+        logger = mock.Mock()
         self.assertEquals(0, common.wait_tty('/dev/null', logger))
         self.assertEquals(0, logger.error.call_count)
         self.assertNotEquals(0, common.wait_tty('no_tty_file', logger))
