@@ -27,7 +27,9 @@ MAC_RE = re.compile(r'([0-9a-f]{2}:){5}[0-9a-f]{2}')
 
 
 class FatalError(Exception):
+
     """ FatalError during tests """
+
     def __init__(self, value):
         super(FatalError, self).__init__()
         self.value = value
@@ -42,7 +44,9 @@ def tst_ok(bool_value):
 
 
 class AutoTestManager(object):
+
     """ Gateway and open node auto tests """
+
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
 
