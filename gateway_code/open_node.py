@@ -19,8 +19,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 class NodeFox(object):
     """ Open node FOX implemention """
-    # TODO Add note in docstring about 'tty' management and 'wait_tty' on
-    # start/stop experiment
+    # Contrary to m3 node, fox node need some time to be visible.
     # ALso it may fail for user flash/reset after a node start_dc but don't
     # care!
     TTY = '/dev/ttyON_FOX'

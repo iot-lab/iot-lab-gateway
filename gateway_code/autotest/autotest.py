@@ -182,7 +182,6 @@ class AutoTestManager(object):
         time.sleep(2)  # wait open node ready
 
         # setup open node
-        # TODO board_type detected
         ret_val += {'m3': self._setup_open_node_m3,
                     'a8': self._setup_open_node_a8,
                     'fox': self._setup_open_node_fox}[board_type]()
@@ -226,7 +225,6 @@ class AutoTestManager(object):
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
-        # TODO board_type
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         board_type = config.board_type()
 
@@ -245,7 +243,6 @@ class AutoTestManager(object):
             # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
             ret_val += self.test_consumption_batt(board_type)
-            # TODO board type
             # switch to DC and configure open node
             self._setup_open_node_connection(board_type)
             self.check_get_time()
@@ -273,7 +270,6 @@ class AutoTestManager(object):
 
             # test consumption measures
             ret_val += self.test_consumption_dc()
-            # TODO board_type
             # m3 specific tests
             if 'm3' == board_type:  # pragma: no branch
                 # cannot test this with a8 I think
@@ -371,7 +367,7 @@ class AutoTestManager(object):
         if test_ok:
             uid_str = values[0]
             # UID: split every 4 char
-            uid_split = [''.join(x) for x in zip(*[iter(uid_str)]*4)]
+            uid_split = [''.join(x) for x in zip(*[iter(uid_str)] * 4)]
             uid = ':'.join(uid_split)
             self.ret_dict['open_node_m3_uid'] = uid
         else:  # pragma: no cover
