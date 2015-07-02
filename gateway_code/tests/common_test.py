@@ -60,6 +60,7 @@ class TestWaitCond(unittest.TestCase):
 
 
 class TestWaitTTY(unittest.TestCase):
+
     def test_wait_tty(self):
         """ Test running wait_tty fct """
         logger = mock.Mock()
@@ -75,6 +76,7 @@ class TestSyncronousDecorator(unittest.TestCase):
 
         # using RLock as it's what I want to use at the end
         class PutAfterTime(object):  # pylint: disable=too-few-public-methods
+
             def __init__(self):
                 self.rlock = RLock()
                 self.item_list = []
