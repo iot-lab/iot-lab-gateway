@@ -29,8 +29,9 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 USER = 'harter'
 
-
 # Bottle FileUpload class stub
+
+
 class FileUpload(object):  # pylint: disable=too-few-public-methods
 
     """ Bottle FileUpload class stub """
@@ -193,20 +194,18 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_IDLE)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
         time.sleep(1)
-
         # idle firmware, there should be no reply
         self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
-
         # flash echo firmware
         self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.open_flash())
+
         time.sleep(1)
 
         # self.app.set_time()  # test set_time during experiment
 
         # Should echo <message>, do it multiple times for reliability
         self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
-
         # open node reset and start stop
         self.assertEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertEquals({'ret': 0}, self.app.open_start())

@@ -284,7 +284,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
 
         ret = self._nodes[node].flash(firmware_path)
-
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret
