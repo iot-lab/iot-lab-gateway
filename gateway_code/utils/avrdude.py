@@ -69,3 +69,6 @@ class AvrDude(object):
             LOGGER.debug(
                 "An error occured while triggering Leonardo's bootloader")
             return 1
+        except OSError:
+            LOGGER.debug("Trigger Bootloader : can't find %s", tty)
+            return 1
