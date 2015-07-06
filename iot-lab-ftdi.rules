@@ -15,7 +15,7 @@ SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_A8-M3",         EN
 # Fox Nodes
 SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="HiKoB_HiKoB_FOX_JTAG",         ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_FOX"
 # Leonardo Nodes
-SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_LLC_Arduino_Leonardo",  ATTRS{idProduct}=="8036", SYMLINK+="ttyON_LEONARDO"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_LLC_Arduino_Leonardo",  ATTRS{idProduct}=="8036", SYMLINK+="ttyON_LEONARDO", RUN+="/bin/stty -F /dev/ttyON_LEONARDO 9600"
 # Rules for the pramming interface of the Leonardo (when he reboots and wait for a new firmware to be uploaded
 SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_LLC_Arduino_Leonardo",  ATTRS{idProduct}=="0036", SYMLINK+="ttyON_LEONARDO_PROG"
 
