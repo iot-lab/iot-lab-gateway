@@ -46,7 +46,9 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
         _ext = os.path.splitext(self.filename)[1]
 
         try:
-            self.name = {'.json': 'profile', '.elf': 'firmware'}[_ext]
+            self.name = {
+                '.json': 'profile',
+                '.elf': 'firmware', '.hex': 'firmware'}[_ext]
         except KeyError:
             raise ValueError("Uknown file type %r: %r" % (_ext, file_path))
 
@@ -128,7 +130,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         elif 'fox' == board_type:
             self._run_simple_experiment_fox(m_error)
         elif 'leonardo' == board_type:
-            self._run_simple_experiment_leonardo
+            self._run_simple_experiment_leonardo(m_error)
         else:
             self.fail('Experiment Running not implemented for %r' % board_type)
 

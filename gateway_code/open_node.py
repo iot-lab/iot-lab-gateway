@@ -62,15 +62,27 @@ class NodeLeonardo(object):
         if AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG):
             LOGGER.error("FLASH : Leonardo's jtag port not available")
             return 1
-
+        ret_val = 0
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Leonardo: %s', firmware_path)
-        return self.avrdude.flash(firmware_path)
+        ret_val += self.avrdude.flash(firmware_path)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
+        return ret_val
 
+    @logger_call("Reset of leonardo node")
     def reset(self):
         """ Reset the Leonardo node using jtag """
-        LOGGER.info('Reset Leonardo node')
-        return AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG)
+        ret_val = 0
+        ret_val += AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
+        return ret_val
+
+    def _wait_serial(self):
+        ret_val = 0
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
+        ret_val += self.flash(None)
+        return ret_val
+
 
     def debug_start(self):
         """ Start Leonardo node debugger """
