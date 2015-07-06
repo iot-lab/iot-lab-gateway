@@ -12,6 +12,7 @@ import serial
 from serial import SerialException
 
 from gateway_code import common
+from gateway_code.common import logger_call
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -31,6 +32,7 @@ class AvrDude(object):
         self.out = None if verb else self.DEVNULL
         self.tty = tty
 
+    @logger_call("AvrDude : flash")
     def flash(self, hex_file):
         """ Flash firmware """
         try:
@@ -53,6 +55,7 @@ class AvrDude(object):
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
     @classmethod
+    @logger_call("AvrDude : trigger the bootloader")
     def trigger_bootloader(cls, tty, tty_prog, timeout=10, baudrate=1200):
         """ Open and close the serial port at 1200 bauds to lauch the soft reset
         of the arduino. Which allow the programming

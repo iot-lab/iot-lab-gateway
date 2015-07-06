@@ -7,7 +7,7 @@ import time
 from gateway_code.config import static_path
 from gateway_code import common
 # TODO Add logs for all open nodes
-# from gateway_code.common import logger_call
+from gateway_code.common import logger_call
 
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
@@ -36,6 +36,7 @@ class NodeLeonardo(object):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.avrdude = AvrDude(self.AVRDUDE_CFG_FILE, self.TTY_PROG)
 
+    @logger_call("Setup of leonardo node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
         ret_val = 0
@@ -46,6 +47,7 @@ class NodeLeonardo(object):
         ret_val += self.serial_redirection.start()
         return ret_val
 
+    @logger_call("Teardown of leonardo node")
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
@@ -54,6 +56,7 @@ class NodeLeonardo(object):
         ret_val += self.flash(None)
         return ret_val
 
+    @logger_call("Flash of leonardo node")
     def flash(self, firmware_path=None):
         """ Flash the given firmware on Leonardo node
         :param firmware_path: Path to the firmware to be flashed on `node`.
