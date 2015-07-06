@@ -8,6 +8,8 @@ from gateway_code.utils.openocd import OpenOCD
 from gateway_code.config import static_path
 from gateway_code.control_node import cn_interface, cn_protocol
 
+from gateway_code.common import logger_call
+
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
@@ -29,6 +31,7 @@ class ControlNode(object):
         self.open_node_state = 'stop'
         self.profile = self.default_profile
 
+    @logger_call("Control node : Starting of control node serial interface")
     def start(self, exp_desc):
         """ Start ControlNode serial interface """
         ret_val = 0
@@ -37,6 +40,7 @@ class ControlNode(object):
         ret_val += self.open_start('dc')
         return ret_val
 
+    @logger_call("Control node : Stop control node serial interface")
     def stop(self):
         """ Start ControlNode """
         ret_val = 0
@@ -45,6 +49,7 @@ class ControlNode(object):
         ret_val += self.reset()
         return ret_val
 
+    @logger_call("Control node : Start experiment")
     def start_experiment(self, profile, board_type):
         """ Configure the experiment """
         ret_val = 0
@@ -56,6 +61,7 @@ class ControlNode(object):
         ret_val += self.configure_profile(profile)
         return ret_val
 
+    @logger_call("Control node : stop of the experiment")
     def stop_experiment(self):
         """ Cleanup the control node configuration
         Also start open node for cleanup """
@@ -65,6 +71,7 @@ class ControlNode(object):
         ret_val += self.protocol.green_led_on()
         return ret_val
 
+    @logger_call("Control node : profile configuration")
     def configure_profile(self, profile=None):
         """ Configure the given profile on the control node """
         LOGGER.info('Configure profile on Control Node')
@@ -78,6 +85,7 @@ class ControlNode(object):
         ret_val += self.protocol.config_radio(self.profile.radio)
         return ret_val
 
+    @logger_call("Control node : start power of open node")
     def open_start(self, power=None):
         """ Start open node with 'power' source """
         power = power or self.profile.power
@@ -86,6 +94,7 @@ class ControlNode(object):
             self.open_node_state = 'start'
         return ret
 
+    @logger_call("Control node : stop power of open node")
     def open_stop(self, power=None):
         """ Stop open node with 'power' source """
         power = power or self.profile.power
@@ -94,6 +103,7 @@ class ControlNode(object):
             self.open_node_state = 'stop'
         return ret
 
+    @logger_call("Control node : flash the open node")
     def flash(self, firmware_path=None):
         """ Flash the given firmware on Control Node
         :param firmware_path: Path to the firmware to be flashed on `node`.
@@ -105,6 +115,7 @@ class ControlNode(object):
         self._wait_control_node_ready()
         return ret
 
+    @logger_call("Control node : reset")
     def reset(self):
         """ Reset the Control Node using jtag """
         LOGGER.info('Reset Control Node')

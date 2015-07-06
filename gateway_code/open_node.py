@@ -6,6 +6,8 @@ import time
 
 from gateway_code.config import static_path
 from gateway_code import common
+# TODO Add logs for all open nodes
+# from gateway_code.common import logger_call
 
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
