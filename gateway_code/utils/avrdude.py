@@ -25,7 +25,7 @@ class AvrDude(object):
                ' -b57600 -D'
                ' {cmd}')
 
-    FLASH = (' -Uflash:w:{0}:i')
+    FLASH = (' -Uflash:w:{0}:e')
 
     def __init__(self, config_file, tty, verb=False):
         self.cfg_file = common.abspath(config_file)
