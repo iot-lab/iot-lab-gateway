@@ -120,6 +120,7 @@ class AutoTestManager(object):
         return ret_val
 
     def _setup_open_node_leonardo(self):
+        """ Setup open node leonardo connecton """
         ret_val = 0
         ret = self.g_m.open_node.flash(open_node.NodeLeonardo.FW_AUTOTEST)
         ret_val += self._check(ret, 'flash_leonardo', ret)
