@@ -110,8 +110,7 @@ class NodeFox(object):
 
     """ Open node FOX implemention """
     # Contrary to m3 node, fox node need some time to be visible.
-    # ALso it may fail for user flash/reset after a node start_dc but don't
-    # care!
+    # Also flash/reset may fail after a node start_dc but don't care
     TTY = '/dev/ttyON_FOX'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-fox.cfg')
