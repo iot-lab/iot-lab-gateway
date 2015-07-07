@@ -28,7 +28,6 @@ class NodeLeonardo(object):
     BAUDRATE = 9600
     AVRDUDE_CFG_FILE = static_path('avrdude.conf')
     FW_IDLE = static_path('idle_leonardo.elf')
-    # TODO : create the firmware for autotest
     FW_AUTOTEST = static_path('leonardo_autotest.elf')
     ALIM = '5V'
 
