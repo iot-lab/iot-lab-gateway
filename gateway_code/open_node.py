@@ -88,7 +88,6 @@ class NodeFox(object):
         """ Check FOX node status """
         # Status is called when open node is not powered
         # So can't check for FTDI
-        # ftdi_check('fox', '2232')
         return 0
 
 
