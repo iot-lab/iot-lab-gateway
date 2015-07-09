@@ -1,0 +1,4 @@
+# Open A8 M3 node
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_A8-M3",         ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyA8_M3"
+
+SUBSYSTEM=="usb", ATTR{idProduct}=="6011", ATTR{idVendor}=="0403", MODE="0664", GROUP="dialout"
