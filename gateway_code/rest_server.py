@@ -46,8 +46,9 @@ class GatewayRest(object):
         if self.board_type in ('m3', 'fox', 'leonardo'):
             bottle.route('/open/flash', 'POST')(self.open_flash)
             bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
-            bottle.route('/open/debug/start', 'PUT')(self.open_debug_start)
-            bottle.route('/open/debug/stop', 'PUT')(self.open_debug_stop)
+            if self.board_type in ('m3', 'fox'):
+                bottle.route('/open/debug/start', 'PUT')(self.open_debug_start)
+                bottle.route('/open/debug/stop', 'PUT')(self.open_debug_stop)
         else:  # pragma: no cover
             pass  # handle A8 nodes here
 

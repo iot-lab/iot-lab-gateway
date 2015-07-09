@@ -79,29 +79,9 @@ class NodeLeonardo(object):
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         return ret_val
 
-    def _wait_serial(self):
-        ret_val = 0
-        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
-        ret_val += self.flash(None)
-        return ret_val
-
-
-    def debug_start(self):
-        """ Start Leonardo node debugger """
-        LOGGER.info('Leonardo Node debugger start')
-        # TODO : DO !
-        return 1
-
-    def debug_stop(self):
-        """ Stop Leonardo node debugger """
-        LOGGER.info('Leonardo Node debugger stop')
-        # TODO : DO !
-        return 1
-
     @staticmethod
     def status():
         """ Check Leonardo node status """
-        # TODO : DO !
         return 0
 
 
