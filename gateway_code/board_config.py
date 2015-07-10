@@ -6,16 +6,21 @@
 """ Board Config """
 
 import os
+from importlib import import_module
+
 
 _BOARD_CONFIG = {}
 GATEWAY_CONFIG_PATH = '/var/local/config/'
 
+_OPEN_NODES_PATH = 'gateway_code.open_nodes.'
+_OPEN_NODE_FILENAME = 'node_'
+
 
 class BoardConfig(object):
 
-    """ 
-            Class BoardConfig, used to get all the informations on the actual node 
-            this class is implemented as a Singleton
+    """
+            Class BoardConfig, used to get all the informations on the actual
+            node this class is implemented as a Singleton
     """
     # The unique instance of the class Board Config
     _instance = None
@@ -23,7 +28,7 @@ class BoardConfig(object):
     # We define a new contructor to respect the Singleton patern
     def __new__(cls):
         # if the instance of the class doesn't exist
-        if BoardConfig._instance == None:
+        if BoardConfig._instance is None:
                 # we create a new instance of the class
             BoardConfig._instance = object.__new__(cls)
         # we return the new instance of the existing instance
@@ -31,7 +36,15 @@ class BoardConfig(object):
 
     # the initialisation of the class
     def __init__(self):
+        open_node_path = _OPEN_NODES_PATH
+        open_node_filname = _OPEN_NODE_FILENAME
+
         self.board_type = self.find_board_type()
+        open_node_filname += self.board_type
+        open_node_path += open_node_filname
+
+        module = import_module(open_node_path)
+        self.board_class = getattr(module, 'Node' + self.board_type.title())
 
     def _get_conf(self, key, path, raise_error=False):
         """
