@@ -22,16 +22,24 @@ from gateway_code import gateway_manager
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
+# TODO : this test must run in board_config_test
+# @patch('gateway_code.config.board_type', (lambda: 'NOT_A_BOARD'))
+# class TestGatewayManagerInvalidBoardType(unittest.TestCase):
+#    def test_invalid_board_type(self):
+#        """ Run setup with a wrong board type"""
+#        self.assertRaises(ValueError, gateway_manager.GatewayManager)
 
-@patch('gateway_code.config.board_type', (lambda: 'NOT_A_BOARD'))
-class TestGatewayManagerInvalidBoardType(unittest.TestCase):
-    def test_invalid_board_type(self):
-        """ Run setup with a wrong board type"""
-        self.assertRaises(ValueError, gateway_manager.GatewayManager)
 
-
-@patch('gateway_code.config.board_type', (lambda: 'm3'))
 class TestGatewayManager(unittest.TestCase):
+
+    def setUp(self):
+        self.board_patcher = patch(
+            'gateway_code.board_config.BoardConfig.find_board_type')
+        self.board = self.board_patcher.start()
+        self.board.return_value = 'm3'
+
+    def tearDown(self):
+        self.board_patcher.stop()
 
     def test_setup(self):
         """ Test running gateway_manager with setup without error """
