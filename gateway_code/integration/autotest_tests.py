@@ -14,7 +14,10 @@ from gateway_code.integration import test_integration_mock
 import gateway_code.autotest.m3_node_interface
 import gateway_code.autotest.autotest
 from gateway_code import open_node
+# TODO : delete
 import gateway_code.config
+
+import gateway_code.board_config as board_config
 
 import os
 if os.uname()[4] != 'armv7l':
@@ -42,7 +45,8 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         self.assertEquals(0, ret_dict['ret'])
 
         # test that ON still on => should be blinking and answering
-        if gateway_code.config.board_type() != 'm3':
+        # TODO add fox
+        if board_config.BoardConfig().board_type != 'm3':
             return
         open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial(
             open_node.NodeM3.TTY, open_node.NodeM3.BAUDRATE)
