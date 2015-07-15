@@ -22,6 +22,7 @@ LOGGER = gateway_logging.LOGGER
 
 
 class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
+
     """
     Gateway Manager class,
 
@@ -38,7 +39,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     def __init__(self, log_folder='.'):
         self.cls_init()
-
         gateway_logging.init_logger(log_folder)
 
         self.rlock = RLock()
