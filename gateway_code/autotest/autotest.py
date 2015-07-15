@@ -12,7 +12,8 @@ from serial import SerialException
 
 from collections import defaultdict
 
-import gateway_code.config as config
+import gateway_code.board_config as board_config
+
 from gateway_code import common
 from gateway_code import open_node
 from gateway_code.autotest import m3_node_interface
@@ -244,9 +245,10 @@ class AutoTestManager(object):
         """
         ret_val = 0
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
-        board_type = config.board_type()
-
-        if board_type not in ['m3', 'a8', 'fox', 'leonardo']:
+        try:
+            board_type = board_config.BoardConfig().board_type
+        except ValueError:
+            board_type = None
             self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
             return self.ret_dict
 
@@ -318,7 +320,6 @@ class AutoTestManager(object):
         # shutdown node if test failed
         ret_val += self.teardown(blink and (ret_val == 0))
         self.ret_dict['ret'] = ret_val
-
         return self.ret_dict
 
     def _check(self, ret, operation, log_message=''):
