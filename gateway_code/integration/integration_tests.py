@@ -16,10 +16,13 @@ from mock import patch
 # all modules should be imported and not only the package
 from gateway_code.integration import test_integration_mock
 import gateway_code.control_node.cn_interface
+# TODO : delete
 import gateway_code.config
 
 from gateway_code.common import wait_cond
 from gateway_code.autotest.autotest import extract_measures
+
+import gateway_code.board_config as board_config
 
 from gateway_code.open_node import NodeM3
 from gateway_code.open_node import NodeFox
@@ -123,7 +126,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
         """ Test simple experiment"""
-        board_type = gateway_code.config.board_type()
+        board_type = board_config.BoardConfig().board_type
+
         if 'm3' == board_type:
             self._run_simple_experiment_m3(m_error)
         elif 'a8' == board_type:
@@ -263,7 +267,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def test_m3_exp_with_measures(self, m_error):
         """ Run an experiment with measures and profile update """
 
-        if 'm3' != gateway_code.config.board_type():
+        if 'm3' != board_config.BoardConfig().board_type:
             return
         t_start = time.time()
 
@@ -416,7 +420,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 
     def tests_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
-        if 'a8' != gateway_code.config.board_type():
+        if 'a8' != board_config.BoardConfig().board_type:
             return
 
         c_n = self.g_m.control_node
