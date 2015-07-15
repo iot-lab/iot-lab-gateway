@@ -29,6 +29,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Bottle FileUpload class stub
 class FileUpload(object):  # pylint: disable=too-few-public-methods
+
     """ Bottle FileUpload class stub """
     files = {}
 
@@ -55,7 +56,8 @@ class TestRestMethods(unittest.TestCase):
         self.request_patcher = patch('gateway_code.rest_server.request')
         self.request = self.request_patcher.start()
 
-        self.board_patcher = patch('gateway_code.config.board_type')
+        self.board_patcher = patch(
+            'gateway_code.board_config.BoardConfig.find_board_type')
         self.board = self.board_patcher.start()
         self.board.return_value = 'm3'
 
@@ -166,7 +168,7 @@ class TestRestMethods(unittest.TestCase):
 
         # profile that cannot be decoded, invalid JSON
         # http://mock.readthedocs.org/en/latest/examples.html \
-        #    #raising-exceptions-on-attribute-access
+        # raising-exceptions-on-attribute-access
         type(self.request).json = PropertyMock(side_effect=ValueError)
 
         self.assertEquals({'ret': 1}, self.s_r.exp_update_profile())
@@ -250,6 +252,7 @@ class TestRestMethods(unittest.TestCase):
 # Patch to find '/var/log/config/board_type' -> tests/config_m3/board_type
 @patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
 class TestServerRestMain(unittest.TestCase):
+
     """ Cover functions uncovered by unit tests """
 
     @patch('subprocess.call')
