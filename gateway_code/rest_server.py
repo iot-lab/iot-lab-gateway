@@ -11,21 +11,23 @@ from tempfile import NamedTemporaryFile
 import json
 
 from gateway_code.gateway_manager import GatewayManager
-from gateway_code import config
+from gateway_code import board_config
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
 class GatewayRest(object):
+
     """
     Gateway Rest class
 
     It calls the `gateway_ manager` to handle commands
     """
+
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
-        self.board_type = config.board_type()
+        self.board_type = board_config.BoardConfig().board_type
         self._app_routing()
 
     def _app_routing(self):
