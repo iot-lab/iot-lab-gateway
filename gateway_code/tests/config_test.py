@@ -15,7 +15,12 @@ from cStringIO import StringIO
 from gateway_code import config
 
 
+# TODO : delete the class
+raise unittest.SkipTest("This class will die")
+
+
 class TestGetHostname(unittest.TestCase):
+
     def test_get_hosname(self):
         self.assertNotEquals('', config.hostname())
 
