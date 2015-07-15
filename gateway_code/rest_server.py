@@ -135,7 +135,7 @@ class GatewayRest(object):
             return None
 
         # save http file to disk
-        firmware_file = NamedTemporaryFile(suffix='--'+_firm.filename)
+        firmware_file = NamedTemporaryFile(suffix='--' + _firm.filename)
         firmware_file.write(_firm.file.read())
         firmware_file.flush()
         return firmware_file

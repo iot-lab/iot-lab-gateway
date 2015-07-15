@@ -9,6 +9,7 @@ and methods to convert it to config commands
 
 
 class Profile(object):
+
     """ Experiment monitoring Profile """
 
     def __init__(self, open_node_type,  # pylint:disable=unused-argument
@@ -50,6 +51,7 @@ class Profile(object):
 
 
 class Consumption(object):
+
     """ Consumption monitoring configuration """
     choices = {
         'consumption': {
@@ -79,11 +81,14 @@ class Consumption(object):
 
 
 class Radio(object):
+
     """ Radio monitoring configuration """
     choices = {
         'radio': {'channels': range(11, 27)},
-        'rssi': {'num_per_channel': range(0, 256), 'period': range(1, 2**16)},
-        'sniffer': {'period': range(0, 2**16)}
+        'rssi': {
+            'num_per_channel': range(0, 256),
+            'period': range(1, 2 ** 16)},
+        'sniffer': {'period': range(0, 2 ** 16)}
     }
 
     def __init__(self, mode, channels, period=None, num_per_channel=None):
