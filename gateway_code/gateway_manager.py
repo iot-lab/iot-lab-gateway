@@ -13,6 +13,7 @@ from gateway_code.profile import Profile
 from gateway_code.autotest import autotest
 
 import gateway_code.open_node
+import gateway_code.board_config as board_config
 
 from gateway_code.control_node import cn
 from gateway_code import gateway_logging
@@ -60,14 +61,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Init GatewayManager attributes.
         It's done on dynamic init to allow mocking config.board_type in tests
         """
-        try:
-            cls.board_type = config.board_type()
-            cls.open_node_type = cls._OPEN_NODES[cls.board_type]
-            cls.default_profile = Profile(cls.open_node_type,
-                                          **config.default_profile())
-        except KeyError:
-            raise ValueError('Board type not managed %r' % cls.board_type)
+        cls.board_type = board_config.BoardConfig().board_type
+        cls.open_node_type = board_config.BoardConfig().board_class
+        cls.default_profile = Profile(cls.open_node_type,
+                                      **config.default_profile())
 
+    @logger_call("Gateway Manager : Setup")
     def setup(self):
         """ Run commands that might crash
         Must be run before running other commands """
