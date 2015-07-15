@@ -60,7 +60,7 @@ class BoardConfig(object):
         """
         # Singleton pattern
         if key not in _BOARD_CONFIG:
-                # load from file
+            # load from file
             try:
                 _file = open(os.path.join(path, key))
                 _BOARD_CONFIG[key] = _file.read().strip().lower()
@@ -75,4 +75,6 @@ class BoardConfig(object):
         """ Return the board type
         Currently in ('m3', 'a8', 'fox', 'leonardo')
         """
-        return self._get_conf('board_type', GATEWAY_CONFIG_PATH, raise_error=True)
+        return self._get_conf('board_type',
+                              GATEWAY_CONFIG_PATH,
+                              raise_error=True)
