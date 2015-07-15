@@ -48,7 +48,8 @@ class BoardConfig(object):
             self.board_class = getattr(
                 module, 'Node' + self.board_type.title())
         except ImportError:
-            raise ValueError('The class %r is not implemented' % open_node_path)
+            raise ValueError(
+                'The class %r is not implemented' % open_node_path)
 
     def _get_conf(self, key, path, raise_error=False):
         """
