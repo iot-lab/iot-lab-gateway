@@ -35,17 +35,24 @@ class GatewayRest(object):
         """
         Declare the REST supported methods depending on board config
         """
+        # TODO : discuss about option functions
         self.add_route(
             self.exp_start, '/exp/start/<exp_id:int>/<user>', 'POST', 'flash')
 
         self.add_route(
             self.exp_stop, '/exp/stop', 'DELETE', 'flash')
 
-        # TODO : mettre des param optionels
-        bottle.route('/exp/update', 'POST')(self.exp_update_profile)
-        bottle.route('/open/start', 'PUT')(self.open_start)
-        bottle.route('/open/stop', 'PUT')(self.open_stop)
-        bottle.route('/status', 'GET')(self.status)
+        self.add_route(
+            self.exp_update_profile, '/exp/update', 'POST')
+
+        self.add_route(
+            self.open_start, '/open/start', 'PUT')
+        
+        self.add_route(
+            self.open_stop, '/open/stop', 'PUT')
+
+        self.add_route(
+            self.status, '/status', 'GET', 'status')
 
         # query_string: channel=int[11:26]
         self.add_route(
@@ -249,12 +256,12 @@ class GatewayRest(object):
         LOGGER.debug('REST: status')
         return {'ret': self.gateway_manager.status()}
 
-    def add_route(self, server_function, route_patern, route_type, node_function):
+    def add_route(self, server_function, route_patern, route_type, node_function=None):
         """ if node function exists, the route to server_function is added with the right patern"""
 
-        if hasattr(self.board_class, node_function):
+        if node_function is None or hasattr(self.board_class, node_function):
             # just here to prevent a too long condition statement
-            if callable(getattr(self.board_class, node_function)):
+            if node_function is None or callable(getattr(self.board_class, node_function)):
                 bottle.route(route_patern, route_type)(server_function)
                 return
         LOGGER.info(
