@@ -51,6 +51,14 @@ class BoardConfig(object):
             raise ValueError(
                 'The class %r is not implemented' % open_node_path)
 
+    def hostname(self):
+        """ Return the board hostname """
+        return os.uname()[1]
+
+    def robot_type(self):
+        """ Return robot type None, 'roomba' """
+        return self._get_conf('robot', GATEWAY_CONFIG_PATH)
+
     def _get_conf(self, key, path, raise_error=False):
         """
         Load config from file given as key
