@@ -13,7 +13,9 @@ import threading
 from tempfile import NamedTemporaryFile
 
 import atexit
+# TODO : delete
 from gateway_code import config
+import gateway_code.board_config as board_config
 from gateway_code import common
 
 import logging
@@ -103,7 +105,7 @@ class ControlNodeSerial(object):
         # Extract configuration
         oml_cfg = exp_desc['exp_files'].copy()
         oml_cfg['exp_id'] = exp_desc['exp_id']
-        oml_cfg['node_id'] = config.hostname()
+        oml_cfg['node_id'] = board_config.BoardConfig().hostname()
 
         # Save xml configuration in a temporary file
         oml_xml_cfg = OML_XML.format(**oml_cfg)
