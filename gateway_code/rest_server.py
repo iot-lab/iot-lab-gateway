@@ -35,25 +35,36 @@ class GatewayRest(object):
         """
         Declare the REST supported methods depending on board config
         """
-        bottle.route('/exp/start/<exp_id:int>/<user>', 'POST')(self.exp_start)
-        bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
+        self.add_route(
+            self.exp_start, '/exp/start/<exp_id:int>/<user>', 'POST', 'flash')
+
+        self.add_route(
+            self.exp_stop, '/exp/stop', 'DELETE', 'flash')
+
+        # TODO : mettre des param optionels
         bottle.route('/exp/update', 'POST')(self.exp_update_profile)
         bottle.route('/open/start', 'PUT')(self.open_start)
         bottle.route('/open/stop', 'PUT')(self.open_stop)
         bottle.route('/status', 'GET')(self.status)
 
         # query_string: channel=int[11:26]
-        bottle.route('/autotest', 'PUT')(self.auto_tests)
-        bottle.route('/autotest/<mode>', 'PUT')(self.auto_tests)
+        self.add_route(
+            self.auto_tests, '/autotest', 'PUT', 'flash')
+
+        self.add_route(
+            self.auto_tests, '/autotest/<mode>', 'PUT', 'flash')
         # node specific commands
-        if self.board_type in ('m3', 'fox', 'leonardo'):
-            bottle.route('/open/flash', 'POST')(self.open_flash)
-            bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
-            if self.board_type in ('m3', 'fox'):
-                bottle.route('/open/debug/start', 'PUT')(self.open_debug_start)
-                bottle.route('/open/debug/stop', 'PUT')(self.open_debug_stop)
-        else:  # pragma: no cover
-            pass  # handle A8 nodes here
+        self.add_route(
+            self.open_flash, '/open/flash', 'POST', 'flash')
+
+        self.add_route(
+            self.open_soft_reset, '/open/reset', 'PUT', 'reset')
+
+        self.add_route(
+            self.open_debug_start, '/open/debug/start', 'PUT', 'debug_start')
+
+        self.add_route(
+            self.open_debug_stop, '/open/debug/stop', 'PUT', 'debug_stop')
 
     def exp_start(self, user, exp_id):
         """
@@ -238,10 +249,22 @@ class GatewayRest(object):
         LOGGER.debug('REST: status')
         return {'ret': self.gateway_manager.status()}
 
+    def add_route(self, server_function, route_patern, route_type, node_function):
+        """ if node function exists, the route to server_function is added with the right patern"""
+
+        if hasattr(self.board_class, node_function):
+            # just here to prevent a too long condition statement
+            if callable(getattr(self.board_class, node_function)):
+                bottle.route(route_patern, route_type)(server_function)
+                return
+        LOGGER.info(
+            'Rest Server : The route %s does not exist for this node', route_patern)
 
 #
 # Command line functions
 #
+
+
 def _parse_arguments(args):
     """
     Parse arguments:
