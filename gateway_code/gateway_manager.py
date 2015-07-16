@@ -12,7 +12,6 @@ from gateway_code.common import logger_call
 from gateway_code.profile import Profile
 from gateway_code.autotest import autotest
 
-import gateway_code.open_node
 import gateway_code.board_config as board_config
 
 from gateway_code.control_node import cn
@@ -31,11 +30,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     board_type = None
     open_node_type = None
     default_profile = None
-
-    _OPEN_NODES = {'m3': gateway_code.open_node.NodeM3,
-                   'a8': gateway_code.open_node.NodeA8,
-                   'fox': gateway_code.open_node.NodeFox,
-                   'leonardo': gateway_code.open_node.NodeLeonardo}
 
     def __init__(self, log_folder='.'):
         self.cls_init()
@@ -114,7 +108,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_desc['exp_id'] = exp_id
         self.exp_desc['user'] = user
 
-        if config.robot_type() == 'turtlebot2':  # pragma: no cover
+        if board_config.BoardConfig().robot_type() == 'turtlebot2':  # pragma: no cover
             LOGGER.info("I'm a Turtlebot2")
             self._create_user_exp_folders(user, exp_id)
 
@@ -311,7 +305,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Create user experiment files with 0666 permissions """
 
         exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
-        node_id = config.hostname()
+        node_id = board_config.BoardConfig().hostname()
 
         for key, exp_file in config.EXP_FILES.iteritems():
             # calculate file_path and store it in exp_description
