@@ -250,7 +250,7 @@ class TestRestMethods(unittest.TestCase):
 
 
 # Patch to find '/var/log/config/board_type' -> tests/config_m3/board_type
-@patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
+@patch('gateway_code.board_config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
 class TestServerRestMain(unittest.TestCase):
 
     """ Cover functions uncovered by unit tests """
