@@ -33,6 +33,9 @@ class NodeLeonardo(object):
 
     ALIM = '5V'
 
+    AUTOTEST_ANSWERS = ['check_get_time',
+                        'get_uid']
+
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.avrdude = AvrDude(self.AVRDUDE_CONF)

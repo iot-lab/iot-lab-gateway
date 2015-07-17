@@ -24,6 +24,18 @@ class NodeFox(object):
     FW_AUTOTEST = static_path('fox_autotest.elf')
     ALIM = '5V'
 
+    AUTOTEST_ANSWERS = ['check_get_time',
+                        'get_uid',
+                        'test_gyro',
+                        'test_magneto',
+                        'test_accelero',
+                        'test_radio_ping_pong',
+                        'test_radio_with_rssi',
+                        'test_consumption_dc',
+                        'test_gps',
+                        'test_consumption_batt',
+                        ]
+
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
