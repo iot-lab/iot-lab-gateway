@@ -61,12 +61,23 @@ class TestRestMethods(unittest.TestCase):
         self.board = self.board_patcher.start()
         self.board.return_value = 'm3'
 
+        # self.bottle_patcher = patch('bottle.route')
+        # self.bottle = self.bottle_patcher.start()
+
         self.g_m = mock.Mock()
         self.s_r = rest_server.GatewayRest(self.g_m)
 
     def tearDown(self):
-        self.request_patcher.stop()
+        # self.bottle_patcher.stop()
         self.board_patcher.stop()
+        self.request_patcher.stop()
+
+    @patch('bottle.route')
+    def test_routes(self, mocked_func):
+        self.s_r.add_route('open_start', '/test', 'POST', 'NOT_A_FUNCTION')
+        self.assertFalse(mocked_func.called)
+        self.s_r.add_route('open_start', '/test', 'POST', 'flash')
+        self.assertTrue(mocked_func.called)
 
     def test_exp_start_file_and_profile(self):
         idle = FileUpload('elf32arm0X1234', 'idle.elf')
