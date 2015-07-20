@@ -13,8 +13,6 @@ import threading
 from tempfile import NamedTemporaryFile
 
 import atexit
-# TODO : delete
-from gateway_code import config
 import gateway_code.board_config as board_config
 from gateway_code import common
 
