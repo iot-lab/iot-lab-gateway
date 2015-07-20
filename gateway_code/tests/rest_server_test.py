@@ -261,16 +261,17 @@ class TestRestMethods(unittest.TestCase):
 
 
 # Patch to find '/var/log/config/board_type' -> tests/config_m3/board_type
-@patch('gateway_code.board_config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
+@patch('gateway_code.board_config.GATEWAY_CONFIG_PATH',
+       CURRENT_DIR + '/config_m3/')
 class TestServerRestMain(unittest.TestCase):
 
     """ Cover functions uncovered by unit tests """
-
+    @patch('gateway_code.board_config.BoardConfig.find_board_type')
     @patch('subprocess.call')
     @patch('bottle.run')
-    def test_main_function(self, run_mock, call_mock):
+    def test_main_function(self, run_mock, call_mock, board_type_mock):
         call_mock.return_value = 0
-
+        board_type_mock.return_value = 'm3'
         args = ['rest_server.py', 'localhost', '8080']
         rest_server._main(args)
         self.assertTrue(run_mock.called)
