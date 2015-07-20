@@ -45,6 +45,7 @@ OML_XML = '''
 
 
 class ControlNodeSerial(object):
+
     """
     Class handling the communication with the control node serial program
     """

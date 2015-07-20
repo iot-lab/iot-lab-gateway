@@ -47,7 +47,7 @@ class GatewayRest(object):
 
         self.add_route(
             self.open_start, '/open/start', 'PUT')
-        
+
         self.add_route(
             self.open_stop, '/open/stop', 'PUT')
 
@@ -256,8 +256,12 @@ class GatewayRest(object):
         LOGGER.debug('REST: status')
         return {'ret': self.gateway_manager.status()}
 
-    def add_route(self, server_function, route_patern, route_type, node_function=None):
-        """ if node function exists, the route to server_function is added with the right patern"""
+    def add_route(self, server_function, route_patern, route_type,
+                  node_function=None):
+        """
+        if node function exists, the route to server_function is added
+        with the right patern
+        """
 
         if node_function is None or hasattr(self.board_class, node_function):
             # just here to prevent a too long condition statement
@@ -265,7 +269,8 @@ class GatewayRest(object):
                 bottle.route(route_patern, route_type)(server_function)
                 return
         LOGGER.info(
-            'Rest Server : The route %s does not exist for this node', route_patern)
+            'Rest Server : The route %s does not exist for this node',
+            route_patern)
 
 #
 # Command line functions

@@ -39,8 +39,7 @@ class NodeA8(object):
                         'test_radio_with_rssi',
                         'test_consumption_dc',
                         'test_gps',
-                        'test_consumption_batt',
-                        ]
+                        'test_consumption_batt']
 
     def __init__(self):
         self._a8_expect = None
