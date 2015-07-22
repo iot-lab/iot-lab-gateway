@@ -32,8 +32,10 @@ SSH_OPTS = '-F {0}'.format(SSH_CFG)
 @task
 def upload():
     """ Upload sources as www-data:www-data """
+    extra_opts = " --delete-excluded"
     rsync_project(local_dir=LOCAL + '/', remote_dir=REMOTE, upload=True,
-                  ssh_opts=SSH_OPTS, exclude=EXCLUDE, delete=True)
+                  ssh_opts=SSH_OPTS, extra_opts=extra_opts,
+                  exclude=EXCLUDE, delete=True)
     run('chown -R www-data:www-data {dir}'.format(dir=REMOTE))
 
 
