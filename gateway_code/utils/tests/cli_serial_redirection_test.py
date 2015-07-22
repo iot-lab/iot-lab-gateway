@@ -16,10 +16,9 @@ from ..cli import serial_redirection
 class TestMain(unittest.TestCase):
     """ Main function tests """
 
-    @staticmethod
     @mock.patch('gateway_code.utils.serial_redirection.SerialRedirection')
     @mock.patch('signal.pause')
-    def test_main_function(m_pause, m_serial_redirect_class):
+    def test_main_function(self, m_pause, m_serial_redirect_class):
         """ Test cli.serial_redirection main function
 
         Run and simulate 'stop' with a Ctrl+C
@@ -31,10 +30,10 @@ class TestMain(unittest.TestCase):
         with mock.patch('sys.argv', args):
             serial_redirection.main()
 
-            m_pause.assert_called()
+            self.assertTrue(m_pause.called)
             m_serial_redirect_class.assert_called_with('/dev/ttyON_M3', 500000)
-            redirect.start.assert_called()
-            redirect.stop.assert_called()
+            self.assertTrue(redirect.start.called)
+            self.assertTrue(redirect.stop.called)
 
 
 class TestArgumentsParsing(unittest.TestCase):

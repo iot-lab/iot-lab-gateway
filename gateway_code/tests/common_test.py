@@ -48,9 +48,9 @@ class TestWaitTTY(unittest.TestCase):
         """ Test running wait_tty fct """
         logger = Mock()
         self.assertEquals(0, common.wait_tty('/dev/null', logger))
-        logger.assertNotCalled()
+        self.assertEquals(0, logger.error.call_count)
         self.assertNotEquals(0, common.wait_tty('no_tty_file', logger))
-        logger.assertCalledOnce()
+        self.assertEquals(1, logger.error.call_count)
 
 
 class TestSyncronousDecorator(unittest.TestCase):

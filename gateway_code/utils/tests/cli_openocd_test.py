@@ -25,7 +25,7 @@ class TestsOpenOCDcli(unittest.TestCase):
             self.ocd.flash.return_value = 0
             ret = openocd.main()
             self.assertEquals(ret, 0)
-            self.ocd.flash.assert_called()
+            self.assertTrue(self.ocd.flash.called)
 
             self.ocd.flash.return_value = 42
             ret = openocd.main()
@@ -38,7 +38,7 @@ class TestsOpenOCDcli(unittest.TestCase):
             self.ocd.reset.return_value = 0
             ret = openocd.main()
             self.assertEquals(ret, 0)
-            self.ocd.reset.assert_called()
+            self.assertTrue(self.ocd.reset.called)
 
             self.ocd.reset.return_value = 42
             ret = openocd.main()

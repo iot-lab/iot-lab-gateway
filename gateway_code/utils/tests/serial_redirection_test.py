@@ -118,7 +118,7 @@ class TestSerialRedirection(unittest.TestCase):
         self.redirect.start()
         self.redirect.stop()
 
-        m_socat.terminate.assert_called()
+        self.assertTrue(m_socat.terminate.called)
 
     @mock.patch('subprocess.Popen')
     def test__call_socat_error(self, m_popen):

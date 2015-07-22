@@ -44,7 +44,7 @@ class TestOpenNodeSerial(unittest.TestCase):
         self.readline_called.wait(5)
         self.assertTrue(self.readline_called.is_set())
         self.on_interface.stop()
-        self.serial.close.assert_called()
+        self.assertTrue(self.serial.close.called)
 
     def test_start_serial_exception(self):
         from serial import SerialException
@@ -69,7 +69,7 @@ class TestOpenNodeSerial(unittest.TestCase):
         mock_queue.get.side_effect = Queue.Empty
         ret = self.on_interface.send_command(['test_command', 'with_timeout'])
         self.assertEquals(ret, None)
-        self.serial.write.assertCalledWith('test_command with_timeout\n')
+        self.serial.write.assert_called_with('test_command with_timeout\n')
 
         self.on_interface.stop()
 

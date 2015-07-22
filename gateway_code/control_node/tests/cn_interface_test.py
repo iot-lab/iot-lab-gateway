@@ -40,10 +40,10 @@ class TestControlNodeSerial(unittest.TestCase):
     def test_normal_start_stop(self):
         ret_start = self.cn.start('tty')
         self.assertEquals(0, ret_start)
-        self.popen.stderr.readline.assert_called()
+        self.assertTrue(self.popen.stderr.readline.called)
 
         self.cn.stop()
-        self.popen.terminate.assert_called()
+        self.assertTrue(self.popen.terminate.called)
         self.assertTrue(self.readline_ret_vals.empty())
 
     @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
