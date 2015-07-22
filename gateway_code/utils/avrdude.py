@@ -9,7 +9,6 @@ import subprocess
 
 import logging
 import serial
-from serial import SerialException
 
 from gateway_code import common
 from gateway_code.common import logger_call
@@ -54,27 +53,21 @@ class AvrDude(object):
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
-    @classmethod
-    @logger_call("AvrDude : trigger the bootloader")
-    def trigger_bootloader(cls, tty, tty_prog, timeout=10, baudrate=1200):
+    @staticmethod
+    def trigger_bootloader(tty, tty_prog, timeout=10, baudrate=1200):
         """
         It's impossible to program the Leonardo while still running.
         To be programed the Leonardo has to be in his bootloader sequence.
         While in the bootloader, the Leonardo wait for a new program during 8s
-        There are two way to launch the bootloader :
-            _ The first one physical by pressing the reset button
-            _ The software way by opening and closing the serial port at 1200b/s
+        There are two way to launch the bootloader:
+         - The first one physical by pressing the reset button
+         - The software way by opening and closing the serial port at 1200bauds
         This method perform the second method.
         """
         try:
             serial.Serial(tty, baudrate).close()
             # Wait the programming interface to be available
-            common.wait_tty(tty_prog, LOGGER, timeout)
-            return 0
-        except SerialException:
-            LOGGER.debug(
-                "An error occured while triggering Leonardo's bootloader")
-            return 1
-        except OSError:
-            LOGGER.debug("Trigger Bootloader : can't find %s", tty)
+            return common.wait_tty(tty_prog, LOGGER, timeout)
+        except (OSError, serial.SerialException) as err:
+            LOGGER.warning("Error while opening TTY %s: %r", tty, err)
             return 1
