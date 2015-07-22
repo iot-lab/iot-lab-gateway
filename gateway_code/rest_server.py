@@ -37,10 +37,10 @@ class GatewayRest(object):
         """
         # TODO : discuss about option functions
         self.add_route(
-            self.exp_start, '/exp/start/<exp_id:int>/<user>', 'POST', 'flash')
+            self.exp_start, '/exp/start/<exp_id:int>/<user>', 'POST')
 
         self.add_route(
-            self.exp_stop, '/exp/stop', 'DELETE', 'flash')
+            self.exp_stop, '/exp/stop', 'DELETE')
 
         self.add_route(
             self.exp_update_profile, '/exp/update', 'POST')
@@ -52,7 +52,7 @@ class GatewayRest(object):
             self.open_stop, '/open/stop', 'PUT')
 
         self.add_route(
-            self.status, '/status', 'GET', 'status')
+            self.status, '/status', 'GET')
 
         # query_string: channel=int[11:26]
         self.add_route(
