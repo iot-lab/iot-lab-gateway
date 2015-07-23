@@ -8,12 +8,9 @@
 import os
 from importlib import import_module
 
-
-_BOARD_CONFIG = {}
 GATEWAY_CONFIG_PATH = '/var/local/config/'
 
-_OPEN_NODES_PATH = 'gateway_code.open_nodes.'
-_OPEN_NODE_FILENAME = 'node_'
+_OPEN_NODES_PATH = 'gateway_code.open_nodes.node_{0}'
 
 
 class BoardConfig(object):
@@ -27,21 +24,20 @@ class BoardConfig(object):
 
     # We define a new contructor to respect the Singleton patern
     def __new__(cls):
-        # if the instance of the class doesn't exist
-        if BoardConfig._instance is None:
-                # we create a new instance of the class
-            BoardConfig._instance = object.__new__(cls)
-        # we return the new instance of the existing instance
-        return BoardConfig._instance
+        if cls._instance is None:
+            cls._instance = object.__new__(cls)
+            cls._is_init = False
+        return cls._instance
 
-    # the initialisation of the class
+    # The initialisation of the class
     def __init__(self):
-        open_node_path = _OPEN_NODES_PATH
-        open_node_filname = _OPEN_NODE_FILENAME
+        if self._is_init:
+            return
+        self._is_init = True
 
-        self.board_type = self.find_board_type()
-        open_node_filname += self.board_type
-        open_node_path += open_node_filname
+        self.board_type = self._find_board_type()
+        self.hostname = self.get_hostname()
+        open_node_path = _OPEN_NODES_PATH.format(self.board_type)
 
         try:
             module = import_module(open_node_path)
@@ -51,7 +47,13 @@ class BoardConfig(object):
             raise ValueError(
                 'The class %r is not implemented' % open_node_path)
 
-    def hostname(self):
+    def clear_instance(self):
+        """ Reset the instance contained in the Singleton """
+        self._instance = None
+        self._is_init = False
+
+    @staticmethod
+    def get_hostname():
         """ Return the board hostname """
         return os.uname()[1]
 
@@ -66,20 +68,18 @@ class BoardConfig(object):
         :param key: config file name
         :param raise_error: select if exceptions are silenced or raised
         """
-        # Singleton pattern
-        if key not in _BOARD_CONFIG:
-            # load from file
-            try:
-                _file = open(os.path.join(path, key))
-                _BOARD_CONFIG[key] = _file.read().strip().lower()
-                _file.close()
-            except IOError as err:
-                _BOARD_CONFIG[key] = None
-                if raise_error:
-                    raise err
-        return _BOARD_CONFIG[key]
+        # load from file
+        try:
+            _file = open(os.path.join(path, key))
+            readed = _file.read().strip().lower()
+            _file.close()
+        except IOError as err:
+            readed = None
+            if raise_error:
+                raise err
+        return readed
 
-    def find_board_type(self):
+    def _find_board_type(self):
         """ Return the board type
         Currently in ('m3', 'a8', 'fox', 'leonardo')
         """
