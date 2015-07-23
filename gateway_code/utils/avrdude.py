@@ -16,20 +16,17 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class AvrDude(object):
-
     """ Debugger class, implemented as a global variable storage """
+    _ARVDUDE_CONF_KEYS = {'tty', 'baudrate', 'model', 'programmer'}
     DEVNULL = open(os.devnull, 'w')
 
-    AVRDUDE = ('avrdude -C"{cfg}" -v -v -v -v -patmega32u4 -cavr109 -P{tty}'
-               ' -b57600 -D'
-               ' {cmd}')
+    AVRDUDE = 'avrdude -p {model} -P {tty} -c {programmer} -b {baudrate} {cmd}'
+    FLASH = ' -D -U {0}'
 
-    FLASH = (' -Uflash:w:{0}:e')
-
-    def __init__(self, config_file, tty, verb=False):
-        self.cfg_file = common.abspath(config_file)
+    def __init__(self, avrdude_conf, verb=False):
+        assert set(avrdude_conf.keys()) == self._ARVDUDE_CONF_KEYS
+        self.conf = avrdude_conf
         self.out = None if verb else self.DEVNULL
-        self.tty = tty
 
     @logger_call("AvrDude : flash")
     def flash(self, hex_file):
@@ -48,8 +45,7 @@ class AvrDude(object):
     def _avrdude_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
-        cmd = self.AVRDUDE.format(
-            cfg=self.cfg_file, tty=self.tty, cmd=command_str)
+        cmd = self.AVRDUDE.format(cmd=command_str, **self.conf)
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 

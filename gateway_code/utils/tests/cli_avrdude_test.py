@@ -31,7 +31,7 @@ class TestsAvrDudecli(unittest.TestCase):
             self.avrdude.flash.return_value = 0
             ret = avrdude.main()
             self.assertEquals(ret, 0)
-            self.avrdude.flash.assert_called()
+            self.assertTrue(self.avrdude.flash.called)
 
             self.avrdude.flash.return_value = 42
             ret = avrdude.main()

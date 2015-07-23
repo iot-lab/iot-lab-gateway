@@ -26,14 +26,20 @@ class NodeLeonardo(object):
     # The Leonardo node need a special open/close and then appear on a new TTY
     TTY_PROG = '/dev/ttyON_LEONARDO_PROG'
     BAUDRATE = 9600
-    AVRDUDE_CFG_FILE = static_path('avrdude.conf')
     FW_IDLE = static_path('idle_leonardo.elf')
     FW_AUTOTEST = static_path('leonardo_autotest.elf')
+    AVRDUDE_CONF = {
+        'tty': TTY_PROG,
+        'baudrate': 9600,
+        'model': 'atmega32u4',
+        'programmer': 'avr109',
+    }
+
     ALIM = '5V'
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.avrdude = AvrDude(self.AVRDUDE_CFG_FILE, self.TTY_PROG)
+        self.avrdude = AvrDude(self.AVRDUDE_CONF)
 
     @logger_call("Setup of leonardo node")
     def setup(self, firmware_path):
@@ -51,8 +57,7 @@ class NodeLeonardo(object):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
         ret_val += self.serial_redirection.stop()
-        # The reboot need 8 seconds before ending. The added 2 seconds for the timeout
-        # if others caclculations have to be performet
+        # Reboot needs 8 seconds before ending linux sees it in < 2 seconds
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         ret_val += self.flash(None)
         return ret_val

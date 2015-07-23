@@ -17,15 +17,14 @@ from .. import avrdude
 from gateway_code.open_node import NodeLeonardo  # config file
 
 
-@mock.patch('subprocess.call')
 class TestsMethods(unittest.TestCase):
 
     """ Tests avrdude methods """
 
     def setUp(self):
-        self.avr = avrdude.AvrDude(
-            NodeLeonardo.AVRDUDE_CFG_FILE, NodeLeonardo.TTY_PROG)
+        self.avr = avrdude.AvrDude(NodeLeonardo.AVRDUDE_CONF)
 
+    @mock.patch('subprocess.call')
     def test_flash(self, call_mock):
         """ Test flash """
         call_mock.return_value = 0
@@ -35,6 +34,10 @@ class TestsMethods(unittest.TestCase):
         call_mock.return_value = 42
         ret = self.avr.flash(NodeLeonardo.FW_IDLE)
         self.assertEquals(42, ret)
+
+    def test_invalid_firmware_path(self):
+        ret = self.avr.flash('/invalid/path')
+        self.assertNotEqual(0, ret)
 
 
 @mock.patch('serial.Serial')
@@ -87,16 +90,4 @@ class TestTriggerBootloader(unittest.TestCase):
 
         serial_mock.side_effect = OSError()
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog)
-        self.assertNotEqual(0, ret)
-
-
-class TestsFlashInvalidPaths(unittest.TestCase):
-
-    def test_invalid_config_file_path(self):
-        self.assertRaises(IOError, avrdude.AvrDude, '/invalid/path', 'NotATty')
-
-    def test_invalid_firmware_path(self):
-        ret = avrdude.AvrDude(
-            NodeLeonardo.AVRDUDE_CFG_FILE, NodeLeonardo.TTY_PROG).flash(
-                '/invalid/path')
         self.assertNotEqual(0, ret)

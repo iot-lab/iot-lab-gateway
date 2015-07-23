@@ -33,7 +33,7 @@ def main():
     opts = PARSER.parse_args()
     node = _node_type(opts.node)
     ret = avrdude.AvrDude.trigger_bootloader(node.TTY, node.TTY_PROG)
-    avr = avrdude.AvrDude(node.AVRDUDE_CFG_FILE, node.TTY_PROG, True)
+    avr = avrdude.AvrDude(node.AVRDUDE_CONF, verb=True)
 
     if opts.cmd == 'flash':
         ret += avr.flash(opts.firmware)
