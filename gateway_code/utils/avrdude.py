@@ -57,8 +57,14 @@ class AvrDude(object):
     @classmethod
     @logger_call("AvrDude : trigger the bootloader")
     def trigger_bootloader(cls, tty, tty_prog, timeout=10, baudrate=1200):
-        """ Open and close the serial port at 1200 bauds to lauch the soft reset
-        of the arduino. Which allow the programming
+        """
+        It's impossible to program the Leonardo while still running.
+        To be programed the Leonardo has to be in his bootloader sequence.
+        While in the bootloader, the Leonardo wait for a new program during 8s
+        There are two way to launch the bootloader :
+            _ The first one physical by pressing the reset button
+            _ The software way by opening and closing the serial port at 1200b/s
+        This method perform the second method.
         """
         try:
             serial.Serial(tty, baudrate).close()
