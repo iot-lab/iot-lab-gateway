@@ -51,6 +51,8 @@ class NodeLeonardo(object):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
         ret_val += self.serial_redirection.stop()
+        # The reboot need 8 seconds before ending. The added 2 seconds for the timeout
+        # if others caclculations have to be performet
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         ret_val += self.flash(None)
         return ret_val
@@ -82,6 +84,7 @@ class NodeLeonardo(object):
     @staticmethod
     def status():
         """ Check Leonardo node status """
+        # It's impossible for us to check the status of the leonardo node
         return 0
 
 
