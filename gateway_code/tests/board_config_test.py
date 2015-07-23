@@ -39,7 +39,19 @@ class TestGetHostname(unittest.TestCase):
         board_config.BoardConfig().clear_instance()
 
     def test_get_hosname(self):
-        self.assertNotEquals('', board_config.BoardConfig().hostname())
+        self.assertNotEquals('', board_config.BoardConfig().hostname)
+
+
+class TestSingletonPatern(unittest.TestCase):
+
+    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
+    def test_single_instance(self, mock_func):
+        mock_func.return_value = 'm3'
+        board_config.BoardConfig()
+        board_config.BoardConfig()
+        board_config.BoardConfig()
+        mock_func.assert_called_once_with()
+        board_config.BoardConfig().clear_instance()
 
 
 class TestsBoardAndRobotType(unittest.TestCase):
