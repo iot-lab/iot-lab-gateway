@@ -17,7 +17,7 @@ from gateway_code import config
 class TestDefaultProfile(unittest.TestCase):
 
     @staticmethod
-    @mock.patch('gateway_code.board_config.BoardConfig.find_board_type')
+    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_default_profile(mock_board_type):
         mock_board_type.return_value = 'm3'
         config.default_profile()

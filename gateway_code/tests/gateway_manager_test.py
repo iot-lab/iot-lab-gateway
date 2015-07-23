@@ -34,7 +34,7 @@ class TestGatewayManager(unittest.TestCase):
 
     def setUp(self):
         self.board_patcher = patch(
-            'gateway_code.board_config.BoardConfig.find_board_type')
+            'gateway_code.board_config.BoardConfig._find_board_type')
         self.board = self.board_patcher.start()
         self.board.return_value = 'm3'
 

@@ -57,7 +57,7 @@ class TestRestMethods(unittest.TestCase):
         self.request = self.request_patcher.start()
 
         self.board_patcher = patch(
-            'gateway_code.board_config.BoardConfig.find_board_type')
+            'gateway_code.board_config.BoardConfig._find_board_type')
         self.board = self.board_patcher.start()
         self.board.return_value = 'm3'
 
@@ -266,7 +266,7 @@ class TestRestMethods(unittest.TestCase):
 class TestServerRestMain(unittest.TestCase):
 
     """ Cover functions uncovered by unit tests """
-    @patch('gateway_code.board_config.BoardConfig.find_board_type')
+    @patch('gateway_code.board_config.BoardConfig._find_board_type')
     @patch('subprocess.call')
     @patch('bottle.run')
     def test_main_function(self, run_mock, call_mock, board_type_mock):

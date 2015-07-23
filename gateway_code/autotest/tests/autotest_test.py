@@ -106,15 +106,16 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
-    @mock.patch('gateway_code.board_config.BoardConfig.find_board_type')
+    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_invalid_board_type(self, mock_func):
         mock_func.return_value = 'unkown'
         ret_dict = self.g_v.auto_tests()
         self.assertNotEquals(0, ret_dict['ret'])
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['board_type'], ret_dict['error'])
+        board_config.BoardConfig().clear_instance()
 
-    @mock.patch('gateway_code.board_config.BoardConfig.find_board_type')
+    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_fail_on_setup_control_node(self, mock_func):
         mock_func.return_value = 'm3'
 
@@ -135,6 +136,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.assertTrue(2 <= ret_dict['ret'])
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['setup', 'teardown'], ret_dict['error'])
+        board_config.BoardConfig().clear_instance()
 
 
 class TestAutotestFatalError(unittest.TestCase):
