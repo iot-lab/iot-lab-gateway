@@ -7,6 +7,7 @@ import mock
 from mock import patch
 
 from gateway_code.autotest import autotest
+import gateway_code.board_config as board_config
 
 # pylint: disable=missing-docstring
 # pylint: disable=protected-access
