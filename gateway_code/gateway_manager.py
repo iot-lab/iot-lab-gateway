@@ -8,6 +8,7 @@ from threading import RLock, Timer
 
 import gateway_code.config as config
 from gateway_code import common
+from gateway_code.common import logger_call
 from gateway_code.profile import Profile
 from gateway_code.autotest import autotest
 
@@ -76,6 +77,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     # R0913 too many arguments 6/5
     @common.syncronous('rlock')
+    @logger_call("Gateway Manager : Start experiment")
     def exp_start(self, user, exp_id,  # pylint: disable=R0913
                   firmware_path=None, profile_dict=None, timeout=0):
         """
@@ -150,6 +152,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_stop()
 
     @common.syncronous('rlock')
+    @logger_call("Gateway Manager : Stop experiment")
     def exp_stop(self):
         """
         Stop the current running experiment
@@ -211,6 +214,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         return ret
 
     @common.syncronous('rlock')
+    @logger_call("Gateway Manager : Start open node power")
     def open_power_start(self, power=None):
         """ Power on the open node """
         LOGGER.info('Open power start')
@@ -220,6 +224,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         return ret
 
     @common.syncronous('rlock')
+    @logger_call("Gateway Manager : Stop open node power")
     def open_power_stop(self, power=None):
         """ Power off the open node """
         LOGGER.info('Open power stop')
@@ -249,6 +254,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         return ret
 
     @common.syncronous('rlock')
+    @logger_call("Gateway Manager : Soft reset of open node")
     def node_soft_reset(self, node):
         """
         Reset the given node using reset pin
@@ -265,6 +271,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         return ret
 
     @common.syncronous('rlock')
+    @logger_call("Gateway Manager : Flash of open node")
     def node_flash(self, node, firmware_path):
         """
         Flash the given firmware on the given node

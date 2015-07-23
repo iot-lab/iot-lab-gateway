@@ -7,8 +7,40 @@ import os
 import time
 # http://code.activestate.com/recipes/\
 #     577105-synchronization-decorator-for-class-methods/
-# About the `functools.wrap` http://stackoverflow.com/a/309000/395687
-from functools import wraps
+# About `functools.wraps` http://stackoverflow.com/a/309000/395687
+import functools
+
+import logging
+LOGGER = logging.getLogger('gateway_code')
+
+
+def logger_call(msg, log_lvl='info', err_lvl='warning'):
+    """ Decorator to wrap a function with logs
+
+    Print a message before calling the function and an error message in case of
+    non zero return value.
+
+    :param msg: message used in logs messages
+    :param log_lvl: Logger level for info message
+    :param err_lvl: Logger level for error message
+    """
+
+    log_msg = getattr(LOGGER, log_lvl)
+    log_err = getattr(LOGGER, err_lvl)
+
+    def _wrap(func):
+        """ Decorator implementation """
+        @functools.wraps(func)
+        def _wrapped_f(*args, **kwargs):
+            """ Function wrapped with logs """
+            log_msg(msg)
+            ret = func(*args, **kwargs)
+            if ret:
+                log_err("%s FAILED: ret = %d", msg, ret)
+            return ret
+
+        return _wrapped_f
+    return _wrap
 
 
 def empty_queue(queue):
@@ -52,19 +84,19 @@ def wait_tty(dev_tty, logger, timeout=0):
 
 def syncronous(tlockname):
     """A decorator to place an instance based lock around a method """
-    def _synched(func):
-        """ _decorated """
-        @wraps(func)
-        def _synchronizer(self, *args, **kwargs):
-            """ _decorator """
+    def _wrap(func):
+        """ Decorator implementation """
+        @functools.wraps(func)
+        def _wrapped_f(self, *args, **kwargs):
+            """ Function protected by 'rlock' """
             tlock = self.__getattribute__(tlockname)
             tlock.acquire()
             try:
                 return func(self, *args, **kwargs)
             finally:
                 tlock.release()
-        return _synchronizer
-    return _synched
+        return _wrapped_f
+    return _wrap
 
 
 def abspath(path):
