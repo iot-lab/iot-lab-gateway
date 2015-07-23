@@ -39,7 +39,7 @@ class NodeLeonardo(object):
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
         ret_val = 0
-        # it appears that /dev/ttyON_FOX need some time to be detected
+        # it appears that /dev/ttyON_LEONARDO need some time to be detected
 
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
         ret_val += self.flash(firmware_path)
