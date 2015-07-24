@@ -65,9 +65,9 @@ class TestWaitTTY(unittest.TestCase):
     def test_wait_tty(self):
         """ Test running wait_tty fct """
         logger = mock.Mock()
-        self.assertEquals(0, common.wait_tty('/dev/null', logger))
+        self.assertEquals(0, common.wait_tty('/dev/null', logger, 0))
         self.assertEquals(0, logger.error.call_count)
-        self.assertNotEquals(0, common.wait_tty('no_tty_file', logger))
+        self.assertNotEquals(0, common.wait_tty('no_tty_file', logger, 0))
         self.assertEquals(1, logger.error.call_count)
 
 
