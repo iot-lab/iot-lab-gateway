@@ -73,11 +73,27 @@ class TestRestMethods(unittest.TestCase):
         self.request_patcher.stop()
 
     @patch('bottle.route')
-    def test_routes(self, mocked_func):
-        self.s_r.add_route('open_start', '/test', 'POST', 'NOT_A_FUNCTION')
-        self.assertFalse(mocked_func.called)
-        self.s_r.add_route('open_start', '/test', 'POST', 'flash')
-        self.assertTrue(mocked_func.called)
+    def test_routes(self, m_route):
+
+        def _func():
+            pass
+
+        ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
+        self.assertTrue(m_route.called)
+        self.assertIsNotNone(ret)
+        m_route.reset_mock()
+
+        # Not a function
+        ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
+        self.assertFalse(m_route.called)
+        self.assertIsNone(ret)
+        m_route.reset_mock()
+
+        # Non existent
+        ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
+        self.assertFalse(m_route.called)
+        self.assertIsNone(ret)
+        m_route.reset_mock()
 
     def test_exp_start_file_and_profile(self):
         idle = FileUpload('elf32arm0X1234', 'idle.elf')

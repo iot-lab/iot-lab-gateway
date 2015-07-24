@@ -35,43 +35,28 @@ class GatewayRest(object):
         """
         Declare the REST supported methods depending on board config
         """
-        # TODO : discuss about option functions
-        self.add_route(
-            self.exp_start, '/exp/start/<exp_id:int>/<user>', 'POST')
-
-        self.add_route(
-            self.exp_stop, '/exp/stop', 'DELETE')
-
-        self.add_route(
-            self.exp_update_profile, '/exp/update', 'POST')
-
-        self.add_route(
-            self.open_start, '/open/start', 'PUT')
-
-        self.add_route(
-            self.open_stop, '/open/stop', 'PUT')
-
-        self.add_route(
-            self.status, '/status', 'GET')
-
+        # GatewayManager global functions
+        bottle.route('/exp/start/<exp_id:int>/<user>', 'POST', self.exp_start)
+        bottle.route('/exp/stop', 'POST', self.exp_stop)
+        bottle.route('/status', 'GET', self.status)
+        # Control node functions
+        bottle.route('/exp/update', 'POST', self.exp_update_profile)
+        bottle.route('/open/start', 'PUT', self.open_start)
+        bottle.route('/open/stop', 'PUT', self.open_stop)
+        # Autotest functions
         # query_string: channel=int[11:26]
-        self.add_route(
-            self.auto_tests, '/autotest', 'PUT', 'flash')
+        bottle.route('/autotest', 'PUT', self.auto_tests)
+        bottle.route('/autotest/<mode>', 'PUT', self.auto_tests)
 
-        self.add_route(
-            self.auto_tests, '/autotest/<mode>', 'PUT', 'flash')
-        # node specific commands
-        self.add_route(
-            self.open_flash, '/open/flash', 'POST', 'flash')
-
-        self.add_route(
-            self.open_soft_reset, '/open/reset', 'PUT', 'reset')
-
-        self.add_route(
-            self.open_debug_start, '/open/debug/start', 'PUT', 'debug_start')
-
-        self.add_route(
-            self.open_debug_stop, '/open/debug/stop', 'PUT', 'debug_stop')
+        # Add open_node functions if available
+        self.conditional_route('flash', '/open/flash', 'POST',
+                               self.open_flash)
+        self.conditional_route('reset', '/open/reset', 'PUT',
+                               self.open_soft_reset)
+        self.conditional_route('debug_start', '/open/debug/start', 'PUT',
+                               self.open_debug_start)
+        self.conditional_route('debug_stop', '/open/debug/stop', 'PUT',
+                               self.open_debug_stop)
 
     def exp_start(self, user, exp_id):
         """
@@ -256,21 +241,16 @@ class GatewayRest(object):
         LOGGER.debug('REST: status')
         return {'ret': self.gateway_manager.status()}
 
-    def add_route(self, server_function, route_patern, route_type,
-                  node_function=None):
-        """
-        if node function exists, the route to server_function is added
-        with the right patern
-        """
+    def conditional_route(self, node_func, path, *route_args, **route_kwargs):
+        """ Add route if node implements 'node_func' """
+        has_fct = callable(getattr(self.board_class, node_func, None))
+        if has_fct:
+            LOGGER.info('RestServer: Route %s registered', path)
+            return bottle.route(path, *route_args, **route_kwargs)
+        else:
+            LOGGER.debug('RestServer: Route %s not available', path)
+            return None
 
-        if node_function is None or hasattr(self.board_class, node_function):
-            # just here to prevent a too long condition statement
-            if node_function is None or callable(getattr(self.board_class, node_function)):
-                bottle.route(route_patern, route_type)(server_function)
-                return
-        LOGGER.info(
-            'Rest Server : The route %s does not exist for this node',
-            route_patern)
 
 #
 # Command line functions
