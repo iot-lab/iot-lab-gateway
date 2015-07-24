@@ -38,7 +38,9 @@ class TestGetHostname(unittest.TestCase):
     def tearDown(self):
         board_config.BoardConfig().clear_instance()
 
-    def test_get_hosname(self):
+    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
+    def test_get_hosname(self, mock_find_board_type):
+        mock_find_board_type.return_value = 'm3'
         self.assertNotEquals('', board_config.BoardConfig().hostname)
 
 

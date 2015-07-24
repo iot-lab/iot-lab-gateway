@@ -122,7 +122,9 @@ class TestControlNodeSerial(unittest.TestCase):
         ret = self.cn._config_oml(None)
         self.assertEquals([], ret)
 
-    def test_config_oml(self):
+    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
+    def test_config_oml(self, mock_board_type):
+        mock_board_type.return_value = 'm3'
         exp_desc = {
             'user': 'harter',
             'exp_id': '1234',
