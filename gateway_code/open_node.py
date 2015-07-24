@@ -47,7 +47,7 @@ class NodeLeonardo(object):
         ret_val = 0
         # it appears that /dev/ttyON_LEONARDO need some time to be detected
 
-        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
         return ret_val
@@ -56,6 +56,9 @@ class NodeLeonardo(object):
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
+
+        common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
         ret_val += self.serial_redirection.stop()
         # Reboot needs 8 seconds before ending linux sees it in < 2 seconds
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
@@ -67,7 +70,6 @@ class NodeLeonardo(object):
         """ Flash the given firmware on Leonardo node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware """
-
         if AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG):
             LOGGER.error("FLASH : Leonardo's jtag port not available")
             return 1
@@ -115,7 +117,7 @@ class NodeFox(object):
         # it appears that /dev/ttyON_FOX need some time to be detected
 
         # Found 1.333 seconds for timeout, so let some margin
-        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
+        common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
         return ret_val
@@ -127,7 +129,7 @@ class NodeFox(object):
         # And then restarted again in cn teardown.
         # This leads to problem where the TTY disappears and reappears during
         # the first 2 seconds. So let some time if it wants to disappear first.
-        time.sleep(2)
+        common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=3)
         # cleanup debugger before flashing
         ret_val += self.debug_stop()
