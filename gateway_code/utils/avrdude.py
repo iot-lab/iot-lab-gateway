@@ -60,6 +60,7 @@ class AvrDude(object):
          - The software way by opening and closing the serial port at 1200bauds
         This method perform the second method.
         """
+        LOGGER.info("Triggering bootloader")
         try:
             serial.Serial(tty, baudrate).close()
             # Wait the programming interface to be available
