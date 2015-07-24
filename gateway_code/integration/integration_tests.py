@@ -210,15 +210,12 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertEquals({'ret': 0}, self.app.open_start())
         self.assertEquals({'ret': 0}, self.app.open_stop())
-
         # stop exp
         self.assertEquals({'ret': 0}, self.app.exp_stop())
 
         # Got no error during tests (use call_args_list for printing on error)
         self.assertEquals([], m_error.call_args_list)
 
-        # node is correctly shutdown
-        time.sleep(2)  # wait control node is really reset
         # reset firmware should fail and logger error will be called
         self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
         self.assertTrue(m_error.called)
