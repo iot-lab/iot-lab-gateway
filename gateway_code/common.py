@@ -73,6 +73,9 @@ def wait_cond(timeout, value, fct, *args, **kwargs):
             return False
         time.sleep(0.1)
 
+# The embedded need some time to detect the tty
+# At least of 1.33 seconds has been (so ~ x2)
+TTY_DETECT_TIME = 3
 
 def wait_tty(dev_tty, logger, timeout=0):
     """ Wait that tty is present """
@@ -80,6 +83,13 @@ def wait_tty(dev_tty, logger, timeout=0):
         return 0
     logger.error('Error Open Node tty not visible: %s', dev_tty)
     return 1
+
+def wait_no_tty(dev_tty, timeout=0):
+    """
+    If present, wait the tty to desapear with timeout
+    If absent, go on
+     """
+    wait_cond(timeout, False, os.path.exists, dev_tty)
 
 
 def syncronous(tlockname):
