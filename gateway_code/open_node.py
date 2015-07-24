@@ -191,12 +191,13 @@ class NodeA8(object):
     def _debug_thread(self, timeout):
         """ Monitor A8 tty to check if node booted """
         t_start = time.time()
-        # TODO : error case when self.TTY is not detected
-        #    OSError: [Errno 2] No such file or directory: '/dev/ttyON_A8'
-        # Happend in tests that it disappeared between the first 'wait_tty' and
-        # in this thread
-        self._a8_expect = SerialExpect(self.TTY, self.BAUDRATE, LOGGER)
-        match = self._a8_expect.expect(' login: ', timeout=timeout)
+        try:
+            self._a8_expect = SerialExpect(self.TTY, self.BAUDRATE, LOGGER)
+            match = self._a8_expect.expect(' login: ', timeout=timeout)
+        except OSError:
+            # Happend in tests that tty disappeared between the first
+            # 'wait_tty' and serial creation (fast start/stop)
+            match = ''
         delta_t = time.time() - t_start
 
         if match != '':
