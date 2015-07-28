@@ -19,8 +19,8 @@ class TestGetClass(unittest.TestCase):
 
     @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_get_class(self, mock_func):
-        board_config.BoardConfig().clear_instance()
         mock_func.return_value = 'm3'
+        board_config.BoardConfig().clear_instance()
         self.assertEquals(
             board_config.BoardConfig().board_class.TTY, '/dev/ttyON_M3')
         board_config.BoardConfig().clear_instance()
@@ -50,9 +50,12 @@ class TestSingletonPatern(unittest.TestCase):
     def test_single_instance(self, mock_func):
         mock_func.return_value = 'm3'
         board_config.BoardConfig()
+        first_instance = board_config.BoardConfig._instance
         board_config.BoardConfig()
+        second_instance = board_config.BoardConfig._instance
         board_config.BoardConfig()
         mock_func.assert_called_once_with()
+        self.assertEquals(first_instance, second_instance)
         board_config.BoardConfig().clear_instance()
 
 
