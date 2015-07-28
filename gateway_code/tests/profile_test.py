@@ -7,7 +7,7 @@ import os
 import re
 import json
 import gateway_code.profile
-from gateway_code import open_node
+from gateway_code.open_nodes.node_m3 import NodeM3
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 PROFILES_DIR = CURRENT_DIR + 'profiles/'
@@ -28,7 +28,7 @@ class TestsSimpleProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.Profile(open_node.NodeM3,
+                ret = gateway_code.profile.Profile(NodeM3,
                                                    **profile_dict)
                 self.assertTrue(ret.consumption is None, str(ret))
 
@@ -41,7 +41,7 @@ class TestsSimpleProfile(unittest.TestCase):
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
                 try:
-                    gateway_code.profile.Profile(open_node.NodeM3,
+                    gateway_code.profile.Profile(NodeM3,
                                                  **profile_dict)
                 except (AssertionError, TypeError):
                     pass
@@ -59,7 +59,7 @@ class TestsConsumptionProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.Profile(open_node.NodeM3,
+                ret = gateway_code.profile.Profile(NodeM3,
                                                    **profile_dict)
                 self.assertTrue(ret.consumption is not None, str(ret))
 
@@ -71,7 +71,7 @@ class TestsConsumptionProfile(unittest.TestCase):
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
                 self.assertRaises(AssertionError, gateway_code.profile.Profile,
-                                  open_node.NodeM3, **profile_dict)
+                                  NodeM3, **profile_dict)
 
 
 class TestsRadioProfile(unittest.TestCase):
@@ -85,7 +85,7 @@ class TestsRadioProfile(unittest.TestCase):
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
                 print profile_dict
-                ret = gateway_code.profile.Profile(open_node.NodeM3,
+                ret = gateway_code.profile.Profile(NodeM3,
                                                    **profile_dict)
                 self.assertTrue(ret.radio is not None, str(ret))
 
@@ -97,7 +97,7 @@ class TestsRadioProfile(unittest.TestCase):
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
                 self.assertRaises(AssertionError, gateway_code.profile.Profile,
-                                  open_node.NodeM3, **profile_dict)
+                                  NodeM3, **profile_dict)
 
 
 class TestsMixedProfile(unittest.TestCase):
@@ -109,7 +109,7 @@ class TestsMixedProfile(unittest.TestCase):
         for profile_file in files:
             with open(profile_file) as _file:
                 profile_dict = json.load(_file)
-                ret = gateway_code.profile.Profile(open_node.NodeM3,
+                ret = gateway_code.profile.Profile(NodeM3,
                                                    **profile_dict)
                 self.assertTrue(ret.radio is not None, str(ret))
                 self.assertTrue(ret.consumption is not None, str(ret))

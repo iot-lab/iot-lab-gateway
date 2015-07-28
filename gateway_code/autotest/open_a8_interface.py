@@ -10,7 +10,7 @@ from subprocess import check_output, check_call, Popen
 from subprocess import STDOUT, CalledProcessError
 
 from gateway_code.config import static_path
-from gateway_code.open_node import NodeA8
+from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.utils.serial_expect import SerialExpect
 
 

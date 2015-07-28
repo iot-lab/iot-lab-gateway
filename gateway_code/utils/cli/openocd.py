@@ -26,8 +26,8 @@ _RESET.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'))
 def _node_config(node):
     """ Get node openocd config for 'node' in ('CN', 'M3', 'FOX') """
     # This is a HACK for the moment, nodes should be deduced otherwise
-    from gateway_code.open_node import NodeM3
-    from gateway_code.open_node import NodeFox
+    from gateway_code.open_nodes.node_m3 import NodeM3
+    from gateway_code.open_nodes.node_fox import NodeFox
     from gateway_code.control_node.cn import ControlNode
     _config_files = {
         'CN': ControlNode.OPENOCD_CFG_FILE,

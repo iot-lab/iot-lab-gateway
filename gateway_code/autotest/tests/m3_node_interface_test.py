@@ -8,7 +8,7 @@ import mock
 import threading
 import Queue
 from gateway_code.autotest import m3_node_interface
-from gateway_code.open_node import NodeM3
+from gateway_code.open_nodes.node_m3 import NodeM3
 
 # errors when analysing self.serial
 # pylint: disable=maybe-no-member

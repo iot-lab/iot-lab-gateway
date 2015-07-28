@@ -21,7 +21,7 @@ _FLASH.add_argument('firmware', type=str, help="Firmware name")
 
 def _node_type(node):
     """ Get node avrdude config for 'node' in ('LEONARDO') """
-    from gateway_code.open_node import NodeLeonardo
+    from gateway_code.open_nodes.node_leonardo import NodeLeonardo
     _config = {
         'LEONARDO': NodeLeonardo,
     }
