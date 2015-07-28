@@ -11,6 +11,8 @@ STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
 PKG_DIR = os.path.abspath(os.path.dirname(__file__))
 STATIC_DIR = os.path.join(PKG_DIR, 'static')
 
+OPEN_NODES_PATH = 'gateway_code.open_nodes.node_{0}'
+
 
 def static_path(static_file):
     """ Return the 'static_file' relative path """
@@ -24,6 +26,7 @@ EXP_FILES = {'consumption': 'consumption/{node_id}.oml',
              'event': 'event/{node_id}.oml',
              'sniffer': 'sniffer/{node_id}.oml',
              'log': 'log/{node_id}.log'}
+
 
 def default_profile():
     """ Return the default profile """

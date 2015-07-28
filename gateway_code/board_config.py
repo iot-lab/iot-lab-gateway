@@ -7,10 +7,9 @@
 
 import os
 from importlib import import_module
+from gateway_code import config
 
 GATEWAY_CONFIG_PATH = '/var/local/config/'
-
-_OPEN_NODES_PATH = 'gateway_code.open_nodes.node_{0}'
 
 
 class BoardConfig(object):
@@ -37,9 +36,9 @@ class BoardConfig(object):
 
         self.board_type = self._find_board_type()
         self.hostname = self.get_hostname()
-        open_node_path = _OPEN_NODES_PATH.format(self.board_type)
 
         try:
+            open_node_path = config.OPEN_NODES_PATH.format(self.board_type)
             module = import_module(open_node_path)
             self.board_class = getattr(
                 module, 'Node' + self.board_type.title())
