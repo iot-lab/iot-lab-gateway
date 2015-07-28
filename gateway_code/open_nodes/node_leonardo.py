@@ -71,7 +71,7 @@ class NodeLeonardo(object):
         """ Flash the given firmware on Leonardo node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware """
-        if AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG):
+        if AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG, timeout=15):
             LOGGER.error("FLASH : Leonardo's jtag port not available")
             return 1
         ret_val = 0

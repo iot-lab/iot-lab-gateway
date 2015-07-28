@@ -62,6 +62,7 @@ class AvrDude(object):
         """
         LOGGER.info("Triggering bootloader")
         try:
+            LOGGER.info("Trigerring bootloader")
             serial.Serial(tty, baudrate).close()
             # Wait the programming interface to be available
             return common.wait_tty(tty_prog, LOGGER, timeout)
