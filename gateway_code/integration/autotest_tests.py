@@ -13,8 +13,7 @@ from gateway_code.integration import test_integration_mock
 
 import gateway_code.autotest.m3_node_interface
 import gateway_code.autotest.autotest
-from gateway_code import open_node
-# TODO : delete
+from gateway_code.open_nodes.node_m3 import NodeM3
 import gateway_code.config
 
 import gateway_code.board_config as board_config
