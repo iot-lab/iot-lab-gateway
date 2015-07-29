@@ -23,11 +23,33 @@ from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
 
+
+import functools
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
 MAC_CMD = "cat /sys/class/net/eth0/address"
 MAC_RE = re.compile(r'([0-9a-f]{2}:){5}[0-9a-f]{2}')
+
+
+def autotest_checker(test):
+    """
+    Allow to select to launch a test or not, if the string test
+    is present in the AUTOTEST_AVAILABLE of the board
+    """
+    autotests = board_config.BoardConfig().board_class.AUTOTEST_AVAILABLE
+
+    def _wrap(func):
+        """ Decorator implementation """
+        @functools.wraps(func)
+        def _wrapped_f(*args, **kwargs):
+            """ Function wrapped with test """
+            if test not in autotests:
+                return 0
+            else:
+                return func(*args, **kwargs)
+        return _wrapped_f
+    return _wrap
 
 
 class FatalError(Exception):
@@ -340,7 +362,30 @@ class AutoTestManager(object):
 #
 # Test implementation
 #
+    @autotest_checker('test_blink')
+    def test_blink(self, ret_val):
+        """
+        This function made the led blink if no errors occured 
+        """
+        # set_leds
+        self._on_call(['leds_off', '7'])
+        if ret_val == 0:
+            self._on_call(['leds_blink', '7', '500'])
+            self.g_m.control_node.protocol.green_led_blink()
+        else:  # pragma: no cover
+            pass
 
+    @autotest_checker('test_echo')
+    def test_echo(self):
+        """ run the echo command on the serial port """
+        cmd = 'echo HELLO WORLD'
+        answer = self.on_serial.send_command(cmd)
+        if answer[0:2] != ['HELLO', 'WORLD']:
+            return 1
+        return 0
+
+
+    @autotest_checker('test_time')
     def check_get_time(self):
         """ runs the 'get_time' command
         Error on this check are fatal
@@ -355,6 +400,7 @@ class AutoTestManager(object):
         if 0 != ret_val:  # pragma: no cover
             raise FatalError("get_time failed. Can't communicate with m3 node")
 
+    @autotest_checker('test_uid')
     def get_uid(self):
         """ runs the 'get_uid' command
         And add the resulting UID to the global return dictionary
@@ -378,6 +424,7 @@ class AutoTestManager(object):
 # sensors and flash
 #
 
+    @autotest_checker('test_flash')
     def test_flash(self, flash):
         """ test Flash """
         if not flash:
@@ -387,6 +434,7 @@ class AutoTestManager(object):
         test_ok = len(values)
         return self._check(tst_ok(test_ok), 'test_flash', values)
 
+    @autotest_checker('test_pressure')
     def test_pressure(self):
         """ test pressure sensor """
         # ['ACK', 'get_pressure', '9.944219E2', 'mbar']
@@ -394,6 +442,7 @@ class AutoTestManager(object):
         test_ok = 1 < len(set(values))
         return self._check(tst_ok(test_ok), 'test_pressure', values)
 
+    @autotest_checker('test_light')
     def test_light(self):
         """ test light sensor with leds"""
         # ['ACK', 'get_light', '5.2001953E1', 'lux']
@@ -439,6 +488,7 @@ class AutoTestManager(object):
         self._on_call(['test_pps_stop'])
         return ret_val
 
+    @autotest_checker('test_gps')
     def test_gps(self, gps):
         """ Test the gps """
         if not gps:
@@ -452,10 +502,12 @@ class AutoTestManager(object):
 #
 # Control Node <--> Open Node Interraction
 #
+    @autotest_checker('test_gpio')
     def test_gpio(self):
         """ test GPIO connections """
         return self._test_on_cn(5, ['test_gpio'])
 
+    @autotest_checker('test_i2c')
     def test_i2c(self):
         """ test i2c communication """
         return self._test_on_cn(1, ['test_i2c'])
@@ -488,17 +540,20 @@ class AutoTestManager(object):
 #
 # Inertial Measurement Unit
 #
+    @autotest_checker('test_magneto')
     def test_magneto(self):
         """ test magneto sensor """
         # ['ACK', 'get_magneto' '4.328358E-2', '6.716418E-2', '-3.880597E-1',
         # 'gauss']
         return self._test_xyz_sensor('get_magneto')
 
+    @autotest_checker('test_gyro')
     def test_gyro(self):
         """ test gyro sensor """
         # ['ACK', 'get_gyro', '1.07625', '1.75', '5.2500002E-2', 'dps']
         return self._test_xyz_sensor('get_gyro')
 
+    @autotest_checker('test_accelero')
     def test_accelero(self):
         """ test accelerator sensor """
         # ['ACK', 'get_accelero', '3.6E-2', '-1.56E-1', '1.0320001', 'g']
@@ -517,7 +572,7 @@ class AutoTestManager(object):
 #
 # Radio tests
 #
-
+    @autotest_checker('test_radio_ping_pong')
     def test_radio_ping_pong(self, channel):
         """ test Radio Ping-pong with control-node """
         if channel is None:
@@ -526,6 +581,7 @@ class AutoTestManager(object):
         return self._test_on_cn(10, ['test_radio_ping_pong'],
                                 ['radio_ping_pong'], [str(channel), '3dBm'])
 
+    @autotest_checker('test_radio_with_rssi')
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
         self.cn_measures = []
@@ -628,6 +684,7 @@ class AutoTestManager(object):
         # Value ranges may be validated with an Idle firmware
         return ret_val
 
+    @autotest_checker('test_leds_with_consumption')
     def test_leds_with_consumption(self):
         """ Test Leds with consumption
 
