@@ -31,6 +31,11 @@ class NodeLeonardo(object):
         'programmer': 'avr109',
     }
 
+    AUTOTEST_AVAILABLE = ['test_echo',
+                          'test_time',
+                          'test_uid',
+                          ]
+
     ALIM = '5V'
 
     AUTOTEST_ANSWERS = ['check_get_time',

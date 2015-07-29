@@ -28,18 +28,21 @@ class NodeA8(object):
     # 15 secs was not always enough
     A8_TTY_DETECT_TIME = 20
 
-    AUTOTEST_ANSWERS = ['check_get_time',
-                        'get_uid',
-                        'test_gyro',
-                        'test_magneto',
-                        'test_accelero',
-                        'test_gpio',
-                        'test_i2c',
-                        'test_radio_ping_pong',
-                        'test_radio_with_rssi',
-                        'test_consumption_dc',
-                        'test_gps',
-                        'test_consumption_batt']
+    AUTOTEST_AVAILABLE = ['test_echo',
+                          'test_time',
+                          'test_uid',
+                          'test_gyro',
+                          'test_magneto',
+                          'test_accelero',
+                          'test_gpio',
+                          'test_i2c',
+                          'test_radio_ping_pong',
+                          'test_radio_with_rssi',
+                          'test_consumption_dc',
+                          'test_gps',
+                          'test_consumption_batt',
+                          'test_blink',
+                          ]
 
     def __init__(self):
         self._a8_expect = None
