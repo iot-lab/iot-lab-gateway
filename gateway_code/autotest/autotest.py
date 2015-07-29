@@ -14,7 +14,6 @@ from collections import defaultdict
 
 import gateway_code.board_config as board_config
 
-
 from gateway_code.open_nodes.node_m3 import NodeM3
 from gateway_code.open_nodes.node_a8 import NodeA8
 
@@ -268,6 +267,7 @@ class AutoTestManager(object):
             self._setup_open_node_connection(board_type, board_class)
             self.check_get_time()
             self.get_uid()
+            self.test_echo()
 
             #
             # Other tests, run on DC
@@ -275,42 +275,35 @@ class AutoTestManager(object):
             ret = self.g_m.control_node.open_start('dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
-            if board_type != 'leonardo':
-                # test IMU
-                ret_val += self.test_gyro()
-                ret_val += self.test_magneto()
-                ret_val += self.test_accelero()
+            # test IMU
+            ret_val += self.test_gyro()
+            ret_val += self.test_magneto()
+            ret_val += self.test_accelero()
 
-                if board_type != 'fox':
-                    # test m3-on communication
-                    ret_val += self.test_gpio()
-                    ret_val += self.test_i2c()
+            # test m3-on communication
+            ret_val += self.test_gpio()
+            ret_val += self.test_i2c()
 
-                # radio tests
-                ret_val += self.test_radio_ping_pong(channel)
-                ret_val += self.test_radio_with_rssi(channel)
+            # radio tests
+            ret_val += self.test_radio_ping_pong(channel)
+            ret_val += self.test_radio_with_rssi(channel)
 
-                # test consumption measures
-                ret_val += self.test_consumption_dc()
-                # m3 specific tests
-                if 'm3' == board_type:  # pragma: no branch
-                    # cannot test this with a8 I think
-                    ret_val += self.test_leds_with_consumption()
-                    # test m3 specific sensors
-                    ret_val += self.test_pressure()
-                    ret_val += self.test_light()
-                    ret_val += self.test_flash(flash)
+            # test consumption measures
+            ret_val += self.test_consumption_dc()
+            # m3 specific tests
 
-                # run test_gps if requested
-                ret_val += self.test_gps(gps)
+            # cannot test this with a8 I think
+            ret_val += self.test_leds_with_consumption()
+            # test m3 specific sensors
+            ret_val += self.test_pressure()
+            ret_val += self.test_light()
+            ret_val += self.test_flash(flash)
 
-                # set_leds
-                self._on_call(['leds_off', '7'])
-                if ret_val == 0:
-                    self._on_call(['leds_blink', '7', '500'])
-                    self.g_m.control_node.protocol.green_led_blink()
-                else:  # pragma: no cover
-                    pass
+            # run test_gps if requested
+            ret_val += self.test_gps(gps)
+
+            # set_leds
+            self.test_blink(ret_val)
         except FatalError as err:
             # Fatal Error during test, don't run further tests
             LOGGER.error("Fatal Error in tests, stop further tests: %s",
