@@ -1,0 +1,5 @@
+# Leonardo Nodes
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_Srl_Arduino_Mega_754353530383515151E0",  ATTRS{idProduct}=="0042", SYMLINK+="ttyON_MEGA", RUN+="/bin/stty -F /dev/ttyON_MEGA 57600"
+
+
+SUBSYSTEMS=="usb", ATTRS{idProduct}=="0042", ATTRS{idVendor}=="2a03", MODE="0664", GROUP="dialout"
