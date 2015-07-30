@@ -46,7 +46,9 @@ def autotest_checker(test):
             if test not in autotests:
                 return 0
             else:
-                return func(*args, **kwargs)
+                retour = func(*args, **kwargs)
+                time.sleep(1)
+                return retour
         return _wrapped_f
     return _wrap
 
@@ -265,8 +267,9 @@ class AutoTestManager(object):
             ret_val += self.test_consumption_batt(board_type)
             # switch to DC and configure open node
             self._setup_open_node_connection(board_type, board_class)
-            self.check_get_time()
+            time.sleep(1)
             self.get_uid()
+            self.check_get_time()
             self.test_echo()
 
             #
