@@ -9,7 +9,7 @@ from mock import patch
 from gateway_code.autotest import autotest
 import gateway_code.board_config as board_config
 
-raise unittest.SkipTest("Fail to mock proper function, the decorator made test_gps fail")
+raise unittest.SkipTest("Temporary disable, mock failed")
 
 
 # pylint: disable=missing-docstring

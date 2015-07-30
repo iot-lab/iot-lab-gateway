@@ -361,7 +361,7 @@ class AutoTestManager(object):
     @autotest_checker('test_blink')
     def test_blink(self, ret_val):
         """
-        This function made the led blink if no errors occured 
+        This function made the led blink if no errors occured
         """
         # set_leds
         self._on_call(['leds_off', '7'])
@@ -379,7 +379,6 @@ class AutoTestManager(object):
         if answer[0:2] != ['HELLO', 'WORLD']:
             return 1
         return 0
-
 
     @autotest_checker('test_time')
     def check_get_time(self):
