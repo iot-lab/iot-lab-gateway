@@ -9,6 +9,7 @@ from gateway_code.utils.avrdude import AvrDude
 from gateway_code.utils.serial_redirection import SerialRedirection
 
 import serial
+import time
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -85,7 +86,10 @@ class NodeMega(object):
         try:
             ser = serial.Serial(self.TTY, self.BAUDRATE)
             ser.setDTR(False)
+            time.sleep(0.5)
             ser.setDTR(True)
+            time.sleep(0.5)
+            ser.close()
         except OSError:
             LOGGER.warning("Nothing to reset")
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
