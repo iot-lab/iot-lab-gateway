@@ -98,6 +98,8 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
             sock.connect((host, port))
             sock_file = sock.makefile('rw')
             sock.settimeout(5.0)
+            # the mega needs at least 1 second
+            time.sleep(1.5)
             sock.send(command + '\n')
             ret = sock_file.readline().rstrip()
         except (socket.timeout, IOError):
