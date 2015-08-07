@@ -40,7 +40,7 @@
 \maketitle
 
 \section{Introduction}
-The Iot-LAB experimental allow users to conduct remote experiments on wireless sensor board (such as an arduino board with an Xbee module).
+The Iot-LAB experimental platform allow users to conduct remote experiments on wireless sensor board (such as an arduino board with an Xbee module).
 For this purpose,a board called \textit{open-node}, can be connected to the IoT-LAB gateway, via the usb port.\newline
 Bellow, the picture of an open-node connected to a gateway.\newline
 \begin{figure}[H]
@@ -49,19 +49,19 @@ Bellow, the picture of an open-node connected to a gateway.\newline
 \caption{Gateway and wireless sensor board (e.g. Fox node)}
 \label{fig1}
 \end{figure}
-On the linux distribution installed on the gateway, a Python code running provides an API able to receive remote commands to manage the open-node. The gateway can perfom open-node commands like flashing a firmware in the open-node or starting his power supply on. \newline
+On the linux distribution installed on the gateway, a Python module running provides a REST API able to receive remote commands to manage the open-node. The gateway can perform open-node commands like flashing a firmware in the open-node or starting his power supply on. \newline
 This document show how to integrate a new open-node in the Iot-Lab platform.\newline
-The application is based on a system of plugin to integrate them.
+This integration is based on a plugin system provides by the Python module.
 \section{Requirement}
 Your node must be powered by USB.\newline
-You must have developed at least two firmware for your node : an autotest firmware and an idle firmware (describe in section bellow).\newline
-\section{Adding an open-node in the gateway code}
-To clone the the repository, you can use this command :
+You must have developed at least two firmwares for your node : an autotest firmware and an idle firmware (describe in section bellow).\newline
+\section{Adding a new open-node}
+You can get the Python module code by cloning the git repository :
 \begin{verbatim}
-git clone git@github.com:iot-lab/iot-lab-gateway.git
+$git clone git@github.com:iot-lab/iot-lab-gateway.git
 \end{verbatim}
-\subsection{Directory architecture}
-This section will present you the architecture of the code gateway
+\subsection{Module architecture}
+This section present the module architecture.
 \medskip
 \dirtree{%
 .1 bin/.
@@ -103,7 +103,7 @@ ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_M3"
 SUBSYSTEM=="usb", ATTR{idProduct}=="6011", ATTR{idVendor}=="0403", 
 MODE="0664", GROUP="dialout"
 \end{verbatim}
-\subsection{Writing python code}
+\subsection{Plugin integration}
 \subsubsection{Naming convention}
 As said previously, the application is based on a system of plugin : if you want to add a node, you just have to write a specific file to interface with the application.\newline
 When the application is launched, the gateway take the name of your node located in the file \begin{verbatim}/var/local/config/board_type\end{verbatim} 

@@ -1,43 +1,72 @@
-IoT-LAB open node generic integration
-=====================================
-
 Introduction
 ============
 
-The Iot-LAB experimental allow users to conduct remote experiments on
-wireless sensor board (such as an arduino board with an Xbee module).
-For this purpose,a board called *open-node*, can be connected to the
-IoT-LAB gateway, via the usb port.Bellow, the picture of an open-node
-connected to a gateway.
+The Iot-LAB experimental platform allow users to conduct remote
+experiments on wireless sensor board (such as an arduino board with an
+Xbee module). For this purpose,a board called *open-node*, can be
+connected to the IoT-LAB gateway, via the usb port.Bellow, the picture
+of an open-node connected to a gateway.
 
 ![Gateway and wireless sensor board (e.g. Fox node)](gateway.jpg "fig:")
 [Gateway and wireless sensor board (e.g. Fox node)]
 
-On the linux distribution installed on the gateway, a Python code
-running provides an API able to receive remote commands to manage the
-open-node. The gateway can perfom open-node commands like flashing a
-firmware in the open-node or starting his power supply on. This document
-show how to integrate a new open-node in the Iot-Lab platform.The
-application is based on a system of plugin to integrate them.
+On the linux distribution installed on the gateway, a Python module
+running provides a REST API able to receive remote commands to manage
+the open-node. The gateway can perform open-node commands like flashing
+a firmware in the open-node or starting his power supply on. This
+document show how to integrate a new open-node in the Iot-Lab
+platform.This integration is based on a plugin system provides by the
+Python module.
 
 Requirement
 ===========
 
 Your node must be powered by USB.You must have developed at least two
-firmware for your node : an autotest firmware and an idle firmware
+firmwares for your node : an autotest firmware and an idle firmware
 (describe in section bellow).
 
-Adding an open-node in the gateway code
-=======================================
+Adding a new open-node
+======================
 
-To clone the the repository, you can use this command :
+You can get the Python module code by cloning the git repository :
 
-    git clone git@github.com:iot-lab/iot-lab-gateway.git
+    $git clone git@github.com:iot-lab/iot-lab-gateway.git
 
-Directory architecture
-----------------------
+Module architecture
+-------------------
 
-This section will present you the architecture of the code gateway
+This section present the module architecture.
+|
++-bin/
+| |
+| +-----rules.d .................. Directory for the udev rules
+| +-----m3.rules
+| +-----a8.rules
+|
++-gateway_code/
+| |
+| +-----rest-server.py ........... The API entry point
+| +-----common.py
+| +-----gateway_manager.py
+| +-----autotest/...............................Directory for all the autotests
+| +-----utils/.. Contains script for serial operation such as serial redirection or programmer
+|        |
+|    +-----avrdude.py
+|    +-----openocd.py
+|
++-------static/..... Contains the firmwares and the configuration file
+|    |
+|        +-----idle_m3.elf
+|    +-----m3_autotest.elf
+|    +-----iot-lab-m3.cnf
++-------open_nodes/... Contains the code to interact with the open-node, you will put your code here
+     |
+     +-----node_a8.py
+     +-----node_m3.py
+     +-----node_fox.py
+     +-----node_leonardo.py
+     +-----node_mega.py
+
 
 Udev rules
 ----------
@@ -60,8 +89,8 @@ ttyON\_NODENAME. Bellow the example of the udev rule for the node M3 :
     SUBSYSTEM=="usb", ATTR{idProduct}=="6011", ATTR{idVendor}=="0403", 
     MODE="0664", GROUP="dialout"
 
-Writing python code
--------------------
+Plugin integration
+------------------
 
 ### Naming convention
 
@@ -109,16 +138,16 @@ Some service are always available such as the start and stop of an
 experiment. The method required by these service are mandatory and are
 the folowing :
 
-- __setup__
-:
+setup
+:   \
     Perform all the action required to properly start an experiment.
 
-- __teardown__
-:
+teardown
+:   \
     Perform all the action required to properly stop an experiment.
 
-- __flash__
-:
+flash
+:   \
     Flash a firmware on the open-node.
 
 Others methods are not mandatory and can be implemented if you need
@@ -287,74 +316,72 @@ Autotests available
 Bellow you will find command that can be sent by the gateway during the
 tests and the corresponding format of the return expected.
 
-__test\_echo__
-:   
+test\_echo
+:   \
     Format of the answer : already describe in the autotest section.
 
-__test\_get\_time__
-:   
+test\_get\_time
+:   \
     Format of the answer : ACK check\_get\_time 122953 tick\_32khz
 
-__test\_uid__
-:   
+test\_uid
+:   \
     Format of the answer : ACK get\_uid 05D8FF323632483343037109.
 
-__test\_gyro__
-:   
+test\_gyro
+:   \
     Format of the answer : ACK get\_gyro 1.07625 1.75 5.2500002E-2 dps.
 
-__test\_magneto__
-:   
+test\_magneto
+:   \
     Format of the answer : ACK get\_magneto 4.328358E-2 6.716418E-2
     -3.880597E-1 gauss.
 
-__test\_accelero__
-:   
+test\_accelero
+:   \
     Format of the answer : ACK get\_accelero 3.6E-2 -1.56E-1 1.0320001
     g.
 
-__test\_gpio__
-:   
+test\_gpio
+:   \
     Format of the answer : ACK test\_gpio.
 
-__test\_i2c__
-:   
+test\_i2c
+:   \
     Format of the answer : ACK test\_i2c.
 
-__test\_radio\_ping\_pong__
-:   
+test\_radio\_ping\_pong
+:   \
     Format of the answer : ACK test\_radio\_ping\_pong.
 
-__test\_radio\_with\_rssi__
-:   
+test\_radio\_with\_rssi
+:   \
     Format of the answer : ACK test\_radio\_with\_rssi.
 
-__test\_consumption\_dc__
-:   
+test\_consumption\_dc
+:   \
     Format of the answer : ACK test\_consumption\_dc.
 
-__test\_leds\_with\_consumption__
-:   
+test\_leds\_with\_consumption
+:   \
     Format of the answer : ACK test\_leds\_with\_consumption.
 
-__test\_pressure__
-:   
+test\_pressure
+:   \
     Format of the answer : ACK get\_pressure 9.944219E2 mbar.
 
-__test\_light__
-:   
+test\_light
+:   \
     Format of the answer : ACK get\_light 5.2001953E1 lux.
 
-__test\_flash__
-:   
+test\_flash
+:   \
     Format of the answer : ACK test\_flash.
 
-__test\_gps__
-:   
+test\_gps
+:   \
     Format of the answer : ACK test\_gps.
 
-__test\_consumption\_batt__
-:   
+test\_consumption\_batt
+:   \
     Format of the answer : ACK test\_consumption\_batt.
-
-
