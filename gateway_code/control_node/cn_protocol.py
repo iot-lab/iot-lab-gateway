@@ -59,7 +59,8 @@ class Protocol(object):
     def set_node_id(self, board_type):
         """ Set node id on control node"""
         # set_node_id
-        if board_type == 'fox':
+        # Other nodes types are not handled by the protocol (Leonardo, Fox)
+        if board_type not in ('m3', 'a8'):
             return 0
         # TODO don't read hostname directly here.
         # Should get board_type and hostname at the same time in config

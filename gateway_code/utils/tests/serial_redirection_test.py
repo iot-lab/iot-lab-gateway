@@ -39,6 +39,7 @@ def wait_connect(host, port, tries=10, step=1):
 
 
 class TestSerialRedirection(unittest.TestCase):
+
     """ SerialRedirection class test """
 
     def setUp(self):

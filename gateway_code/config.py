@@ -41,7 +41,9 @@ def default_profile():
 
 
 def board_type():
-    """ Return the board type 'm3', 'a8', 'fox', or other """
+    """ Return the board type
+    Currently in ('m3', 'a8', 'fox', 'leonardo')
+    """
     return _get_conf('board_type', GATEWAY_CONFIG_PATH, raise_error=True)
 
 

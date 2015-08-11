@@ -32,7 +32,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     _OPEN_NODES = {'m3': gateway_code.open_node.NodeM3,
                    'a8': gateway_code.open_node.NodeA8,
-                   'fox': gateway_code.open_node.NodeFox}
+                   'fox': gateway_code.open_node.NodeFox,
+                   'leonardo': gateway_code.open_node.NodeLeonardo}
 
     def __init__(self, log_folder='.'):
         self.cls_init()
@@ -283,7 +284,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
 
         ret = self._nodes[node].flash(firmware_path)
-
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret

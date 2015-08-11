@@ -23,14 +23,17 @@ from gateway_code.autotest.autotest import extract_measures
 
 from gateway_code.open_node import NodeM3
 from gateway_code.open_node import NodeFox
+from gateway_code.open_node import NodeLeonardo
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 USER = 'harter'
 
-
 # Bottle FileUpload class stub
+
+
 class FileUpload(object):  # pylint: disable=too-few-public-methods
+
     """ Bottle FileUpload class stub """
     files = {}
 
@@ -44,7 +47,9 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
         _ext = os.path.splitext(self.filename)[1]
 
         try:
-            self.name = {'.json': 'profile', '.elf': 'firmware'}[_ext]
+            self.name = {
+                '.json': 'profile',
+                '.elf': 'firmware', '.hex': 'firmware'}[_ext]
         except KeyError:
             raise ValueError("Uknown file type %r: %r" % (_ext, file_path))
 
@@ -57,6 +62,7 @@ if os.uname()[4] != 'armv7l':
 
 
 class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
+
     """ Create environment for running experiments """
 
     def setUp(self):
@@ -111,6 +117,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
 
 class TestComplexExperimentRunning(ExperimentRunningMock):
+
     """ Run complete experiment test """
 
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
@@ -123,6 +130,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             self._run_simple_experiment_a8(m_error)
         elif 'fox' == board_type:
             self._run_simple_experiment_fox(m_error)
+        elif 'leonardo' == board_type:
+            self._run_simple_experiment_leonardo(m_error)
         else:
             self.fail('Experiment Running not implemented for %r' % board_type)
 
@@ -165,6 +174,42 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         self.assertEquals({'ret': 0}, self.app.open_stop())
 
+        # stop exp
+        self.assertEquals({'ret': 0}, self.app.exp_stop())
+
+        # Got no error during tests (use call_args_list for printing on error)
+        self.assertEquals([], m_error.call_args_list)
+
+        # reset firmware should fail and logger error will be called
+        self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
+        self.assertTrue(m_error.called)
+
+    def _run_simple_experiment_leonardo(self, m_error):
+        """ Run a simple experiment on leonardo node without profile
+        Try the different node features """
+
+        msg = 'HELLO WORLD'
+
+        # start exp with idle firmware
+        self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_IDLE)}
+        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
+        time.sleep(1)
+        # idle firmware, there should be no reply
+        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+        # flash echo firmware
+        self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_AUTOTEST)}
+        self.assertEquals({'ret': 0}, self.app.open_flash())
+
+        time.sleep(1)
+
+        # self.app.set_time()  # test set_time during experiment
+
+        # Should echo <message>, do it multiple times for reliability
+        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+        # open node reset and start stop
+        self.assertEquals({'ret': 0}, self.app.open_soft_reset())
+        self.assertEquals({'ret': 0}, self.app.open_start())
+        self.assertEquals({'ret': 0}, self.app.open_stop())
         # stop exp
         self.assertEquals({'ret': 0}, self.app.exp_stop())
 
@@ -287,6 +332,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
 
 class TestExperimentTimeout(ExperimentRunningMock):
+
     """ Test the 'timeout' feature of experiments """
 
     def setUp(self):
@@ -340,6 +386,7 @@ class TestExperimentTimeout(ExperimentRunningMock):
 
 
 class TestIntegrationOther(ExperimentRunningMock):
+
     """ Group other tests cases"""
 
     def test_status(self):
@@ -382,6 +429,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 
 
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):
+
     """ Invalid calls """
 
     def tests_invalid_profile_at_start(self):

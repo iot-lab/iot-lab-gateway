@@ -14,6 +14,7 @@ EXCLUDE = ['.git', '.tox']
 EXCLUDE += ['*egg-info', '*pyc', 'build', 'dist', 'cover', '.coverage']
 EXCLUDE += ['*swp']
 EXCLUDE += ['obj', 'results']
+EXCLUDE += ['*.log', '*.out', '*.xml']
 
 SCRIPT_DIR = os.path.dirname((__file__))
 LOCAL = os.path.dirname(SCRIPT_DIR)

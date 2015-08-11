@@ -29,6 +29,8 @@ from setuptools.command.build_ext import build_ext
 import sys
 import os
 import subprocess
+import shutil
+from glob import glob
 
 # pylint: disable=attribute-defined-outside-init
 # pylint <= 1.3
@@ -53,10 +55,12 @@ def get_version(package):
                 return eval(line.split('=')[-1])  # pylint:disable=eval-used
 
 
-SCRIPTS = ['bin/scripts/' + el for el in os.listdir('bin/scripts')]
+SCRIPTS = glob('bin/scripts/*')
 SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
+
+UDEV_RULES = glob('bin/rules.d/*.rules')
 
 
 class BuildExt(build_ext):
@@ -96,8 +100,8 @@ class Release(Command):
     @staticmethod
     def post_install():
         """ Install init.d script
+        Install the udev rules files
         Add www-data user to dialout group """
-        import shutil
 
         # setup init script
         init_script = 'gateway-server-daemon'
@@ -107,6 +111,10 @@ class Release(Command):
         shutil.copy('bin/init_script/' + init_script, '/etc/init.d/')
         os.chmod('/etc/init.d/' + init_script, 0755)
         subprocess.check_call(update_rc_d_args)
+
+        # Udev rules
+        for rule in UDEV_RULES:
+            shutil.copy(rule, '/etc/udev/rules.d/')
 
         #  add `www-data` user to `dialout` group
         subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
