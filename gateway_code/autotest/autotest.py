@@ -36,19 +36,19 @@ def autotest_checker(test):
     Allow to select to launch a test or not, if the string test
     is present in the AUTOTEST_AVAILABLE of the board
     """
-    autotests = board_config.BoardConfig().board_class.AUTOTEST_AVAILABLE
-
     def _wrap(func):
         """ Decorator implementation """
         @functools.wraps(func)
         def _wrapped_f(*args, **kwargs):
             """ Function wrapped with test """
-            if test not in autotests:
+            node_class = board_config.BoardConfig().board_class
+            if test not in node_class.AUTOTEST_AVAILABLE:
                 return 0
             else:
-                retour = func(*args, **kwargs)
-                time.sleep(1)
-                return retour
+                ret = func(*args, **kwargs)
+                # Some tests need time between each others
+                time.sleep(1)  # TODO: check why, I'm not sure for that…
+                return ret
         return _wrapped_f
     return _wrap
 
