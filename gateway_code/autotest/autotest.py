@@ -303,7 +303,7 @@ class AutoTestManager(object):
             ret_val += self.test_gps(gps)
 
             # set_leds
-            self.test_blink(ret_val)
+            self.set_result_leds(ret_val)
         except FatalError as err:
             # Fatal Error during test, don't run further tests
             LOGGER.error("Fatal Error in tests, stop further tests: %s",
@@ -356,17 +356,16 @@ class AutoTestManager(object):
 # Test implementation
 #
     @autotest_checker('test_blink')
-    def test_blink(self, ret_val):
-        """
-        This function made the led blink if no errors occured
-        """
-        # set_leds
+    def set_result_leds(self, ret_val):
+        """ Make leds blink in case of success. Turn off on failure """
+        # Clean leds state
         self._on_call(['leds_off', '7'])
-        if ret_val == 0:
-            self._on_call(['leds_blink', '7', '500'])
-            self.g_m.control_node.protocol.green_led_blink()
-        else:  # pragma: no cover
-            pass
+        if ret_val != 0:  # pragma: no cover
+            return
+
+        # Blink leds on success
+        self._on_call(['leds_blink', '7', '500'])
+        self.g_m.control_node.protocol.green_led_blink()
 
     @autotest_checker('test_echo')
     def check_echo(self):
