@@ -45,10 +45,7 @@ def autotest_checker(test):
             if test not in node_class.AUTOTEST_AVAILABLE:
                 return 0
             else:
-                ret = func(*args, **kwargs)
-                # Some tests need time between each others
-                time.sleep(1)  # TODO: check why, I'm not sure for that…
-                return ret
+                return func(*args, **kwargs)
         return _wrapped_f
     return _wrap
 
@@ -103,7 +100,6 @@ class AutoTestManager(object):
         ret_val += self.g_m.control_node.reset()
         self.g_m.control_node.cn_serial.start(self.g_m.control_node.TTY, None,
                                               ['-d'], self._measures_handler)
-        time.sleep(1)
         ret_val += self.g_m.control_node.protocol.set_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
@@ -117,20 +113,21 @@ class AutoTestManager(object):
             raise FatalError('Setup control node failed')
 
     def _setup_open_node(self, board_type, board_class):
-        """ Setup open node connection """
-        flash_string = 'flash_{0}'
-        open_serial_string = 'open_{0}_serial'
+        """ Setup open node connection
+        * Flash firmware
+        * Start serial interface """
         ret_val = 0
+
         ret = self.g_m.open_node.flash(board_class.FW_AUTOTEST)
-        ret_val += self._check(ret, flash_string.format(board_type), ret)
+        flash_string = 'flash_{0}'.format(board_type)
+        ret_val += self._check(ret, flash_string, ret)
         time.sleep(2)
 
-        self.on_serial = m3_node_interface.OpenNodeSerial(
-            board_class.TTY, board_class.BAUDRATE)
-
+        self.on_serial = m3_node_interface.OpenNodeSerial(board_class.TTY,
+                                                          board_class.BAUDRATE)
         ret, err_msg = self.on_serial.start()
-        ret_val += self._check(ret,
-                               open_serial_string.format(board_type), err_msg)
+        open_serial_string = 'open_{0}_serial'.format(board_type)
+        ret_val += self._check(ret, open_serial_string, err_msg)
         return ret_val
 
     def _setup_open_node_a8(self):
@@ -198,6 +195,7 @@ class AutoTestManager(object):
         ret_val = 0
         ret_val += self.g_m.control_node.open_start('dc')
         time.sleep(2)  # wait open node ready
+        # TODO use the open node setup instead, would wait for tty
 
         # setup
         # A8 node is very different from the generic way
