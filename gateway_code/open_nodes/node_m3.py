@@ -14,8 +14,9 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeM3(object):
-
     """ Open node M3 implemenation """
+
+    TYPE = 'm3'
     TTY = '/dev/ttyON_M3'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-m3.cfg')

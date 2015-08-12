@@ -13,8 +13,9 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeLeonardo(object):
-
     """ Open node Leonardo implemention """
+
+    TYPE = 'leonardo'
     TTY = '/dev/ttyON_LEONARDO'
     # The Leonardo node need a special open/close and then appear on a new TTY
     TTY_PROG = '/dev/ttyON_LEONARDO_PROG'

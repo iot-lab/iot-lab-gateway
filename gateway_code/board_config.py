@@ -39,6 +39,7 @@ class BoardConfig(object):
             module = import_module(open_node_path)
             self.board_class = getattr(
                 module, 'Node' + self.board_type.title())
+            assert self.board_type == self.board_class.TYPE
         except ImportError:
             raise ValueError(
                 'The class %r is not implemented' % open_node_path)

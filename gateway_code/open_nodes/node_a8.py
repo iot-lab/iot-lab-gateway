@@ -15,8 +15,9 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeA8(object):
-
     """ Open node A8 implementation """
+
+    TYPE = 'a8'
     TTY = '/dev/ttyON_A8'
     BAUDRATE = 115200
     LOCAL_A8_M3_TTY = '/tmp/local_ttyA8_M3'
