@@ -22,25 +22,26 @@ class NodeM3(object):
     FW_IDLE = static_path('idle_m3.elf')
     FW_AUTOTEST = static_path('m3_autotest.elf')
     ALIM = '3.3V'
-    AUTOTEST_AVAILABLE = ['test_echo',
-                          'test_time',
-                          'test_uid',
-                          'test_gyro',
-                          'test_magneto',
-                          'test_accelero',
-                          'test_gpio',
-                          'test_i2c',
-                          'test_radio_ping_pong',
-                          'test_radio_with_rssi',
-                          'test_consumption_dc',
-                          'test_leds_with_consumption',
-                          'test_pressure',
-                          'test_light',
-                          'test_flash',
-                          'test_gps',
-                          'test_consumption_batt',
-                          'test_blink',
-                          ]
+    AUTOTEST_AVAILABLE = [
+        'test_echo',
+        'test_time',
+        'test_uid',
+        'test_gyro',
+        'test_magneto',
+        'test_accelero',
+        'test_gpio',
+        'test_i2c',
+        'test_radio_ping_pong',
+        'test_radio_with_rssi',
+        'test_consumption_dc',
+        'test_leds_with_consumption',
+        'test_pressure',
+        'test_light',
+        'test_flash',
+        'test_gps',
+        'test_consumption_batt',
+        'test_blink',
+    ]
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
