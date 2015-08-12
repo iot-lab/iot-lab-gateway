@@ -9,14 +9,11 @@ import os
 from importlib import import_module
 from gateway_code import config
 
-GATEWAY_CONFIG_PATH = '/var/local/config/'
-
 
 class BoardConfig(object):
-
     """
-            Class BoardConfig, used to get all the informations on the actual
-            node this class is implemented as a Singleton
+    Class BoardConfig, used to get all the informations on the actual
+    node this class is implemented as a Singleton
     """
     # The unique instance of the class Board Config
     _instance = None
@@ -58,7 +55,7 @@ class BoardConfig(object):
 
     def robot_type(self):
         """ Return robot type None, 'roomba' """
-        return self._get_conf('robot', GATEWAY_CONFIG_PATH)
+        return self._get_conf('robot', config.GATEWAY_CONFIG_PATH)
 
     def _get_conf(self, key, path, raise_error=False):
         """
@@ -79,9 +76,6 @@ class BoardConfig(object):
         return readed
 
     def _find_board_type(self):
-        """ Return the board type
-        Currently in ('m3', 'a8', 'fox', 'leonardo')
-        """
-        return self._get_conf('board_type',
-                              GATEWAY_CONFIG_PATH,
+        """ Return the board type """
+        return self._get_conf('board_type', config.GATEWAY_CONFIG_PATH,
                               raise_error=True)

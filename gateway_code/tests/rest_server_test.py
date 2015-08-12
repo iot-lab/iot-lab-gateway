@@ -24,7 +24,6 @@ import unittest
 from gateway_code import rest_server
 
 import os
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 # Bottle FileUpload class stub
@@ -276,11 +275,7 @@ class TestRestMethods(unittest.TestCase):
         self.assertNotEquals(0, ret_dict['ret'])
 
 
-# Patch to find '/var/log/config/board_type' -> tests/config_m3/board_type
-@patch('gateway_code.board_config.GATEWAY_CONFIG_PATH',
-       CURRENT_DIR + '/config_m3/')
 class TestServerRestMain(unittest.TestCase):
-
     """ Cover functions uncovered by unit tests """
     @patch('gateway_code.board_config.BoardConfig._find_board_type')
     @patch('subprocess.call')
