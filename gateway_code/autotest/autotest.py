@@ -268,9 +268,10 @@ class AutoTestManager(object):
             # switch to DC and configure open node
             self._setup_open_node_connection(board_type, board_class)
             time.sleep(1)
-            self.get_uid()
+            self.check_echo()
             self.check_get_time()
-            self.test_echo()
+
+            self.get_uid()
 
             #
             # Other tests, run on DC
@@ -372,13 +373,15 @@ class AutoTestManager(object):
             pass
 
     @autotest_checker('test_echo')
-    def test_echo(self):
+    def check_echo(self):
         """ run the echo command on the serial port """
-        cmd = 'echo HELLO WORLD'
+        # echo arg1 arg2: ['arg1', 'arg2']
+        cmd = ['echo', 'HELLO', 'WORLD']
         answer = self.on_serial.send_command(cmd)
-        if answer[0:2] != ['HELLO', 'WORLD']:
-            return 1
-        return 0
+        test_ok = answer[0:2] == ['HELLO', 'WORLD']
+        ret_val = self._check(tst_ok(test_ok), 'on_serial_echo', answer)
+        if 0 != ret_val:  # pragma: no cover
+            raise FatalError("echo failed. Can't communicate with open node")
 
     @autotest_checker('test_time')
     def check_get_time(self):
@@ -390,10 +393,10 @@ class AutoTestManager(object):
 
         values = self._run_test(5, ['get_time'], (lambda x: x[2].isdigit()))
         test_ok = (any(values))
-        ret_val = self._check(tst_ok(test_ok), 'm3_comm_with_get_time', answer)
+        ret_val = self._check(tst_ok(test_ok), 'on_serial_get_time', answer)
 
         if 0 != ret_val:  # pragma: no cover
-            raise FatalError("get_time failed. Can't communicate with m3 node")
+            raise FatalError("get_time failed. Can't communicate with ON")
 
     @autotest_checker('test_uid')
     def get_uid(self):

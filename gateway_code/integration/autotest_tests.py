@@ -40,6 +40,7 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         ret_dict = self.app.auto_tests(mode='blink')
         print >> stderr, ret_dict
         self.assertEquals([], ret_dict['error'])
+        self.assertIn('on_serial_echo', ret_dict['success'])
         self.assertTrue('GWT' in ret_dict['mac'])
         self.assertEquals(0, ret_dict['ret'])
 

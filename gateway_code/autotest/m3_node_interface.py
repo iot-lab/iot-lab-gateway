@@ -53,6 +53,8 @@ class OpenNodeSerial(object):
 
     def send_command(self, command_list):
         """ Send command and wait for answer """
+        assert (isinstance(command_list, list) or
+                isinstance(command_list, tuple))
         packet = ' '.join(command_list)
         self.serial_fd.write(packet + '\n')
 
