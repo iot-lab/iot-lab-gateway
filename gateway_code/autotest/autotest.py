@@ -12,15 +12,11 @@ from serial import SerialException
 
 from collections import defaultdict
 
-import gateway_code.board_config as board_config
-
-from gateway_code.open_nodes.node_m3 import NodeM3
-from gateway_code.open_nodes.node_a8 import NodeA8
-
 from gateway_code import common
 from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
+import gateway_code.board_config as board_config
 
 
 import functools
@@ -130,7 +126,7 @@ class AutoTestManager(object):
         ret_val += self._check(ret, open_serial_string, err_msg)
         return ret_val
 
-    def _setup_open_node_a8(self):
+    def _setup_open_node_a8(self, board_type, board_class):
         """ Setup open node a8-m3 connection
 
         * Boot open node
@@ -139,10 +135,12 @@ class AutoTestManager(object):
           * get
 
         """
+        assert board_type == 'a8'
+
         ret_val = 0
+        node_a8 = board_class
         try:
-            ret_val += common.wait_tty(NodeA8.TTY, LOGGER,
-                                       timeout=20)
+            ret_val += common.wait_tty(node_a8.TTY, LOGGER, timeout=20)
 
             # wait nodes start
             # get ip address using serial
@@ -167,7 +165,7 @@ class AutoTestManager(object):
 
         # open A8 flash
         try:
-            self.a8_connection.scp(NodeA8.A8_M3_FW_AUTOTEST,
+            self.a8_connection.scp(node_a8.A8_M3_FW_AUTOTEST,
                                    '/tmp/a8_autotest.elf')
         except CalledProcessError as err:  # pragma: no cover
             ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
@@ -181,7 +179,7 @@ class AutoTestManager(object):
 
         # Create open node a8-m3 connection through socat
         self.on_serial = m3_node_interface.OpenNodeSerial(
-            NodeA8.LOCAL_A8_M3_TTY, NodeA8.A8_M3_BAUDRATE)
+            node_a8.LOCAL_A8_M3_TTY, node_a8.A8_M3_BAUDRATE)
 
         ret, err_msg = self.on_serial.start()
         ret_val += self._check(ret, 'open_a8_serial', err_msg)
@@ -200,7 +198,7 @@ class AutoTestManager(object):
         # setup
         # A8 node is very different from the generic way
         if board_type == 'a8':
-            ret_val += self._setup_open_node_a8()
+            ret_val += self._setup_open_node_a8(board_type, board_class)
         else:
             ret_val += self._setup_open_node(board_type, board_class)
 
@@ -262,7 +260,7 @@ class AutoTestManager(object):
             # battery -> dc: No reboot
             # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
-            ret_val += self.test_consumption_batt(board_type)
+            ret_val += self.test_consumption_batt(board_type, board_class)
             # switch to DC and configure open node
             self._setup_open_node_connection(board_type, board_class)
             time.sleep(1)
@@ -640,7 +638,7 @@ class AutoTestManager(object):
 
         return ret_val
 
-    def test_consumption_batt(self, board_type):
+    def test_consumption_batt(self, board_type, board_class):
         """ Try consumption for Battery """
 
         ret_val = 0
@@ -650,7 +648,7 @@ class AutoTestManager(object):
         # on a8, linux is consuming enough I think
         if 'm3' == board_type:  # pragma: no branch
             time.sleep(1)
-            ret = self.g_m.open_node.flash(NodeM3.FW_AUTOTEST)
+            ret = self.g_m.open_node.flash(board_class.FW_AUTOTEST)
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption
