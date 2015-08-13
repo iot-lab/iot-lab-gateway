@@ -359,7 +359,7 @@ class AutoTestManager(object):
 #
 # Test implementation
 #
-    @autotest_checker('test_blink')
+    @autotest_checker('leds_off', 'leds_blink')
     def set_result_leds(self, ret_val):
         """ Make leds blink in case of success. Turn off on failure """
         # Clean leds state
@@ -371,7 +371,7 @@ class AutoTestManager(object):
         self._on_call(['leds_blink', '7', '500'])
         self.g_m.control_node.protocol.green_led_blink()
 
-    @autotest_checker('test_echo')
+    # Require 'echo' command
     def check_echo(self):
         """ run the echo command on the serial port """
         # echo arg1 arg2: ['arg1', 'arg2']
@@ -382,7 +382,7 @@ class AutoTestManager(object):
         if 0 != ret_val:  # pragma: no cover
             raise FatalError("echo failed. Can't communicate with open node")
 
-    @autotest_checker('test_time')
+    # Require 'get_time' command
     def check_get_time(self):
         """ runs the 'get_time' command
         Error on this check are fatal
@@ -397,7 +397,7 @@ class AutoTestManager(object):
         if 0 != ret_val:  # pragma: no cover
             raise FatalError("get_time failed. Can't communicate with ON")
 
-    @autotest_checker('test_uid')
+    @autotest_checker('get_uid')
     def get_uid(self):
         """ runs the 'get_uid' command
         And add the resulting UID to the global return dictionary
@@ -431,7 +431,7 @@ class AutoTestManager(object):
         test_ok = len(values)
         return self._check(tst_ok(test_ok), 'test_flash', values)
 
-    @autotest_checker('test_pressure')
+    @autotest_checker('get_pressure')
     def test_pressure(self):
         """ test pressure sensor """
         # ['ACK', 'get_pressure', '9.944219E2', 'mbar']
@@ -439,7 +439,7 @@ class AutoTestManager(object):
         test_ok = 1 < len(set(values))
         return self._check(tst_ok(test_ok), 'test_pressure', values)
 
-    @autotest_checker('test_light')
+    @autotest_checker('get_light', 'leds_on', 'leds_off')
     def test_light(self):
         """ test light sensor with leds"""
         # ['ACK', 'get_light', '5.2001953E1', 'lux']
@@ -485,7 +485,7 @@ class AutoTestManager(object):
         self._on_call(['test_pps_stop'])
         return ret_val
 
-    @autotest_checker('test_gps')
+    @autotest_checker('test_pps_start', 'test_pps_get', 'test_pps_stop')
     def test_gps(self, gps):
         """ Test the gps """
         if not gps:
@@ -537,20 +537,20 @@ class AutoTestManager(object):
 #
 # Inertial Measurement Unit
 #
-    @autotest_checker('test_magneto')
+    @autotest_checker('get_magneto')
     def test_magneto(self):
         """ test magneto sensor """
         # ['ACK', 'get_magneto' '4.328358E-2', '6.716418E-2', '-3.880597E-1',
         # 'gauss']
         return self._test_xyz_sensor('get_magneto')
 
-    @autotest_checker('test_gyro')
+    @autotest_checker('get_gyro')
     def test_gyro(self):
         """ test gyro sensor """
         # ['ACK', 'get_gyro', '1.07625', '1.75', '5.2500002E-2', 'dps']
         return self._test_xyz_sensor('get_gyro')
 
-    @autotest_checker('test_accelero')
+    @autotest_checker('get_accelero')
     def test_accelero(self):
         """ test accelerator sensor """
         # ['ACK', 'get_accelero', '3.6E-2', '-1.56E-1', '1.0320001', 'g']
@@ -569,7 +569,7 @@ class AutoTestManager(object):
 #
 # Radio tests
 #
-    @autotest_checker('test_radio_ping_pong')
+    @autotest_checker('radio_ping_pong')
     def test_radio_ping_pong(self, channel):
         """ test Radio Ping-pong with control-node """
         if channel is None:
@@ -578,7 +578,7 @@ class AutoTestManager(object):
         return self._test_on_cn(10, ['test_radio_ping_pong'],
                                 ['radio_ping_pong'], [str(channel), '3dBm'])
 
-    @autotest_checker('test_radio_with_rssi')
+    @autotest_checker('radio_pkt')
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
         self.cn_measures = []
@@ -681,7 +681,7 @@ class AutoTestManager(object):
         # Value ranges may be validated with an Idle firmware
         return ret_val
 
-    @autotest_checker('test_leds_with_consumption')
+    @autotest_checker('leds_consumption', 'leds_on', 'leds_off')
     def test_leds_with_consumption(self):
         """ Test Leds with consumption
 

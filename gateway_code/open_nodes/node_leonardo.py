@@ -33,9 +33,8 @@ class NodeLeonardo(object):
     }
 
     AUTOTEST_AVAILABLE = [
-        'test_echo',
-        'test_time',
-        'test_uid',
+        'echo', 'get_time',  # mandatory
+        'get_uid',
     ]
 
     ALIM = '5V'

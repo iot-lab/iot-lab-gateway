@@ -25,18 +25,13 @@ class NodeFox(object):
     FW_AUTOTEST = static_path('fox_autotest.elf')
 
     AUTOTEST_AVAILABLE = [
-        'test_echo',
-        'test_time',
-        'test_uid',
-        'test_gyro',
-        'test_magneto',
-        'test_accelero',
-        'test_radio_ping_pong',
-        'test_radio_with_rssi',
-        'test_consumption_dc',
-        'test_gps',
-        'test_blink',
-        'test_consumption_batt',
+        'echo', 'get_time',  # mandatory
+        'get_uid',
+        'get_accelero', 'get_gyro', 'get_magneto',
+        'radio_pkt', 'radio_ping_pong',
+        'leds_on', 'leds_off', 'leds_blink',
+        # 'leds_consumption', not precise enough
+        # (0.886405, [0.886405, 0.886405, 0.886405, 0.887015])
     ]
 
     ALIM = '5V'

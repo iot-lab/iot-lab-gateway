@@ -24,24 +24,14 @@ class NodeM3(object):
     FW_AUTOTEST = static_path('m3_autotest.elf')
     ALIM = '3.3V'
     AUTOTEST_AVAILABLE = [
-        'test_echo',
-        'test_time',
-        'test_uid',
-        'test_gyro',
-        'test_magneto',
-        'test_accelero',
-        'test_gpio',
-        'test_i2c',
-        'test_radio_ping_pong',
-        'test_radio_with_rssi',
-        'test_consumption_dc',
-        'test_leds_with_consumption',
-        'test_pressure',
-        'test_light',
-        'test_flash',
-        'test_gps',
-        'test_consumption_batt',
-        'test_blink',
+        'echo', 'get_time',  # mandatory
+        'get_uid',
+        'get_pressure', 'get_light', 'test_flash',
+        'get_accelero', 'get_gyro', 'get_magneto',
+        'test_gpio', 'test_i2c',
+        'radio_pkt', 'radio_ping_pong',
+        'leds_consumption',
+        'leds_on', 'leds_off', 'leds_blink',
     ]
 
     def __init__(self):
