@@ -27,21 +27,25 @@ MAC_CMD = "cat /sys/class/net/eth0/address"
 MAC_RE = re.compile(r'([0-9a-f]{2}:){5}[0-9a-f]{2}')
 
 
-def autotest_checker(test):
-    """
-    Allow to select to launch a test or not, if the string test
-    is present in the AUTOTEST_AVAILABLE of the board
-    """
+def autotest_checker(*required):
+    """ Only run tests if required `commands` is implemented.
+
+    Allow selecting test launch if the required commads are present in
+    board AUTOTEST_AVAILABLE list. """
+    required = set(required)
+
     def _wrap(func):
         """ Decorator implementation """
         @functools.wraps(func)
         def _wrapped_f(*args, **kwargs):
             """ Function wrapped with test """
             node_class = board_config.BoardConfig().board_class
-            if test not in node_class.AUTOTEST_AVAILABLE:
-                return 0
-            else:
+            available = set(node_class.AUTOTEST_AVAILABLE)
+
+            if required.issubset(available):
                 return func(*args, **kwargs)
+            else:
+                return 0
         return _wrapped_f
     return _wrap
 

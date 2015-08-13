@@ -103,6 +103,50 @@ class TestProtocol(unittest.TestCase):
             self.assertNotEquals(0, self.g_v._test_pps_open_node(0))
 
 
+class TestAutotestChecker(unittest.TestCase):
+
+    def setUp(self):
+        self.func = mock.Mock()
+
+    def function(self, *args, **kwargs):
+        """ Should mock a real function to let 'wraps' work """
+        self.func(self, *args, **kwargs)
+
+    @mock.patch('gateway_code.autotest.autotest.board_config.BoardConfig')
+    def test_autotest_checker(self, b_config_class):
+
+        board_cfg = b_config_class.return_value
+        board_cfg.board_class.AUTOTEST_AVAILABLE = ['echo', 'get_time']
+
+        # Should call the function
+        # func_cmd == decorated function
+        func_cmd = autotest.autotest_checker('echo')(self.function)
+        func_cmd()
+        self.assertTrue(self.func.called)
+        self.func.reset_mock()
+
+        func_cmd = autotest.autotest_checker('get_time')(self.function)
+        func_cmd()
+        self.assertTrue(self.func.called)
+        self.func.reset_mock()
+
+        func_cmd = autotest.autotest_checker('echo', 'get_time')(self.function)
+        func_cmd()
+        self.assertTrue(self.func.called)
+        self.func.reset_mock()
+
+        # Not calling the function
+        func_cmd = autotest.autotest_checker('unknown')(self.function)
+        func_cmd()
+        self.assertFalse(self.func.called)
+        self.func.reset_mock()
+
+        func_cmd = autotest.autotest_checker('echo', 'unknown')(self.function)
+        func_cmd()
+        self.assertFalse(self.func.called)
+        self.func.reset_mock()
+
+
 class TestAutoTestsErrorCases(unittest.TestCase):
 
     def setUp(self):
