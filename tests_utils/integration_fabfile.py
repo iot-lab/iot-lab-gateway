@@ -34,6 +34,12 @@ SSH_OPTS = '-F {0}'.format(SSH_CFG)
 @task
 def upload():
     """ Upload sources as www-data:www-data """
+    execute(_do_upload)
+
+
+def _do_upload():
+    """ Actually do the upload. """
+    # 'runs_once' conflicts with multiple hosts, so call it with 'execute'
     extra_opts = " --delete-excluded"
     rsync_project(local_dir=LOCAL + '/', remote_dir=REMOTE, upload=True,
                   ssh_opts=SSH_OPTS, extra_opts=extra_opts,
