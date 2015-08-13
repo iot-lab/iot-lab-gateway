@@ -29,6 +29,10 @@ env.use_ssh_config = True
 # Required to re-add SSH_OPTS on the integration server
 SSH_OPTS = '-F {0}'.format(SSH_CFG)
 
+# Default to all targets
+if not env.hosts:
+    env.hosts = ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci']
+
 
 @runs_once
 @task
