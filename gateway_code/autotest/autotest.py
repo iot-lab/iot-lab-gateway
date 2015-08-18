@@ -37,13 +37,12 @@ def autotest_checker(*required):
     def _wrap(func):
         """ Decorator implementation """
         @functools.wraps(func)
-        def _wrapped_f(*args, **kwargs):
+        def _wrapped_f(self, *args, **kwargs):
             """ Function wrapped with test """
-            node_class = board_config.BoardConfig().board_class
-            available = set(node_class.AUTOTEST_AVAILABLE)
+            available = set(self.open_node.AUTOTEST_AVAILABLE)
 
             if required.issubset(available):
-                return func(*args, **kwargs)
+                return func(self, *args, **kwargs)
             else:
                 return 0
         return _wrapped_f
@@ -68,17 +67,18 @@ def tst_ok(bool_value):
 
 
 class AutoTestManager(object):
-
     """ Gateway and open node auto tests """
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
 
+        board_cfg = board_config.BoardConfig()
+        self.open_node = board_cfg.board_class
+
         self.on_serial = None
         self.a8_connection = None
 
-        self.ret_dict = None
-
+        self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         self.cn_measures = []
 
     def _measures_handler(self, measure_str):
@@ -112,25 +112,25 @@ class AutoTestManager(object):
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup control node failed')
 
-    def _setup_open_node(self, board_type, board_class):
+    def _setup_open_node(self):
         """ Setup open node connection
         * Flash firmware
         * Start serial interface """
         ret_val = 0
 
-        ret = self.g_m.open_node.flash(board_class.FW_AUTOTEST)
-        flash_string = 'flash_{0}'.format(board_type)
+        ret = self.g_m.open_node.flash(self.open_node.FW_AUTOTEST)
+        flash_string = 'flash_{0}'.format(self.open_node.TYPE)
         ret_val += self._check(ret, flash_string, ret)
         time.sleep(2)
 
-        self.on_serial = m3_node_interface.OpenNodeSerial(board_class.TTY,
-                                                          board_class.BAUDRATE)
+        self.on_serial = m3_node_interface.OpenNodeSerial(
+            self.open_node.TTY, self.open_node.BAUDRATE)
         ret, err_msg = self.on_serial.start()
-        open_serial_string = 'open_{0}_serial'.format(board_type)
+        open_serial_string = 'open_{0}_serial'.format(self.open_node.TYPE)
         ret_val += self._check(ret, open_serial_string, err_msg)
         return ret_val
 
-    def _setup_open_node_a8(self, board_type, board_class):
+    def _setup_open_node_a8(self):
         """ Setup open node a8-m3 connection
 
         * Boot open node
@@ -139,10 +139,10 @@ class AutoTestManager(object):
           * get
 
         """
-        assert board_type == 'a8'
+        assert 'a8' == self.open_node.TYPE
 
         ret_val = 0
-        node_a8 = board_class
+        node_a8 = self.open_node
         try:
             ret_val += common.wait_tty(node_a8.TTY, LOGGER, timeout=20)
 
@@ -190,7 +190,7 @@ class AutoTestManager(object):
 
         return ret_val
 
-    def _setup_open_node_connection(self, board_type, board_class):
+    def _setup_open_node_connection(self):
         """ Setup the connection with Open Node
         Should be done on DC"""
 
@@ -201,10 +201,10 @@ class AutoTestManager(object):
 
         # setup
         # A8 node is very different from the generic way
-        if board_type == 'a8':
-            ret_val += self._setup_open_node_a8(board_type, board_class)
+        if 'a8' == self.open_node.TYPE:
+            ret_val += self._setup_open_node_a8()
         else:
-            ret_val += self._setup_open_node(board_type, board_class)
+            ret_val += self._setup_open_node()
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -245,15 +245,6 @@ class AutoTestManager(object):
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
-        self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
-        try:
-            board_type = board_config.BoardConfig().board_type
-            board_class = board_config.BoardConfig().board_class
-        except ValueError:
-            board_type = None
-            self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
-            return self.ret_dict
-
         try:
             self.setup_control_node()
 
@@ -264,9 +255,9 @@ class AutoTestManager(object):
             # battery -> dc: No reboot
             # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
-            ret_val += self.test_consumption_batt(board_type, board_class)
+            ret_val += self.test_consumption_batt()
             # switch to DC and configure open node
-            self._setup_open_node_connection(board_type, board_class)
+            self._setup_open_node_connection()
             time.sleep(1)
             self.check_echo()
             self.check_get_time()
@@ -641,7 +632,7 @@ class AutoTestManager(object):
 
         return ret_val
 
-    def test_consumption_batt(self, board_type, board_class):
+    def test_consumption_batt(self):
         """ Try consumption for Battery """
 
         ret_val = 0
@@ -649,9 +640,9 @@ class AutoTestManager(object):
 
         # set a firmware on m3 to ensure corret consumption measures
         # on a8, linux is consuming enough I think
-        if 'm3' == board_type:  # pragma: no branch
+        if 'm3' == self.open_node.TYPE:  # pragma: no branch
             time.sleep(1)
-            ret = self.g_m.open_node.flash(board_class.FW_AUTOTEST)
+            ret = self.g_m.open_node.flash(self.open_node.FW_AUTOTEST)
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption

@@ -21,10 +21,9 @@ class TestProtocol(unittest.TestCase):
 
     def setUp(self):
         board_config.BoardConfig.clear_instance()
+        mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
-        self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
-                             'mac': {}}
 
     def tearDown(self):
         board_config.BoardConfig.clear_instance()
@@ -58,7 +57,6 @@ class TestProtocol(unittest.TestCase):
                                       "On Command: ['test_command']",
                                       ['NACK', 'test_command', '1.414'])
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.autotest.autotest.AutoTestManager._run_test')
     def test_get_uid(self, run_test_mock):
         """ Test get_uid autotest function """
@@ -72,7 +70,18 @@ class TestProtocol(unittest.TestCase):
         run_test_mock.return_value = []
         self.assertNotEquals(0, self.g_v.get_uid())
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
+
+class TestProtocolGPS(unittest.TestCase):
+
+    def setUp(self):
+        board_config.BoardConfig.clear_instance()
+        mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8')).start()
+        gateway_manager = mock.Mock()
+        self.g_v = autotest.AutoTestManager(gateway_manager)
+
+    def tearDown(self):
+        board_config.BoardConfig.clear_instance()
+
     def test_test_gps(self):
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:
             # test with gps disabled
@@ -87,19 +96,20 @@ class TestProtocol(unittest.TestCase):
     def test__test_pps_open_node(self):
         pps_get_values = []
 
-        def _on_call(cmd):
-            if cmd[0] == 'test_pps_start':
+        def _on_call(args):
+            cmd = args[0]
+            if cmd == 'test_pps_start':
                 return (0, ['ACK', 'test_pps_start'])
-            elif cmd[0] == 'test_pps_stop':
+            elif cmd == 'test_pps_stop':
                 return (0, ['ACK', 'test_pps_stop'])
-            return pps_get_values.pop(0)
+            elif cmd == 'test_pps_get':
+                return pps_get_values.pop(0)
+            else:
+                self.fail('Unknown command %r' % cmd)
 
         with mock.patch.object(self.g_v, '_on_call', _on_call):
-
-            pps_get_values = [
-                (0, ['ACK', 'test_pps_get', '0', 'pps']),
-                (0, ['ACK', 'test_pps_get', '3', 'pps'])
-            ]
+            pps_get_values = [(0, ['ACK', 'test_pps_get', '0', 'pps']),
+                              (0, ['ACK', 'test_pps_get', '3', 'pps'])]
             self.assertEquals(0, self.g_v._test_pps_open_node(10))
 
             pps_get_values = []
@@ -109,8 +119,8 @@ class TestProtocol(unittest.TestCase):
 class TestAutotestChecker(unittest.TestCase):
 
     def setUp(self):
-        board_config.BoardConfig.clear_instance()
         self.func = mock.Mock()
+        self.open_node = mock.Mock()
 
     def tearDown(self):
         board_config.BoardConfig.clear_instance()
@@ -119,37 +129,35 @@ class TestAutotestChecker(unittest.TestCase):
         """ Should mock a real function to let 'wraps' work """
         self.func(self, *args, **kwargs)
 
-    @mock.patch('gateway_code.autotest.autotest.board_config.BoardConfig')
-    def test_autotest_checker(self, b_config_class):
+    def test_autotest_checker(self):
 
-        board_cfg = b_config_class.return_value
-        board_cfg.board_class.AUTOTEST_AVAILABLE = ['echo', 'get_time']
+        self.open_node.AUTOTEST_AVAILABLE = ['echo', 'get_time']
 
         # Should call the function
         # func_cmd == decorated function
         func_cmd = autotest.autotest_checker('echo')(self.function)
-        func_cmd()
+        func_cmd(self)
         self.assertTrue(self.func.called)
         self.func.reset_mock()
 
         func_cmd = autotest.autotest_checker('get_time')(self.function)
-        func_cmd()
+        func_cmd(self)
         self.assertTrue(self.func.called)
         self.func.reset_mock()
 
         func_cmd = autotest.autotest_checker('echo', 'get_time')(self.function)
-        func_cmd()
+        func_cmd(self)
         self.assertTrue(self.func.called)
         self.func.reset_mock()
 
         # Not calling the function
         func_cmd = autotest.autotest_checker('unknown')(self.function)
-        func_cmd()
+        func_cmd(self)
         self.assertFalse(self.func.called)
         self.func.reset_mock()
 
         func_cmd = autotest.autotest_checker('echo', 'unknown')(self.function)
-        func_cmd()
+        func_cmd(self)
         self.assertFalse(self.func.called)
         self.func.reset_mock()
 
@@ -158,21 +166,15 @@ class TestAutoTestsErrorCases(unittest.TestCase):
 
     def setUp(self):
         board_config.BoardConfig.clear_instance()
+        mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
+
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
     def tearDown(self):
         board_config.BoardConfig.clear_instance()
+        mock.patch.stopall()
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('unknown'))
-    def test_invalid_board_type(self):
-        # TODO this should never even be called
-        ret_dict = self.g_v.auto_tests()
-        self.assertNotEquals(0, ret_dict['ret'])
-        self.assertEquals([], ret_dict['success'])
-        self.assertEquals(['board_type'], ret_dict['error'])
-
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     def test_fail_on_setup_control_node(self):
 
         def setup():
@@ -184,7 +186,6 @@ class TestAutoTestsErrorCases(unittest.TestCase):
             return 1
 
         self.g_v.setup_control_node = mock.Mock(side_effect=setup)
-
         self.g_v.teardown = mock.Mock(side_effect=teardown)
 
         ret_dict = self.g_v.auto_tests()
