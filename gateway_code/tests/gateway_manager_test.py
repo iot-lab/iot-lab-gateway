@@ -9,9 +9,10 @@ import os
 
 import unittest
 import mock
-from mock import patch
 
 from gateway_code import gateway_manager
+from gateway_code import board_config
+from . import utils
 
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
@@ -30,16 +31,14 @@ from gateway_code import gateway_manager
 #        self.assertRaises(ValueError, gateway_manager.GatewayManager)
 
 
+@mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
 class TestGatewayManager(unittest.TestCase):
 
     def setUp(self):
-        self.board_patcher = patch(
-            'gateway_code.board_config.BoardConfig._find_board_type')
-        self.board = self.board_patcher.start()
-        self.board.return_value = 'm3'
+        board_config.BoardConfig.clear_instance()
 
     def tearDown(self):
-        self.board_patcher.stop()
+        board_config.BoardConfig.clear_instance()
 
     def test_setup(self):
         """ Test running gateway_manager with setup without error """
@@ -66,7 +65,7 @@ class TestGatewayManager(unittest.TestCase):
 # Measures folder and files management  #
 # # # # # # # # # # # # # # # # # # # # #
 
-    @patch('gateway_code.config.EXP_FILES_DIR', './iotlab/')
+    @mock.patch('gateway_code.config.EXP_FILES_DIR', './iotlab/')
     def test_create_and_del_user_exp_files(self):  # pylint:disable=no-self-use
         """ Create files and clean them"""
         g_m = gateway_manager.GatewayManager()
@@ -77,7 +76,7 @@ class TestGatewayManager(unittest.TestCase):
         g_m._destroy_user_exp_folders('user', 123)
         g_m._destroy_user_exp_folders('user', 123)
 
-    @patch('gateway_code.config.EXP_FILES_DIR', './iotlab/')
+    @mock.patch('gateway_code.config.EXP_FILES_DIR', './iotlab/')
     def test__create_user_exp_files_fail(self):
         """ Create user_exp files fail """
         g_m = gateway_manager.GatewayManager()

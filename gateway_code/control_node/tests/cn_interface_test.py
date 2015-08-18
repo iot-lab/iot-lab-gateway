@@ -13,11 +13,13 @@ import mock
 import Queue
 from gateway_code.control_node import cn_interface
 import gateway_code.board_config as board_config
+from gateway_code.tests import utils
 
 
 class TestControlNodeSerial(unittest.TestCase):
 
     def setUp(self):
+        board_config.BoardConfig.clear_instance()
         self.popen_patcher = mock.patch('subprocess.Popen')
         popen_class = self.popen_patcher.start()
         self.popen = popen_class.return_value
@@ -34,6 +36,7 @@ class TestControlNodeSerial(unittest.TestCase):
     def tearDown(self):
         self.cn.stop()
         mock.patch.stopall()
+        board_config.BoardConfig.clear_instance()
 
     def _terminate(self):
         self.readline_ret_vals.put('')
@@ -123,9 +126,8 @@ class TestControlNodeSerial(unittest.TestCase):
         ret = self.cn._config_oml(None)
         self.assertEquals([], ret)
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
-    def test_config_oml(self, mock_board_type):
-        mock_board_type.return_value = 'm3'
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    def test_config_oml(self):
         exp_desc = {
             'user': 'harter',
             'exp_id': '1234',

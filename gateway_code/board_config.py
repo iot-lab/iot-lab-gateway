@@ -28,7 +28,7 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
             return
         self._is_init = True
 
-        self.board_type = self._find_board_type()
+        self.board_type = config.read_config('board_type')
         self.board_class = config.open_node_class(self.board_type)
         self.robot_type = config.read_config('robot', None)
         self.hostname = os.uname()[1]
@@ -38,8 +38,3 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
         """ Reset the instance contained in the Singleton """
         cls._instance = None
         cls._is_init = False
-
-    @staticmethod
-    def _find_board_type():
-        """ Return the board type """
-        return config.read_config('board_type')

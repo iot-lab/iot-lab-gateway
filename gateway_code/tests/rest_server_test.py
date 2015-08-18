@@ -18,10 +18,11 @@ Complement the 'integration' tests
 from cStringIO import StringIO
 
 import mock
-from mock import patch, PropertyMock
 import unittest
 
 from gateway_code import rest_server
+from gateway_code import board_config
+from . import utils
 
 import os
 
@@ -52,26 +53,19 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
 class TestRestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.request_patcher = patch('gateway_code.rest_server.request')
-        self.request = self.request_patcher.start()
+        board_config.BoardConfig.clear_instance()
 
-        self.board_patcher = patch(
-            'gateway_code.board_config.BoardConfig._find_board_type')
-        self.board = self.board_patcher.start()
-        self.board.return_value = 'm3'
-
-        # self.bottle_patcher = patch('bottle.route')
-        # self.bottle = self.bottle_patcher.start()
+        self.request = mock.patch('gateway_code.rest_server.request').start()
+        mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
 
         self.g_m = mock.Mock()
         self.s_r = rest_server.GatewayRest(self.g_m)
 
     def tearDown(self):
-        # self.bottle_patcher.stop()
-        self.board_patcher.stop()
-        self.request_patcher.stop()
+        board_config.BoardConfig.clear_instance()
+        mock.patch.stopall()
 
-    @patch('bottle.route')
+    @mock.patch('bottle.route')
     def test_routes(self, m_route):
 
         def _func():
@@ -195,7 +189,7 @@ class TestRestMethods(unittest.TestCase):
         # profile that cannot be decoded, invalid JSON
         # http://mock.readthedocs.org/en/latest/examples.html \
         # raising-exceptions-on-attribute-access
-        type(self.request).json = PropertyMock(side_effect=ValueError)
+        type(self.request).json = mock.PropertyMock(side_effect=ValueError)
 
         self.assertEquals({'ret': 1}, self.s_r.exp_update_profile())
         self.assertFalse(self.g_m.exp_update_profile.called)
@@ -277,12 +271,18 @@ class TestRestMethods(unittest.TestCase):
 
 class TestServerRestMain(unittest.TestCase):
     """ Cover functions uncovered by unit tests """
-    @patch('gateway_code.board_config.BoardConfig._find_board_type')
-    @patch('subprocess.call')
-    @patch('bottle.run')
-    def test_main_function(self, run_mock, call_mock, board_type_mock):
+
+    def setUp(self):
+        board_config.BoardConfig.clear_instance()
+
+    def tearDown(self):
+        board_config.BoardConfig.clear_instance()
+
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    @mock.patch('subprocess.call')
+    @mock.patch('bottle.run')
+    def test_main_function(self, run_mock, call_mock):
         call_mock.return_value = 0
-        board_type_mock.return_value = 'm3'
         args = ['rest_server.py', 'localhost', '8080']
         rest_server._main(args)
         self.assertTrue(run_mock.called)

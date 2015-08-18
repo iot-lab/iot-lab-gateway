@@ -7,12 +7,11 @@ import mock
 
 from gateway_code.autotest import autotest
 import gateway_code.board_config as board_config
+from gateway_code.tests import utils
 
 
 # pylint: disable=missing-docstring
 # pylint: disable=protected-access
-# pylint <= 1.3
-# pylint: disable=too-many-public-methods
 # pylint >= 1.4
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
@@ -21,10 +20,14 @@ import gateway_code.board_config as board_config
 class TestProtocol(unittest.TestCase):
 
     def setUp(self):
+        board_config.BoardConfig.clear_instance()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
         self.g_v.ret_dict = {'ret': None, 'success': [], 'error': [],
                              'mac': {}}
+
+    def tearDown(self):
+        board_config.BoardConfig.clear_instance()
 
     def test__check(self):
         # test validate
@@ -55,11 +58,10 @@ class TestProtocol(unittest.TestCase):
                                       "On Command: ['test_command']",
                                       ['NACK', 'test_command', '1.414'])
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.autotest.autotest.AutoTestManager._run_test')
-    def test_get_uid(self, run_test_mock, m_board_type):
+    def test_get_uid(self, run_test_mock):
         """ Test get_uid autotest function """
-        m_board_type.return_value = 'm3'
 
         run_test_mock.return_value = ['05D8FF323632483343037109']
         self.assertEquals(0, self.g_v.get_uid())
@@ -70,10 +72,8 @@ class TestProtocol(unittest.TestCase):
         run_test_mock.return_value = []
         self.assertNotEquals(0, self.g_v.get_uid())
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type',
-                lambda self: 'a8')
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
     def test_test_gps(self):
-        board_config.BoardConfig.clear_instance()
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:
             # test with gps disabled
             self.assertEquals(0, self.g_v.test_gps(False))
@@ -83,7 +83,6 @@ class TestProtocol(unittest.TestCase):
             test_pps.return_value = 0
             self.assertEquals(0, self.g_v.test_gps(True))
             self.assertTrue(test_pps.called)
-        board_config.BoardConfig.clear_instance()
 
     def test__test_pps_open_node(self):
         pps_get_values = []
@@ -110,7 +109,11 @@ class TestProtocol(unittest.TestCase):
 class TestAutotestChecker(unittest.TestCase):
 
     def setUp(self):
+        board_config.BoardConfig.clear_instance()
         self.func = mock.Mock()
+
+    def tearDown(self):
+        board_config.BoardConfig.clear_instance()
 
     def function(self, *args, **kwargs):
         """ Should mock a real function to let 'wraps' work """
@@ -149,27 +152,28 @@ class TestAutotestChecker(unittest.TestCase):
         func_cmd()
         self.assertFalse(self.func.called)
         self.func.reset_mock()
-        board_config.BoardConfig.clear_instance()
 
 
 class TestAutoTestsErrorCases(unittest.TestCase):
 
     def setUp(self):
+        board_config.BoardConfig.clear_instance()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
-    def test_invalid_board_type(self, m_board_type):
-        m_board_type.return_value = 'unkown'
+    def tearDown(self):
+        board_config.BoardConfig.clear_instance()
+
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('unknown'))
+    def test_invalid_board_type(self):
+        # TODO this should never even be called
         ret_dict = self.g_v.auto_tests()
         self.assertNotEquals(0, ret_dict['ret'])
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['board_type'], ret_dict['error'])
-        board_config.BoardConfig.clear_instance()
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
-    def test_fail_on_setup_control_node(self, m_board_type):
-        m_board_type.return_value = 'm3'
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    def test_fail_on_setup_control_node(self):
 
         def setup():
             self.g_v.ret_dict['error'].append('setup')
@@ -188,7 +192,6 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.assertTrue(2 <= ret_dict['ret'])
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['setup', 'teardown'], ret_dict['error'])
-        board_config.BoardConfig.clear_instance()
 
 
 class TestAutotestFatalError(unittest.TestCase):
