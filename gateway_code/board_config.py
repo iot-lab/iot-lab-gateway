@@ -35,7 +35,8 @@ class BoardConfig(object):
         self.hostname = self.get_hostname()
 
         try:
-            open_node_path = config.OPEN_NODES_PATH.format(self.board_type)
+            open_node_path = config.OPEN_NODES_PATH.format(
+                board_type=self.board_type)
             module = import_module(open_node_path)
             self.board_class = getattr(
                 module, 'Node' + self.board_type.title())
