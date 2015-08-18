@@ -4,6 +4,9 @@
 import mock
 import os
 
+# Help mocking config.read_config
+READ_CONFIG = 'gateway_code.config.read_config'
+
 
 def read_config_mock(board_type, **kwargs):
     """ Mock for gateway_config.config.read_config with

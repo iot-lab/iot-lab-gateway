@@ -11,83 +11,60 @@
 
 import mock
 import unittest
-from cStringIO import StringIO
 import gateway_code.board_config as board_config
+from . import utils
 
 
-class TestGetClass(unittest.TestCase):
+class TestBoardConfig(unittest.TestCase):
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
-    def test_get_class(self, mock_func):
-        mock_func.return_value = 'm3'
+    def setUp(self):
         board_config.BoardConfig.clear_instance()
-        self.assertEquals(
-            board_config.BoardConfig().board_class.TTY, '/dev/ttyON_M3')
-        board_config.BoardConfig.clear_instance()
-
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
-    def test_inexisting_class(self, mock_func):
-        mock_func.return_value = 'unknown'
-        with self.assertRaises(ValueError):
-            board_config.BoardConfig()
-        board_config.BoardConfig.clear_instance()
-
-
-class TestGetHostname(unittest.TestCase):
 
     def tearDown(self):
         board_config.BoardConfig.clear_instance()
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
-    def test_get_hosname(self, mock_find_board_type):
-        mock_find_board_type.return_value = 'm3'
+    @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_robot'))
+    def test_board_type(self):
+        board_cfg = board_config.BoardConfig()
+
+        self.assertEquals('m3', board_cfg.board_type)
+        self.assertEquals('m3', board_cfg.board_class.TYPE)
+        self.assertEquals('turtlebot2', board_cfg.robot_type)
         self.assertNotEquals('', board_config.BoardConfig().hostname)
+
+    @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot'))
+    def test_board_type_no_robot(self):
+        board_cfg = board_config.BoardConfig()
+
+        self.assertEquals('m3', board_cfg.board_type)
+        self.assertEquals(None, board_cfg.robot_type)
+
+    @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('invalid_board_type'))
+    def test_board_type_not_found(self):
+        self.assertRaises(ValueError, board_config.BoardConfig)
 
 
 class TestSingletonPatern(unittest.TestCase):
 
-    @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
-    def test_single_instance(self, mock_func):
-        mock_func.return_value = 'm3'
-        board_config.BoardConfig()
-        first_instance = board_config.BoardConfig._instance
-        board_config.BoardConfig()
-        second_instance = board_config.BoardConfig._instance
-        board_config.BoardConfig()
-        mock_func.assert_called_once_with()
-        self.assertEquals(first_instance, second_instance)
+    def setUp(self):
         board_config.BoardConfig.clear_instance()
 
-
-class TestsBoardAndRobotType(unittest.TestCase):
-
-    def setUp(self):
-        self.string_io = StringIO()
-
-        self.open_mock_patcher = mock.patch('gateway_code.board_config.open',
-                                            create=True)
-
-        self.open_mock = self.open_mock_patcher.start()
-        self.open_mock.return_value = self.string_io
+        self.read_cfg = utils.read_config_mock('m3')
+        mock.patch(utils.READ_CONFIG, self.read_cfg).start()
 
     def tearDown(self):
-        self.open_mock_patcher.stop()
-
-    def test_board_type(self):
-
-        self.string_io.write('M3\n')
-        self.string_io.seek(0)
-        self.assertEquals('m3', board_config.BoardConfig().board_type)
+        mock.patch.stopall()
         board_config.BoardConfig.clear_instance()
 
-    def test_board_type_not_found(self):
-        self.open_mock.side_effect = IOError()
-        with self.assertRaises(IOError):
-            board_config.BoardConfig()
-        board_config.BoardConfig.clear_instance()
+    def test_single_instance(self):
+        first = board_config.BoardConfig()
+        second = board_config.BoardConfig()
+        third = board_config.BoardConfig()
 
-    def test_robot_type_not_found(self):
-        self.open_mock.side_effect = IOError()
-        with self.assertRaises(IOError):
-            self.assertEquals(None, board_config.BoardConfig().robot_type())
-        board_config.BoardConfig.clear_instance()
+        self.assertTrue(first is second)
+        self.assertTrue(first is third)
+
+        # Only one request each configuration
+        self.assertEquals(2, self.read_cfg.call_count)
+        calls = [mock.call('board_type'), mock.call('robot', None)]
+        self.read_cfg.assert_has_calls(calls)
