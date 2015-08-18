@@ -20,23 +20,23 @@ class TestGetClass(unittest.TestCase):
     @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_get_class(self, mock_func):
         mock_func.return_value = 'm3'
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
         self.assertEquals(
             board_config.BoardConfig().board_class.TTY, '/dev/ttyON_M3')
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
     @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_inexisting_class(self, mock_func):
         mock_func.return_value = 'unknown'
         with self.assertRaises(ValueError):
             board_config.BoardConfig()
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
 
 class TestGetHostname(unittest.TestCase):
 
     def tearDown(self):
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
     @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_get_hosname(self, mock_find_board_type):
@@ -56,7 +56,7 @@ class TestSingletonPatern(unittest.TestCase):
         board_config.BoardConfig()
         mock_func.assert_called_once_with()
         self.assertEquals(first_instance, second_instance)
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
 
 class TestsBoardAndRobotType(unittest.TestCase):
@@ -78,16 +78,16 @@ class TestsBoardAndRobotType(unittest.TestCase):
         self.string_io.write('M3\n')
         self.string_io.seek(0)
         self.assertEquals('m3', board_config.BoardConfig().board_type)
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
     def test_board_type_not_found(self):
         self.open_mock.side_effect = IOError()
         with self.assertRaises(IOError):
             board_config.BoardConfig()
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
     def test_robot_type_not_found(self):
         self.open_mock.side_effect = IOError()
         with self.assertRaises(IOError):
             self.assertEquals(None, board_config.BoardConfig().robot_type())
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()

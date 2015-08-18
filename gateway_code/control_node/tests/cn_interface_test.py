@@ -139,7 +139,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.cn.start('tty', exp_desc=exp_desc)
         self.assertIsNotNone(self.cn.oml_cfg_file)
         self.cn.stop()
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
 
 class TestHandleAnswer(unittest.TestCase):

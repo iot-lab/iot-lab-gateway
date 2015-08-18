@@ -44,10 +44,11 @@ class BoardConfig(object):
             raise ValueError(
                 'The class %r is not implemented' % open_node_path)
 
-    def clear_instance(self):
+    @classmethod
+    def clear_instance(cls):
         """ Reset the instance contained in the Singleton """
-        self._instance = None
-        self._is_init = False
+        cls._instance = None
+        cls._is_init = False
 
     @staticmethod
     def get_hostname():

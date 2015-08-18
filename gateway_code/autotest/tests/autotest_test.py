@@ -73,7 +73,7 @@ class TestProtocol(unittest.TestCase):
     @mock.patch('gateway_code.board_config.BoardConfig._find_board_type',
                 lambda self: 'a8')
     def test_test_gps(self):
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:
             # test with gps disabled
             self.assertEquals(0, self.g_v.test_gps(False))
@@ -83,7 +83,7 @@ class TestProtocol(unittest.TestCase):
             test_pps.return_value = 0
             self.assertEquals(0, self.g_v.test_gps(True))
             self.assertTrue(test_pps.called)
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
     def test__test_pps_open_node(self):
         pps_get_values = []
@@ -149,7 +149,7 @@ class TestAutotestChecker(unittest.TestCase):
         func_cmd()
         self.assertFalse(self.func.called)
         self.func.reset_mock()
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
 
 class TestAutoTestsErrorCases(unittest.TestCase):
@@ -165,7 +165,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.assertNotEquals(0, ret_dict['ret'])
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['board_type'], ret_dict['error'])
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
     @mock.patch('gateway_code.board_config.BoardConfig._find_board_type')
     def test_fail_on_setup_control_node(self, m_board_type):
@@ -188,7 +188,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.assertTrue(2 <= ret_dict['ret'])
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['setup', 'teardown'], ret_dict['error'])
-        board_config.BoardConfig().clear_instance()
+        board_config.BoardConfig.clear_instance()
 
 
 class TestAutotestFatalError(unittest.TestCase):
