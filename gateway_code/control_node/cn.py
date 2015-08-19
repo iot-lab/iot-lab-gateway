@@ -26,7 +26,7 @@ class ControlNode(object):
         self.default_profile = default_profile
 
         self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
-        self.cn_serial = cn_interface.ControlNodeSerial()
+        self.cn_serial = cn_interface.ControlNodeSerial(self.TTY)
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
         self.open_node_state = 'stop'
         self.profile = self.default_profile
@@ -36,7 +36,7 @@ class ControlNode(object):
         """ Start ControlNode serial interface """
         ret_val = 0
         ret_val += self.reset()
-        ret_val += self.cn_serial.start(self.TTY, exp_desc=exp_desc)
+        ret_val += self.cn_serial.start(exp_desc=exp_desc)
         ret_val += self.open_start('dc')
         return ret_val
 

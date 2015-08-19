@@ -44,13 +44,13 @@ OML_XML = '''
 '''
 
 
-class ControlNodeSerial(object):
-
+class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
     """
     Class handling the communication with the control node serial program
     """
 
-    def __init__(self):
+    def __init__(self, tty):
+        self.tty = tty
         self.cn_interface_process = None
         self.reader_thread = None
         self.cn_msg_queue = Queue.Queue(1)
@@ -65,7 +65,7 @@ class ControlNodeSerial(object):
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, tty, exp_desc=None, _args=None, _measures_handler=None):
+    def start(self, exp_desc=None, _args=None, _measures_handler=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
@@ -77,7 +77,7 @@ class ControlNodeSerial(object):
         self.measures_handler = _measures_handler or \
             self.measures_handler or LOGGER.error
 
-        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', tty]
+        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', self.tty]
         args += self._config_oml(exp_desc)
 
         # add arguments, used by tests
