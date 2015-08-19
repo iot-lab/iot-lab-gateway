@@ -308,7 +308,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Create user experiment files with 0666 permissions """
 
         exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
-        node_id = self.board_cfg.hostname
+        node_id = self.board_cfg.node_id
 
         for key, exp_file in config.EXP_FILES.iteritems():
             # calculate file_path and store it in exp_description

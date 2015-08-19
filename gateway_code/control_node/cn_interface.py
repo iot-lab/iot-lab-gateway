@@ -98,7 +98,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         # Extract configuration
         oml_cfg = exp_desc['exp_files'].copy()
         oml_cfg['exp_id'] = exp_desc['exp_id']
-        oml_cfg['node_id'] = board_config.BoardConfig().hostname
+        oml_cfg['node_id'] = board_config.BoardConfig().node_id
 
         # Save xml configuration in a temporary file
         oml_xml_cfg = OML_XML.format(**oml_cfg)

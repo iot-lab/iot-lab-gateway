@@ -31,7 +31,7 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
         self.board_type = config.read_config('board_type')
         self.board_class = config.open_node_class(self.board_type)
         self.robot_type = config.read_config('robot', None)
-        self.hostname = os.uname()[1]
+        self.node_id = os.uname()[1]
 
     @classmethod
     def clear_instance(cls):

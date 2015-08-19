@@ -30,7 +30,7 @@ class TestBoardConfig(unittest.TestCase):
         self.assertEquals('m3', board_cfg.board_type)
         self.assertEquals('m3', board_cfg.board_class.TYPE)
         self.assertEquals('turtlebot2', board_cfg.robot_type)
-        self.assertNotEquals('', board_config.BoardConfig().hostname)
+        self.assertNotEquals('', board_config.BoardConfig().node_id)
 
     @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot'))
     def test_board_type_no_robot(self):
