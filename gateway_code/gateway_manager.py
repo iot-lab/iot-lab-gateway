@@ -32,7 +32,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # Nodes instance
         self.open_node = self.board_cfg.board_class()
-        self.control_node = cn.ControlNode(self.board_cfg.default_profile)
+        self.control_node = cn.ControlNode(self.board_cfg.node_id,
+                                           self.board_cfg.default_profile)
         self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos

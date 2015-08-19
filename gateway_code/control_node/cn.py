@@ -22,7 +22,8 @@ class ControlNode(object):
     FW_CONTROL_NODE = static_path('control_node.elf')
     default_profile = None
 
-    def __init__(self, default_profile):
+    def __init__(self, node_id, default_profile):
+        self.node_id = node_id
         self.default_profile = default_profile
 
         self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
@@ -50,14 +51,12 @@ class ControlNode(object):
         return ret_val
 
     @logger_call("Control node : Start experiment")
-    def start_experiment(self, profile, board_type):
+    def start_experiment(self, profile):
         """ Configure the experiment """
         ret_val = 0
         ret_val += self.protocol.green_led_blink()
         ret_val += self.protocol.set_time()
-
-        # can't be done if we can't use i2C connection
-        ret_val += self.protocol.set_node_id(board_type)
+        ret_val += self.protocol.set_node_id(self.node_id)
         ret_val += self.configure_profile(profile)
         return ret_val
 
