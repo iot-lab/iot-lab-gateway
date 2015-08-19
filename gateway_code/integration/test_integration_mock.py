@@ -23,10 +23,6 @@ class GatewayCodeMock(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        # print measures
-        patch('gateway_code.control_node.cn_interface.TESTS_ARGS',
-              ['-d']).start()
-
         g_m = gateway_code.rest_server.GatewayManager('.')
         g_m.setup()
         cls.app = gateway_code.rest_server.GatewayRest(g_m)
@@ -42,12 +38,19 @@ class GatewayCodeMock(unittest.TestCase):
 
         self.board_cfg = gateway_code.board_config.BoardConfig()
 
+        self.cn_measures = []
+        self.g_m.control_node.cn_serial.measures_debug = self.cn_measure
+
         self.request_patcher = patch('gateway_code.rest_server.request')
         self.request = self.request_patcher.start()
         self.request.query = mock.Mock(timeout='0')  # no timeout by default
 
         with open(CURRENT_DIR + 'profile.json') as prof:
             self.profile_dict = json.load(prof)
+
+    def cn_measure(self, measure):
+        """ Store control node measures """
+        self.cn_measures.append(measure.split(' '))
 
     def tearDown(self):
         self.request_patcher.stop()

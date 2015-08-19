@@ -14,8 +14,6 @@ import mock
 from mock import patch
 
 from gateway_code.integration import test_integration_mock
-import gateway_code.control_node.cn_interface
-
 from gateway_code.autotest import autotest
 from gateway_code.common import wait_cond
 
@@ -61,9 +59,8 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
     def setUp(self):
         super(ExperimentRunningMock, self).setUp()
-        self.cn_measures = []
-        self.g_m.control_node.cn_serial.measures_handler = \
-            self._measures_handler
+
+        # super(self).cn_measures = []  # will hold control node measures
 
         # no timeout
         self.request.query = mock.Mock(timeout='')
@@ -76,11 +73,6 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
     def tearDown(self):
         super(ExperimentRunningMock, self).tearDown()
         self.g_m._destroy_user_exp_folders(**self.exp_conf)
-
-    def _measures_handler(self, measure_str):
-        """ control node measures Handler """
-        gateway_code.control_node.cn_interface.LOGGER.debug(measure_str)
-        self.cn_measures.append(measure_str.split(' '))
 
     @staticmethod
     def _send_command_open_node(command, host='localhost', port=20000):

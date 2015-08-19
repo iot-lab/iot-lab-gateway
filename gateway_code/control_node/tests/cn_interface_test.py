@@ -171,10 +171,16 @@ class TestHandleAnswer(unittest.TestCase):
         mock_logger.assert_called_with('cn_serial_error: any error msg')
 
     def test_measures_debug(self):
-        self.cn.measures_handler = mock.Mock()
-        self.cn._handle_answer('measures_debug: consumption_measure ' +
-                               '1377268768.841070:1.78250 ' +
-                               '0.000000 3.230000 0.080003')
-        self.cn.measures_handler.assert_called_with(
-            'measures_debug: consumption_measure ' +
-            '1377268768.841070:1.78250 0.000000 3.230000 0.080003')
+        msg = ('measures_debug: consumption_measure 1377268768.841070:'
+               '1.78250 0.000000 3.230000 0.080003')
+
+        m_debug = mock.Mock()
+
+        self.cn.measures_debug = m_debug
+        self.cn._handle_answer(msg)
+        m_debug.assert_called_with(msg)
+
+        m_debug.mock_reset()
+        self.cn.measures_debug = None
+        self.cn._handle_answer(msg)
+        self.assertFalse(m_debug.called)

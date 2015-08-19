@@ -99,8 +99,8 @@ class AutoTestManager(object):
         # configure Control Node
         ret_val += self.g_m.control_node.reset()
 
-        self.g_m.control_node.cn_serial.start(None,
-                                              ['-d'], self._measures_handler)
+        self.g_m.control_node.cn_serial.measures_debug = self._measures_handler
+        self.g_m.control_node.cn_serial.start()
 
         ret_val += self.g_m.control_node.protocol.set_time()
 

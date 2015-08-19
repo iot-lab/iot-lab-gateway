@@ -20,9 +20,6 @@ import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
-# use for tests
-TESTS_ARGS = []
-
 CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 
 
@@ -54,7 +51,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         self.process = None
         self.reader_thread = None
         self.msgs = Queue.Queue(1)
-        self.measures_handler = None
+        self.measures_debug = None
 
         self._send_mutex = threading.Semaphore(1)
         self._wait_ready = Queue.Queue(1)
@@ -63,22 +60,14 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, exp_desc=None, _args=None, _measures_handler=None):
+    def start(self, exp_desc=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
         """
         common.empty_queue(self._wait_ready)
 
-        # argument, or current value (for tests) or LOGGER.error
-        self.measures_handler = _measures_handler or \
-            self.measures_handler or LOGGER.error
-
-        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', self.tty]
-        args += self._config_oml(exp_desc)
-
-        # add arguments, used by tests
-        args += _args or TESTS_ARGS
+        args = self._cn_interface_args(exp_desc)
         self.process = subprocess.Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
@@ -86,6 +75,15 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         ret = self._wait_ready.get()
         return ret
+
+    def _cn_interface_args(self, exp_desc):
+        """ Arguments for control_node_serial_interface """
+        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', self.tty]
+        if self.measures_debug is not None:
+            args += ['-d']
+
+        args += self._config_oml(exp_desc)
+        return args
 
     def _config_oml(self, exp_desc):
         """ Create oml config files and folder
@@ -127,6 +125,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         # remove process after reader_thread is joined
         self.process = None
+        self.measures_debug = None
 
         # cleanup oml
         if self._oml_cfg_file is not None:
@@ -162,6 +161,12 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
                 self.msgs.put_nowait(answer)
             except Queue.Full:
                 LOGGER.error('Control node answer queue full: %r', answer)
+
+    def measures_handler(self, line):
+        """ Debug measures """
+        LOGGER.debug(line)
+        if self.measures_debug is not None:
+            self.measures_debug(line)
 
     def _reader(self):
         """ Reader thread worker.
