@@ -27,7 +27,6 @@ class GatewayRest(object):
 
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
-        self.board_type = board_config.BoardConfig().board_type
         self.board_class = board_config.BoardConfig().board_class
         self._app_routing()
 
@@ -82,16 +81,16 @@ class GatewayRest(object):
         try:
             profile = self._extract_profile()
         except ValueError:
-            LOGGER.error('Invalid json for profile')
+            LOGGER.error('REST: Invalid json for profile')
             return {'ret': 1}
 
-        ret = self.gateway_manager.exp_start(
-            user, exp_id, firmware, profile, timeout)
+        ret = self.gateway_manager.exp_start(user, exp_id, firmware, profile,
+                                             timeout)
         # cleanup of temp file
         if firmware_file is not None:
             firmware_file.close()
         if ret:  # pragma: no cover
-            LOGGER.error('Start experiment with errors: ret: %d', ret)
+            LOGGER.error('REST: Start experiment with errors: ret: %d', ret)
         return {'ret': ret}
 
     def exp_stop(self):
@@ -99,7 +98,7 @@ class GatewayRest(object):
         LOGGER.debug('REST: Stop experiment')
         ret = self.gateway_manager.exp_stop()
         if ret:  # pragma: no cover
-            LOGGER.error('Stop experiment errors: ret: %d', ret)
+            LOGGER.error('REST: Stop experiment errors: ret: %d', ret)
         return {'ret': ret}
 
     def exp_update_profile(self):
@@ -107,9 +106,9 @@ class GatewayRest(object):
         LOGGER.debug('REST: Update profile')
         try:
             profile = request.json
-            LOGGER.debug('Profile json dict: %r', profile)
+            LOGGER.debug('REST: Profile json dict: %r', profile)
         except ValueError:
-            LOGGER.error('Invalid json for profile')
+            LOGGER.error('REST: Invalid json for profile')
             return {'ret': 1}
 
         ret = self.gateway_manager.exp_update_profile(profile)
@@ -126,7 +125,7 @@ class GatewayRest(object):
             return None
 
         profile = json.load(_prof.file)  # ValueError on invalid profile
-        LOGGER.debug('Profile json dict: %r', profile)
+        LOGGER.debug('REST: Profile json dict: %r', profile)
         return profile
 
     @staticmethod
@@ -150,7 +149,7 @@ class GatewayRest(object):
     def open_flash(self):
         """ Flash open node
         Requires: request.files contains 'firmware' file argument """
-        LOGGER.debug('REST: Flash %s', self.board_type)
+        LOGGER.debug('REST: Flash OpenNode')
 
         firmware_file = self._extract_firmware()
         if firmware_file is None:
@@ -163,31 +162,31 @@ class GatewayRest(object):
 
     def open_soft_reset(self):
         """ Soft reset open node """
-        LOGGER.debug('REST: Reset %s', self.board_type)
+        LOGGER.debug('REST: Reset OpenNode')
         ret = self.gateway_manager.node_soft_reset('open')
         return {'ret': ret}
 
     def open_start(self):
         """ Start open node. Alimentation mode stays the same """
-        LOGGER.debug('REST: Open node start')
+        LOGGER.debug('REST: Start OpenNode')
         ret = self.gateway_manager.open_power_start()
         return {'ret': ret}
 
     def open_stop(self):
         """ Stop open node. Alimentation mode stays the same """
-        LOGGER.debug('REST: Open node stop')
+        LOGGER.debug('REST: Stop OpenNode')
         ret = self.gateway_manager.open_power_stop()
         return {'ret': ret}
 
     def open_debug_start(self):
         """ Start open node debugger """
-        LOGGER.debug('REST: Open node debugger start')
+        LOGGER.debug('REST: Debug OpenNode')
         ret = self.gateway_manager.open_debug_start()
         return {'ret': ret}
 
     def open_debug_stop(self):
         """ Stop open node debugger """
-        LOGGER.debug('REST: Open node debugger stop')
+        LOGGER.debug('REST: Stop debug OpenNode')
         ret = self.gateway_manager.open_debug_stop()
         return {'ret': ret}
 
@@ -202,7 +201,7 @@ class GatewayRest(object):
         Mode:
          * 'blink': leds keep blinking
         """
-        LOGGER.debug('REST: auto_tests')
+        LOGGER.debug('REST: Autotests')
 
         # get mode
         if mode not in ['blink', None]:
@@ -238,17 +237,17 @@ class GatewayRest(object):
         """ Return node status
          * Check nodes ftdi
         """
-        LOGGER.debug('REST: status')
+        LOGGER.debug('REST: Status')
         return {'ret': self.gateway_manager.status()}
 
     def conditional_route(self, node_func, path, *route_args, **route_kwargs):
         """ Add route if node implements 'node_func' """
         has_fct = callable(getattr(self.board_class, node_func, None))
         if has_fct:
-            LOGGER.info('RestServer: Route %s registered', path)
+            LOGGER.info('REST: Route %s registered', path)
             return bottle.route(path, *route_args, **route_kwargs)
         else:
-            LOGGER.debug('RestServer: Route %s not available', path)
+            LOGGER.debug('REST: Route %s not available', path)
             return None
 
 
