@@ -60,8 +60,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         cls.board_type = cls.board_cfg.board_type
         cls.open_node_class = cls.board_cfg.board_class
-        cls.default_profile = Profile(cls.open_node_class,
-                                      **config.default_profile())
+        cls.default_profile = Profile.from_dict(cls.open_node_class,
+                                                config.DEFAULT_PROFILE)
 
     @logger_call("Gateway Manager : Setup")
     def setup(self):

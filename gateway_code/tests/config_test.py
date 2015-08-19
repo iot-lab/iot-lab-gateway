@@ -52,6 +52,4 @@ class TestConfig(unittest.TestCase):
             u'power': u'dc',
             u'profilename': u'_default_profile',
         }
-        ret = config.default_profile()
-
-        self.assertEquals(default_profile_dict, ret)
+        self.assertEquals(default_profile_dict, config.DEFAULT_PROFILE)
