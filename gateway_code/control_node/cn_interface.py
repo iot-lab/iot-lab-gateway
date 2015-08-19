@@ -60,7 +60,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         self.cn_serial_ready = None
 
-        self.oml_cfg_file = None
+        self._oml_cfg_file = None
 
         # cleanup in case of error
         atexit.register(self.stop)
@@ -108,11 +108,11 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         # Save xml configuration in a temporary file
         oml_xml_cfg = OML_XML.format(**oml_cfg)
-        self.oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
-        self.oml_cfg_file.write(oml_xml_cfg)
-        self.oml_cfg_file.flush()
+        self._oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
+        self._oml_cfg_file.write(oml_xml_cfg)
+        self._oml_cfg_file.flush()
 
-        return ['-c', self.oml_cfg_file.name]
+        return ['-c', self._oml_cfg_file.name]
 
     def stop(self):
         """ Stop control node interface.
@@ -132,8 +132,9 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         self.cn_interface_process = None
 
         # cleanup oml
-        if self.oml_cfg_file is not None:
-            self.oml_cfg_file.close()
+        if self._oml_cfg_file is not None:
+            self._oml_cfg_file.close()
+            self._oml_cfg_file = None
         return 0
 
     def _handle_answer(self, line):
