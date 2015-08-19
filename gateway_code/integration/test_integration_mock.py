@@ -10,7 +10,7 @@ from nose.plugins.attrib import attr
 from mock import patch
 
 import gateway_code.rest_server
-import gateway_code.config
+import gateway_code.board_config
 
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -39,6 +39,8 @@ class GatewayCodeMock(unittest.TestCase):
         # get quick access to class attributes
         self.app = type(self).app
         self.g_m = self.app.gateway_manager
+
+        self.board_cfg = gateway_code.board_config.BoardConfig()
 
         self.request_patcher = patch('gateway_code.rest_server.request')
         self.request = self.request_patcher.start()

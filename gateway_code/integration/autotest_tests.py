@@ -10,13 +10,7 @@ import mock
 from nose.plugins.attrib import attr
 
 from gateway_code.integration import test_integration_mock
-
-import gateway_code.autotest.m3_node_interface
-import gateway_code.autotest.autotest
-from gateway_code.open_nodes.node_m3 import NodeM3
-import gateway_code.config
-
-import gateway_code.board_config as board_config
+from gateway_code.autotest import autotest, m3_node_interface
 
 import os
 if os.uname()[4] != 'armv7l':
@@ -46,10 +40,10 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
 
         # test that ON still on => should be blinking and answering
         # TODO add fox
-        if board_config.BoardConfig().board_type != 'm3':
+        if self.board_cfg.board_type != 'm3':
             return
-        open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial(
-            NodeM3.TTY, NodeM3.BAUDRATE)
+        node = self.board_cfg.board_class
+        open_serial = m3_node_interface.OpenNodeSerial(node.TTY, node.BAUDRATE)
         open_serial.start()
         self.assertIsNotNone(open_serial.send_command(['get_time']))
         open_serial.stop()
@@ -57,7 +51,7 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
     def test_mode_no_blink_no_radio(self):
         """ Try running autotest without blinking leds and without radio """
 
-        g_v = gateway_code.autotest.autotest.AutoTestManager(self.g_m)
+        g_v = autotest.AutoTestManager(self.g_m)
         ret_dict = g_v.auto_tests(channel=None, blink=False)
 
         self.assertEquals([], ret_dict['error'])

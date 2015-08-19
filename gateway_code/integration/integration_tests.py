@@ -13,16 +13,11 @@ from itertools import izip
 import mock
 from mock import patch
 
-# all modules should be imported and not only the package
 from gateway_code.integration import test_integration_mock
 import gateway_code.control_node.cn_interface
 
+from gateway_code.autotest import autotest
 from gateway_code.common import wait_cond
-from gateway_code.autotest.autotest import extract_measures
-
-import gateway_code.board_config as board_config
-
-from gateway_code.open_nodes.node_m3 import NodeM3
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -122,11 +117,10 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
         """ Test simple experiment"""
-        board_type = board_config.BoardConfig().board_type
-        board_class = board_config.BoardConfig().board_class
+        board_class = self.board_cfg.board_class
 
         # The A8 node is really different from the others
-        if board_type == 'a8':
+        if board_class.TYPE == 'a8':
             self._run_simple_experiment_a8(m_error)
         else:
             self._run_simple_experiment_node(m_error, board_class)
@@ -184,12 +178,13 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_m3_exp_with_measures(self, m_error):
         """ Run an experiment with measures and profile update """
+        board_class = self.board_cfg.board_class
 
-        if 'm3' != board_config.BoardConfig().board_type:
+        if 'm3' != board_class.TYPE:
             return
         t_start = time.time()
 
-        self.request.files = {'firmware': FileUpload(NodeM3.FW_AUTOTEST)}
+        self.request.files = {'firmware': FileUpload(board_class.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
         exp_files = self.g_m.exp_desc['exp_files'].copy()
         time.sleep(1)
@@ -204,7 +199,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.request.json = None
         self.assertEquals({'ret': 0}, self.app.exp_update_profile())
         time.sleep(2)  # wait maybe remaining values
-        measures = extract_measures(self.cn_measures)
+        measures = autotest.extract_measures(self.cn_measures)
         self.cn_measures = []
 
         # # # # # # # # # #
@@ -338,7 +333,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 
     def tests_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
-        if 'a8' != board_config.BoardConfig().board_type:
+        if 'a8' != self.board_cfg.board_type:
             return
 
         c_n = self.g_m.control_node
