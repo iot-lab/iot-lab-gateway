@@ -51,15 +51,13 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
     def __init__(self, tty):
         self.tty = tty
-        self.cn_interface_process = None
+        self.process = None
         self.reader_thread = None
-        self.cn_msg_queue = Queue.Queue(1)
-        self.protect_send = threading.Semaphore(1)
-        # handler to allow changing it in tests
+        self.msgs = Queue.Queue(1)
         self.measures_handler = None
 
-        self.cn_serial_ready = None
-
+        self._send_mutex = threading.Semaphore(1)
+        self._wait_ready = Queue.Queue(1)
         self._oml_cfg_file = None
 
         # cleanup in case of error
@@ -70,8 +68,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         Run `control node serial program` and handle its answers.
         """
-        # Reset Queue (== use a new one)
-        self.cn_serial_ready = Queue.Queue(0)
+        common.empty_queue(self._wait_ready)
 
         # argument, or current value (for tests) or LOGGER.error
         self.measures_handler = _measures_handler or \
@@ -82,13 +79,12 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         # add arguments, used by tests
         args += _args or TESTS_ARGS
-        self.cn_interface_process = subprocess.Popen(
-            args, stderr=PIPE, stdin=PIPE)
+        self.process = subprocess.Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
 
-        ret = self.cn_serial_ready.get()
+        ret = self._wait_ready.get()
         return ret
 
     def _config_oml(self, exp_desc):
@@ -117,19 +113,20 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
     def stop(self):
         """ Stop control node interface.
 
-        Stop `control node serial program` and answers handler.
-        """
+        Stop `control node serial program` and answers handler.  """
 
-        if self.cn_interface_process is not None:
-            try:
-                self.cn_interface_process.terminate()
-            except OSError:
-                LOGGER.error('Control node process already terminated')
+        try:
+            self.process.terminate()
+        except OSError:
+            LOGGER.error('Control node process already terminated')
+        except AttributeError:
+            pass  # None
+
         if self.reader_thread is not None:
             self.reader_thread.join()
 
-        # remove cn_interface_process after reader_thread is joined
-        self.cn_interface_process = None
+        # remove process after reader_thread is joined
+        self.process = None
 
         # cleanup oml
         if self._oml_cfg_file is not None:
@@ -158,11 +155,11 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         elif answer[0] == 'measures_debug:':  # measures output
             self.measures_handler(line)
         elif answer[0] == 'cn_serial_ready':  # cn_serial interface ready
-            self.cn_serial_ready.put(0)
+            self._wait_ready.put(0)
 
         else:  # control node answer to a command
             try:
-                self.cn_msg_queue.put_nowait(answer)
+                self.msgs.put_nowait(answer)
             except Queue.Full:
                 LOGGER.error('Control node answer queue full: %r', answer)
 
@@ -171,14 +168,14 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         Reads and handle control node answers
         """
-        while self.cn_interface_process.poll() is None:
-            line = self.cn_interface_process.stderr.readline()
+        while self.process.poll() is None:
+            line = self.process.stderr.readline()
             if line == '':
                 break
             self._handle_answer(line.strip())
         else:
             LOGGER.error('Control node serial reader thread ended prematurely')
-            self.cn_serial_ready.put(1)  # in case of failure at startup
+            self._wait_ready.put(1)  # in case of failure at startup
 
     def send_command(self, command_args):
         """ Send given command to control node and wait for an answer
@@ -188,23 +185,24 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         :return: received answers or `None` if timeout caught
         """
         command_str = ' '.join(command_args) + '\n'
-        with self.protect_send:
+        with self._send_mutex:
             # remove existing items (old not treated answers)
-            common.empty_queue(self.cn_msg_queue)
+            common.empty_queue(self.msgs)
             try:
                 LOGGER.debug('control_node_cmd: %r', command_args)
-                self.cn_interface_process.stdin.write(command_str)
+                self.process.stdin.write(command_str)
                 # wait for answer 1 second at max
-                answer_cn = self.cn_msg_queue.get(block=True, timeout=1.0)
-            except Queue.Empty:  # timeout, answer not got
+                answer_cn = self.msgs.get(block=True, timeout=1.0)
+            except Queue.Empty:
+                LOGGER.error('control_node_serial answer timeout')
                 answer_cn = None
-            except AttributeError:  # write when stdin is None
+            except AttributeError:
                 LOGGER.error('control_node_serial stdin is None')
                 answer_cn = None
             except IOError:
                 LOGGER.error('control_node_serial process is terminated')
                 answer_cn = None
-
-        LOGGER.debug('control_node_answer: %r', answer_cn)
+            finally:
+                LOGGER.debug('control_node_answer: %r', answer_cn)
 
         return answer_cn
