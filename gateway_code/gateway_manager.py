@@ -27,8 +27,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     Manages experiments, open node and control node
     """
+    board_cfg = None
     board_type = None
-    open_node_type = None
+    open_node_class = None
     default_profile = None
 
     def __init__(self, log_folder='.'):
@@ -36,7 +37,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         gateway_logging.init_logger(log_folder)
 
         self.rlock = RLock()
-        self.open_node = GatewayManager.open_node_type()
+        self.open_node = GatewayManager.open_node_class()
         self.control_node = cn.ControlNode(GatewayManager.default_profile)
         self._nodes = {'control': self.control_node, 'open': self.open_node}
 
@@ -55,9 +56,11 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Init GatewayManager attributes.
         It's done on dynamic init to allow mocking config.board_type in tests
         """
-        cls.board_type = board_config.BoardConfig().board_type
-        cls.open_node_type = board_config.BoardConfig().board_class
-        cls.default_profile = Profile(cls.open_node_type,
+        cls.board_cfg = board_config.BoardConfig()
+
+        cls.board_type = cls.board_cfg.board_type
+        cls.open_node_class = cls.board_cfg.board_class
+        cls.default_profile = Profile(cls.open_node_class,
                                       **config.default_profile())
 
     @logger_call("Gateway Manager : Setup")
@@ -97,7 +100,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_stop()
 
         try:
-            profile = Profile.from_dict(self.open_node_type, profile_dict)
+            profile = Profile.from_dict(self.open_node_class, profile_dict)
         except ValueError as err:
             LOGGER.error('%r', err)
             return 1
@@ -108,8 +111,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_desc['exp_id'] = exp_id
         self.exp_desc['user'] = user
 
-        if board_config.BoardConfig().robot_type == 'turtlebot2':
-            # pragma: no cover
+        if self.board_cfg.robot_type == 'turtlebot2':  # pragma: no cover
             LOGGER.info("I'm a Turtlebot2")
             self._create_user_exp_folders(user, exp_id)
 
@@ -197,7 +199,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info('Update experiment profile')
 
         try:
-            profile = Profile.from_dict(self.open_node_type, profile_dict)
+            profile = Profile.from_dict(self.open_node_class, profile_dict)
         except ValueError as err:
             LOGGER.error('%r', err)
             ret = 1
@@ -306,7 +308,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Create user experiment files with 0666 permissions """
 
         exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
-        node_id = board_config.BoardConfig().hostname
+        node_id = self.board_cfg.hostname
 
         for key, exp_file in config.EXP_FILES.iteritems():
             # calculate file_path and store it in exp_description
