@@ -42,7 +42,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.readline_ret_vals.put('')
 
     def test_normal_start_stop(self):
-        ret_start = self.cn.start()
+        ret_start = self.cn.start('m3-1')
         self.assertEquals(0, ret_start)
         self.assertTrue(self.popen.stderr.readline.called)
 
@@ -56,7 +56,7 @@ class TestControlNodeSerial(unittest.TestCase):
         # poll should return an error
         self.popen.poll.return_value = 2
 
-        ret_start = self.cn.start()
+        ret_start = self.cn.start('m3-1')
         self.assertNotEquals(0, ret_start)
         mock_logger.assert_called_with(
             'Control node serial reader thread ended prematurely')
@@ -73,7 +73,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stdin.write.side_effect = IOError()
         self.popen.terminate.side_effect = OSError()
 
-        self.cn.start()
+        self.cn.start('m3-1')
 
         # try sending command
         ret = self.cn.send_command(['test', 'cmd'])
@@ -92,13 +92,13 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stdin.write.side_effect = \
             (lambda *x: self.readline_ret_vals.put('start ACK\n'))
 
-        self.cn.start()
+        self.cn.start('m3-1')
         ret = self.cn.send_command(['start', 'DC'])
         self.assertEquals(['start', 'ACK'], ret)
         self.cn.stop()
 
     def test_send_command_no_answer(self):
-        self.cn.start()
+        self.cn.start('m3-1')
         ret = self.cn.send_command(['start', 'DC'])
         self.assertIsNone(ret)
         self.cn.stop()
@@ -113,7 +113,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.readline_ret_vals.put('set ACK\n')
         self.readline_ret_vals.put('start ACK\n')
 
-        self.cn.start()
+        self.cn.start('m3-1')
         self.cn.stop()
 
         mock_logger.assert_called_with('Control node answer queue full: %r',
@@ -123,7 +123,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def test_empty_config_oml(self):
         # No experiment description
-        ret = self.cn._config_oml(None)
+        ret = self.cn._config_oml('m3-1', None)
         self.assertEquals([], ret)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
@@ -138,7 +138,7 @@ class TestControlNodeSerial(unittest.TestCase):
                           'log': '/tmp/log'}
         }
 
-        self.cn.start(exp_desc=exp_desc)
+        self.cn.start('m3-1', exp_desc=exp_desc)
         self.assertIsNotNone(self.cn._oml_cfg_file)
         self.cn.stop()
         board_config.BoardConfig.clear_instance()

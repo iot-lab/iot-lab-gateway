@@ -37,7 +37,7 @@ class ControlNode(object):
         """ Start ControlNode serial interface """
         ret_val = 0
         ret_val += self.reset()
-        ret_val += self.cn_serial.start(exp_desc=exp_desc)
+        ret_val += self.cn_serial.start(self.node_id, exp_desc)
         ret_val += self.open_start('dc')
         return ret_val
 

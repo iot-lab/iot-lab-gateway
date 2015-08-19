@@ -100,7 +100,7 @@ class AutoTestManager(object):
         ret_val += self.g_m.control_node.reset()
 
         self.g_m.control_node.cn_serial.measures_debug = self._measures_handler
-        self.g_m.control_node.cn_serial.start()
+        self.g_m.control_node.cn_serial.start(self.board_cfg.node_id)
 
         ret_val += self.g_m.control_node.protocol.set_time()
 

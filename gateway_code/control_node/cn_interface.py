@@ -13,7 +13,6 @@ import threading
 from tempfile import NamedTemporaryFile
 
 import atexit
-import gateway_code.board_config as board_config
 from gateway_code import common
 
 import logging
@@ -60,14 +59,14 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, exp_desc=None):
+    def start(self, node_id, exp_desc=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
         """
         common.empty_queue(self._wait_ready)
 
-        args = self._cn_interface_args(exp_desc)
+        args = self._cn_interface_args(node_id, exp_desc)
         self.process = subprocess.Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
@@ -76,16 +75,16 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         ret = self._wait_ready.get()
         return ret
 
-    def _cn_interface_args(self, exp_desc):
+    def _cn_interface_args(self, node_id, exp_desc):
         """ Arguments for control_node_serial_interface """
         args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', self.tty]
         if self.measures_debug is not None:
             args += ['-d']
 
-        args += self._config_oml(exp_desc)
+        args += self._config_oml(node_id, exp_desc)
         return args
 
-    def _config_oml(self, exp_desc):
+    def _config_oml(self, node_id, exp_desc):
         """ Create oml config files and folder
         if user and exp_id are given
 
@@ -98,7 +97,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         # Extract configuration
         oml_cfg = exp_desc['exp_files'].copy()
         oml_cfg['exp_id'] = exp_desc['exp_id']
-        oml_cfg['node_id'] = board_config.BoardConfig().node_id
+        oml_cfg['node_id'] = node_id
 
         # Save xml configuration in a temporary file
         oml_xml_cfg = OML_XML.format(**oml_cfg)
