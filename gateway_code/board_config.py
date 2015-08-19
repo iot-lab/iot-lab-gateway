@@ -3,7 +3,9 @@
 """ Board Config """
 
 import os
+import functools
 from gateway_code import config
+from gateway_code import profile
 
 
 # Implemented as a class to be loaded dynamically and allow mocking in tests
@@ -32,6 +34,10 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
         self.board_class = config.open_node_class(self.board_type)
         self.robot_type = config.read_config('robot', None)
         self.node_id = os.uname()[1]
+
+        self.profile_from_dict = functools.partial(profile.Profile.from_dict,
+                                                   self.board_class)
+        self.default_profile = self.profile_from_dict(config.DEFAULT_PROFILE)
 
     @classmethod
     def clear_instance(cls):

@@ -9,7 +9,6 @@ from threading import RLock, Timer
 import gateway_code.config as config
 from gateway_code import common
 from gateway_code.common import logger_call
-from gateway_code.profile import Profile
 from gateway_code.autotest import autotest
 
 import gateway_code.board_config as board_config
@@ -21,24 +20,19 @@ LOGGER = gateway_logging.LOGGER
 
 
 class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
+    """ Gateway Manager class,
 
-    """
-    Gateway Manager class,
-
-    Manages experiments, open node and control node
-    """
-    board_cfg = None
-    board_type = None
-    open_node_class = None
-    default_profile = None
+    Manages experiments, open node and control node """
 
     def __init__(self, log_folder='.'):
-        self.cls_init()
         gateway_logging.init_logger(log_folder)
 
+        self.board_cfg = board_config.BoardConfig()
         self.rlock = RLock()
-        self.open_node = GatewayManager.open_node_class()
-        self.control_node = cn.ControlNode(GatewayManager.default_profile)
+
+        # Nodes instance
+        self.open_node = self.board_cfg.board_class()
+        self.control_node = cn.ControlNode(self.board_cfg.default_profile)
         self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
@@ -50,18 +44,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.experiment_is_running = False
         self.user_log_handler = None
         self.timeout_timer = None
-
-    @classmethod
-    def cls_init(cls):
-        """ Init GatewayManager attributes.
-        It's done on dynamic init to allow mocking config.board_type in tests
-        """
-        cls.board_cfg = board_config.BoardConfig()
-
-        cls.board_type = cls.board_cfg.board_type
-        cls.open_node_class = cls.board_cfg.board_class
-        cls.default_profile = Profile.from_dict(cls.open_node_class,
-                                                config.DEFAULT_PROFILE)
 
     @logger_call("Gateway Manager : Setup")
     def setup(self):
@@ -100,7 +82,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_stop()
 
         try:
-            profile = Profile.from_dict(self.open_node_class, profile_dict)
+            profile = self.board_cfg.profile_from_dict(profile_dict)
         except ValueError as err:
             LOGGER.error('%r', err)
             return 1
@@ -128,7 +110,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
-        ret_val += self.control_node.start_experiment(profile, self.board_type)
+        ret_val += self.control_node.start_experiment(
+            profile, self.board_cfg.board_type)
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
             self.timeout_timer = Timer(timeout, self._timeout_exp_stop,
@@ -199,7 +182,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info('Update experiment profile')
 
         try:
-            profile = Profile.from_dict(self.open_node_class, profile_dict)
+            profile = self.board_cfg.profile_from_dict(profile_dict)
         except ValueError as err:
             LOGGER.error('%r', err)
             ret = 1
