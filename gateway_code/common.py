@@ -89,7 +89,8 @@ def wait_tty(dev_tty, logger, timeout=TTY_DETECT_TIME):
 
 def wait_no_tty(dev_tty, timeout=TTY_DETECT_TIME):
     """ Wait until `dev_tty` is not present """
-    wait_cond(timeout, False, os.path.exists, dev_tty)
+    ret = wait_cond(timeout, False, os.path.exists, dev_tty)
+    return 0 if ret else 1
 
 
 def syncronous(tlockname):
