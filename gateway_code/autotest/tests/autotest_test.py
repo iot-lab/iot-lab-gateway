@@ -6,7 +6,6 @@ import unittest
 import mock
 
 from gateway_code.autotest import autotest
-import gateway_code.board_config as board_config
 from gateway_code.tests import utils
 
 
@@ -20,13 +19,9 @@ from gateway_code.tests import utils
 class TestProtocol(unittest.TestCase):
 
     def setUp(self):
-        board_config.BoardConfig.clear_instance()
         mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
-
-    def tearDown(self):
-        board_config.BoardConfig.clear_instance()
 
     def test__check(self):
         # test validate
@@ -74,13 +69,9 @@ class TestProtocol(unittest.TestCase):
 class TestProtocolGPS(unittest.TestCase):
 
     def setUp(self):
-        board_config.BoardConfig.clear_instance()
         mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8')).start()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
-
-    def tearDown(self):
-        board_config.BoardConfig.clear_instance()
 
     def test_test_gps(self):
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:
@@ -122,9 +113,6 @@ class TestAutotestChecker(unittest.TestCase):
         self.func = mock.Mock()
         self.open_node = mock.Mock()
 
-    def tearDown(self):
-        board_config.BoardConfig.clear_instance()
-
     def function(self, *args, **kwargs):
         """ Should mock a real function to let 'wraps' work """
         self.func(self, *args, **kwargs)
@@ -165,14 +153,12 @@ class TestAutotestChecker(unittest.TestCase):
 class TestAutoTestsErrorCases(unittest.TestCase):
 
     def setUp(self):
-        board_config.BoardConfig.clear_instance()
         mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
 
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
     def tearDown(self):
-        board_config.BoardConfig.clear_instance()
         mock.patch.stopall()
 
     def test_fail_on_setup_control_node(self):

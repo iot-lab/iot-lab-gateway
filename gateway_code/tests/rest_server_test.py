@@ -21,7 +21,6 @@ import mock
 import unittest
 
 from gateway_code import rest_server
-from gateway_code import board_config
 from . import utils
 
 import os
@@ -53,8 +52,6 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
 class TestRestMethods(unittest.TestCase):
 
     def setUp(self):
-        board_config.BoardConfig.clear_instance()
-
         self.request = mock.patch('gateway_code.rest_server.request').start()
         mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
 
@@ -62,7 +59,6 @@ class TestRestMethods(unittest.TestCase):
         self.s_r = rest_server.GatewayRest(self.g_m)
 
     def tearDown(self):
-        board_config.BoardConfig.clear_instance()
         mock.patch.stopall()
 
     @mock.patch('bottle.route')
@@ -271,12 +267,6 @@ class TestRestMethods(unittest.TestCase):
 
 class TestServerRestMain(unittest.TestCase):
     """ Cover functions uncovered by unit tests """
-
-    def setUp(self):
-        board_config.BoardConfig.clear_instance()
-
-    def tearDown(self):
-        board_config.BoardConfig.clear_instance()
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('subprocess.call')

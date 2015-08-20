@@ -12,14 +12,12 @@ import mock
 
 import Queue
 from gateway_code.control_node import cn_interface
-import gateway_code.board_config as board_config
 from gateway_code.tests import utils
 
 
 class TestControlNodeSerial(unittest.TestCase):
 
     def setUp(self):
-        board_config.BoardConfig.clear_instance()
         self.popen_patcher = mock.patch('subprocess.Popen')
         popen_class = self.popen_patcher.start()
         self.popen = popen_class.return_value
@@ -36,7 +34,6 @@ class TestControlNodeSerial(unittest.TestCase):
     def tearDown(self):
         self.cn.stop()
         mock.patch.stopall()
-        board_config.BoardConfig.clear_instance()
 
     def _terminate(self):
         self.readline_ret_vals.put('')
@@ -152,7 +149,6 @@ class TestControlNodeSerial(unittest.TestCase):
         self.assertIsNotNone(self.cn._oml_cfg_file)
 
         self.cn.stop()
-        board_config.BoardConfig.clear_instance()
 
     def test_oml_xml_config(self):
         exp_files = {

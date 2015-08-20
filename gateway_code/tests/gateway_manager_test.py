@@ -11,34 +11,18 @@ import unittest
 import mock
 
 from gateway_code import gateway_manager
-from gateway_code import board_config
 from . import utils
 
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
-# pylint <= 1.3
-# pylint: disable=too-many-public-methods
 # pylint >= 1.4
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
-# TODO : this test must run in board_config_test
-# @patch('gateway_code.config.board_type', (lambda: 'NOT_A_BOARD'))
-# class TestGatewayManagerInvalidBoardType(unittest.TestCase):
-#    def test_invalid_board_type(self):
-#        """ Run setup with a wrong board type"""
-#        self.assertRaises(ValueError, gateway_manager.GatewayManager)
-
 
 @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
 class TestGatewayManager(unittest.TestCase):
-
-    def setUp(self):
-        board_config.BoardConfig.clear_instance()
-
-    def tearDown(self):
-        board_config.BoardConfig.clear_instance()
 
     def test_setup(self):
         """ Test running gateway_manager with setup without error """

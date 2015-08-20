@@ -17,12 +17,6 @@ from . import utils
 
 class TestBoardConfig(unittest.TestCase):
 
-    def setUp(self):
-        board_config.BoardConfig.clear_instance()
-
-    def tearDown(self):
-        board_config.BoardConfig.clear_instance()
-
     @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_robot'))
     def test_board_type(self):
         board_cfg = board_config.BoardConfig()
@@ -42,29 +36,3 @@ class TestBoardConfig(unittest.TestCase):
     @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('invalid_board_type'))
     def test_board_type_not_found(self):
         self.assertRaises(ValueError, board_config.BoardConfig)
-
-
-class TestSingletonPatern(unittest.TestCase):
-
-    def setUp(self):
-        board_config.BoardConfig.clear_instance()
-
-        self.read_cfg = utils.read_config_mock('m3')
-        mock.patch(utils.READ_CONFIG, self.read_cfg).start()
-
-    def tearDown(self):
-        mock.patch.stopall()
-        board_config.BoardConfig.clear_instance()
-
-    def test_single_instance(self):
-        first = board_config.BoardConfig()
-        second = board_config.BoardConfig()
-        third = board_config.BoardConfig()
-
-        self.assertTrue(first is second)
-        self.assertTrue(first is third)
-
-        # Only one request each configuration
-        self.assertEquals(2, self.read_cfg.call_count)
-        calls = [mock.call('board_type'), mock.call('robot', None)]
-        self.read_cfg.assert_has_calls(calls)
