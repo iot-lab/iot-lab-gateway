@@ -71,8 +71,8 @@ class TestGatewayManager(unittest.TestCase):
         g_m = gateway_manager.GatewayManager()
         g_m._create_user_exp_folders('user', 123)
         g_m._create_user_exp_folders('user', 123)
-        g_m.create_user_exp_files('user', 123)
-        g_m.cleanup_user_exp_files()
+        exp_files = g_m.create_user_exp_files('m3-1', 'user', 123)
+        g_m.cleanup_user_exp_files(exp_files)
         g_m._destroy_user_exp_folders('user', 123)
         g_m._destroy_user_exp_folders('user', 123)
 
@@ -80,20 +80,24 @@ class TestGatewayManager(unittest.TestCase):
     def test__create_user_exp_files_fail(self):
         """ Create user_exp files fail """
         g_m = gateway_manager.GatewayManager()
-        self.assertRaises(IOError, g_m.create_user_exp_files, '_user_', '-1')
+        self.assertRaises(IOError, g_m.create_user_exp_files,
+                          'm3-1', '_user_', '-1')
 
     def test__cleanup_user_exp_files_fail_cases(self):
         """ Trying cleaning up files in different state """
 
         g_m = gateway_manager.GatewayManager()
-        g_m.exp_desc['exp_files']['non_existent'] = "invalid_path_lala"
-        g_m.exp_desc['exp_files']['empty_file'] = "test_file"
-        g_m.exp_desc['exp_files']['non_empty_file'] = "test_file_2"
+        exp_files = {
+            'non_existent': "invalid_path_lala",
+            'empty_file': "test_file",
+            'non_empty_file': "test_file_2",
+        }
+
         open("test_file", 'w').close()
         with open('test_file_2', 'w') as test_file:
             test_file.write('test\n')
 
-        g_m.cleanup_user_exp_files()
+        g_m.cleanup_user_exp_files(exp_files)
 
         # no exception
         self.assertFalse(os.path.exists("test_file"))

@@ -33,11 +33,14 @@ class ControlNode(object):
         self.profile = self.default_profile
 
     @logger_call("Control node : Starting of control node serial interface")
-    def start(self, exp_desc):
+    def start(self, exp_id, exp_files=None):
         """ Start ControlNode serial interface """
         ret_val = 0
         ret_val += self.reset()
-        ret_val += self.cn_serial.start(self.node_id, exp_desc)
+
+        oml_cfg = self.cn_serial.oml_xml_config(self.node_id, exp_id,
+                                                exp_files)
+        ret_val += self.cn_serial.start(oml_cfg)
         ret_val += self.open_start('dc')
         return ret_val
 

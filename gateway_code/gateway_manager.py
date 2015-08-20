@@ -37,11 +37,10 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
-        self.exp_desc = {
-            'exp_id': None,
-            'user': None,
-            'exp_files': {}
-        }
+        self.exp_id = None
+        self.user = None
+        self.exp_files = {}
+
         self.experiment_is_running = False
         self.user_log_handler = None
         self.timeout_timer = None
@@ -91,27 +90,29 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         ret_val = 0
 
         self.experiment_is_running = True
-        self.exp_desc['exp_id'] = exp_id
-        self.exp_desc['user'] = user
+        self.exp_id = exp_id
+        self.user = user
 
         if self.board_cfg.robot_type == 'turtlebot2':  # pragma: no cover
             LOGGER.info("I'm a Turtlebot2")
             self._create_user_exp_folders(user, exp_id)
 
-        # Create the experiment files with correct permissions
-        self.create_user_exp_files(user=user, exp_id=exp_id)
+        self.exp_files = self.create_user_exp_files(self.board_cfg.node_id,
+                                                    user, exp_id)
 
         # Create user log
         self.user_log_handler = gateway_logging.user_logger(
-            self.exp_desc['exp_files']['log'])
+            self.exp_files['log'])
         LOGGER.addHandler(self.user_log_handler)
         LOGGER.info('Start experiment: %s-%i', user, exp_id)
+
         # Init ControlNode
-        ret_val += self.control_node.start(self.exp_desc)
+        ret_val += self.control_node.start(self.exp_id, self.exp_files)
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
         ret_val += self.control_node.start_experiment(profile)
+
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
             self.timeout_timer = Timer(timeout, self._timeout_exp_stop,
@@ -127,7 +128,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         Should stop only if experiment is the same as the experiment
         that started the timer """
         LOGGER.info("Timeout experiment: %r %r", user, exp_id)
-        if self.exp_desc['exp_id'] == exp_id and self.exp_desc['user'] == user:
+        if (self.exp_id, self.user) == (exp_id, user):
             LOGGER.info("Still running. Stop exp")
             self.exp_stop()
 
@@ -163,11 +164,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.control_node.stop()
 
         # Remove empty user experiment files
-        self.cleanup_user_exp_files()
+        self.cleanup_user_exp_files(self.exp_files)
+        self.exp_files = {}
 
         # Reset configuration
-        self.exp_desc['exp_id'] = None
-        self.exp_desc['user'] = None
+        self.exp_id = None
+        self.user = None
         self.experiment_is_running = False
 
         LOGGER.info("Stop experiment succeeded")
@@ -269,9 +271,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     @common.syncronous('rlock')
     def auto_tests(self, channel, blink, flash, gps):
-        """
-        Run Auto-tests on nodes and gateway
-        """
+        """ Run Auto-tests on nodes and gateway """
         autotest_manager = autotest.AutoTestManager(self)
         return autotest_manager.auto_tests(channel, blink, flash, gps)
 
@@ -287,33 +287,24 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 # Experiment files and folder management methods
 #
 
-    def create_user_exp_files(self, user, exp_id):
+    @staticmethod
+    def create_user_exp_files(node_id, user, exp_id):
         """ Create user experiment files with 0666 permissions """
 
-        exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
-        node_id = self.board_cfg.node_id
+        exp_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
+        exp_files = {}
 
-        for key, exp_file in config.EXP_FILES.iteritems():
-            # calculate file_path and store it in exp_description
-            file_path = exp_files_dir + exp_file.format(node_id=node_id)
-            self.exp_desc['exp_files'][key] = file_path
-            try:
-                # create empty file with 0666 permission
-                open(file_path, "w").close()
-                os.chmod(file_path, config.STAT_0666)
-            except IOError as err:
-                LOGGER.error('Cannot write exp file: %r', file_path)
-                raise err
+        for name, exp_file in config.EXP_FILES.iteritems():
+            file_path = os.path.join(exp_dir, exp_file.format(node_id=node_id))
+            exp_files[name] = config.create_user_file(file_path)
 
-    def cleanup_user_exp_files(self):
+        return exp_files
+
+    @staticmethod
+    def cleanup_user_exp_files(exp_files):
         """ Delete empty user experiment files """
-        for exp_file in self.exp_desc['exp_files'].itervalues():
-            try:
-                if os.path.getsize(exp_file) == 0:
-                    os.unlink(exp_file)
-            except OSError:
-                pass
-        self.exp_desc['exp_files'] = {}
+        for exp_file in exp_files.itervalues():
+            config.clean_user_file(exp_file)
 
 # Exp folders creation used in tests
 

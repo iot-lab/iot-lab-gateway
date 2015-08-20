@@ -59,14 +59,14 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, node_id, exp_desc=None):
+    def start(self, oml_xml_config=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
         """
         common.empty_queue(self._wait_ready)
 
-        args = self._cn_interface_args(node_id, exp_desc)
+        args = self._cn_interface_args(oml_xml_config)
         self.process = subprocess.Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
@@ -75,37 +75,43 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         ret = self._wait_ready.get()
         return ret
 
-    def _cn_interface_args(self, node_id, exp_desc):
+    def _cn_interface_args(self, oml_xml_config=None):
         """ Arguments for control_node_serial_interface """
         args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', self.tty]
+
+        # OML Configuration
+        self._oml_cfg_file = self._oml_config_file(oml_xml_config)
+        if self._oml_cfg_file is not None:
+            args += ['-c', self._oml_cfg_file.name]
+
+        # Debug mode
         if self.measures_debug is not None:
             args += ['-d']
 
-        args += self._config_oml(node_id, exp_desc)
         return args
 
-    def _config_oml(self, node_id, exp_desc):
-        """ Create oml config files and folder
-        if user and exp_id are given
+    @staticmethod
+    def _oml_config_file(oml_xml_config=None):
+        """ Create oml config file """
 
-        Returns the list of parameter to give to the serial interface
-        """
         # empty description for autotests
-        if exp_desc is None:
-            return []
-
-        # Extract configuration
-        oml_cfg = exp_desc['exp_files'].copy()
-        oml_cfg['exp_id'] = exp_desc['exp_id']
-        oml_cfg['node_id'] = node_id
+        if oml_xml_config is None:
+            return None
 
         # Save xml configuration in a temporary file
-        oml_xml_cfg = OML_XML.format(**oml_cfg)
-        self._oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
-        self._oml_cfg_file.write(oml_xml_cfg)
-        self._oml_cfg_file.flush()
+        cfg_file = NamedTemporaryFile(suffix='--oml.config')
+        cfg_file.write(oml_xml_config)
+        cfg_file.flush()
 
-        return ['-c', self._oml_cfg_file.name]
+        return cfg_file
+
+    @staticmethod
+    def oml_xml_config(node_id, exp_id, exp_files_dict=None):
+        """ Generate the oml xml configuration """
+        if not exp_files_dict:
+            return None
+        cfg = OML_XML.format(node_id=node_id, exp_id=exp_id, **exp_files_dict)
+        return cfg.strip()
 
     def stop(self):
         """ Stop control node interface.

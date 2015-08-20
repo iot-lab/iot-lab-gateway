@@ -4,11 +4,8 @@
 Logger configuration for gateway code
 """
 
-import os
 import logging
 from logging.handlers import RotatingFileHandler
-
-from gateway_code import config
 
 # set default logger level to DEBUG to log everything
 LOGLEVEL = logging.DEBUG
@@ -42,11 +39,7 @@ def init_logger(log_folder):
 
 def user_logger(log_file_path):
     """ Create a logger for user logs in `log_file_path` """
-    # create log file with 666 permissions
-    open(log_file_path, "a").close()
-    os.chmod(log_file_path, config.STAT_0666)
     user_log = logging.FileHandler(log_file_path)
     user_log.setLevel(logging.INFO)
     user_log.setFormatter(FORMATTER)
-
     return user_log

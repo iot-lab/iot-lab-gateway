@@ -71,9 +71,7 @@ class AutoTestManager(object):
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
-
-        board_cfg = board_config.BoardConfig()
-        self.open_node = board_cfg.board_class
+        self.open_node = board_config.BoardConfig().board_class
 
         self.on_serial = None
         self.a8_connection = None
@@ -100,7 +98,7 @@ class AutoTestManager(object):
         ret_val += self.g_m.control_node.reset()
 
         self.g_m.control_node.cn_serial.measures_debug = self._measures_handler
-        self.g_m.control_node.cn_serial.start(self.board_cfg.node_id)
+        self.g_m.control_node.cn_serial.start()
 
         ret_val += self.g_m.control_node.protocol.set_time()
 

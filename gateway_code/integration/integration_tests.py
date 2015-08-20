@@ -178,7 +178,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         self.request.files = {'firmware': FileUpload(board_class.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
-        exp_files = self.g_m.exp_desc['exp_files'].copy()
+        exp_files = self.g_m.exp_files.copy()
         time.sleep(1)
 
         # Set first profile
