@@ -31,6 +31,22 @@ EXP_FILES = {
 }
 
 
+def create_user_file(file_path, mode='w'):
+    """ Creat a file that can be read and modified by user """
+    open(file_path, mode).close()
+    os.chmod(file_path, STAT_0666)
+    return file_path
+
+
+def clean_user_file(file_path):
+    """ Clean a user file if empty """
+    try:
+        if os.path.getsize(file_path) == 0:
+            os.remove(file_path)
+    except OSError:
+        pass
+
+
 DEFAULT_PROFILE = json.load(open(static_path('default_profile.json')))
 
 OPEN_NODES_PATH = 'gateway_code.open_nodes.node_{board_type}'

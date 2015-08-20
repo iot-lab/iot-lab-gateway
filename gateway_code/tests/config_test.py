@@ -7,6 +7,7 @@
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
+import os
 import mock
 import unittest
 
@@ -53,3 +54,28 @@ class TestConfig(unittest.TestCase):
             u'profilename': u'_default_profile',
         }
         self.assertEquals(default_profile_dict, config.DEFAULT_PROFILE)
+
+    @staticmethod
+    def _rmfile(file_path):
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
+
+    def test_user_files(self):
+        file_path = '/tmp/test_%s' % os.uname()[1]
+        self._rmfile(file_path)
+
+        config.create_user_file(file_path)
+        self.assertTrue(os.path.exists(file_path))
+        config.clean_user_file(file_path)
+        self.assertFalse(os.path.exists(file_path))
+
+        config.create_user_file(file_path)
+        self.assertTrue(os.path.exists(file_path))
+        with open(file_path, 'w+') as _file:
+            _file.write('DATA\n')
+        config.clean_user_file(file_path)
+        self.assertTrue(os.path.exists(file_path))  # not empty, still here
+
+        self._rmfile(file_path)
