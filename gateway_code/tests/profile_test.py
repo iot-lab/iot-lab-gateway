@@ -20,8 +20,8 @@ PROFILES_DIR = CURRENT_DIR + 'profiles/'
 
 def profile_dict(file_path):
     with open(file_path) as _file:
-        profile_dict = json.load(_file)
-    return profile_dict
+        prof_d = json.load(_file)
+    return prof_d
 
 
 class TestsSimpleProfile(unittest.TestCase):
