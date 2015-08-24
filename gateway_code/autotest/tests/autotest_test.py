@@ -23,6 +23,9 @@ class TestProtocol(unittest.TestCase):
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
+    def tearDown(self):
+        mock.patch.stopall()
+
     def test__check(self):
         # test validate
         ret_1 = self.g_v._check(0, 'message_1', ['1', '2'])
@@ -72,6 +75,9 @@ class TestProtocolGPS(unittest.TestCase):
         mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8')).start()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
+
+    def tearDown(self):
+        mock.patch.stopall()
 
     def test_test_gps(self):
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:

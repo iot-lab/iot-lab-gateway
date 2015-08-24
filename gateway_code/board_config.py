@@ -4,7 +4,7 @@
 
 import os
 import functools
-from gateway_code import config
+import gateway_code.config as config  # allow mocking as 'gateway_code.config'
 from gateway_code import profile
 
 
