@@ -3,12 +3,15 @@
 
 from threading import Thread
 import time
+import datetime
 
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
 
-from gateway_code.utils.serial_expect import SerialExpect
+import serial
+from gateway_code.utils.serial_expect import SerialExpectForSocket
+from gateway_code.utils.serial_redirection import SerialRedirection
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
@@ -40,40 +43,50 @@ class NodeA8(object):
     ]
 
     def __init__(self):
+        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self._a8_expect = None
 
     @logger_call("Node A8 : setup of a8 node")
-    def setup(self, firmware_path):  # pylint: disable=unused-argument
+    def setup(self, _firmware, debug=True):  # pylint: disable=unused-argument
         """ Wait that open nodes tty appears and start A8 boot log """
-        ret = common.wait_tty(self.TTY, LOGGER, self.A8_TTY_DETECT_TIME)
-        if ret == 0:
+        ret_val = 0
+        ret_val += common.wait_tty(self.TTY, LOGGER, self.A8_TTY_DETECT_TIME)
+        ret_val += self.serial_redirection.start()
+
+        if ret_val == 0 and debug:
             # Timeout 15 minutes for boot (we saw 10minutes boot already)
             self._debug_boot_start(15 * 60)
-        return ret
+        return ret_val
 
     @logger_call("Node A8 : teardown of a8 node")
     def teardown(self):
         """ Stop A8 boot log """
-        self._debug_boot_stop()
-        return 0
+        ret_val = 0
+        ret_val += self.serial_redirection.stop()
+        ret_val += self._debug_boot_stop()
+        return ret_val
 
     def _debug_boot_start(self, timeout):
         """ A8 boot debug thread start """
-        thr = Thread(target=self._debug_thread, args=(timeout,))
+        thr = Thread(target=self.wait_booted, args=(timeout,))
         thr.daemon = True
         thr.start()
 
-    def _debug_thread(self, timeout):
+    def wait_booted(self, timeout):
         """ Monitor A8 tty to check if node booted """
-        t_start = time.time()
         try:
-            self._a8_expect = SerialExpect(self.TTY, self.BAUDRATE, LOGGER)
+            t_start = time.time()
+            LOGGER.debug("Time before boot %s", datetime.datetime.now())
+            self._a8_expect = SerialExpectForSocket(logger=LOGGER)
             match = self._a8_expect.expect(' login: ', timeout=timeout)
-        except OSError:
+            LOGGER.debug("Time after boot %s", datetime.datetime.now())
+        except (OSError, serial.SerialException):
             # Happend in tests that tty disappeared between the first
             # 'wait_tty' and serial creation (fast start/stop)
             match = ''
-        delta_t = time.time() - t_start
+        finally:
+            delta_t = time.time() - t_start
+            self._debug_boot_stop()
 
         if match != '':
             LOGGER.info("Boot A8 succeeded in time: %ds", delta_t)
@@ -84,9 +97,10 @@ class NodeA8(object):
     def _debug_boot_stop(self):
         """ Stop the debug thread """
         try:
-            self._a8_expect.serial_fd.close()
+            self._a8_expect.close()
         except AttributeError:  # pragma: no cover
             pass
+        return 0
 
     @staticmethod
     def status():
