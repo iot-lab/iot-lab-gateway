@@ -15,6 +15,7 @@ from mock import patch
 
 from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
+from gateway_code.autotest.node_connection import OpenNodeConnection
 from gateway_code.common import wait_cond
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -75,29 +76,14 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
         self.g_m._destroy_user_exp_folders(**self.exp_conf)
 
     @staticmethod
-    def _send_command_open_node(command, host='localhost', port=20000):
-        """ send a command to host/port and wait for an answer as a line """
-        import socket
-
-        ret = None
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((host, port))
-            sock_file = sock.makefile('rw')
-            sock.settimeout(5.0)
-            sock.send(command + '\n')
-            ret = sock_file.readline().rstrip()
-        except (socket.timeout, IOError):
-            ret = None
-        finally:
-            sock.close()
-        return ret
-
-    def _send_command_multiple(self, command, num_times, step=0.5):
+    def send_n_cmds(command, num_times, step=0.5):
         """ Send a command multiple times and return array of answers """
         answers = []
+        cmd = command.split()
         for _itr in range(0, num_times):  # pylint:disable=unused-variable
-            answers.append(self._send_command_open_node(command))
+            ans = OpenNodeConnection.send_one_command(cmd)
+            ans = ' '.join(ans) if ans is not None else None
+            answers.append(ans)
             time.sleep(step)
         return answers
 
@@ -140,7 +126,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         time.sleep(1)
 
         # idle firmware, there should be no reply
-        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+        self.assertNotIn(msg, self.send_n_cmds('echo %s' % msg, 5))
 
         # flash echo firmware
         self.request.files = {'firmware': FileUpload(board_class.FW_AUTOTEST)}
@@ -150,7 +136,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # self.app.set_time()  # test set_time during experiment
 
         # Should echo <message>, do it multiple times for reliability
-        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+        self.assertIn(msg, self.send_n_cmds('echo %s' % msg, 5))
 
         # open node reset and start stop
         self.assertEquals({'ret': 0}, self.app.open_soft_reset())
