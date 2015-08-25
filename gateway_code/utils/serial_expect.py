@@ -22,6 +22,7 @@ class SerialExpect(object):
         self.logger = logger
 
     def close(self):
+        """ Close connection """
         try:
             self.fd.close()
         except AttributeError:
@@ -55,7 +56,7 @@ class SerialExpect(object):
             # get new data
             try:
                 read_bytes = self.fd.read(size=16)  # timeout 0.1
-            except serial.SerialException:
+            except (serial.SerialException, AttributeError):
                 return ''
 
             if end_time <= time.time():
@@ -83,7 +84,9 @@ class SerialExpect(object):
 
                 # print all lines
                 for line in lines:
-                    self.logger.debug(line)
+                    line = line.strip()
+                    if line:
+                        self.logger.debug(line)
 
             match = regexp.search(buff)
             if match:
@@ -93,6 +96,12 @@ class SerialExpect(object):
                 return match.group(0)
 
             # continue
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, _value, _traceback):
+        self.close()
 
 
 class SerialExpectForSocket(SerialExpect):
