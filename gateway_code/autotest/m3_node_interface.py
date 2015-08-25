@@ -71,10 +71,9 @@ class OpenNodeSerial(object):
         read_str = ''
         while not self.stop_reader.is_set():
             read_str += self.serial_fd.readline()  # append waiting data
-            # issues without this or a print for test_gpio
             # This is pure magic, really
-            time.sleep(0.1)
-            if not read_str or read_str[-1] != '\n':  # timeout reached
+            time.sleep(0.1)  # MAGIC, required to make it work
+            if not read_str.endswith('\n'):  # timeout reached
                 continue
             # answer complete
             self.msg_queue.put(read_str.strip())
