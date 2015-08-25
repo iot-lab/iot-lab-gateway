@@ -17,13 +17,19 @@ class SerialExpect(object):
     """ Simple Expect implementation for serial """
 
     def __init__(self, tty, baudrate, logger=None):
-        self.serial_fd = serial.Serial(tty, baudrate, timeout=0.1)
-        self.serial_fd.flushInput()
+        self.fd = serial.Serial(tty, baudrate,  # pylint:disable=invalid-name
+                                timeout=0.1)
         self.logger = logger
+
+    def close(self):
+        try:
+            self.fd.close()
+        except AttributeError:
+            pass
 
     def send(self, data):
         """ Write given data to serial with newline"""
-        self.serial_fd.write(data + '\n')
+        self.fd.write(data + '\n')
 
     def expect_list(self, pattern_list, timeout=float('+inf')):
         """ expect multiple patterns """
@@ -48,7 +54,7 @@ class SerialExpect(object):
         while True:
             # get new data
             try:
-                read_bytes = self.serial_fd.read(size=16)  # timeout 0.1
+                read_bytes = self.fd.read(size=16)  # timeout 0.1
             except serial.SerialException:
                 return ''
 
@@ -87,3 +93,19 @@ class SerialExpect(object):
                 return match.group(0)
 
             # continue
+
+
+class SerialExpectForSocket(SerialExpect):
+    """ Simple Expect implementation for tcp connection adapter """
+
+    # Just a hack to use the same class without changing init
+    def __init__(self,  # pylint:disable=super-init-not-called
+                 host='localhost', port=20000, logger=None):
+        url = 'socket://{host}:{port}'.format(host=host, port=port)
+        self.fd = serial.serial_for_url(url, timeout=0.1)
+        self.logger = logger
+
+    def close(self):
+        """ Close connection and wait until it's restartable """
+        super(SerialExpectForSocket, self).close()
+        time.sleep(1)  # Wait SerialRedirection restarts and can be reconnected
