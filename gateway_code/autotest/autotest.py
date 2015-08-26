@@ -182,6 +182,8 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         else:
             ret_val += self._setup_open_node()
 
+        self.on_serial.empty()  # flush messages that can be bufferred
+
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
 

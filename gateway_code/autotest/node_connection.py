@@ -65,19 +65,33 @@ class OpenNodeConnection(object):
         """ Send command and wait for answer """
         assert (isinstance(command_list, list) or
                 isinstance(command_list, tuple))
-        packet = ' '.join(command_list) + '\n'
+        packet = ' '.join(command_list)
 
+        LOGGER.debug("Command send:   %r", packet)
+        self._writeline(packet)
+        answer = self._readline()
+        LOGGER.debug("Command answer: %r", answer)
+        return answer
+
+    def empty(self):
+        """ Empty out buffer """
+        while self._readline() is not None:
+            pass
+
+    def _writeline(self, line):
+        """ Write a line """
+        self.fd.write(line + '\n')
+        self.fd.flush()
+
+    def _readline(self):
+        """ Read a line """
         try:
-            LOGGER.debug("Command send:   %r", packet)
-            self.fd.write(packet)
-            self.fd.flush()
             answer = self.fd.readline()
-            LOGGER.debug("Command answer: %r", answer)
             if answer.endswith('\n'):
                 return answer.strip().split(' ')
         except (socket.timeout, IOError) as err:
-            LOGGER.error("Node Connection error: %r", err)
-        return None
+            LOGGER.warning("Read timeout: %s", err)
+            return None
 
     @classmethod
     def send_one_command(cls, command_list, *args, **kwargs):
