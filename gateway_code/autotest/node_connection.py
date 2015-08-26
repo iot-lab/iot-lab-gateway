@@ -16,7 +16,7 @@ class OpenNodeConnection(object):
     HOST = 'localhost'
     PORT = 20000
 
-    def __init__(self, host=HOST, port=PORT, timeout=1.0):
+    def __init__(self, host=HOST, port=PORT, timeout=5.0):
         self.address = (host, port)
         self.timeout = timeout
         self.fd = None  # pylint:disable=invalid-name
@@ -24,12 +24,12 @@ class OpenNodeConnection(object):
     def start(self):
         """ Connect to the serial_redirection """
         try:
-            self.fd = self.try_connect(self.address)
+            sock = self.try_connect(self.address)
+            sock.settimeout(self.timeout)
+            self.fd = sock.makefile('rw')
+            return 0
         except IOError:
             return 1
-        else:
-            self.fd.settimeout(self.timeout)
-            return 0
 
     def stop(self):
         """ Close the connection and wait until the connection is ready
@@ -67,16 +67,17 @@ class OpenNodeConnection(object):
                 isinstance(command_list, tuple))
         packet = ' '.join(command_list) + '\n'
 
-        LOGGER.debug("Command send:   %r", packet)
-
-        self.fd.sendall(packet)
-        answer = self.fd.recv(256)
-        LOGGER.debug("Command answer: %r", answer)
-
-        if answer.endswith('\n'):
-            return answer.strip().split(' ')
-        else:
-            return None
+        try:
+            LOGGER.debug("Command send:   %r", packet)
+            self.fd.write(packet)
+            self.fd.flush()
+            answer = self.fd.readline()
+            LOGGER.debug("Command answer: %r", answer)
+            if answer.endswith('\n'):
+                return answer.strip().split(' ')
+        except (socket.timeout, IOError) as err:
+            LOGGER.error("Node Connection error: %r", err)
+        return None
 
     @classmethod
     def send_one_command(cls, command_list, *args, **kwargs):
