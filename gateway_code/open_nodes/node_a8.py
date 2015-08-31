@@ -50,6 +50,7 @@ class NodeA8(object):
     def setup(self, _firmware, debug=True):  # pylint: disable=unused-argument
         """ Wait that open nodes tty appears and start A8 boot log """
         ret_val = 0
+        common.wait_no_tty(self.TTY)
         ret_val += common.wait_tty(self.TTY, LOGGER, self.A8_TTY_DETECT_TIME)
         ret_val += self.serial_redirection.start()
 
@@ -80,7 +81,8 @@ class NodeA8(object):
             self._a8_expect = SerialExpectForSocket(logger=LOGGER)
             match = self._a8_expect.expect(' login: ', timeout=timeout)
             LOGGER.debug("Time after boot %s", datetime.datetime.now())
-        except (OSError, serial.SerialException):
+        except (OSError, serial.SerialException) as err:
+            LOGGER.warning("Boot monitoring error: %r", err)
             # Happend in tests that tty disappeared between the first
             # 'wait_tty' and serial creation (fast start/stop)
             match = ''
