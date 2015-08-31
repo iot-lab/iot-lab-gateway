@@ -15,7 +15,7 @@ from mock import patch
 
 from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
-from gateway_code.autotest.node_connection import OpenNodeConnection
+from gateway_code.utils.node_connection import OpenNodeConnection
 from gateway_code.common import wait_cond
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'

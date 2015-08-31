@@ -12,7 +12,7 @@ from subprocess import Popen, PIPE
 
 from gateway_code.common import wait_tty
 from ..serial_redirection import SerialRedirection
-from gateway_code.autotest.node_connection import OpenNodeConnection
+from ..node_connection import OpenNodeConnection
 
 # pylint: disable=invalid-name
 # pylint: disable=protected-access

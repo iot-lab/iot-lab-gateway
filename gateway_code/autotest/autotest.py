@@ -13,7 +13,7 @@ from collections import defaultdict
 
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
-from gateway_code.autotest.node_connection import OpenNodeConnection
+from gateway_code.utils.node_connection import OpenNodeConnection
 import gateway_code.board_config as board_config
 
 

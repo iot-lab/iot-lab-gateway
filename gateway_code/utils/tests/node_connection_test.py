@@ -8,7 +8,7 @@ import unittest
 import threading
 from subprocess import Popen, PIPE
 
-from gateway_code.autotest.node_connection import OpenNodeConnection
+from ..node_connection import OpenNodeConnection
 
 # pylint:disable=missing-docstring
 
