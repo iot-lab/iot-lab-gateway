@@ -251,6 +251,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
             # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
             ret_val += self.test_consumption_batt()
+
             # switch to DC and configure open node
             self._setup_open_node_connection()
             time.sleep(1)
@@ -615,10 +616,15 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         return ret_val
 
-    def test_consumption_batt(self):
+    def test_consumption_batt(self):  # pragma: no cover
+
         """ Try consumption for Battery """
 
-        ret_val = 0
+        # Disable battery tests as they have been unplugged
+        return 0
+
+        ret_val = 0  # pylint: disable=unreachable
+
         ret_val += self.g_m.control_node.open_start('battery')
 
         # set a firmware on m3 to ensure corret consumption measures

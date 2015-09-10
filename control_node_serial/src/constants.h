@@ -87,8 +87,9 @@ enum ack_nack {
 };
 
 enum alimentation {
-    BATTERY = 0x0,
-    DC      = 0x1,
+    BATTERY      = 0x0,
+    DC_CHARGE    = 0x1,
+    DC_NO_CHARGE = 0x2,
 };
 
 enum mode {

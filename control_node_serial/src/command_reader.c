@@ -54,8 +54,9 @@ struct command_buffer {
 };
 
 struct dict_entry alim_d[] = {
-    {"dc", DC},
-    {"battery", BATTERY},
+    {"dc",        DC_NO_CHARGE},
+    {"dc_charge", DC_CHARGE},
+    {"battery",   BATTERY},
     {NULL, 0},
 };
 
