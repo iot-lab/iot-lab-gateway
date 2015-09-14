@@ -1,6 +1,26 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
+# This file is a part of IoT-LAB gateway_code
+# Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
+# Contributor(s) : see AUTHORS file
+#
+# This software is governed by the CeCILL license under French law
+# and abiding by the rules of distribution of free software.  You can  use,
+# modify and/ or redistribute the software under the terms of the CeCILL
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# http://www.cecill.info.
+#
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license and that you accept its terms.
+
+
 """ auto tests implementation """
 
 import time
@@ -224,9 +244,8 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         try:
             self.setup_control_node()
 
-            #
             # Tests using Battery
-            #
+
             # dc -> battery: a8 reboot
             # battery -> dc: No reboot
             # a8 may not work with new batteries (not enough power)
@@ -240,9 +259,8 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
             self.get_uid()
 
-            #
             # Other tests, run on DC
-            #
+
             ret = self.g_m.control_node.open_start('dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
@@ -329,9 +347,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
             return (1, answer)
         return (0, answer)
 
-#
 # Test implementation
-#
     @autotest_checker('leds_off', 'leds_blink')
     def set_result_leds(self, ret_val):
         """ Make leds blink in case of success. Turn off on failure """
@@ -387,9 +403,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         ret_val = self._check(tst_ok(test_ok), 'get_uid', values)
         return ret_val
-#
 # sensors and flash
-#
 
     @autotest_checker('test_flash')
     def test_flash(self, flash):
@@ -425,9 +439,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         test_ok = 1 < len(set(values))
         return self._check(tst_ok(test_ok), 'get_light', values)
 
-#
 # Test GPS
-#
     def _test_pps_open_node(self, timeout):
         """ Test the pps on open a8 m3 node"""
         ret_val = 0
@@ -466,9 +478,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         ret_val = self._check(ret_val, 'test_gps', ret_val)
         return ret_val
 
-#
 # Control Node <--> Open Node Interraction
-#
     @autotest_checker('test_gpio')
     def test_gpio(self):
         """ test GPIO connections """
@@ -504,9 +514,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         return ret_val
 
-#
 # Inertial Measurement Unit
-#
     @autotest_checker('get_magneto')
     def test_magneto(self):
         """ test magneto sensor """
@@ -536,9 +544,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         test_ok = 1 < len(set(values))  # got different values
         return self._check(tst_ok(test_ok), sensor, values)
 
-#
 # Radio tests
-#
     @autotest_checker('radio_ping_pong')
     def test_radio_ping_pong(self, channel):
         """ test Radio Ping-pong with control-node """
@@ -579,9 +585,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         return ret_val
 
-#
 # Consumption tests
-#
 
     def test_consumption_dc(self):
         """ Try consumption for DC """
