@@ -12,6 +12,7 @@ from subprocess import Popen, PIPE
 
 from gateway_code.common import wait_tty
 from ..serial_redirection import SerialRedirection
+from ..node_connection import OpenNodeConnection
 
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
@@ -22,24 +23,7 @@ from ..serial_redirection import SerialRedirection
 # pylint: disable=no-member
 
 
-def wait_connect(host, port, tries=10, step=1):
-    """ Try connecting 'tries' time to host:port.
-    Sleep 'step' between each tries.
-
-    If last trial fails, the IOError is raised
-    """
-    # Do 'tries - 1' connection with exception catching
-    for _ in range(0, tries - 1):
-        try:
-            return socket.create_connection((host, port))
-        except IOError:
-            time.sleep(step)
-    # Do last try without exception catching to raise exception on error
-    return socket.create_connection((host, port))
-
-
 class TestSerialRedirection(unittest.TestCase):
-
     """ SerialRedirection class test """
 
     def setUp(self):
@@ -63,7 +47,7 @@ class TestSerialRedirection(unittest.TestCase):
 
         for i in range(0, 3):
             # connect to port 20000
-            conn = wait_connect('0.0.0.0', 20000)
+            conn = OpenNodeConnection.try_connect(('0.0.0.0', 20000))
 
             # TCP send
             sock_txt = 'HelloFromSock: %u\n' % i
@@ -98,7 +82,7 @@ class TestSerialRedirection(unittest.TestCase):
         self.redirect = SerialRedirection(self.tty, self.baud)
         self.redirect.start()
 
-        conn = wait_connect('0.0.0.0', 20000)
+        conn = OpenNodeConnection.try_connect(('0.0.0.0', 20000))
         time.sleep(1)
         # Second connection should fail
         self.assertRaises(IOError,

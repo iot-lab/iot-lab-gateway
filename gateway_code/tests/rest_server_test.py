@@ -18,17 +18,17 @@ Complement the 'integration' tests
 from cStringIO import StringIO
 
 import mock
-from mock import patch, PropertyMock
 import unittest
 
 from gateway_code import rest_server
+from . import utils
 
 import os
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 # Bottle FileUpload class stub
 class FileUpload(object):  # pylint: disable=too-few-public-methods
+
     """ Bottle FileUpload class stub """
     files = {}
 
@@ -52,19 +52,37 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
 class TestRestMethods(unittest.TestCase):
 
     def setUp(self):
-        self.request_patcher = patch('gateway_code.rest_server.request')
-        self.request = self.request_patcher.start()
-
-        self.board_patcher = patch('gateway_code.config.board_type')
-        self.board = self.board_patcher.start()
-        self.board.return_value = 'm3'
+        self.request = mock.patch('gateway_code.rest_server.request').start()
+        mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
 
         self.g_m = mock.Mock()
         self.s_r = rest_server.GatewayRest(self.g_m)
 
     def tearDown(self):
-        self.request_patcher.stop()
-        self.board_patcher.stop()
+        mock.patch.stopall()
+
+    @mock.patch('bottle.route')
+    def test_routes(self, m_route):
+
+        def _func():
+            pass
+
+        ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
+        self.assertTrue(m_route.called)
+        self.assertIsNotNone(ret)
+        m_route.reset_mock()
+
+        # Not a function
+        ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
+        self.assertFalse(m_route.called)
+        self.assertIsNone(ret)
+        m_route.reset_mock()
+
+        # Non existent
+        ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
+        self.assertFalse(m_route.called)
+        self.assertIsNone(ret)
+        m_route.reset_mock()
 
     def test_exp_start_file_and_profile(self):
         idle = FileUpload('elf32arm0X1234', 'idle.elf')
@@ -166,8 +184,8 @@ class TestRestMethods(unittest.TestCase):
 
         # profile that cannot be decoded, invalid JSON
         # http://mock.readthedocs.org/en/latest/examples.html \
-        #    #raising-exceptions-on-attribute-access
-        type(self.request).json = PropertyMock(side_effect=ValueError)
+        # raising-exceptions-on-attribute-access
+        type(self.request).json = mock.PropertyMock(side_effect=ValueError)
 
         self.assertEquals({'ret': 1}, self.s_r.exp_update_profile())
         self.assertFalse(self.g_m.exp_update_profile.called)
@@ -247,16 +265,14 @@ class TestRestMethods(unittest.TestCase):
         self.assertNotEquals(0, ret_dict['ret'])
 
 
-# Patch to find '/var/log/config/board_type' -> tests/config_m3/board_type
-@patch('gateway_code.config.GATEWAY_CONFIG_PATH', CURRENT_DIR + '/config_m3/')
 class TestServerRestMain(unittest.TestCase):
     """ Cover functions uncovered by unit tests """
 
-    @patch('subprocess.call')
-    @patch('bottle.run')
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    @mock.patch('subprocess.call')
+    @mock.patch('bottle.run')
     def test_main_function(self, run_mock, call_mock):
         call_mock.return_value = 0
-
         args = ['rest_server.py', 'localhost', '8080']
         rest_server._main(args)
         self.assertTrue(run_mock.called)

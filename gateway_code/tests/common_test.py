@@ -67,8 +67,13 @@ class TestWaitTTY(unittest.TestCase):
         logger = mock.Mock()
         self.assertEquals(0, common.wait_tty('/dev/null', logger, 0))
         self.assertEquals(0, logger.error.call_count)
-        self.assertNotEquals(0, common.wait_tty('no_tty_file', logger, 0))
+        self.assertEquals(1, common.wait_tty('no_tty_file', logger, 0))
         self.assertEquals(1, logger.error.call_count)
+
+    def test_wait_no_tty(self):
+        """ Test running wait_no_tty fct """
+        self.assertEquals(0, common.wait_no_tty('no_tty_file', 0))
+        self.assertEquals(1, common.wait_no_tty('/dev/null', 0))
 
 
 class TestSyncronousDecorator(unittest.TestCase):

@@ -51,17 +51,17 @@ class AvrDude(object):
 
     @staticmethod
     def trigger_bootloader(tty, tty_prog, timeout=10, baudrate=1200):
-        """
-        It's impossible to program the Leonardo while still running.
+        """ Trigger leonardo bootloader
+
         To be programed the Leonardo has to be in his bootloader sequence.
         While in the bootloader, the Leonardo wait for a new program during 8s
         There are two way to launch the bootloader:
-         - The first one physical by pressing the reset button
-         - The software way by opening and closing the serial port at 1200bauds
-        This method perform the second method.
-        """
+        - The first one physical by pressing the reset button
+        - The software way by opening and closing the serial port at 1200bauds
+        This method perform the second method. """
         LOGGER.info("Triggering bootloader")
         try:
+            LOGGER.info("Trigerring bootloader")
             serial.Serial(tty, baudrate).close()
             # Wait the programming interface to be available
             return common.wait_tty(tty_prog, LOGGER, timeout)

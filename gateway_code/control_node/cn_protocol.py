@@ -1,31 +1,23 @@
 # -*- coding:utf-8 -*-
 
-"""
-Protocol between python code and the control_node_serial_interface C code
-"""
-import os
+""" Protocol between python code and control_node_serial_interface C code """
 
 
 class Protocol(object):
-    """
-    Implements commands that can sent to the control node interface
-    """
+    """ Implements commands that can be sent to control node interface """
 
     def __init__(self, sender):
         self.sender = sender
 
     def send_cmd(self, command_list):
-        """
-        Send a command to the control node and wait for it's answer.
-        """
+        """ Send a command to the control node and wait for it's answer.  """
         command = command_list[0]
         answer = self.sender(command_list)
         answer_valid = ([command, 'ACK'] == answer)
         return 0 if answer_valid else 1   # 0 on success
 
     def start_stop(self, command, alim):
-        """
-        Start/stop open node
+        """ Start/stop open node
 
         :param command: 'start'|'stop'
         :param alim:    'dc'|'battery'
@@ -41,32 +33,31 @@ class Protocol(object):
         return self.send_cmd(cmd)
 
     @staticmethod
-    def _extract_node_id(hostname):
+    def _set_node_id_args(node_id):
         """
-        >>> Protocol._extract_node_id('m3-1')
+        >>> Protocol._set_node_id_args('m3-1')
         ('m3', '1')
 
-        >>> Protocol._extract_node_id('a8-256')
+        >>> Protocol._set_node_id_args('a8-256')
         ('a8', '256')
 
-        >>> Protocol._extract_node_id('m3-00-ci')
+        >>> Protocol._set_node_id_args('m3-00-ci')
         ('m3', '0')
         """
-        archi, num_str = hostname.split('-')[0:2]
+        archi, num_str = node_id.split('-')[0:2]
         num = str(int(num_str))
         return archi, num
 
-    def set_node_id(self, board_type):
+    def set_node_id(self, node_id):
         """ Set node id on control node"""
         # set_node_id
+        archi, num = self._set_node_id_args(node_id)
+
         # Other nodes types are not handled by the protocol (Leonardo, Fox)
-        if board_type not in ('m3', 'a8'):
+        if archi not in ('m3', 'a8'):
             return 0
-        # TODO don't read hostname directly here.
-        # Should get board_type and hostname at the same time in config
-        # (dependency on 'gateway_code.config')
-        node_id = self._extract_node_id(os.uname()[1])
-        cmd = ['set_node_id'] + list(node_id)
+
+        cmd = ['set_node_id', archi, num]
         return self.send_cmd(cmd)
 
     def green_led_blink(self):
@@ -80,8 +71,7 @@ class Protocol(object):
         return self.send_cmd(cmd)
 
     def config_consumption(self, consumption=None):
-        """
-        Configure consumption measures on control node
+        """ Configure consumption measures on control node
 
         :param consumption: consumption measures configuration
         :type consumption:  class profile._Consumption
@@ -92,9 +82,9 @@ class Protocol(object):
         #         -p <periods_see_c_code> -a <average_see_c_code>
 
         cmd = ['config_consumption_measure']
-        if consumption is None or \
+        if (consumption is None or
                 not (consumption.power or consumption.voltage or
-                     consumption.current):
+                     consumption.current)):
             cmd.append('stop')
         else:
             cmd.append('start')
@@ -108,16 +98,15 @@ class Protocol(object):
         return ret
 
     def config_radio(self, radio):
-        """
-        Configure radio measures on control node
+        """ Configure radio measures on control node
+
         :param radio: radio configuration
         :type radio:  class Radio
 
-        It stops previous radio measures if necessary
-        """
+        It stops previous radio measures if necessary """
 
         if radio is None:
-            return self._stop_radio()  # stop current mode
+            return self._stop_radio()
 
         if 'rssi' == radio.mode:
             return self._config_radio_measure(radio)
@@ -127,9 +116,7 @@ class Protocol(object):
         raise NotImplementedError("Uknown radio mode: %s", radio.mode)
 
     def _config_radio_measure(self, radio):
-        """
-        Configure radio measure
-        """
+        """ Configure radio measure """
         # config_radio_measure
         #     <channel,list,comma,separated>
         #     <period>

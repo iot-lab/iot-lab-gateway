@@ -15,6 +15,7 @@ EXCLUDE += ['*egg-info', '*pyc', 'build', 'dist', 'cover', '.coverage']
 EXCLUDE += ['*swp']
 EXCLUDE += ['obj', 'results']
 EXCLUDE += ['*.log', '*.out', '*.xml']
+EXCLUDE += ['iotlab']  # test user measures directory
 
 SCRIPT_DIR = os.path.dirname((__file__))
 LOCAL = os.path.dirname(SCRIPT_DIR)
@@ -28,11 +29,21 @@ env.use_ssh_config = True
 # Required to re-add SSH_OPTS on the integration server
 SSH_OPTS = '-F {0}'.format(SSH_CFG)
 
+# Default to all targets
+if not env.hosts:
+    env.hosts = ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci']
+
 
 @runs_once
 @task
 def upload():
     """ Upload sources as www-data:www-data """
+    execute(_do_upload)
+
+
+def _do_upload():
+    """ Actually do the upload. """
+    # 'runs_once' conflicts with multiple hosts, so call it with 'execute'
     extra_opts = " --delete-excluded"
     rsync_project(local_dir=LOCAL + '/', remote_dir=REMOTE, upload=True,
                   ssh_opts=SSH_OPTS, extra_opts=extra_opts,

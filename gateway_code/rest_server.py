@@ -11,46 +11,51 @@ from tempfile import NamedTemporaryFile
 import json
 
 from gateway_code.gateway_manager import GatewayManager
-from gateway_code import config
+from gateway_code import board_config
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
 class GatewayRest(object):
+
     """
     Gateway Rest class
 
     It calls the `gateway_ manager` to handle commands
     """
+
     def __init__(self, gateway_manager):
         self.gateway_manager = gateway_manager
-        self.board_type = config.board_type()
+        self.board_class = board_config.BoardConfig().board_class
         self._app_routing()
 
     def _app_routing(self):
         """
         Declare the REST supported methods depending on board config
         """
-        bottle.route('/exp/start/<exp_id:int>/<user>', 'POST')(self.exp_start)
-        bottle.route('/exp/stop', 'DELETE')(self.exp_stop)
-        bottle.route('/exp/update', 'POST')(self.exp_update_profile)
-        bottle.route('/open/start', 'PUT')(self.open_start)
-        bottle.route('/open/stop', 'PUT')(self.open_stop)
-        bottle.route('/status', 'GET')(self.status)
-
+        # GatewayManager global functions
+        bottle.route('/exp/start/<exp_id:int>/<user>', 'POST', self.exp_start)
+        bottle.route('/exp/stop', 'POST', self.exp_stop)
+        bottle.route('/status', 'GET', self.status)
+        # Control node functions
+        bottle.route('/exp/update', 'POST', self.exp_update_profile)
+        bottle.route('/open/start', 'PUT', self.open_start)
+        bottle.route('/open/stop', 'PUT', self.open_stop)
+        # Autotest functions
         # query_string: channel=int[11:26]
-        bottle.route('/autotest', 'PUT')(self.auto_tests)
-        bottle.route('/autotest/<mode>', 'PUT')(self.auto_tests)
-        # node specific commands
-        if self.board_type in ('m3', 'fox', 'leonardo'):
-            bottle.route('/open/flash', 'POST')(self.open_flash)
-            bottle.route('/open/reset', 'PUT')(self.open_soft_reset)
-            if self.board_type in ('m3', 'fox'):
-                bottle.route('/open/debug/start', 'PUT')(self.open_debug_start)
-                bottle.route('/open/debug/stop', 'PUT')(self.open_debug_stop)
-        else:  # pragma: no cover
-            pass  # handle A8 nodes here
+        bottle.route('/autotest', 'PUT', self.auto_tests)
+        bottle.route('/autotest/<mode>', 'PUT', self.auto_tests)
+
+        # Add open_node functions if available
+        self.conditional_route('flash', '/open/flash', 'POST',
+                               self.open_flash)
+        self.conditional_route('reset', '/open/reset', 'PUT',
+                               self.open_soft_reset)
+        self.conditional_route('debug_start', '/open/debug/start', 'PUT',
+                               self.open_debug_start)
+        self.conditional_route('debug_stop', '/open/debug/stop', 'PUT',
+                               self.open_debug_stop)
 
     def exp_start(self, user, exp_id):
         """
@@ -76,16 +81,16 @@ class GatewayRest(object):
         try:
             profile = self._extract_profile()
         except ValueError:
-            LOGGER.error('Invalid json for profile')
+            LOGGER.error('REST: Invalid json for profile')
             return {'ret': 1}
 
-        ret = self.gateway_manager.exp_start(
-            user, exp_id, firmware, profile, timeout)
+        ret = self.gateway_manager.exp_start(user, exp_id, firmware, profile,
+                                             timeout)
         # cleanup of temp file
         if firmware_file is not None:
             firmware_file.close()
         if ret:  # pragma: no cover
-            LOGGER.error('Start experiment with errors: ret: %d', ret)
+            LOGGER.error('REST: Start experiment with errors: ret: %d', ret)
         return {'ret': ret}
 
     def exp_stop(self):
@@ -93,7 +98,7 @@ class GatewayRest(object):
         LOGGER.debug('REST: Stop experiment')
         ret = self.gateway_manager.exp_stop()
         if ret:  # pragma: no cover
-            LOGGER.error('Stop experiment errors: ret: %d', ret)
+            LOGGER.error('REST: Stop experiment errors: ret: %d', ret)
         return {'ret': ret}
 
     def exp_update_profile(self):
@@ -101,9 +106,9 @@ class GatewayRest(object):
         LOGGER.debug('REST: Update profile')
         try:
             profile = request.json
-            LOGGER.debug('Profile json dict: %r', profile)
+            LOGGER.debug('REST: Profile json dict: %r', profile)
         except ValueError:
-            LOGGER.error('Invalid json for profile')
+            LOGGER.error('REST: Invalid json for profile')
             return {'ret': 1}
 
         ret = self.gateway_manager.exp_update_profile(profile)
@@ -120,7 +125,7 @@ class GatewayRest(object):
             return None
 
         profile = json.load(_prof.file)  # ValueError on invalid profile
-        LOGGER.debug('Profile json dict: %r', profile)
+        LOGGER.debug('REST: Profile json dict: %r', profile)
         return profile
 
     @staticmethod
@@ -133,7 +138,7 @@ class GatewayRest(object):
             return None
 
         # save http file to disk
-        firmware_file = NamedTemporaryFile(suffix='--'+_firm.filename)
+        firmware_file = NamedTemporaryFile(suffix='--' + _firm.filename)
         firmware_file.write(_firm.file.read())
         firmware_file.flush()
         return firmware_file
@@ -144,7 +149,7 @@ class GatewayRest(object):
     def open_flash(self):
         """ Flash open node
         Requires: request.files contains 'firmware' file argument """
-        LOGGER.debug('REST: Flash %s', self.board_type)
+        LOGGER.debug('REST: Flash OpenNode')
 
         firmware_file = self._extract_firmware()
         if firmware_file is None:
@@ -157,31 +162,31 @@ class GatewayRest(object):
 
     def open_soft_reset(self):
         """ Soft reset open node """
-        LOGGER.debug('REST: Reset %s', self.board_type)
+        LOGGER.debug('REST: Reset OpenNode')
         ret = self.gateway_manager.node_soft_reset('open')
         return {'ret': ret}
 
     def open_start(self):
         """ Start open node. Alimentation mode stays the same """
-        LOGGER.debug('REST: Open node start')
+        LOGGER.debug('REST: Start OpenNode')
         ret = self.gateway_manager.open_power_start()
         return {'ret': ret}
 
     def open_stop(self):
         """ Stop open node. Alimentation mode stays the same """
-        LOGGER.debug('REST: Open node stop')
+        LOGGER.debug('REST: Stop OpenNode')
         ret = self.gateway_manager.open_power_stop()
         return {'ret': ret}
 
     def open_debug_start(self):
         """ Start open node debugger """
-        LOGGER.debug('REST: Open node debugger start')
+        LOGGER.debug('REST: Debug OpenNode')
         ret = self.gateway_manager.open_debug_start()
         return {'ret': ret}
 
     def open_debug_stop(self):
         """ Stop open node debugger """
-        LOGGER.debug('REST: Open node debugger stop')
+        LOGGER.debug('REST: Stop debug OpenNode')
         ret = self.gateway_manager.open_debug_stop()
         return {'ret': ret}
 
@@ -196,7 +201,7 @@ class GatewayRest(object):
         Mode:
          * 'blink': leds keep blinking
         """
-        LOGGER.debug('REST: auto_tests')
+        LOGGER.debug('REST: Autotests')
 
         # get mode
         if mode not in ['blink', None]:
@@ -232,13 +237,25 @@ class GatewayRest(object):
         """ Return node status
          * Check nodes ftdi
         """
-        LOGGER.debug('REST: status')
+        LOGGER.debug('REST: Status')
         return {'ret': self.gateway_manager.status()}
+
+    def conditional_route(self, node_func, path, *route_args, **route_kwargs):
+        """ Add route if node implements 'node_func' """
+        has_fct = callable(getattr(self.board_class, node_func, None))
+        if has_fct:
+            LOGGER.info('REST: Route %s registered', path)
+            return bottle.route(path, *route_args, **route_kwargs)
+        else:
+            LOGGER.debug('REST: Route %s not available', path)
+            return None
 
 
 #
 # Command line functions
 #
+
+
 def _parse_arguments(args):
     """
     Parse arguments:

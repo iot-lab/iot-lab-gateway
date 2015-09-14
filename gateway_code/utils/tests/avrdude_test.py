@@ -14,7 +14,7 @@ import unittest
 import serial
 
 from .. import avrdude
-from gateway_code.open_node import NodeLeonardo  # config file
+from gateway_code.open_nodes.node_leonardo import NodeLeonardo
 
 
 class TestsMethods(unittest.TestCase):

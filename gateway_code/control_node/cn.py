@@ -22,21 +22,25 @@ class ControlNode(object):
     FW_CONTROL_NODE = static_path('control_node.elf')
     default_profile = None
 
-    def __init__(self, default_profile):
+    def __init__(self, node_id, default_profile):
+        self.node_id = node_id
         self.default_profile = default_profile
 
         self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
-        self.cn_serial = cn_interface.ControlNodeSerial()
+        self.cn_serial = cn_interface.ControlNodeSerial(self.TTY)
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
         self.open_node_state = 'stop'
         self.profile = self.default_profile
 
     @logger_call("Control node : Starting of control node serial interface")
-    def start(self, exp_desc):
+    def start(self, exp_id, exp_files=None):
         """ Start ControlNode serial interface """
         ret_val = 0
         ret_val += self.reset()
-        ret_val += self.cn_serial.start(self.TTY, exp_desc=exp_desc)
+
+        oml_cfg = self.cn_serial.oml_xml_config(self.node_id, exp_id,
+                                                exp_files)
+        ret_val += self.cn_serial.start(oml_cfg)
         ret_val += self.open_start('dc')
         return ret_val
 
@@ -50,14 +54,12 @@ class ControlNode(object):
         return ret_val
 
     @logger_call("Control node : Start experiment")
-    def start_experiment(self, profile, board_type):
+    def start_experiment(self, profile):
         """ Configure the experiment """
         ret_val = 0
         ret_val += self.protocol.green_led_blink()
         ret_val += self.protocol.set_time()
-
-        # can't be done if we can't use i2C connection
-        ret_val += self.protocol.set_node_id(board_type)
+        ret_val += self.protocol.set_node_id(self.node_id)
         ret_val += self.configure_profile(profile)
         return ret_val
 
@@ -106,8 +108,9 @@ class ControlNode(object):
     @logger_call("Control node : flash the open node")
     def flash(self, firmware_path=None):
         """ Flash the given firmware on Control Node
+
         :param firmware_path: Path to the firmware to be flashed on `node`.
-            If None, flash 'control_node' firmware
+                              If None, flash 'control_node' firmware
         """
         firmware_path = firmware_path or self.FW_CONTROL_NODE
         LOGGER.info('Flash firmware on Control Node %s', firmware_path)

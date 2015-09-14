@@ -13,15 +13,11 @@ import threading
 from tempfile import NamedTemporaryFile
 
 import atexit
-from gateway_code import config
 from gateway_code import common
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
-
-# use for tests
-TESTS_ARGS = []
 
 CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
 
@@ -44,95 +40,102 @@ OML_XML = '''
 '''
 
 
-class ControlNodeSerial(object):
+class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
     """
     Class handling the communication with the control node serial program
     """
 
-    def __init__(self):
-        self.cn_interface_process = None
+    def __init__(self, tty):
+        self.tty = tty
+        self.process = None
         self.reader_thread = None
-        self.cn_msg_queue = Queue.Queue(1)
-        self.protect_send = threading.Semaphore(1)
-        # handler to allow changing it in tests
-        self.measures_handler = None
+        self.msgs = Queue.Queue(1)
+        self.measures_debug = None
 
-        self.cn_serial_ready = None
-
-        self.oml_cfg_file = None
+        self._send_mutex = threading.Semaphore(1)
+        self._wait_ready = Queue.Queue(1)
+        self._oml_cfg_file = None
 
         # cleanup in case of error
         atexit.register(self.stop)
 
-    def start(self, tty, exp_desc=None, _args=None, _measures_handler=None):
+    def start(self, oml_xml_config=None):
         """Start control node interface.
 
         Run `control node serial program` and handle its answers.
         """
-        # Reset Queue (== use a new one)
-        self.cn_serial_ready = Queue.Queue(0)
+        common.empty_queue(self._wait_ready)
 
-        # argument, or current value (for tests) or LOGGER.error
-        self.measures_handler = _measures_handler or \
-            self.measures_handler or LOGGER.error
-
-        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', tty]
-        args += self._config_oml(exp_desc)
-
-        # add arguments, used by tests
-        args += _args or TESTS_ARGS
-        self.cn_interface_process = subprocess.Popen(
-            args, stderr=PIPE, stdin=PIPE)
+        args = self._cn_interface_args(oml_xml_config)
+        self.process = subprocess.Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
 
-        ret = self.cn_serial_ready.get()
+        ret = self._wait_ready.get()
         return ret
 
-    def _config_oml(self, exp_desc):
-        """ Create oml config files and folder
-        if user and exp_id are given
+    def _cn_interface_args(self, oml_xml_config=None):
+        """ Arguments for control_node_serial_interface """
+        args = [CONTROL_NODE_SERIAL_INTERFACE, '-t', self.tty]
 
-        Returns the list of parameter to give to the serial interface
-        """
+        # OML Configuration
+        self._oml_cfg_file = self._oml_config_file(oml_xml_config)
+        if self._oml_cfg_file is not None:
+            args += ['-c', self._oml_cfg_file.name]
+
+        # Debug mode
+        if self.measures_debug is not None:
+            args += ['-d']
+
+        return args
+
+    @staticmethod
+    def _oml_config_file(oml_xml_config=None):
+        """ Create oml config file """
+
         # empty description for autotests
-        if exp_desc is None:
-            return []
-
-        # Extract configuration
-        oml_cfg = exp_desc['exp_files'].copy()
-        oml_cfg['exp_id'] = exp_desc['exp_id']
-        oml_cfg['node_id'] = config.hostname()
+        if oml_xml_config is None:
+            return None
 
         # Save xml configuration in a temporary file
-        oml_xml_cfg = OML_XML.format(**oml_cfg)
-        self.oml_cfg_file = NamedTemporaryFile(suffix='--oml.config')
-        self.oml_cfg_file.write(oml_xml_cfg)
-        self.oml_cfg_file.flush()
+        cfg_file = NamedTemporaryFile(suffix='--oml.config')
+        cfg_file.write(oml_xml_config)
+        cfg_file.flush()
 
-        return ['-c', self.oml_cfg_file.name]
+        return cfg_file
+
+    @staticmethod
+    def oml_xml_config(node_id, exp_id, exp_files_dict=None):
+        """ Generate the oml xml configuration """
+        if not exp_files_dict:
+            return None
+        cfg = OML_XML.format(node_id=node_id, exp_id=exp_id, **exp_files_dict)
+        return cfg.strip()
 
     def stop(self):
         """ Stop control node interface.
 
-        Stop `control node serial program` and answers handler.
-        """
+        Stop `control node serial program` and answers handler.  """
 
-        if self.cn_interface_process is not None:
-            try:
-                self.cn_interface_process.terminate()
-            except OSError:
-                LOGGER.error('Control node process already terminated')
+        try:
+            self.process.terminate()
+        except OSError:
+            LOGGER.error('Control node process already terminated')
+        except AttributeError:
+            pass  # None
+
         if self.reader_thread is not None:
             self.reader_thread.join()
 
-        # remove cn_interface_process after reader_thread is joined
-        self.cn_interface_process = None
+        # remove process after reader_thread is joined
+        self.process = None
+        self.measures_debug = None
 
         # cleanup oml
-        if self.oml_cfg_file is not None:
-            self.oml_cfg_file.close()
+        if self._oml_cfg_file is not None:
+            self._oml_cfg_file.close()
+            self._oml_cfg_file = None
         return 0
 
     def _handle_answer(self, line):
@@ -156,27 +159,33 @@ class ControlNodeSerial(object):
         elif answer[0] == 'measures_debug:':  # measures output
             self.measures_handler(line)
         elif answer[0] == 'cn_serial_ready':  # cn_serial interface ready
-            self.cn_serial_ready.put(0)
+            self._wait_ready.put(0)
 
         else:  # control node answer to a command
             try:
-                self.cn_msg_queue.put_nowait(answer)
+                self.msgs.put_nowait(answer)
             except Queue.Full:
                 LOGGER.error('Control node answer queue full: %r', answer)
+
+    def measures_handler(self, line):
+        """ Debug measures """
+        LOGGER.debug(line)
+        if self.measures_debug is not None:
+            self.measures_debug(line)
 
     def _reader(self):
         """ Reader thread worker.
 
         Reads and handle control node answers
         """
-        while self.cn_interface_process.poll() is None:
-            line = self.cn_interface_process.stderr.readline()
+        while self.process.poll() is None:
+            line = self.process.stderr.readline()
             if line == '':
                 break
             self._handle_answer(line.strip())
         else:
             LOGGER.error('Control node serial reader thread ended prematurely')
-            self.cn_serial_ready.put(1)  # in case of failure at startup
+            self._wait_ready.put(1)  # in case of failure at startup
 
     def send_command(self, command_args):
         """ Send given command to control node and wait for an answer
@@ -186,23 +195,24 @@ class ControlNodeSerial(object):
         :return: received answers or `None` if timeout caught
         """
         command_str = ' '.join(command_args) + '\n'
-        with self.protect_send:
+        with self._send_mutex:
             # remove existing items (old not treated answers)
-            common.empty_queue(self.cn_msg_queue)
+            common.empty_queue(self.msgs)
             try:
                 LOGGER.debug('control_node_cmd: %r', command_args)
-                self.cn_interface_process.stdin.write(command_str)
+                self.process.stdin.write(command_str)
                 # wait for answer 1 second at max
-                answer_cn = self.cn_msg_queue.get(block=True, timeout=1.0)
-            except Queue.Empty:  # timeout, answer not got
+                answer_cn = self.msgs.get(block=True, timeout=1.0)
+            except Queue.Empty:
+                LOGGER.error('control_node_serial answer timeout')
                 answer_cn = None
-            except AttributeError:  # write when stdin is None
+            except AttributeError:
                 LOGGER.error('control_node_serial stdin is None')
                 answer_cn = None
             except IOError:
                 LOGGER.error('control_node_serial process is terminated')
                 answer_cn = None
-
-        LOGGER.debug('control_node_answer: %r', answer_cn)
+            finally:
+                LOGGER.debug('control_node_answer: %r', answer_cn)
 
         return answer_cn

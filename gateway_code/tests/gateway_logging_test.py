@@ -5,7 +5,7 @@
 
 import unittest
 import logging
-from gateway_code import gateway_logging, config
+from gateway_code import gateway_logging
 import os
 
 
@@ -27,15 +27,14 @@ class TestGatewayLogging(unittest.TestCase):
 
         log_file = 'test_log_file.log'
         log_handler = gateway_logging.user_logger(log_file)
+
         logger.addHandler(log_handler)
 
         for i in range(0, 100):
             logger.info('Test log %d', i)
-
         log_handler.close()
 
-        # file has correct permission and has data
-        self.assertEquals(os.stat(log_file).st_mode & 0777, config.STAT_0666)
-        self.assertNotEquals(0, os.stat(log_file).st_size)
+        # file has data
+        self.assertNotEquals(0, os.path.getsize(log_file))
 
         os.remove(log_file)

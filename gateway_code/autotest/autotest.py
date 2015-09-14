@@ -7,23 +7,44 @@ import time
 from bisect import bisect
 import re
 
-from subprocess import check_output, STDOUT, CalledProcessError
-from serial import SerialException
+from subprocess import check_output, STDOUT
 
 from collections import defaultdict
 
-import gateway_code.config as config
-from gateway_code import common
-from gateway_code import open_node
-from gateway_code.autotest import m3_node_interface
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
+from gateway_code.utils.node_connection import OpenNodeConnection
+import gateway_code.board_config as board_config
 
+
+import functools
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
 MAC_CMD = "cat /sys/class/net/eth0/address"
 MAC_RE = re.compile(r'([0-9a-f]{2}:){5}[0-9a-f]{2}')
+
+
+def autotest_checker(*required):
+    """ Only run tests if required `commands` is implemented.
+
+    Allow selecting test launch if the required commads are present in
+    board AUTOTEST_AVAILABLE list. """
+    required = set(required)
+
+    def _wrap(func):
+        """ Decorator implementation """
+        @functools.wraps(func)
+        def _wrapped_f(self, *args, **kwargs):
+            """ Function wrapped with test """
+            available = set(self.open_node.AUTOTEST_AVAILABLE)
+
+            if required.issubset(available):
+                return func(self, *args, **kwargs)
+            else:
+                return 0
+        return _wrapped_f
+    return _wrap
 
 
 class FatalError(Exception):
@@ -43,18 +64,17 @@ def tst_ok(bool_value):
     return 0 if bool_value else 1
 
 
-class AutoTestManager(object):
-
+class AutoTestManager(object):  # pylint:disable=too-many-public-methods
     """ Gateway and open node auto tests """
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
+        self.open_node = board_config.BoardConfig().board_class
 
         self.on_serial = None
         self.a8_connection = None
 
-        self.ret_dict = None
-
+        self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         self.cn_measures = []
 
     def _measures_handler(self, measure_str):
@@ -74,9 +94,10 @@ class AutoTestManager(object):
 
         # configure Control Node
         ret_val += self.g_m.control_node.reset()
-        self.g_m.control_node.cn_serial.start(self.g_m.control_node.TTY, None,
-                                              ['-d'], self._measures_handler)
-        time.sleep(1)
+
+        self.g_m.control_node.cn_serial.measures_debug = self._measures_handler
+        self.g_m.control_node.cn_serial.start()
+
         ret_val += self.g_m.control_node.protocol.set_time()
 
         gwt_mac_addr = self.get_local_mac_addr()
@@ -85,51 +106,21 @@ class AutoTestManager(object):
         test_ok = (MAC_RE.match(gwt_mac_addr) is not None)
         ret_val += self._check(tst_ok(test_ok), 'gw_mac_addr', gwt_mac_addr)
 
-        self._check(ret_val, 'setup_cn_connection', ret_val)
-        if 0 != ret_val:  # pragma: no cover
-            raise FatalError('Setup control node failed')
+        self._assert(ret_val, 'setup_cn_connection', ret_val,
+                     'Setup control node failed')
 
-    def _setup_open_node_m3(self):
-        """ Setup open node m3 connection """
+    def _setup_open_node(self):
+        """ Setup open node connection
+        * Flash firmware
+        * Start serial interface """
         ret_val = 0
 
-        ret = self.g_m.open_node.flash(open_node.NodeM3.FW_AUTOTEST)
-        ret_val += self._check(ret, 'flash_m3', ret)
-        time.sleep(2)
+        ret = self.g_m.open_node.setup(self.open_node.FW_AUTOTEST)
+        ret_val += self._check(ret, 'open_node_setup', ret)
 
-        self.on_serial = m3_node_interface.OpenNodeSerial(
-            open_node.NodeM3.TTY, open_node.NodeM3.BAUDRATE)
-        ret, err_msg = self.on_serial.start()
-        ret_val += self._check(ret, 'open_m3_serial', err_msg)
-
-        return ret_val
-
-    def _setup_open_node_fox(self):
-        """ Setup open node fox connection """
-        ret_val = 0
-        ret = self.g_m.open_node.flash(open_node.NodeFox.FW_AUTOTEST)
-        ret_val += self._check(ret, 'flash_fox', ret)
-        time.sleep(2)
-
-        self.on_serial = m3_node_interface.OpenNodeSerial(
-            open_node.NodeFox.TTY, open_node.NodeFox.BAUDRATE)
-
-        ret, err_msg = self.on_serial.start()
-        ret_val += self._check(ret, 'open_fox_serial', err_msg)
-
-        return ret_val
-
-    def _setup_open_node_leonardo(self):
-        """ Setup open node leonardo connecton """
-        ret_val = 0
-        ret = self.g_m.open_node.flash(open_node.NodeLeonardo.FW_AUTOTEST)
-        ret_val += self._check(ret, 'flash_leonardo', ret)
-        time.sleep(2)
-
-        self.on_serial = m3_node_interface.OpenNodeSerial(
-            open_node.NodeLeonardo.TTY, open_node.NodeLeonardo.BAUDRATE)
-        ret, err_msg = self.on_serial.start()
-        ret_val += self._check(ret, 'open_leonardo_serial', err_msg)
+        self.on_serial = OpenNodeConnection()
+        ret = self.on_serial.start()
+        ret_val += self._check(ret, 'open_node_connection', ret)
         return ret_val
 
     def _setup_open_node_a8(self):
@@ -141,25 +132,25 @@ class AutoTestManager(object):
           * get
 
         """
+        assert 'a8' == self.open_node.TYPE
+
         ret_val = 0
+        ret = self.g_m.open_node.setup(None, debug=False)
+        self._assert(ret, 'open_a8_setup', ret, 'Open Node Setup failed')
+
+        match = self.g_m.open_node.wait_booted(timeout=300)
+        self._assert(tst_ok(match != ''), 'open_a8_boot_timeout', 300,
+                     'Open Node Boot failed')
+
+        # get ip address using serial
+        # run socats commands to access a8-m3 open node on gateway
+        self.a8_connection = open_a8_interface.OpenA8Connection()
+        LOGGER.debug("Wait that open a8 node starts")
         try:
-            ret_val += common.wait_tty(open_node.NodeA8.TTY, LOGGER,
-                                       timeout=20)
-
-            # wait nodes start
-            # get ip address using serial
-            # run socats commands to access a8-m3 open node on gateway
-            self.a8_connection = open_a8_interface.OpenA8Connection()
-            LOGGER.debug("Wait that open a8 node starts")
             self.a8_connection.start()
-
-        except SerialException as err:  # pragma: no cover
-            ret_val += self._check(1, 'access_a8_serial_port', str(err))
-            raise FatalError('Setup Open Node failed')
         except open_a8_interface.A8ConnectionError as err:  # pragma: no cover
-            ret_val += self._check(1, 'open_a8_init_error: %s' % err.err_msg,
-                                   str(err))
-            raise FatalError('Setup Open Node failed')
+            self._assert(1, 'open_a8_init_error: %s' % err.err_msg, str(err),
+                         'Setup Connection failed')
 
         # save mac address
         a8_mac_addr = self.a8_connection.get_mac_addr()
@@ -167,42 +158,31 @@ class AutoTestManager(object):
         test_ok = (MAC_RE.match(a8_mac_addr) is not None)
         ret_val += self._check(tst_ok(test_ok), 'a8_mac_addr', a8_mac_addr)
 
-        # open A8 flash
-        try:
-            self.a8_connection.scp(open_node.NodeA8.A8_M3_FW_AUTOTEST,
-                                   '/tmp/a8_autotest.elf')
-        except CalledProcessError as err:  # pragma: no cover
-            ret_val += self._check(1, 'scp a8_autotest.elf fail', str(err))
-            raise FatalError('Setup Open Node failed')
-        try:
-            self.a8_connection.ssh_run('flash_a8_m3 /tmp/a8_autotest.elf')
-            time.sleep(5)
-        except CalledProcessError as err:  # pragma: no cover
-            ret_val += self._check(1, 'Flash a8-m3 fail', str(err))
-            raise FatalError('Setup Open Node failed')
+        ret = self.a8_connection.flash(self.g_m.open_node.A8_M3_FW_AUTOTEST)
+        self._assert(ret, 'flash a8_autotest.elf', ret, 'OpenNodeFlash Failed')
 
-        # Create open node a8-m3 connection through socat
-        self.on_serial = m3_node_interface.OpenNodeSerial(
-            open_node.NodeA8.LOCAL_A8_M3_TTY, open_node.NodeA8.A8_M3_BAUDRATE)
-
-        ret, err_msg = self.on_serial.start()
-        ret_val += self._check(ret, 'open_a8_serial', err_msg)
+        # Create open node a8-m3 connection through node-a8 serial redirection
+        self.on_serial = OpenNodeConnection(self.a8_connection.ip_addr)
+        ret = self.on_serial.start()
+        ret_val += self._check(ret, 'open_a8_serial', ret)
 
         return ret_val
 
-    def _setup_open_node_connection(self, board_type):
+    def _setup_open_node_connection(self):
         """ Setup the connection with Open Node
         Should be done on DC"""
 
         ret_val = 0
         ret_val += self.g_m.control_node.open_start('dc')
-        time.sleep(2)  # wait open node ready
 
-        # setup open node
-        ret_val += {'m3': self._setup_open_node_m3,
-                    'a8': self._setup_open_node_a8,
-                    'fox': self._setup_open_node_fox,
-                    'leonardo': self._setup_open_node_leonardo}[board_type]()
+        # setup
+        # A8 node is very different from the generic way
+        if 'a8' == self.open_node.TYPE:
+            ret_val += self._setup_open_node_a8()
+        else:
+            ret_val += self._setup_open_node()
+
+        self.on_serial.empty()  # flush messages that can be bufferred
 
         if 0 != ret_val:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -223,18 +203,16 @@ class AutoTestManager(object):
             self.on_serial = None
 
         if not blink:
+            ret_val += self.g_m.open_node.teardown()
             LOGGER.debug("Stop open node, no blinking")
             ret_val += self.g_m.control_node.open_stop('dc')
         else:
+            # Can't call teardown as it flashes 'idle'
+            ret_val += self.g_m.open_node.serial_redirection.stop()
             LOGGER.debug("Set status on LEDs")
 
         self.g_m.control_node.cn_serial.stop()
         LOGGER.debug("cn_serial stopped")
-
-        try:
-            self.a8_connection.stop()
-        except AttributeError:  # pragma: no cover
-            pass
 
         return self._check(ret_val, 'teardown', ret_val)
 
@@ -243,13 +221,6 @@ class AutoTestManager(object):
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
-        self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
-        board_type = config.board_type()
-
-        if board_type not in ['m3', 'a8', 'fox', 'leonardo']:
-            self.ret_dict['ret'] = self._check(1, 'board_type', board_type)
-            return self.ret_dict
-
         try:
             self.setup_control_node()
 
@@ -260,10 +231,13 @@ class AutoTestManager(object):
             # battery -> dc: No reboot
             # a8 may not work with new batteries (not enough power)
             # so check battery and then switch to DC
-            ret_val += self.test_consumption_batt(board_type)
+            ret_val += self.test_consumption_batt()
             # switch to DC and configure open node
-            self._setup_open_node_connection(board_type)
+            self._setup_open_node_connection()
+            time.sleep(1)
+            self.check_echo()
             self.check_get_time()
+
             self.get_uid()
 
             #
@@ -272,43 +246,35 @@ class AutoTestManager(object):
             ret = self.g_m.control_node.open_start('dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
-            if board_type != 'leonardo':
-                # test IMU
-                ret_val += self.test_gyro()
-                ret_val += self.test_magneto()
-                ret_val += self.test_accelero()
+            # test IMU
+            ret_val += self.test_gyro()
+            ret_val += self.test_magneto()
+            ret_val += self.test_accelero()
 
-                if board_type != 'fox':
-                    # test m3-on communication
-                    ret_val += self.test_gpio()
-                    ret_val += self.test_i2c()
+            # test m3-on communication
+            ret_val += self.test_gpio()
+            ret_val += self.test_i2c()
 
-                # radio tests
-                ret_val += self.test_radio_ping_pong(channel)
-                ret_val += self.test_radio_with_rssi(channel)
+            # radio tests
+            ret_val += self.test_radio_ping_pong(channel)
+            ret_val += self.test_radio_with_rssi(channel)
 
-                # test consumption measures
-                ret_val += self.test_consumption_dc()
-                # TODO board_type
-                # m3 specific tests
-                if 'm3' == board_type:  # pragma: no branch
-                    # cannot test this with a8 I think
-                    ret_val += self.test_leds_with_consumption()
-                    # test m3 specific sensors
-                    ret_val += self.test_pressure()
-                    ret_val += self.test_light()
-                    ret_val += self.test_flash(flash)
+            # test consumption measures
+            ret_val += self.test_consumption_dc()
+            # m3 specific tests
 
-                # run test_gps if requested
-                ret_val += self.test_gps(gps)
+            # cannot test this with a8 I think
+            ret_val += self.test_leds_with_consumption()
+            # test m3 specific sensors
+            ret_val += self.test_pressure()
+            ret_val += self.test_light()
+            ret_val += self.test_flash(flash)
 
-                # set_leds
-                self._on_call(['leds_off', '7'])
-                if ret_val == 0:
-                    self._on_call(['leds_blink', '7', '500'])
-                    self.g_m.control_node.protocol.green_led_blink()
-                else:  # pragma: no cover
-                    pass
+            # run test_gps if requested
+            ret_val += self.test_gps(gps)
+
+            # set_leds
+            self.set_result_leds(ret_val)
         except FatalError as err:
             # Fatal Error during test, don't run further tests
             LOGGER.error("Fatal Error in tests, stop further tests: %s",
@@ -318,7 +284,6 @@ class AutoTestManager(object):
         # shutdown node if test failed
         ret_val += self.teardown(blink and (ret_val == 0))
         self.ret_dict['ret'] = ret_val
-
         return self.ret_dict
 
     def _check(self, ret, operation, log_message=''):
@@ -335,6 +300,12 @@ class AutoTestManager(object):
             self.ret_dict['error'].append(operation)
             LOGGER.error('Autotest: %r: %r', operation, log_message)
         return abs(int(ret))
+
+    def _assert(self, ret, operation, log_message, exc_message):
+        """ Shortcut for check + FatalError """
+        ret_val = self._check(ret, operation, log_message)
+        if ret_val:
+            raise FatalError(exc_message)
 
     def _run_test(self, num, cmd, parse_function):
         """ Run a test 'num' times.
@@ -361,7 +332,29 @@ class AutoTestManager(object):
 #
 # Test implementation
 #
+    @autotest_checker('leds_off', 'leds_blink')
+    def set_result_leds(self, ret_val):
+        """ Make leds blink in case of success. Turn off on failure """
+        # Clean leds state
+        self._on_call(['leds_off', '7'])
+        if ret_val != 0:  # pragma: no cover
+            return
 
+        # Blink leds on success
+        self._on_call(['leds_blink', '7', '500'])
+        self.g_m.control_node.protocol.green_led_blink()
+
+    # Require 'echo' command
+    def check_echo(self):
+        """ run the echo command on the serial port """
+        # echo arg1 arg2: ['arg1', 'arg2']
+        cmd = ['echo', 'HELLO', 'WORLD']
+        answer = self.on_serial.send_command(cmd)
+        test_ok = answer[0:2] == ['HELLO', 'WORLD']
+        self._assert(tst_ok(test_ok), 'on_serial_echo', answer,
+                     "echo failed. Can't communicate with open node")
+
+    # Require 'get_time' command
     def check_get_time(self):
         """ runs the 'get_time' command
         Error on this check are fatal
@@ -371,11 +364,10 @@ class AutoTestManager(object):
 
         values = self._run_test(5, ['get_time'], (lambda x: x[2].isdigit()))
         test_ok = (any(values))
-        ret_val = self._check(tst_ok(test_ok), 'm3_comm_with_get_time', answer)
+        self._assert(tst_ok(test_ok), 'on_serial_get_time', answer,
+                     "get_time failed. Can't communicate with ON")
 
-        if 0 != ret_val:  # pragma: no cover
-            raise FatalError("get_time failed. Can't communicate with m3 node")
-
+    @autotest_checker('get_uid')
     def get_uid(self):
         """ runs the 'get_uid' command
         And add the resulting UID to the global return dictionary
@@ -399,6 +391,7 @@ class AutoTestManager(object):
 # sensors and flash
 #
 
+    @autotest_checker('test_flash')
     def test_flash(self, flash):
         """ test Flash """
         if not flash:
@@ -408,6 +401,7 @@ class AutoTestManager(object):
         test_ok = len(values)
         return self._check(tst_ok(test_ok), 'test_flash', values)
 
+    @autotest_checker('get_pressure')
     def test_pressure(self):
         """ test pressure sensor """
         # ['ACK', 'get_pressure', '9.944219E2', 'mbar']
@@ -415,6 +409,7 @@ class AutoTestManager(object):
         test_ok = 1 < len(set(values))
         return self._check(tst_ok(test_ok), 'test_pressure', values)
 
+    @autotest_checker('get_light', 'leds_on', 'leds_off')
     def test_light(self):
         """ test light sensor with leds"""
         # ['ACK', 'get_light', '5.2001953E1', 'lux']
@@ -460,6 +455,7 @@ class AutoTestManager(object):
         self._on_call(['test_pps_stop'])
         return ret_val
 
+    @autotest_checker('test_pps_start', 'test_pps_get', 'test_pps_stop')
     def test_gps(self, gps):
         """ Test the gps """
         if not gps:
@@ -473,10 +469,12 @@ class AutoTestManager(object):
 #
 # Control Node <--> Open Node Interraction
 #
+    @autotest_checker('test_gpio')
     def test_gpio(self):
         """ test GPIO connections """
         return self._test_on_cn(5, ['test_gpio'])
 
+    @autotest_checker('test_i2c')
     def test_i2c(self):
         """ test i2c communication """
         return self._test_on_cn(1, ['test_i2c'])
@@ -509,17 +507,20 @@ class AutoTestManager(object):
 #
 # Inertial Measurement Unit
 #
+    @autotest_checker('get_magneto')
     def test_magneto(self):
         """ test magneto sensor """
         # ['ACK', 'get_magneto' '4.328358E-2', '6.716418E-2', '-3.880597E-1',
         # 'gauss']
         return self._test_xyz_sensor('get_magneto')
 
+    @autotest_checker('get_gyro')
     def test_gyro(self):
         """ test gyro sensor """
         # ['ACK', 'get_gyro', '1.07625', '1.75', '5.2500002E-2', 'dps']
         return self._test_xyz_sensor('get_gyro')
 
+    @autotest_checker('get_accelero')
     def test_accelero(self):
         """ test accelerator sensor """
         # ['ACK', 'get_accelero', '3.6E-2', '-1.56E-1', '1.0320001', 'g']
@@ -538,7 +539,7 @@ class AutoTestManager(object):
 #
 # Radio tests
 #
-
+    @autotest_checker('radio_ping_pong')
     def test_radio_ping_pong(self, channel):
         """ test Radio Ping-pong with control-node """
         if channel is None:
@@ -547,6 +548,7 @@ class AutoTestManager(object):
         return self._test_on_cn(10, ['test_radio_ping_pong'],
                                 ['radio_ping_pong'], [str(channel), '3dBm'])
 
+    @autotest_checker('radio_pkt')
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
         self.cn_measures = []
@@ -609,7 +611,7 @@ class AutoTestManager(object):
 
         return ret_val
 
-    def test_consumption_batt(self, board_type):
+    def test_consumption_batt(self):
         """ Try consumption for Battery """
 
         ret_val = 0
@@ -617,9 +619,9 @@ class AutoTestManager(object):
 
         # set a firmware on m3 to ensure corret consumption measures
         # on a8, linux is consuming enough I think
-        if 'm3' == board_type:  # pragma: no branch
+        if 'm3' == self.open_node.TYPE:  # pragma: no branch
             time.sleep(1)
-            ret = self.g_m.open_node.flash(open_node.NodeM3.FW_AUTOTEST)
+            ret = self.g_m.open_node.flash(self.open_node.FW_AUTOTEST)
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption
@@ -649,6 +651,7 @@ class AutoTestManager(object):
         # Value ranges may be validated with an Idle firmware
         return ret_val
 
+    @autotest_checker('leds_consumption', 'leds_on', 'leds_off')
     def test_leds_with_consumption(self):
         """ Test Leds with consumption
 

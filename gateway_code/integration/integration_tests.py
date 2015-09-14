@@ -13,17 +13,10 @@ from itertools import izip
 import mock
 from mock import patch
 
-# all modules should be imported and not only the package
 from gateway_code.integration import test_integration_mock
-import gateway_code.control_node.cn_interface
-import gateway_code.config
-
+from gateway_code.autotest import autotest
+from gateway_code.utils.node_connection import OpenNodeConnection
 from gateway_code.common import wait_cond
-from gateway_code.autotest.autotest import extract_measures
-
-from gateway_code.open_node import NodeM3
-from gateway_code.open_node import NodeFox
-from gateway_code.open_node import NodeLeonardo
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -56,20 +49,14 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
         self.file = open(file_path)
 
 
-if os.uname()[4] != 'armv7l':
-    import unittest
-    raise unittest.SkipTest("Skip board embedded tests")
-
-
 class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
     """ Create environment for running experiments """
 
     def setUp(self):
         super(ExperimentRunningMock, self).setUp()
-        self.cn_measures = []
-        self.g_m.control_node.cn_serial.measures_handler = \
-            self._measures_handler
+
+        # super(self).cn_measures = []  # will hold control node measures
 
         # no timeout
         self.request.query = mock.Mock(timeout='')
@@ -83,35 +70,15 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
         super(ExperimentRunningMock, self).tearDown()
         self.g_m._destroy_user_exp_folders(**self.exp_conf)
 
-    def _measures_handler(self, measure_str):
-        """ control node measures Handler """
-        gateway_code.control_node.cn_interface.LOGGER.debug(measure_str)
-        self.cn_measures.append(measure_str.split(' '))
-
     @staticmethod
-    def _send_command_open_node(command, host='localhost', port=20000):
-        """ send a command to host/port and wait for an answer as a line """
-        import socket
-
-        ret = None
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((host, port))
-            sock_file = sock.makefile('rw')
-            sock.settimeout(5.0)
-            sock.send(command + '\n')
-            ret = sock_file.readline().rstrip()
-        except (socket.timeout, IOError):
-            ret = None
-        finally:
-            sock.close()
-        return ret
-
-    def _send_command_multiple(self, command, num_times, step=0.5):
+    def send_n_cmds(command, num_times, step=0.5):
         """ Send a command multiple times and return array of answers """
         answers = []
+        cmd = command.split()
         for _itr in range(0, num_times):  # pylint:disable=unused-variable
-            answers.append(self._send_command_open_node(command))
+            ans = OpenNodeConnection.send_one_command(cmd)
+            ans = ' '.join(ans) if ans is not None else None
+            answers.append(ans)
             time.sleep(step)
         return answers
 
@@ -123,17 +90,13 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
         """ Test simple experiment"""
-        board_type = gateway_code.config.board_type()
-        if 'm3' == board_type:
-            self._run_simple_experiment_m3(m_error)
-        elif 'a8' == board_type:
+        board_class = self.board_cfg.board_class
+
+        # The A8 node is really different from the others
+        if board_class.TYPE == 'a8':
             self._run_simple_experiment_a8(m_error)
-        elif 'fox' == board_type:
-            self._run_simple_experiment_fox(m_error)
-        elif 'leonardo' == board_type:
-            self._run_simple_experiment_leonardo(m_error)
         else:
-            self.fail('Experiment Running not implemented for %r' % board_type)
+            self._run_simple_experiment_node(m_error, board_class)
 
     def _run_simple_experiment_a8(self, moc):  # pylint:disable=unused-argument
         """ Run an experiment for a8 nodes """
@@ -145,104 +108,30 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         self.assertEquals({'ret': 0}, self.app.exp_stop())
 
-    def _run_simple_experiment_fox(self, m_error):
-        """ Run a simple experiment on fox node without profile
-        Try the different node features """
-
+    def _run_simple_experiment_node(self, m_error, board_class):
+        """
+        Run a simple experiment on a node without profile
+        Try the different node features
+        """
         msg = 'HELLO WORLD'
 
         # start exp with idle firmware
-        self.request.files = {'firmware': FileUpload(NodeFox.FW_IDLE)}
+        self.request.files = {'firmware': FileUpload(board_class.FW_IDLE)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
         time.sleep(1)
 
         # idle firmware, there should be no reply
-        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+        self.assertNotIn(msg, self.send_n_cmds('echo %s' % msg, 5))
 
         # flash echo firmware
-        self.request.files = {'firmware': FileUpload(NodeFox.FW_AUTOTEST)}
-        self.assertEquals({'ret': 0}, self.app.open_flash())
-        time.sleep(1)
-
-        # Should echo <message>, do it multiple times for reliability
-        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
-        time.sleep(5)
-        # open node reset and start stop
-        self.assertEquals({'ret': 0}, self.app.open_soft_reset())
-
-        self.assertEquals({'ret': 0}, self.app.open_start())
-
-        self.assertEquals({'ret': 0}, self.app.open_stop())
-
-        # stop exp
-        self.assertEquals({'ret': 0}, self.app.exp_stop())
-
-        # Got no error during tests (use call_args_list for printing on error)
-        self.assertEquals([], m_error.call_args_list)
-
-        # reset firmware should fail and logger error will be called
-        self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
-        self.assertTrue(m_error.called)
-
-    def _run_simple_experiment_leonardo(self, m_error):
-        """ Run a simple experiment on leonardo node without profile
-        Try the different node features """
-
-        msg = 'HELLO WORLD'
-
-        # start exp with idle firmware
-        self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_IDLE)}
-        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
-        time.sleep(1)
-        # idle firmware, there should be no reply
-        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
-        # flash echo firmware
-        self.request.files = {'firmware': FileUpload(NodeLeonardo.FW_AUTOTEST)}
-        self.assertEquals({'ret': 0}, self.app.open_flash())
-
-        time.sleep(1)
-
-        # self.app.set_time()  # test set_time during experiment
-
-        # Should echo <message>, do it multiple times for reliability
-        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
-        # open node reset and start stop
-        self.assertEquals({'ret': 0}, self.app.open_soft_reset())
-        self.assertEquals({'ret': 0}, self.app.open_start())
-        self.assertEquals({'ret': 0}, self.app.open_stop())
-        # stop exp
-        self.assertEquals({'ret': 0}, self.app.exp_stop())
-
-        # Got no error during tests (use call_args_list for printing on error)
-        self.assertEquals([], m_error.call_args_list)
-
-        # reset firmware should fail and logger error will be called
-        self.assertNotEquals({'ret': 0}, self.app.open_soft_reset())
-        self.assertTrue(m_error.called)
-
-    def _run_simple_experiment_m3(self, m_error):
-        """ Run a simple experiment on m3 node without profile
-        Try the different node features """
-
-        msg = 'HELLO WORLD'
-
-        # start exp with idle firmware
-        self.request.files = {'firmware': FileUpload(NodeM3.FW_IDLE)}
-        self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
-        time.sleep(1)
-
-        # idle firmware, there should be no reply
-        self.assertNotIn(msg, self._send_command_multiple('echo %s' % msg, 5))
-
-        # flash echo firmware
-        self.request.files = {'firmware': FileUpload(NodeM3.FW_AUTOTEST)}
+        self.request.files = {'firmware': FileUpload(board_class.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.open_flash())
         time.sleep(1)
 
         # self.app.set_time()  # test set_time during experiment
 
         # Should echo <message>, do it multiple times for reliability
-        self.assertIn(msg, self._send_command_multiple('echo %s' % msg, 5))
+        self.assertIn(msg, self.send_n_cmds('echo %s' % msg, 5))
 
         # open node reset and start stop
         self.assertEquals({'ret': 0}, self.app.open_soft_reset())
@@ -262,14 +151,15 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_m3_exp_with_measures(self, m_error):
         """ Run an experiment with measures and profile update """
+        board_class = self.board_cfg.board_class
 
-        if 'm3' != gateway_code.config.board_type():
+        if 'm3' != board_class.TYPE:
             return
         t_start = time.time()
 
-        self.request.files = {'firmware': FileUpload(NodeM3.FW_AUTOTEST)}
+        self.request.files = {'firmware': FileUpload(board_class.FW_AUTOTEST)}
         self.assertEquals({'ret': 0}, self.app.exp_start(**self.exp_conf))
-        exp_files = self.g_m.exp_desc['exp_files'].copy()
+        exp_files = self.g_m.exp_files.copy()
         time.sleep(1)
 
         # Set first profile
@@ -282,7 +172,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.request.json = None
         self.assertEquals({'ret': 0}, self.app.exp_update_profile())
         time.sleep(2)  # wait maybe remaining values
-        measures = extract_measures(self.cn_measures)
+        measures = autotest.extract_measures(self.cn_measures)
         self.cn_measures = []
 
         # # # # # # # # # #
@@ -416,7 +306,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 
     def tests_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
-        if 'a8' != gateway_code.config.board_type():
+        if 'a8' != self.board_cfg.board_type:
             return
 
         c_n = self.g_m.control_node

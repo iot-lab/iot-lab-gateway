@@ -11,7 +11,7 @@ import mock
 import unittest
 
 from .. import openocd
-from gateway_code.open_node import NodeM3  # config file
+from gateway_code.open_nodes.node_m3 import NodeM3  # config file
 
 
 @mock.patch('subprocess.call')

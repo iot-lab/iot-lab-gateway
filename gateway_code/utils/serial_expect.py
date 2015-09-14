@@ -17,13 +17,20 @@ class SerialExpect(object):
     """ Simple Expect implementation for serial """
 
     def __init__(self, tty, baudrate, logger=None):
-        self.serial_fd = serial.Serial(tty, baudrate, timeout=0.1)
-        self.serial_fd.flushInput()
+        self.fd = serial.Serial(tty, baudrate,  # pylint:disable=invalid-name
+                                timeout=0.1)
         self.logger = logger
+
+    def close(self):
+        """ Close connection """
+        try:
+            self.fd.close()
+        except AttributeError:
+            pass
 
     def send(self, data):
         """ Write given data to serial with newline"""
-        self.serial_fd.write(data + '\n')
+        self.fd.write(data + '\n')
 
     def expect_list(self, pattern_list, timeout=float('+inf')):
         """ expect multiple patterns """
@@ -48,8 +55,8 @@ class SerialExpect(object):
         while True:
             # get new data
             try:
-                read_bytes = self.serial_fd.read(size=16)  # timeout 0.1
-            except serial.SerialException:
+                read_bytes = self.fd.read(size=16)  # timeout 0.1
+            except (serial.SerialException, AttributeError):
                 return ''
 
             if end_time <= time.time():
@@ -77,7 +84,9 @@ class SerialExpect(object):
 
                 # print all lines
                 for line in lines:
-                    self.logger.debug(line)
+                    line = line.strip()
+                    if line:
+                        self.logger.debug(line)
 
             match = regexp.search(buff)
             if match:
@@ -87,3 +96,43 @@ class SerialExpect(object):
                 return match.group(0)
 
             # continue
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, _type, _value, _traceback):
+        self.close()
+
+
+class SerialExpectForSocket(SerialExpect):
+    """ Simple Expect implementation for tcp connection adapter """
+
+    # Just a hack to use the same class without changing init
+    def __init__(self,  # pylint:disable=super-init-not-called
+                 host='localhost', port=20000, logger=None):
+        url = 'socket://{host}:{port}'.format(host=host, port=port)
+        self.fd = self.try_connect(url, timeout=0.1)
+        self.logger = logger
+
+    @staticmethod
+    def try_connect(url, tries=10, step=0.5, *args, **kwargs):
+        """ Try connecting 'tries' time to url tuple
+        Sleep 'step' between each tries.
+        If last trial fails, the SerialException is raised
+
+        The goal is to be resilient to the fact that serial_aggregator might be
+        (re)starting.  """
+        # Run 'tries -1' times with 'try except'
+        for _ in range(0, tries - 1):
+            try:
+                return serial.serial_for_url(url, *args, **kwargs)
+            except serial.SerialException:
+                time.sleep(step)
+
+        # Last connection should run an exception
+        return serial.serial_for_url(url, *args, **kwargs)
+
+    def close(self):
+        """ Close connection and wait until it's restartable """
+        super(SerialExpectForSocket, self).close()
+        time.sleep(1)  # Wait SerialRedirection restarts and can be reconnected

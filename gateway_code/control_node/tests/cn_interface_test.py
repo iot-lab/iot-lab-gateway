@@ -12,6 +12,7 @@ import mock
 
 import Queue
 from gateway_code.control_node import cn_interface
+from gateway_code.tests import utils
 
 
 class TestControlNodeSerial(unittest.TestCase):
@@ -28,7 +29,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stderr.readline.side_effect = self.readline_ret_vals.get
         self.readline_ret_vals.put('cn_serial_ready\n')
 
-        self.cn = cn_interface.ControlNodeSerial()
+        self.cn = cn_interface.ControlNodeSerial('tty')
 
     def tearDown(self):
         self.cn.stop()
@@ -38,7 +39,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.readline_ret_vals.put('')
 
     def test_normal_start_stop(self):
-        ret_start = self.cn.start('tty')
+        ret_start = self.cn.start()
         self.assertEquals(0, ret_start)
         self.assertTrue(self.popen.stderr.readline.called)
 
@@ -52,7 +53,7 @@ class TestControlNodeSerial(unittest.TestCase):
         # poll should return an error
         self.popen.poll.return_value = 2
 
-        ret_start = self.cn.start('tty')
+        ret_start = self.cn.start()
         self.assertNotEquals(0, ret_start)
         mock_logger.assert_called_with(
             'Control node serial reader thread ended prematurely')
@@ -69,7 +70,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stdin.write.side_effect = IOError()
         self.popen.terminate.side_effect = OSError()
 
-        self.cn.start('tty')
+        self.cn.start()
 
         # try sending command
         ret = self.cn.send_command(['test', 'cmd'])
@@ -88,13 +89,13 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.stdin.write.side_effect = \
             (lambda *x: self.readline_ret_vals.put('start ACK\n'))
 
-        self.cn.start('tty')
+        self.cn.start()
         ret = self.cn.send_command(['start', 'DC'])
         self.assertEquals(['start', 'ACK'], ret)
         self.cn.stop()
 
     def test_send_command_no_answer(self):
-        self.cn.start('tty')
+        self.cn.start()
         ret = self.cn.send_command(['start', 'DC'])
         self.assertIsNone(ret)
         self.cn.stop()
@@ -109,39 +110,70 @@ class TestControlNodeSerial(unittest.TestCase):
         self.readline_ret_vals.put('set ACK\n')
         self.readline_ret_vals.put('start ACK\n')
 
-        self.cn.start('tty')
+        self.cn.start()
         self.cn.stop()
 
         mock_logger.assert_called_with('Control node answer queue full: %r',
                                        ['start', 'ACK'])
 
+# _cn_interface_args
+    def test__cn_interface_args(self):
+        args = self.cn._cn_interface_args()
+        self.assertIn(self.cn.tty, args)
+        self.assertNotIn('-c', args)
+        self.assertNotIn('-d', args)
+
+        # OML config
+        args = self.cn._cn_interface_args('<omlc></omlc>')
+        self.assertIn('-c', args)
+        self.assertNotIn('-d', args)
+        self.cn._oml_cfg_file.close()
+
+        # Debug mode
+        self.cn.measures_debug = (lambda x: None)
+        args = self.cn._cn_interface_args()
+        self.assertNotIn('-c', args)
+        self.assertIn('-d', args)
+
 # _config_oml coverage tests
 
     def test_empty_config_oml(self):
         # No experiment description
-        ret = self.cn._config_oml(None)
-        self.assertEquals([], ret)
+        ret = self.cn._oml_config_file(None)
+        self.assertIsNone(ret)
 
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     def test_config_oml(self):
-        exp_desc = {
-            'user': 'harter',
-            'exp_id': '1234',
-            'exp_files': {'consumption': '/tmp/consumption',
-                          'radio': '/tmp/radio',
-                          'event': '/tmp/event',
-                          'sniffer': '/tmp/sniffer',
-                          'log': '/tmp/log'}
+        oml_xml_cfg = '''<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>'''
+        self.cn.start(oml_xml_cfg)
+        self.assertIsNotNone(self.cn._oml_cfg_file)
+
+        self.cn.stop()
+
+    def test_oml_xml_config(self):
+        exp_files = {
+            'consumption': '/tmp/consumption',
+            'radio': '/tmp/radio',
+            'event': '/tmp/event',
+            'sniffer': '/tmp/sniffer',
+            'log': '/tmp/log',
         }
 
-        self.cn.start('tty', exp_desc=exp_desc)
-        self.assertIsNotNone(self.cn.oml_cfg_file)
-        self.cn.stop()
+        oml_xml_cfg = self.cn.oml_xml_config('m3-1', '1234', exp_files)
+        self.assertIsNotNone(oml_xml_cfg)
+        self.assertTrue(oml_xml_cfg.startswith('<omlc'))
+
+        # No output if none or empty
+        oml_xml_cfg = self.cn.oml_xml_config('m3-1', '1234', None)
+        self.assertIsNone(oml_xml_cfg)
+        oml_xml_cfg = self.cn.oml_xml_config('m3-1', '1234', {})
+        self.assertIsNone(oml_xml_cfg)
 
 
 class TestHandleAnswer(unittest.TestCase):
 
     def setUp(self):
-        self.cn = cn_interface.ControlNodeSerial()
+        self.cn = cn_interface.ControlNodeSerial('tty')
 
     @mock.patch('gateway_code.control_node.cn_interface.LOGGER.info')
     @mock.patch('gateway_code.control_node.cn_interface.LOGGER.debug')
@@ -165,10 +197,16 @@ class TestHandleAnswer(unittest.TestCase):
         mock_logger.assert_called_with('cn_serial_error: any error msg')
 
     def test_measures_debug(self):
-        self.cn.measures_handler = mock.Mock()
-        self.cn._handle_answer('measures_debug: consumption_measure ' +
-                               '1377268768.841070:1.78250 ' +
-                               '0.000000 3.230000 0.080003')
-        self.cn.measures_handler.assert_called_with(
-            'measures_debug: consumption_measure ' +
-            '1377268768.841070:1.78250 0.000000 3.230000 0.080003')
+        msg = ('measures_debug: consumption_measure 1377268768.841070:'
+               '1.78250 0.000000 3.230000 0.080003')
+
+        m_debug = mock.Mock()
+
+        self.cn.measures_debug = m_debug
+        self.cn._handle_answer(msg)
+        m_debug.assert_called_with(msg)
+
+        m_debug.reset_mock()
+        self.cn.measures_debug = None
+        self.cn._handle_answer(msg)
+        self.assertFalse(m_debug.called)

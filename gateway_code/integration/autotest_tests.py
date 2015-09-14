@@ -4,22 +4,15 @@
 
 # pylint: disable=too-many-public-methods
 
-from sys import stderr
+import os
+import sys
 import mock
 
 from nose.plugins.attrib import attr
 
 from gateway_code.integration import test_integration_mock
-
-import gateway_code.autotest.m3_node_interface
-import gateway_code.autotest.autotest
-from gateway_code import open_node
-import gateway_code.config
-
-import os
-if os.uname()[4] != 'armv7l':
-    import unittest
-    raise unittest.SkipTest("Skip board embedded tests")
+from gateway_code.autotest import autotest
+from gateway_code.utils.node_connection import OpenNodeConnection
 
 
 @attr('autotest', 'integration')
@@ -36,24 +29,26 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         # call using rest
         self.request.query = mock.Mock(channel='22', gps='', flash='1')
         ret_dict = self.app.auto_tests(mode='blink')
-        print >> stderr, ret_dict
+        print >> sys.stderr, ret_dict
         self.assertEquals([], ret_dict['error'])
+        self.assertIn('on_serial_echo', ret_dict['success'])
         self.assertTrue('GWT' in ret_dict['mac'])
         self.assertEquals(0, ret_dict['ret'])
 
-        # test that ON still on => should be blinking and answering
-        if gateway_code.config.board_type() != 'm3':
-            return
-        open_serial = gateway_code.autotest.m3_node_interface.OpenNodeSerial(
-            open_node.NodeM3.TTY, open_node.NodeM3.BAUDRATE)
-        open_serial.start()
-        self.assertIsNotNone(open_serial.send_command(['get_time']))
-        open_serial.stop()
+        # test that ON still on
+        if self.board_cfg.board_type == 'a8':
+            # Don't know ip address, just check TTY
+            self.assertTrue(os.path.exists(self.board_cfg.board_class.TTY))
+        else:
+            g_m.open_node.serial_redirection.start()
+            ret = OpenNodeConnection.send_one_command(['get_time'])
+            g_m.open_node.serial_redirection.stop()
+            self.assertIsNotNone(ret)
 
     def test_mode_no_blink_no_radio(self):
         """ Try running autotest without blinking leds and without radio """
 
-        g_v = gateway_code.autotest.autotest.AutoTestManager(self.g_m)
+        g_v = autotest.AutoTestManager(self.g_m)
         ret_dict = g_v.auto_tests(channel=None, blink=False)
 
         self.assertEquals([], ret_dict['error'])

@@ -3,70 +3,79 @@
 
 # pylint: disable=missing-docstring
 # pylint: disable=protected-access
-# pylint <= 1.3
-# pylint: disable=too-many-public-methods
 # pylint >= 1.4
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
+import os
 import mock
 import unittest
-from cStringIO import StringIO
+
+from gateway_code.open_nodes.node_m3 import NodeM3
+from gateway_code.open_nodes.node_a8 import NodeA8
+
 from gateway_code import config
+from . import utils
 
 
-class TestGetHostname(unittest.TestCase):
-    def test_get_hosname(self):
-        self.assertNotEquals('', config.hostname())
+class TestConfig(unittest.TestCase):
 
+    def test_open_node_class(self):
+        self.assertEquals(NodeM3, config.open_node_class('m3'))
+        self.assertEquals(NodeA8, config.open_node_class('a8'))
 
-class TestDefaultProfile(unittest.TestCase):
+    def test_open_node_class_errors(self):
+        # No module
+        self.assertRaisesRegexp(
+            ValueError, '^Board unknown not implemented: ImportError.*$',
+            config.open_node_class, 'unknown')
+
+        # No Class in module
+        with mock.patch('gateway_code.config.OPEN_CLASS_NAME', 'UnknownClass'):
+            self.assertRaisesRegexp(
+                ValueError, '^Board m3 not implemented: AttributeError.*$',
+                config.open_node_class, 'm3')
+
+    def test_read_config(self):
+        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot')):
+            self.assertEquals('m3', config.read_config('board_type'))
+            self.assertEquals('m3', config.read_config('board_type', 'def'))
+
+            self.assertRaises(IOError, config.read_config, 'robot')
+            self.assertEquals(None, config.read_config('robot', None))
+
+        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_robot')):
+            self.assertEquals('m3', config.read_config('board_type'))
+            self.assertEquals('turtlebot2', config.read_config('robot'))
+
+    def test_default_profile(self):
+        default_profile_dict = {
+            u'power': u'dc',
+            u'profilename': u'_default_profile',
+        }
+        self.assertEquals(default_profile_dict, config.DEFAULT_PROFILE)
 
     @staticmethod
-    @mock.patch('gateway_code.config.board_type', lambda: 'm3')
-    def test_default_profile():
-        config.default_profile()
+    def _rmfile(file_path):
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
 
+    def test_user_files(self):
+        file_path = '/tmp/test_%s' % os.uname()[1]
+        self._rmfile(file_path)
 
-class TestsBoardAndRobotType(unittest.TestCase):
+        config.create_user_file(file_path)
+        self.assertTrue(os.path.exists(file_path))
+        config.clean_user_file(file_path)
+        self.assertFalse(os.path.exists(file_path))
 
-    def setUp(self):
-        config._BOARD_CONFIG = {}
-        self.string_io = StringIO()
+        config.create_user_file(file_path)
+        self.assertTrue(os.path.exists(file_path))
+        with open(file_path, 'w+') as _file:
+            _file.write('DATA\n')
+        config.clean_user_file(file_path)
+        self.assertTrue(os.path.exists(file_path))  # not empty, still here
 
-        self.open_mock_patcher = mock.patch('gateway_code.config.open',
-                                            create=True)
-
-        self.open_mock = self.open_mock_patcher.start()
-        self.open_mock.return_value = self.string_io
-
-    def tearDown(self):
-        self.open_mock_patcher.stop()
-
-    def test_board_type(self):
-
-        self.string_io.write('M3\n')
-        self.string_io.seek(0)
-        config.board_type()
-
-        self.assertEquals('m3', config.board_type())
-
-        self.open_mock.side_effect = Exception()
-        self.assertEquals('m3', config.board_type())
-
-    def test_board_type_not_found(self):
-        self.open_mock.side_effect = IOError()
-        self.assertRaises(IOError, config.board_type)
-
-    def test_robot_type(self):
-
-        self.string_io.write('roomba\n')
-        self.string_io.seek(0)
-        self.assertEquals('roomba', config.robot_type())
-
-        self.open_mock.side_effect = Exception()
-        self.assertEquals('roomba', config.robot_type())
-
-    def test_robot_type_not_found(self):
-        self.open_mock.side_effect = IOError()
-        self.assertEquals(None, config.robot_type())
+        self._rmfile(file_path)
