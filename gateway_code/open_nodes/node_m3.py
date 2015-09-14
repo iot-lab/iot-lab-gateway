@@ -64,8 +64,9 @@ class NodeM3(object):
     @logger_call("Node M3 : flash of m3 node")
     def flash(self, firmware_path=None):
         """ Flash the given firmware on M3 node
+
         :param firmware_path: Path to the firmware to be flashed on `node`.
-            If None, flash 'idle' firmware.
+                              If None, flash 'idle' firmware.
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on M3: %s', firmware_path)

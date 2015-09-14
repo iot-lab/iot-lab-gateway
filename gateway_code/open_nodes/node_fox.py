@@ -70,8 +70,9 @@ class NodeFox(object):
     @logger_call("Node Fox : flash of fox node")
     def flash(self, firmware_path=None):
         """ Flash the given firmware on FOX node
+
         :param firmware_path: Path to the firmware to be flashed on `node`.
-            If None, flash 'idle' firmware.
+                              If None, flash 'idle' firmware.
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on FOX: %s', firmware_path)
