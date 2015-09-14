@@ -1,83 +1,88 @@
-gateway_code Package
+gateway_code package
 ====================
 
-:mod:`gateway_code` Package
----------------------------
+Subpackages
+-----------
 
-.. automodule:: gateway_code.__init__
+.. toctree::
+
+    gateway_code.autotest
+    gateway_code.control_node
+    gateway_code.open_nodes
+    gateway_code.utils
+
+Submodules
+----------
+
+gateway_code.board_config module
+--------------------------------
+
+.. automodule:: gateway_code.board_config
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`config` Module
---------------------
+gateway_code.common module
+--------------------------
+
+.. automodule:: gateway_code.common
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+gateway_code.config module
+--------------------------
 
 .. automodule:: gateway_code.config
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`control_node_interface` Module
-------------------------------------
-
-.. automodule:: gateway_code.control_node_interface
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-:mod:`gateway_logging` Module
------------------------------
+gateway_code.gateway_logging module
+-----------------------------------
 
 .. automodule:: gateway_code.gateway_logging
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`gateway_manager` Module
------------------------------
+gateway_code.gateway_manager module
+-----------------------------------
 
 .. automodule:: gateway_code.gateway_manager
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`openocd_cmd` Module
--------------------------
+gateway_code.gateway_roomba module
+----------------------------------
 
-.. automodule:: gateway_code.openocd_cmd
+.. automodule:: gateway_code.gateway_roomba
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`profile` Module
----------------------
+gateway_code.profile module
+---------------------------
 
 .. automodule:: gateway_code.profile
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`protocol_cn` Module
--------------------------
+gateway_code.rest_server module
+-------------------------------
 
-.. automodule:: gateway_code.protocol_cn
+.. automodule:: gateway_code.rest_server
     :members:
     :undoc-members:
     :show-inheritance:
 
-:mod:`serial_redirection` Module
---------------------------------
 
-.. automodule:: gateway_code.serial_redirection
+Module contents
+---------------
+
+.. automodule:: gateway_code
     :members:
     :undoc-members:
     :show-inheritance:
-
-:mod:`server_rest` Module
--------------------------
-
-.. automodule:: gateway_code.server_rest
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
