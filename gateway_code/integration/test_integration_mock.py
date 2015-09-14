@@ -23,6 +23,10 @@ class GatewayCodeMock(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
+
+        if os.uname()[4] != 'armv7l':
+            raise unittest.SkipTest("Skip board embedded tests")
+
         g_m = gateway_code.rest_server.GatewayManager('.')
         g_m.setup()
         cls.app = gateway_code.rest_server.GatewayRest(g_m)

@@ -4,6 +4,7 @@
 
 # pylint: disable=too-many-public-methods
 
+import os
 import sys
 import mock
 
@@ -12,11 +13,6 @@ from nose.plugins.attrib import attr
 from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
 from gateway_code.utils.node_connection import OpenNodeConnection
-
-import os
-if os.uname()[4] != 'armv7l':
-    import unittest
-    raise unittest.SkipTest("Skip board embedded tests")
 
 
 @attr('autotest', 'integration')

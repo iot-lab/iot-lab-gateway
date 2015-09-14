@@ -49,11 +49,6 @@ class FileUpload(object):  # pylint: disable=too-few-public-methods
         self.file = open(file_path)
 
 
-if os.uname()[4] != 'armv7l':
-    import unittest
-    raise unittest.SkipTest("Skip board embedded tests")
-
-
 class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
     """ Create environment for running experiments """
