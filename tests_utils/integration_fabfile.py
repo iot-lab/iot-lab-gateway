@@ -14,8 +14,13 @@ EXCLUDE = ['.git', '.tox']
 EXCLUDE += ['*egg-info', '*pyc', 'build', 'dist', 'cover', '.coverage']
 EXCLUDE += ['*swp']
 EXCLUDE += ['obj', 'results']
-EXCLUDE += ['*.log', '*.out', '*.xml']
+EXCLUDE += ['*.log', '*.out', './*.xml']
 EXCLUDE += ['iotlab']  # test user measures directory
+
+EXCLUDE += ['control_node_serial/obj']
+EXCLUDE += ['control_node_serial/tests/results/']
+EXCLUDE += ['control_node_serial/tests/obj/']
+EXCLUDE += ['control_node_serial/tests/bin/']
 
 SCRIPT_DIR = os.path.dirname((__file__))
 LOCAL = os.path.dirname(SCRIPT_DIR)
