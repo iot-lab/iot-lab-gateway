@@ -100,21 +100,34 @@ def python_test(*attrs):
     """
     execute(upload)
     execute(kill)
-    cmd = 'tox -e integration'
-    if attrs:
-        cmd += " -- --attr '%s'" % ','.join(attrs)
-    with cd(REMOTE):
-        ret = safe_su(cmd, user='www-data')
+    ret = tox_call('integration', user='www-data', *attrs)
     execute(download)
-    return ret.return_code
+    return ret
 
 
+@runs_once
 @task
 def c_test():
     """ Execute `control_node_serial` tests """
     execute(upload)
     execute(kill)
-    with cd(os.path.join(REMOTE, 'control_node_serial')):
-        ret = safe_su('make realclean coverage', user='www-data')
+    ret = tox_call('control_node_serial', user='www-data')
     execute(download)
+    return ret
+
+
+def tox_call(cmd, user, *attrs):
+    """ Call given tox command as user with attributes """
+    cmd = 'tox -e %s' % cmd
+    if attrs:
+        cmd += " -- --attr '%s'" % ','.join(attrs)
+    with cd(REMOTE):
+        ret = safe_su(cmd, user=user)
     return ret.return_code
+
+
+@task
+def all():
+    """ Execute python tests and c tests """
+    execute(python_test)
+    execute(c_test)
