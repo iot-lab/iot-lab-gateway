@@ -84,8 +84,8 @@ def safe_su(command, user='root'):
 @task()
 def release():
     """ Release python package """
-    execute(upload)
-    execute(kill)
+    upload()
+    kill()
     with cd(REMOTE):
         run('source /etc/profile; python setup.py release')
     run('/etc/init.d/gateway-server-daemon restart', pty=False)
@@ -98,10 +98,10 @@ def python_test(*attrs):
 
     :param attr: nosetets 'attr' option 'attribute=5,!other_attribute'
     """
-    execute(upload)
-    execute(kill)
+    upload()
+    kill()
     ret = tox_call('integration', 'www-data', *attrs)
-    execute(download)
+    download()
     return ret
 
 
@@ -109,10 +109,10 @@ def python_test(*attrs):
 @task
 def c_test():
     """ Execute `control_node_serial` tests """
-    execute(upload)
-    execute(kill)
+    upload()
+    kill()
     ret = tox_call('control_node_serial', 'www-data')
-    execute(download)
+    download()
     return ret
 
 
@@ -127,7 +127,11 @@ def tox_call(cmd, user, *attrs):
 
 
 @task
+@runs_once
 def all():
     """ Execute python tests and c tests """
+    upload()
+    # Runs_once combined with 'execute'
+    # to only execute once per host but with c_test run at the end
     execute(python_test)
     execute(c_test)
