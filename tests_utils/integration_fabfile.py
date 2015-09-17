@@ -100,7 +100,7 @@ def python_test(*attrs):
     """
     execute(upload)
     execute(kill)
-    ret = tox_call('integration', user='www-data', *attrs)
+    ret = tox_call('integration', 'www-data', *attrs)
     execute(download)
     return ret
 
@@ -111,7 +111,7 @@ def c_test():
     """ Execute `control_node_serial` tests """
     execute(upload)
     execute(kill)
-    ret = tox_call('control_node_serial', user='www-data')
+    ret = tox_call('control_node_serial', 'www-data')
     execute(download)
     return ret
 
