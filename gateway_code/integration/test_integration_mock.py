@@ -25,6 +25,7 @@ import os
 import unittest
 import mock
 import json
+import webtest
 from nose.plugins.attrib import attr
 
 from mock import patch
@@ -50,6 +51,7 @@ class GatewayCodeMock(unittest.TestCase):
         g_m = gateway_code.rest_server.GatewayManager('.')
         g_m.setup()
         cls.app = gateway_code.rest_server.GatewayRest(g_m)
+        cls.server = webtest.TestApp(cls.app)
 
     @classmethod
     def tearDownClass(cls):
@@ -58,6 +60,7 @@ class GatewayCodeMock(unittest.TestCase):
     def setUp(self):
         # get quick access to class attributes
         self.app = type(self).app
+        self.server = type(self).server
         self.g_m = self.app.gateway_manager
 
         self.board_cfg = gateway_code.board_config.BoardConfig()
@@ -77,5 +80,5 @@ class GatewayCodeMock(unittest.TestCase):
         self.cn_measures.append(measure.split(' '))
 
     def tearDown(self):
-        self.request_patcher.stop()
+        mock.patch.stopall()
         self.app.exp_stop()  # just in case, post error cleanup
