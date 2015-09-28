@@ -56,7 +56,7 @@ class GatewayRest(object):
         """
         # GatewayManager global functions
         bottle.route('/exp/start/<exp_id:int>/<user>', 'POST', self.exp_start)
-        bottle.route('/exp/stop', 'POST', self.exp_stop)
+        bottle.route('/exp/stop', 'DELETE', self.exp_stop)
         bottle.route('/status', 'GET', self.status)
         # Control node functions
         bottle.route('/exp/update', 'POST', self.exp_update_profile)
