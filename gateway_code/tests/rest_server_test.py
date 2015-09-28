@@ -81,28 +81,28 @@ class TestRestMethods(unittest.TestCase):
     def tearDown(self):
         mock.patch.stopall()
 
-    @mock.patch('bottle.route')
-    def test_routes(self, m_route):
+    def test_routes(self):
+        with mock.patch.object(self.s_r, 'route') as m_route:
 
-        def _func():
-            pass
+            def _func():
+                pass
 
-        ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
-        self.assertTrue(m_route.called)
-        self.assertIsNotNone(ret)
-        m_route.reset_mock()
+            ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
+            self.assertTrue(m_route.called)
+            self.assertIsNotNone(ret)
+            m_route.reset_mock()
 
-        # Not a function
-        ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
-        self.assertFalse(m_route.called)
-        self.assertIsNone(ret)
-        m_route.reset_mock()
+            # Not a function
+            ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
+            self.assertFalse(m_route.called)
+            self.assertIsNone(ret)
+            m_route.reset_mock()
 
-        # Non existent
-        ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
-        self.assertFalse(m_route.called)
-        self.assertIsNone(ret)
-        m_route.reset_mock()
+            # Non existant
+            ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
+            self.assertFalse(m_route.called)
+            self.assertIsNone(ret)
+            m_route.reset_mock()
 
     def test_exp_start_file_and_profile(self):
         idle = FileUpload('elf32arm0X1234', 'idle.elf')

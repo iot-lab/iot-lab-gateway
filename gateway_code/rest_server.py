@@ -37,7 +37,7 @@ import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
-class GatewayRest(object):
+class GatewayRest(bottle.Bottle):
 
     """
     Gateway Rest class
@@ -46,6 +46,7 @@ class GatewayRest(object):
     """
 
     def __init__(self, gateway_manager):
+        super(GatewayRest, self).__init__()
         self.gateway_manager = gateway_manager
         self.board_class = board_config.BoardConfig().board_class
         self._app_routing()
@@ -55,17 +56,17 @@ class GatewayRest(object):
         Declare the REST supported methods depending on board config
         """
         # GatewayManager global functions
-        bottle.route('/exp/start/<exp_id:int>/<user>', 'POST', self.exp_start)
-        bottle.route('/exp/stop', 'DELETE', self.exp_stop)
-        bottle.route('/status', 'GET', self.status)
+        self.route('/exp/start/<exp_id:int>/<user>', 'POST', self.exp_start)
+        self.route('/exp/stop', 'DELETE', self.exp_stop)
+        self.route('/status', 'GET', self.status)
         # Control node functions
-        bottle.route('/exp/update', 'POST', self.exp_update_profile)
-        bottle.route('/open/start', 'PUT', self.open_start)
-        bottle.route('/open/stop', 'PUT', self.open_stop)
+        self.route('/exp/update', 'POST', self.exp_update_profile)
+        self.route('/open/start', 'PUT', self.open_start)
+        self.route('/open/stop', 'PUT', self.open_stop)
         # Autotest functions
         # query_string: channel=int[11:26]
-        bottle.route('/autotest', 'PUT', self.auto_tests)
-        bottle.route('/autotest/<mode>', 'PUT', self.auto_tests)
+        self.route('/autotest', 'PUT', self.auto_tests)
+        self.route('/autotest/<mode>', 'PUT', self.auto_tests)
 
         # Add open_node functions if available
         self.conditional_route('flash', '/open/flash', 'POST',
@@ -263,7 +264,7 @@ class GatewayRest(object):
         has_fct = callable(getattr(self.board_class, node_func, None))
         if has_fct:
             LOGGER.info('REST: Route %s registered', path)
-            return bottle.route(path, *route_args, **route_kwargs)
+            return self.route(path, *route_args, **route_kwargs)
         else:
             LOGGER.debug('REST: Route %s not available', path)
             return None
@@ -303,5 +304,5 @@ def _main(args):
     g_m = GatewayManager(log_folder)
     g_m.setup()
 
-    GatewayRest(g_m)
-    bottle.run(host=host, port=port, server='paste')
+    server = GatewayRest(g_m)
+    server.run(host=host, port=port, server='paste')
