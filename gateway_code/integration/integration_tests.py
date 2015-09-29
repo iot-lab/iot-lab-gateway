@@ -181,7 +181,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals([], m_error.call_args_list)
 
         # reset firmware should fail and logger error will be called
-        self.assertEquals(1, self.server.put('/open/reset').json['ret'])
+        self.assertLessEqual(1, self.server.put('/open/reset').json['ret'])
         self.assertTrue(m_error.called)
 
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
@@ -355,7 +355,7 @@ class TestIntegrationOther(ExperimentRunningMock):
         c_n = self.g_m.control_node
         with patch.object(c_n, 'open_start', c_n.open_stop):
             # detect error when a8 does not start
-            self.assertGreaterEqual(1, self.server.post(EXP_START).json['ret'])
+            self.assertLessEqual(1, self.server.post(EXP_START).json['ret'])
 
         # stop and cleanup
         self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
@@ -373,11 +373,11 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
 
         files = [file_tuple('profile', CURRENT_DIR + 'invalid_profile.json')]
         ret = self.server.post(EXP_START, upload_files=files)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertLessEqual(1, ret.json['ret'])
 
         files = [file_tuple('profile', CURRENT_DIR + 'invalid_profile_2.json')]
         ret = self.server.post(EXP_START, upload_files=files)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertLessEqual(1, ret.json['ret'])
 
     def tests_invalid_files(self):
         """ Test invalid flash files """
@@ -388,4 +388,4 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
         # Flash with a profile
         files = [file_tuple('profile', CURRENT_DIR + 'profile.json')]
         ret = self.server.post('/open/flash', upload_files=files)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertLessEqual(1, ret.json['ret'])
