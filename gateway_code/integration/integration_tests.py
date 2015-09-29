@@ -234,7 +234,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             self.assertNotEquals(0.0, values[2])
         for values in measures['radio']['values']:
             self.assertIn(values[0], [15, 26])
-            self.assertGreaterEqual(-91, values[1])
+            self.assertLessEqual(-91, values[1])
 
         # check timestamps are sorted in correct order
         for values in measures.values():
