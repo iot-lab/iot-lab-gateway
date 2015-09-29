@@ -158,6 +158,11 @@ class TestRestMethods(unittest.TestCase):
         ret = self.server.delete('/exp/stop')
         self.assertEquals(1, ret.json['ret'])
 
+    def test_exp_stop_wrong_request_type(self):
+        ret = self.server.post('/exp/stop', status='*')
+        self.assertEquals(405, ret.status_int)
+        self.assertEquals('405 Method Not Allowed', ret.status)
+
 # Simple functions
 
     def test_exp_update_profile(self):
