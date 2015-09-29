@@ -5,3 +5,4 @@ setuptools-pep8
 pep8
 nosexcover
 mock
+WebTest

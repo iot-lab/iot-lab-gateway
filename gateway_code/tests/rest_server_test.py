@@ -29,225 +29,204 @@ Complement the 'integration' tests
 # too long tests names
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
-# pylint <= 1.3
-# pylint: disable=too-many-public-methods
-# pylint >= 1.4
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
-from cStringIO import StringIO
-
 import mock
 import unittest
+import webtest
 
 from gateway_code import rest_server
 from . import utils
 
-import os
 
+def query_string(query_str):
+    """ Create extra_environ to add query_string to POST/PUT requests
 
-# Bottle FileUpload class stub
-class FileUpload(object):  # pylint: disable=too-few-public-methods
+    Query Strings should not be used for POST/PUT, but it's the case anyway
+    so find way to make it work.
 
-    """ Bottle FileUpload class stub """
-    files = {}
-
-    def __init__(self, file_content, file_name):
-        self.file = None
-        self.filename = None
-        self.name = None
-        self.headers = None
-
-        self.filename = file_name
-        _ext = os.path.splitext(self.filename)[1]
-
-        try:
-            self.name = {'.json': 'profile', '.elf': 'firmware'}[_ext]
-        except KeyError:
-            raise ValueError("Uknown file type %r: %r" % (_ext, file_name))
-
-        self.file = StringIO(file_content)
+    :param query_str: query string
+    :returns: an extra_environ dict for webtest """
+    return {'QUERY_STRING': query_str}
 
 
 class TestRestMethods(unittest.TestCase):
 
+    EXP_START = '/exp/start/{exp_id}/{user}'.format(user='user', exp_id=123)
+
+    PROFILE_STR = '{ "profilename": "_default_profile", "power": "dc" }'
+    PROFILE_DICT = {u'profilename': u'_default_profile', u'power': u'dc'}
+
     def setUp(self):
-        self.request = mock.patch('gateway_code.rest_server.request').start()
         mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
 
         self.g_m = mock.Mock()
         self.s_r = rest_server.GatewayRest(self.g_m)
+        self.server = webtest.TestApp(self.s_r)
 
     def tearDown(self):
         mock.patch.stopall()
 
-    @mock.patch('bottle.route')
-    def test_routes(self, m_route):
+    def test_routes(self):
+        with mock.patch.object(self.s_r, 'route') as m_route:
 
-        def _func():
-            pass
+            def _func():
+                pass
 
-        ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
-        self.assertTrue(m_route.called)
-        self.assertIsNotNone(ret)
-        m_route.reset_mock()
+            ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
+            self.assertTrue(m_route.called)
+            self.assertIsNotNone(ret)
+            m_route.reset_mock()
 
-        # Not a function
-        ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
-        self.assertFalse(m_route.called)
-        self.assertIsNone(ret)
-        m_route.reset_mock()
+            # Not a function
+            ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
+            self.assertFalse(m_route.called)
+            self.assertIsNone(ret)
+            m_route.reset_mock()
 
-        # Non existent
-        ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
-        self.assertFalse(m_route.called)
-        self.assertIsNone(ret)
-        m_route.reset_mock()
+            # Non existant
+            ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
+            self.assertFalse(m_route.called)
+            self.assertIsNone(ret)
+            m_route.reset_mock()
 
     def test_exp_start_file_and_profile(self):
-        idle = FileUpload('elf32arm0X1234', 'idle.elf')
-
-        profile_str = '{ "profilename": "_default_profile", "power": "dc" }'
-        profile_dict = {u'profilename': u'_default_profile', u'power': u'dc'}
-
-        profile = FileUpload(profile_str, 'default_profile.json')
         self.g_m.exp_start.return_value = 0
 
-        self.request.files = {'firmware': idle, 'profile': profile}
-        ret_dict = self.s_r.exp_start('user', 123)
-        self.assertEquals(0, ret_dict['ret'])
+        files = []
+        files += [('firmware', 'idle.elf', 'elf32arm0X1234')]
+        files += [('profile', 'profile.json', self.PROFILE_STR)]
+
+        ret = self.server.post(self.EXP_START, upload_files=files)
+        self.assertEquals(0, ret.json['ret'])
 
         # validate arguments
         call_args = self.g_m.exp_start.call_args[0]
         self.assertEquals(('user', 123), call_args[0: 2])
-        self.assertTrue(idle.filename in call_args[2])
-        self.assertEquals(profile_dict, call_args[3])
+        self.assertTrue('idle.elf' in call_args[2])
+        self.assertEquals(self.PROFILE_DICT, call_args[3])
 
     def test_exp_start_invalid_profile(self):
 
-        profile = FileUpload('invalid json profile}', 'inval_profile.json')
-
-        self.request.files = {'profile': profile}
-        ret_dict = self.s_r.exp_start('user', 123)
-        self.assertNotEquals(0, ret_dict['ret'])
+        files = [('profile', 'inval_profile.json', 'invalid json profile}')]
+        ret = self.server.post(self.EXP_START, upload_files=files)
+        self.assertEquals(1, ret.json['ret'])
 
     def test_exp_start_no_files(self):
         self.g_m.exp_start.return_value = 0
 
         # nothing in files
-        self.request.files = {}
-        self.request.query = mock.Mock(timeout='')
-        ret_dict = self.s_r.exp_start('user', 123)
+        ret = self.server.post(self.EXP_START, upload_files=[])
+        self.assertEquals(0, ret.json['ret'])
 
         # validate
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
-        self.assertEquals(0, ret_dict['ret'])
+        self.assertEquals(0, ret.json['ret'])
 
     def test_exp_start_valid_duration(self):
         self.g_m.exp_start.return_value = 0
-        self.request.files = {}
 
-        self.request.query = mock.Mock(timeout='12')
-        self.s_r.exp_start('user', 123)
+        extra = query_string('timeout=12')
+        self.server.post(self.EXP_START, extra_environ=extra)
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 12)
 
         # invalid data
-        self.request.query = mock.Mock(timeout='ten_minutes')
-        self.s_r.exp_start('user', 123)
+        extra = query_string('timeout=ten_minutes')
+        self.server.post(self.EXP_START, extra_environ=extra)
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
-        self.request.query = mock.Mock(timeout='-1')
-        self.s_r.exp_start('user', 123)
+        extra = query_string('timeout=-1')
+        self.server.post(self.EXP_START, extra_environ=extra)
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
     def test_exp_start_multipart_without_files(self):
         self.g_m.exp_start.return_value = 0
 
-        self.request.files = mock.Mock()
-        self.request.files.__contains__ = mock.Mock(side_effect=ValueError())
-        self.request.files.__getitem__ = mock.Mock(side_effect=ValueError())
-        self.request.query = mock.Mock(timeout='')
-        ret_dict = self.s_r.exp_start('user', 123)
+        ret = self.server.post(self.EXP_START,
+                               content_type='multipart/form-data')
 
-        # validate
+        self.assertEquals(0, ret.json['ret'])
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
-        self.assertEquals(0, ret_dict['ret'])
 
     def test_exp_stop(self):
         self.g_m.exp_stop.return_value = 0
-        ret_dict = self.s_r.exp_stop()
-        self.assertEquals(0, ret_dict['ret'])
+        ret = self.server.delete('/exp/stop')
+        self.assertEquals(0, ret.json['ret'])
 
         self.g_m.exp_stop.return_value = 1
-        ret_dict = self.s_r.exp_stop()
-        self.assertEquals(1, ret_dict['ret'])
+        ret = self.server.delete('/exp/stop')
+        self.assertEquals(1, ret.json['ret'])
+
+    def test_exp_stop_wrong_request_type(self):
+        ret = self.server.post('/exp/stop', status='*')
+        self.assertEquals(405, ret.status_int)
+        self.assertEquals('405 Method Not Allowed', ret.status)
 
 # Simple functions
 
     def test_exp_update_profile(self):
+        app_json = 'application/json'
+
         self.g_m.exp_update_profile = mock.Mock(return_value=0)
 
         # No profile
-        self.request.files = {}
-        self.assertEquals({'ret': 0}, self.s_r.exp_update_profile())
+        ret = self.server.post('/exp/update', content_type=app_json)
+        self.assertEquals(0, ret.json['ret'])
         self.assertTrue(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
 
         # default profile
-        profile_str = '{ "profilename": "_default_profile", "power": "dc" }'
-        self.request.files = {
-            'profile': FileUpload(profile_str, 'default_profile.json')
-        }
-        self.assertEquals({'ret': 0}, self.s_r.exp_update_profile())
+        ret = self.server.post('/exp/update', self.PROFILE_STR,
+                               content_type=app_json)
+        self.assertEquals(0, ret.json['ret'])
         self.assertTrue(self.g_m.exp_update_profile.called)
+
+        call_args = self.g_m.exp_update_profile.call_args[0]
+        self.assertEquals(self.PROFILE_DICT, call_args[0])
         self.g_m.exp_update_profile.reset_mock()
 
         # profile that cannot be decoded, invalid JSON
-        # http://mock.readthedocs.org/en/latest/examples.html \
-        # raising-exceptions-on-attribute-access
-        type(self.request).json = mock.PropertyMock(side_effect=ValueError)
-
-        self.assertEquals({'ret': 1}, self.s_r.exp_update_profile())
+        ret = self.server.post('/exp/update', 'inval }', content_type=app_json)
+        self.assertEquals(1, ret.json['ret'])
         self.assertFalse(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
 
     def test_flash_function(self):
-        idle = FileUpload('elf32arm0X1234', 'idle.elf')
         self.g_m.node_flash.return_value = 0
+        files = [('firmware', 'idle.elf', 'elf32arm0X1234')]
 
         # valid command
-        self.request.files = {'firmware': idle}
-        ret_dict = self.s_r.open_flash()
-        self.assertEquals(0, ret_dict['ret'])
+        ret = self.server.post('/open/flash', upload_files=files)
+        self.assertEquals(0, ret.json['ret'])
 
         # Error no firmware
-        self.request.files = {}
-        ret_dict = self.s_r.open_flash()
-        self.assertNotEquals(0, ret_dict['ret'])
+        ret = self.server.post('/open/flash', upload_files=[])
+        self.assertEquals(1, ret.json['ret'])
 
     def test_reset_wrappers(self):
         self.g_m.node_soft_reset.return_value = 0
 
-        ret_dict = self.s_r.open_soft_reset()
-        self.assertEquals(0, ret_dict['ret'])
+        ret = self.server.put('/open/reset')
+        self.assertEquals(0, ret.json['ret'])
 
     def test_open_start(self):
         self.g_m.open_power_start.return_value = 0
 
-        ret_dict = self.s_r.open_start()
-        self.assertEquals(0, ret_dict['ret'])
+        ret = self.server.put('/open/start')
+        self.assertEquals(0, ret.json['ret'])
 
     def test_open_stop(self):
         self.g_m.open_power_stop.return_value = 0
 
-        ret_dict = self.s_r.open_stop()
-        self.assertEquals(0, ret_dict['ret'])
+        ret = self.server.put('/open/stop')
+        self.assertEquals(0, ret.json['ret'])
 
     def test_status(self):
         self.g_m.status.return_value = 0
 
-        ret_dict = self.s_r.status()
-        self.assertEquals(0, ret_dict['ret'])
+        ret = self.server.get('/status')
+        self.assertEquals(0, ret.json['ret'])
 
     def auto_tests(self):
         self.g_m.auto_tests.return_value = {
@@ -255,34 +234,34 @@ class TestRestMethods(unittest.TestCase):
             'mac': {'A8': '12: 34: 56: 78: 9A: BC'}
         }
 
-        self.request.query = mock.Mock(channel='', flash='', gps='')
-        ret_dict = self.s_r.auto_tests(mode=None)
-        self.assertEquals(0, ret_dict['ret'])
+        ret = self.server.put('/autotest')
+        self.assertEquals(0, ret.json['ret'])
         self.g_m.auto_tests.assert_called_with(None, False, False, False)
 
-        self.request.query = mock.Mock(channel='22', flash='1', gps='')
-        ret_dict = self.s_r.auto_tests(mode='blink')
-        self.assertEquals(0, ret_dict['ret'])
+        extra = query_string('channel=22&flash=1&gps=')
+        ret = self.server.put('/autotest/blink', extra_environ=extra)
+        self.assertEquals(0, ret.json['ret'])
         self.g_m.auto_tests.assert_called_with(22, True, True, False)
-        self.assertEquals(0, ret_dict['ret'])
 
         # invalid calls
-        ret_dict = self.s_r.auto_tests(mode='nothing_valid')
-        self.assertNotEquals(0, ret_dict['ret'])
+        ret = self.server.put('/autotest/invalid_mode')
+        self.assertNotEquals(0, ret.json['ret'])
 
-        self.request.query = mock.Mock(channel='abc')
-        ret_dict = self.s_r.auto_tests()
-        self.assertNotEquals(0, ret_dict['ret'])
-        self.request.query = mock.Mock(channel='42')
-        ret_dict = self.s_r.auto_tests()
-        self.assertNotEquals(0, ret_dict['ret'])
+        extra = query_string('channel=abc')
+        ret = self.server.put('/autotest', extra_environ=extra)
+        self.assertEquals(1, ret.json['ret'])
 
-        self.request.query = mock.Mock(channel='11', gps='true')
-        ret_dict = self.s_r.auto_tests()
-        self.assertNotEquals(0, ret_dict['ret'])
-        self.request.query = mock.Mock(channel='11', gps=None, flash='false')
-        ret_dict = self.s_r.auto_tests()
-        self.assertNotEquals(0, ret_dict['ret'])
+        extra = query_string('channel=42')
+        ret = self.server.put('/autotest', extra_environ=extra)
+        self.assertEquals(1, ret.json['ret'])
+
+        extra = query_string('channel=11&gps=true')
+        ret = self.server.put('/autotest', extra_environ=extra)
+        self.assertEquals(1, ret.json['ret'])
+
+        extra = query_string('channel=11&flash=false')
+        ret = self.server.put('/autotest', extra_environ=extra)
+        self.assertEquals(1, ret.json['ret'])
 
 
 class TestServerRestMain(unittest.TestCase):
