@@ -100,7 +100,6 @@ class TestRestMethods(unittest.TestCase):
 
         ret = self.server.post(self.EXP_START, upload_files=files)
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
         # validate arguments
         call_args = self.g_m.exp_start.call_args[0]
@@ -113,7 +112,6 @@ class TestRestMethods(unittest.TestCase):
         files = [('profile', 'inval_profile.json', 'invalid json profile}')]
         ret = self.server.post(self.EXP_START, upload_files=files)
         self.assertEquals(1, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
     def test_exp_start_no_files(self):
         self.g_m.exp_start.return_value = 0
@@ -121,12 +119,10 @@ class TestRestMethods(unittest.TestCase):
         # nothing in files
         ret = self.server.post(self.EXP_START, upload_files=[])
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
         # validate
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
     def test_exp_start_valid_duration(self):
         self.g_m.exp_start.return_value = 0
@@ -157,12 +153,10 @@ class TestRestMethods(unittest.TestCase):
         self.g_m.exp_stop.return_value = 0
         ret = self.server.delete('/exp/stop')
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
         self.g_m.exp_stop.return_value = 1
         ret = self.server.delete('/exp/stop')
         self.assertEquals(1, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
 # Simple functions
 
@@ -200,40 +194,34 @@ class TestRestMethods(unittest.TestCase):
         # valid command
         ret = self.server.post('/open/flash', upload_files=files)
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
         # Error no firmware
         ret = self.server.post('/open/flash', upload_files=[])
         self.assertEquals(1, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
     def test_reset_wrappers(self):
         self.g_m.node_soft_reset.return_value = 0
 
         ret = self.server.put('/open/reset')
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
     def test_open_start(self):
         self.g_m.open_power_start.return_value = 0
 
         ret = self.server.put('/open/start')
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
     def test_open_stop(self):
         self.g_m.open_power_stop.return_value = 0
 
         ret = self.server.put('/open/stop')
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
     def test_status(self):
         self.g_m.status.return_value = 0
 
         ret = self.server.get('/status')
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
 
     def auto_tests(self):
         self.g_m.auto_tests.return_value = {
@@ -243,13 +231,11 @@ class TestRestMethods(unittest.TestCase):
 
         ret = self.server.put('/autotest')
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
         self.g_m.auto_tests.assert_called_with(None, False, False, False)
 
         extra = query_string('channel=22&flash=1&gps=')
         ret = self.server.put('/autotest/blink', extra_environ=extra)
         self.assertEquals(0, ret.json['ret'])
-        self.assertEquals(200, ret.status_int)
         self.g_m.auto_tests.assert_called_with(22, True, True, False)
 
         # invalid calls
