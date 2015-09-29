@@ -36,12 +36,7 @@ from gateway_code.tests.rest_server_test import query_string
 
 @attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
-
     """ Try running autotests on node """
-
-    def setUp(self):
-        super(TestAutoTests, self).setUp()
-        self.request_patcher.stop()
 
     def test_complete_auto_tests(self):
         """ Test a regular autotest """

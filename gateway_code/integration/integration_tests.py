@@ -45,32 +45,6 @@ USER = 'harter'
 EXP_ID = 123
 EXP_START = '/exp/start/{exp_id}/{user}'.format(user=USER, exp_id=123)
 
-# Bottle FileUpload class stub
-
-
-class FileUpload(object):  # pylint: disable=too-few-public-methods
-
-    """ Bottle FileUpload class stub """
-    files = {}
-
-    def __init__(self, file_path):
-        self.file = None
-        self.filename = None
-        self.name = None
-        self.headers = None
-
-        self.filename = os.path.basename(file_path)
-        _ext = os.path.splitext(self.filename)[1]
-
-        try:
-            self.name = {
-                '.json': 'profile',
-                '.elf': 'firmware', '.hex': 'firmware'}[_ext]
-        except KeyError:
-            raise ValueError("Uknown file type %r: %r" % (_ext, file_path))
-
-        self.file = open(file_path)
-
 
 def file_tuple(fieldname, file_path):
     """ Return upload_file tuple """
@@ -87,13 +61,6 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
     def setUp(self):
         super(ExperimentRunningMock, self).setUp()
-
-        # super(self).cn_measures = []  # will hold control node measures
-
-        # no timeout
-        self.request.query = mock.Mock(timeout='')
-        self.request.files = {}
-
         # config experiment and create folder
         self.g_m._create_user_exp_folders(USER, EXP_ID)
 
@@ -115,11 +82,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
 
 class TestComplexExperimentRunning(ExperimentRunningMock):
-
     """ Run complete experiment test """
-    def setUp(self):
-        super(TestComplexExperimentRunning, self).setUp()
-        self.request_patcher.stop()
 
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_simple_experiment(self, m_error):
@@ -271,7 +234,6 @@ class TestExperimentTimeout(ExperimentRunningMock):
         super(TestExperimentTimeout, self).setUp()
         self.timeout_mock = mock.Mock(side_effect=self.g_m._timeout_exp_stop)
         patch.object(self.g_m, '_timeout_exp_stop', self.timeout_mock).start()
-        self.request_patcher.stop()
 
     def _safe_exp_is_running(self):
         """ Return experiment state but do it under gateway manager rlock
@@ -318,10 +280,6 @@ class TestExperimentTimeout(ExperimentRunningMock):
 class TestIntegrationOther(ExperimentRunningMock):
     """ Group other tests cases"""
 
-    def setUp(self):
-        super(TestIntegrationOther, self).setUp()
-        self.request_patcher.stop()
-
     def test_status(self):
         """ Call the status command """
         ret = self.server.get('/status')
@@ -363,10 +321,6 @@ class TestIntegrationOther(ExperimentRunningMock):
 
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     """ Invalid calls """
-
-    def setUp(self):
-        test_integration_mock.GatewayCodeMock.setUp(self)
-        self.request_patcher.stop()
 
     def tests_invalid_profile_at_start(self):
         """ Run experiments with invalid profiles """

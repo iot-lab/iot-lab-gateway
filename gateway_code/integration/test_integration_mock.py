@@ -65,10 +65,6 @@ class GatewayCodeMock(unittest.TestCase):
         self.cn_measures = []
         self.g_m.control_node.cn_serial.measures_debug = self.cn_measure
 
-        self.request_patcher = mock.patch('gateway_code.rest_server.request')
-        self.request = self.request_patcher.start()
-        self.request.query = mock.Mock(timeout='0')  # no timeout by default
-
     def cn_measure(self, measure):
         """ Store control node measures """
         self.cn_measures.append(measure.split(' '))
