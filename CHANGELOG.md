@@ -41,3 +41,25 @@ Version 1.0.0
  * Clean tests for new classes.
  * Allow select tests with nose attribute
  * Move 'cli' implementations in a 'utils' submodule
+
+
+Version 2.0.0
+-------------
+
+ + Reorganize all 'nodes' implementation to makes adding new archis easier.
+   Architectures specific code is now in `open_nodes` with one module per node.
+   (Romain Jayles)
+ + Use a `serial_redirection` for a8 nodes boot debug.
+ + Disable Battery charge on control node. Batteries are now removed.
+
+### Add new architectures support ###
+
+ + HiKoB Fox
+ + Arduino Leonardo
+
+### Tests ###
+
+ + Use WebTest for rest server, this tests that the correct REST method is used
+ + Improve `integration_fabfile.py` to run on all hosts by default and run all in
+   one command.
+ + Run c tests from 'tox'
