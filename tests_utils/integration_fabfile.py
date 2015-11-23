@@ -81,14 +81,20 @@ def safe_su(command, user='root'):
             user=user, cmd=command))
 
 
-@task()
+@task
+def server_restart():
+    """Restart Gateway server."""
+    return run('/etc/init.d/gateway-server-daemon restart', pty=False)
+
+
+@task
 def release():
-    """ Release python package """
+    """Release python package."""
     upload()
     kill()
     with cd(REMOTE):
         run('source /etc/profile; python setup.py release')
-    run('/etc/init.d/gateway-server-daemon restart', pty=False)
+    server_restart()
 
 
 @task(default=True)
@@ -129,9 +135,11 @@ def tox_call(cmd, user, *attrs):
 @task
 @runs_once
 def all():
-    """ Execute python tests and c tests """
+    """Execute python tests, c tests and restart Gateway Server."""
+    # Only upload once for all hosts
     upload()
     # Runs_once combined with 'execute'
     # to only execute once per host but with c_test run at the end
     execute(python_test)
     execute(c_test)
+    execute(server_restart)
