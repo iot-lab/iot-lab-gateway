@@ -60,9 +60,13 @@ def main():
     else:  # pragma: no cover
         raise ValueError('Uknown Command %s', opts.command)
 
+    # Same code as 'openocd'
+    # pylint:disable=duplicate-code
     if ret == 0:
         print '%s OK\n' % opts.cmd
+        # pylint:disable=duplicate-code
     else:
         print '%s KO: %d\n' % (opts.cmd, ret)
+        # pylint:disable=duplicate-code
 
     return ret

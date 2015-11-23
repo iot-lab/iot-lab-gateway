@@ -68,7 +68,9 @@ class NodeLeonardo(object):
         """ Flash open node, create serial redirection """
         ret_val = 0
 
+        # Same code as 'node_fox'
         common.wait_no_tty(self.TTY)
+        # pylint:disable=duplicate-code
         ret_val += common.wait_tty(self.TTY, LOGGER)
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
