@@ -154,7 +154,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         board_class = self.board_cfg.board_class
         app_json = 'application/json'
 
-        if 'm3' != board_class.TYPE:
+        if board_class.TYPE != 'm3':
             return
         t_start = time.time()
 
@@ -307,7 +307,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 
     def tests_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
-        if 'a8' != self.board_cfg.board_type:
+        if self.board_cfg.board_type != 'a8':
             return
 
         c_n = self.g_m.control_node
@@ -336,7 +336,7 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     def tests_invalid_files(self):
         """ Test invalid flash files """
         # Only if flash available
-        if 'a8' == self.board_cfg.board_type:
+        if self.board_cfg.board_type == 'a8':
             return
 
         # Flash with a profile

@@ -22,6 +22,7 @@
 """ Control Node experiment implementation """
 
 import time
+import logging
 
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
@@ -30,7 +31,6 @@ from gateway_code.control_node import cn_interface, cn_protocol
 
 from gateway_code.common import logger_call
 
-import logging
 LOGGER = logging.getLogger('gateway_code')
 
 

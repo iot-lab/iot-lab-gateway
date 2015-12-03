@@ -63,3 +63,5 @@ Version 2.0.0
  + Improve `integration_fabfile.py` to run on all hosts by default and run all in
    one command.
  + Run c tests from 'tox'
+
++ Version 2.0.1: Fix Pylint 1.5 messages

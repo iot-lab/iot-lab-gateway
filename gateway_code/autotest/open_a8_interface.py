@@ -25,14 +25,12 @@
 
 import os
 import shlex
-from subprocess import check_output, check_call
-from subprocess import STDOUT, CalledProcessError
+import logging
+from subprocess import check_output, check_call, STDOUT, CalledProcessError
 
 from gateway_code.config import static_path
 from gateway_code.utils.serial_expect import SerialExpectForSocket
 
-
-import logging
 LOGGER = logging.getLogger('gateway_code')
 
 _SSH_OPTS = '-F {ssh_cfg}'.format(ssh_cfg=static_path('ssh_a8_config'))

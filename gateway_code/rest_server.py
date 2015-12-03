@@ -25,15 +25,16 @@
 REST server listening to the experiment handler
 """
 
+import json
+import logging
+from tempfile import NamedTemporaryFile
+
 import bottle
 from bottle import request
-from tempfile import NamedTemporaryFile
-import json
 
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code import board_config
 
-import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -90,7 +91,9 @@ class GatewayRest(bottle.Bottle):
 
         LOGGER.debug('REST: Start experiment: %s-%i', user, exp_id)
         try:
-            timeout = max(0, int(request.query.timeout))
+            timeout = int(request.query.timeout)  # pylint:disable=no-member
+            timeout = max(0, timeout)
+
         except ValueError:
             timeout = 0
 
@@ -140,6 +143,8 @@ class GatewayRest(bottle.Bottle):
         """ Extract profile dict from request files
         :raises: ValueError on an invalid pofile """
         try:
+            # Issues with 'request.files'
+            # pylint:disable=unsubscriptable-object
             _prof = request.files['profile']
         except (ValueError, KeyError):
             # ValueError: no files in multipart request
@@ -153,6 +158,8 @@ class GatewayRest(bottle.Bottle):
     def _extract_firmware():
         """ Extract firmware from request files """
         try:
+            # Issues with 'request.files'
+            # pylint:disable=unsubscriptable-object
             _firm = request.files['firmware']
         except (ValueError, KeyError):
             # ValueError: no files in multipart request
@@ -229,7 +236,7 @@ class GatewayRest(bottle.Bottle):
 
         # query optionnal channel
         # if defined it should be int(11:26)
-        channel_str = request.query.channel
+        channel_str = request.query.channel  # pylint:disable=no-member
         if channel_str == '':
             channel = None
         elif channel_str.isdigit() and int(channel_str) in range(11, 27):
@@ -238,12 +245,12 @@ class GatewayRest(bottle.Bottle):
             return {'ret': 1, 'success': [], 'errors': ['invalid_channel']}
 
         try:
-            gps_str = request.query.gps
+            gps_str = request.query.gps  # pylint:disable=no-member
             gps = bool(gps_str and int(gps_str))  # check None or int
         except ValueError:
             return {'ret': 1, 'success': [], 'errors': ['invalid_gps_option']}
         try:
-            flash_str = request.query.flash
+            flash_str = request.query.flash  # pylint:disable=no-member
             flash = bool(flash_str and int(flash_str))  # check None or int
         except ValueError:
             return {'ret': 1, 'success': [],

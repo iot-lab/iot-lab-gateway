@@ -30,10 +30,11 @@ Manage sending commands and receiving messages
 # pylint: disable=too-many-locals,bare-except
 # pylint: disable=too-many-branches,too-many-statements
 
-import serial
 import math
 import time
 import multiprocessing
+
+import serial
 
 # some module-level definitions for the robot commands
 START = chr(128)    # already converted to bytes...

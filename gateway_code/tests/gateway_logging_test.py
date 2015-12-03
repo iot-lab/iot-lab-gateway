@@ -23,10 +23,10 @@
 # pylint: disable=missing-docstring
 # pylint: disable=too-many-public-methods
 
+import os
 import unittest
 import logging
 from gateway_code import gateway_logging
-import os
 
 
 class TestGatewayLogging(unittest.TestCase):

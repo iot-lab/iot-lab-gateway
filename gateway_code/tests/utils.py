@@ -21,8 +21,8 @@
 
 """ Utilities for tests """
 
-import mock
 import os
+import mock
 
 # Help mocking config.read_config
 READ_CONFIG = 'gateway_code.config.read_config'

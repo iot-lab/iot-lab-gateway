@@ -22,13 +22,13 @@
 
 """ test serial_redirection module """
 
-import mock
-import unittest
 import time
-
 import logging
 import socket
 from subprocess import Popen, PIPE
+import unittest
+
+import mock
 
 from gateway_code.common import wait_tty
 from ..serial_redirection import SerialRedirection

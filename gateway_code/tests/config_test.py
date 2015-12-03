@@ -28,8 +28,9 @@
 # pylint: disable=no-member
 
 import os
-import mock
 import unittest
+
+import mock
 
 from gateway_code.open_nodes.node_m3 import NodeM3
 from gateway_code.open_nodes.node_a8 import NodeA8

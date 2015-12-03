@@ -32,9 +32,10 @@ Complement the 'integration' tests
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
-import mock
 import unittest
+
 import webtest
+import mock
 
 from gateway_code import rest_server
 from . import utils

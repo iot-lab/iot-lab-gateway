@@ -22,10 +22,11 @@
 
 """ expect module test """
 
-import unittest
-import mock
 import time
+import unittest
+
 import serial
+import mock
 
 from .. import serial_expect
 

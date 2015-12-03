@@ -23,8 +23,8 @@
 # pylint: disable=unused-argument
 """ Test 'openocd' command line module """
 
-import mock
 import unittest
+import mock
 
 from ..cli import avrdude
 
@@ -45,6 +45,8 @@ class TestsAvrDudecli(unittest.TestCase):
     @mock.patch('gateway_code.utils.avrdude.AvrDude.trigger_bootloader')
     def test_flash(self, call_mock):
         """ Running command line flash """
+        # Instance of 'object' has no 'flash' member"
+        # pylint:disable=no-member
         call_mock.return_value = 0
         args = ['avrdude.py', 'flash', 'LEONARDO', '/dev/null']
         with mock.patch('sys.argv', args):

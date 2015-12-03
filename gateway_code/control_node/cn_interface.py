@@ -29,13 +29,12 @@ import subprocess
 from subprocess import PIPE
 import Queue
 import threading
-
+import logging
 from tempfile import NamedTemporaryFile
-
 import atexit
+
 from gateway_code import common
 
-import logging
 LOGGER = logging.getLogger('gateway_code')
 
 

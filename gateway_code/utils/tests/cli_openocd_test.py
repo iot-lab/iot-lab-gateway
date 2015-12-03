@@ -21,8 +21,8 @@
 
 """ Test 'openocd' command line module """
 
-import mock
 import unittest
+import mock
 
 from ..cli import openocd
 
@@ -39,6 +39,8 @@ class TestsOpenOCDcli(unittest.TestCase):
 
     def test_flash(self):
         """ Running command line flash """
+        # Instance of 'object' has no 'flash' member"
+        # pylint:disable=no-member
 
         args = ['openocd.py', 'flash', 'M3', '/dev/null']
         with mock.patch('sys.argv', args):
@@ -53,6 +55,9 @@ class TestsOpenOCDcli(unittest.TestCase):
 
     def test_reset(self):
         """ Running command line reset """
+        # Instance of 'object' has no 'flash' member"
+        # pylint:disable=no-member
+
         args = ['openocd.py', 'reset', 'M3']
         with mock.patch('sys.argv', args):
             self.ocd.reset.return_value = 0

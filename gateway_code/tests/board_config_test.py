@@ -29,8 +29,10 @@
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
-import mock
 import unittest
+
+import mock
+
 import gateway_code.board_config as board_config
 from . import utils
 

@@ -23,10 +23,11 @@
 """ Test node_connection.OpenNodeConnection """
 
 import time
-import mock
 import unittest
 import threading
 from subprocess import Popen, PIPE
+
+import mock
 
 from ..node_connection import OpenNodeConnection
 

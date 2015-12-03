@@ -27,10 +27,10 @@
 # pylint: disable=maybe-no-member
 # pylint: disable=too-many-public-methods
 
+import Queue
 import unittest
 import mock
 
-import Queue
 from gateway_code.control_node import cn_interface
 from gateway_code.tests import utils
 

@@ -27,8 +27,8 @@
 # serial mock note correctly detected
 # pylint: disable=maybe-no-member
 
-import mock
 import unittest
+import mock
 
 from .. import openocd
 from gateway_code.open_nodes.node_m3 import NodeM3  # config file

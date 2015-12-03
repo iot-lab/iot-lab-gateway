@@ -22,8 +22,9 @@
 
 """ test serial_redirection module """
 
-import mock
 import unittest
+
+import mock
 
 from ..cli import serial_redirection
 

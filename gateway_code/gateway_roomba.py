@@ -26,10 +26,11 @@ Interface with roomba robot directly controled by the gateway
 Manage the robot start/stop experiment, robot behavior and status
 """
 
-from roomba import roomba
 import logging
 import time
 import threading
+
+from roomba import roomba
 
 # Robot status enumeration
 STATUS = {'error': -1, 'closed': 0, 'init': 1, 'docked': 2,

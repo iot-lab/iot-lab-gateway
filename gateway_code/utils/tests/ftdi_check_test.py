@@ -22,9 +22,9 @@
 
 """ Test utils.ftdi_check """
 
+import textwrap
 import unittest
 import mock
-import textwrap
 
 from ..ftdi_check import ftdi_check
 

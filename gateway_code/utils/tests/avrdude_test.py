@@ -29,24 +29,24 @@
 # pylint: disable=unused-argument
 
 import os.path
-import mock
 import unittest
+
 import serial
+import mock
 
 from .. import avrdude
 from gateway_code.open_nodes.node_leonardo import NodeLeonardo
 
 
 class TestsMethods(unittest.TestCase):
-
-    """ Tests avrdude methods """
+    """Tests avrdude methods."""
 
     def setUp(self):
         self.avr = avrdude.AvrDude(NodeLeonardo.AVRDUDE_CONF)
 
     @mock.patch('subprocess.call')
     def test_flash(self, call_mock):
-        """ Test flash """
+        """Test flash."""
         call_mock.return_value = 0
         ret = self.avr.flash(NodeLeonardo.FW_IDLE)
         self.assertEquals(0, ret)
@@ -62,7 +62,7 @@ class TestsMethods(unittest.TestCase):
 
 @mock.patch('serial.Serial')
 class TestTriggerBootloader(unittest.TestCase):
-    """ Test the 'trigger_bootloader' function """
+    """Test 'trigger_bootloader' function."""
 
     def setUp(self):
         self.tty = '/tmp/test_trigger_tty'
@@ -85,7 +85,7 @@ class TestTriggerBootloader(unittest.TestCase):
         return mock.DEFAULT
 
     def test_trigger(self, serial_mock):
-        """ Opening self.tty should create the 'prog' tty """
+        """Opening self.tty should create the 'prog' tty."""
         serial_mock.side_effect = self._create_tty_prog
 
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog,
@@ -94,7 +94,7 @@ class TestTriggerBootloader(unittest.TestCase):
         self.assertTrue(os.path.exists(self.tty_prog))
 
     def test_trigger_fail(self, serial_mock):
-        """ Opening self.tty will not create the 'prog' tty """
+        """Opening self.tty will not create the 'prog' tty."""
         serial_mock.side_effect = self._del_tty_prog
 
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog,
@@ -102,12 +102,14 @@ class TestTriggerBootloader(unittest.TestCase):
         self.assertNotEquals(0, ret)
         self.assertFalse(os.path.exists(self.tty_prog))
 
-    def test_error_opening_tty(self, serial_mock):
-        """ Test Error handling while opening the trigger tty """
+    def test_serial_error_opening_tty(self, serial_mock):
+        """Test SerialError handling while opening the trigger tty."""
         serial_mock.side_effect = serial.SerialException('Test Error')
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog)
         self.assertNotEqual(0, ret)
 
+    def test_oserror_opening_tty(self, serial_mock):
+        """Test OSError handling while opening the trigger tty."""
         serial_mock.side_effect = OSError()
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog)
         self.assertNotEqual(0, ret)

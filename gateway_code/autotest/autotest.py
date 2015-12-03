@@ -24,11 +24,12 @@
 """ auto tests implementation """
 
 import time
-from bisect import bisect
 import re
+import functools
+import logging
+from bisect import bisect
 
 from subprocess import check_output, STDOUT
-
 from collections import defaultdict
 
 from gateway_code.autotest import open_a8_interface
@@ -36,9 +37,6 @@ from gateway_code.profile import Consumption, Radio
 from gateway_code.utils.node_connection import OpenNodeConnection
 import gateway_code.board_config as board_config
 
-
-import functools
-import logging
 LOGGER = logging.getLogger('gateway_code')
 
 MAC_CMD = "cat /sys/class/net/eth0/address"
@@ -152,7 +150,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
           * get
 
         """
-        assert 'a8' == self.open_node.TYPE
+        assert self.open_node.TYPE == 'a8'
 
         ret_val = 0
         ret = self.g_m.open_node.setup(None, debug=False)
@@ -197,14 +195,14 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         # setup
         # A8 node is very different from the generic way
-        if 'a8' == self.open_node.TYPE:
+        if self.open_node.TYPE == 'a8':
             ret_val += self._setup_open_node_a8()
         else:
             ret_val += self._setup_open_node()
 
         self.on_serial.empty()  # flush messages that can be bufferred
 
-        if 0 != ret_val:  # pragma: no cover
+        if ret_val != 0:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
 
     def teardown(self, blink):
@@ -312,7 +310,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         :param ret: 0 means success non zero means failure
         :return: 0 if `ret` == 0, a positive value otherwise
         """
-        if 0 == int(ret):
+        if int(ret) == 0:
             self.ret_dict['success'].append(operation)
             LOGGER.debug('autotest: %r OK: %r', operation, log_message)
         else:
@@ -421,7 +419,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         """ test pressure sensor """
         # ['ACK', 'get_pressure', '9.944219E2', 'mbar']
         values = self._run_test(10, ['get_pressure'], (lambda x: float(x[2])))
-        test_ok = 1 < len(set(values))
+        test_ok = len(set(values)) > 1
         return self._check(tst_ok(test_ok), 'test_pressure', values)
 
     @autotest_checker('get_light', 'leds_on', 'leds_off')
@@ -437,7 +435,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         values_off = self._run_test(5, ['get_light'], (lambda x: float(x[2])))
 
         values = values_on + values_off
-        test_ok = 1 < len(set(values))
+        test_ok = len(set(values)) > 1
         return self._check(tst_ok(test_ok), 'get_light', values)
 
 # Test GPS
@@ -542,7 +540,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         values = self._run_test(
             10, [sensor], (lambda x: tuple([float(val) for val in x[2:5]])))
 
-        test_ok = 1 < len(set(values))  # got different values
+        test_ok = len(set(values)) > 1  # got different values
         return self._check(tst_ok(test_ok), sensor, values)
 
 # Radio tests
@@ -611,7 +609,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         values = measures['consumption']['values']
 
         # Value ranges may be validated with an Idle firmware
-        test_ok = 1 < len(set(values))
+        test_ok = len(set(values)) > 1
         ret_val += self._check(tst_ok(test_ok), 'consumption_dc', values)
 
         return ret_val
@@ -629,7 +627,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         # set a firmware on m3 to ensure corret consumption measures
         # on a8, linux is consuming enough I think
-        if 'm3' == self.open_node.TYPE:  # pragma: no branch
+        if self.open_node.TYPE == 'm3':  # pragma: no branch
             time.sleep(1)
             ret = self.g_m.open_node.flash(self.open_node.FW_AUTOTEST)
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
@@ -655,7 +653,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         measures = extract_measures(self.cn_measures)
         values = measures['consumption']['values']
 
-        test_ok = 1 < len(set(values))
+        test_ok = len(set(values)) > 1
         ret_val += self._check(tst_ok(test_ok), 'consumption_batt', values)
 
         # Value ranges may be validated with an Idle firmware
@@ -745,13 +743,13 @@ def extract_measures(meas_list):
     meas_dict = defaultdict(lambda: dict({'values': [], 'timestamps': []}))
 
     for meas in meas_list:
-        if 'consumption_measure' == meas[1]:
+        if meas[1] == 'consumption_measure':
             # ['measures_debug', 'consumption_measure'
             #     '1378387028.906210', '0.257343', '3.216250', '0.080003']
             values = tuple([float(v) for v in meas[3:6]])
             meas_dict['consumption']['values'].append(values)
             meas_dict['consumption']['timestamps'].append(float(meas[2]))
-        elif 'radio_measure' == meas[1]:
+        elif meas[1] == 'radio_measure':
             # ['measures_debug:', 'radio_measure',
             #      '1378466517.186216', '11', '-91']
             values = tuple([int(v) for v in meas[3:5]])

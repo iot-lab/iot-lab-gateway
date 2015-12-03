@@ -202,7 +202,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
 
         ret_dict = self.g_v.auto_tests()
 
-        self.assertTrue(2 <= ret_dict['ret'])
+        self.assertTrue(ret_dict['ret'] >= 2)
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['setup', 'teardown'], ret_dict['error'])
 
