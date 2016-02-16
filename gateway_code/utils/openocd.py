@@ -89,7 +89,7 @@ class OpenOCD(object):
             LOGGER.debug('Debug stop')
             self._debug.terminate()
         except AttributeError:
-            pass  # None
+            LOGGER.debug('Debug not started.')  # None
         except OSError as err:
             LOGGER.error('Debug stop error: %r', err)
             return 1

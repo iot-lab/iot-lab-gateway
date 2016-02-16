@@ -269,7 +269,7 @@ class TestServerRestMain(unittest.TestCase):
     """ Cover functions uncovered by unit tests """
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    @mock.patch('subprocess.call')
+    @mock.patch('subprocess.call')  # Control node flash
     @mock.patch('bottle.run')
     def test_main_function(self, run_mock, call_mock):
         call_mock.return_value = 0

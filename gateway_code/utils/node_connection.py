@@ -45,7 +45,7 @@ class OpenNodeConnection(object):
         """ Connect to the serial_redirection """
         try:
             sock = self.try_connect(self.address)
-            sock.settimeout(self.timeout)
+            sock.settimeout(self.timeout)  # pylint:disable=no-member
             self.fd = sock.makefile('rw')
             return 0
         except IOError:
