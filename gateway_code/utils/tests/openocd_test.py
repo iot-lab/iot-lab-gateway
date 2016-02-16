@@ -60,6 +60,46 @@ class TestsMethods(unittest.TestCase):
         ret = self.ocd.reset()
         self.assertEquals(42, ret)
 
+    @mock.patch('subprocess.Popen')
+    def test_debug(self, popen_mock, call_mock):
+        """Test debug."""
+        # Stop without debugging
+        ret = self.ocd.debug_stop()
+        self.assertEquals(0, ret)
+
+        ret = self.ocd.debug_start()
+        self.assertEquals(0, ret)
+        self.assertTrue(popen_mock.called)
+
+        # Verify command
+        command_list = popen_mock.call_args[1]['args']
+        self.assertEqual(len(command_list), 12)
+        self.assertEqual(command_list[0], 'openocd')
+        self.assertEqual(command_list[-6:],
+                         ['-c', 'init', '-c', 'targets', '-c', 'reset halt'])
+        # don't test middle args as depends on local path
+        popen_mock.reset_mock()
+
+        # Cannot reset or flash
+        ret = self.ocd.reset()
+        self.assertEqual(ret, 1)
+        ret = self.ocd.flash(NodeM3.FW_IDLE)
+        self.assertEquals(1, ret)
+        # not executed
+        self.assertFalse(call_mock.called)
+
+        ret = self.ocd.debug_stop()
+        self.assertEquals(0, ret)
+
+    @mock.patch('subprocess.Popen')
+    def test_debug_error_stop(self, popen_mock, _):
+        """Test error on debug_stop."""
+        popen_mock.return_value.terminate.side_effect = OSError()
+
+        self.ocd.debug_start()
+        ret = self.ocd.debug_stop()
+        self.assertEqual(ret, 1)
+
 
 class TestsFlashInvalidPaths(unittest.TestCase):
     def test_invalid_config_file_path(self):

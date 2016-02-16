@@ -28,6 +28,7 @@
 import os
 import time
 import math
+import subprocess
 from itertools import izip
 
 import mock
@@ -130,9 +131,18 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # open node reset and start stop
         self.assertEquals(0, self.server.put('/open/reset').json['ret'])
-        self.assertEquals(0, self.server.put('/open/start').json['ret'])
         self.assertEquals(0, self.server.put('/open/stop').json['ret'])
+        self.assertEquals(0, self.server.put('/open/start').json['ret'])
 
+        time.sleep(1)  # wait started
+
+        # Check debug
+        self.assertEquals([], m_error.call_args_list)
+        self._check_debug(board_class)
+        m_error.reset_mock()
+
+        # Stop should work with stopped node
+        self.assertEquals(0, self.server.put('/open/stop').json['ret'])
         # stop exp
         self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
 
@@ -161,6 +171,53 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             self.assertIn(msg, ret_list)
         else:
             self.assertNotIn(msg, ret_list)
+
+    def _check_debug(self, board_class):
+        if not hasattr(board_class, 'debug_stop'):
+            return 0  # no debug
+        if not hasattr(board_class, 'OPENOCD_CFG_FILE'):
+            return 0  # Only openocd debug tested here (arm)
+
+        gdb_cmd = [
+            'gdb',
+            '-ex', 'target remote localhost:3333',
+            '-ex', 'monitor reset halt',
+            '-ex', 'load %s' % board_class.FW_AUTOTEST,
+            '-ex', 'monitor reset init',
+            '-ex', 'continue',
+            '-ex', 'set confirm off',
+            '-ex', 'quit',
+        ]
+
+        # Flash idle firmware
+        ret = self._flash(board_class.FW_IDLE)
+        self.assertEquals(0, ret.json['ret'])
+
+        # idle firmware, there should be no reply
+        self._check_node_echo(echo=False)
+
+        # Start debugger
+        ret = self.server.put('/open/debug/start')
+        self.assertEquals(0, ret.json['ret'])
+
+        # Flash autotest firmware
+        ret = subprocess.call(gdb_cmd, stderr=subprocess.STDOUT)
+        self.assertEquals(0, ret)
+        time.sleep(1)
+
+        # Autotest fw should be running
+        self._check_node_echo(echo=True)
+
+        # Flash idle firmware should fail
+        ret = self._flash(board_class.FW_IDLE)
+        self.assertNotEquals(0, ret.json['ret'])
+
+        # No flash, Autotest fw should be still be running
+        self._check_node_echo(echo=True)
+
+        # Stop debugger
+        ret = self.server.put('/open/debug/stop')
+        self.assertEquals(0, ret.json['ret'])
 
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_m3_exp_with_measures(self,  # pylint:disable=too-many-locals

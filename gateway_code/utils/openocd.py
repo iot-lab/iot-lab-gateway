@@ -79,7 +79,7 @@ class OpenOCD(object):
         """ Start a debugger process """
         LOGGER.debug('Debug start')
         self.debug_stop()  # kill previous process
-        self._debug = subprocess.Popen(self._openocd_args(self.DEBUG))
+        self._debug = subprocess.Popen(**self._openocd_args(self.DEBUG))
         LOGGER.debug('Debug started')
         return 0
 
