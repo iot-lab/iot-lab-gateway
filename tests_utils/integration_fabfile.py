@@ -71,7 +71,9 @@ def download():
 def kill():
     """ Kill remote tests artifacts """
     with settings(warn_only=True):
-        run('killall python socat control_node_serial_interface || true')
+        run('killall'
+            ' python socat control_node_serial_interface openocd'
+            ' || true')
 
 
 def safe_su(command, user='root'):

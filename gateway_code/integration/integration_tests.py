@@ -110,8 +110,6 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         Run a simple experiment on a node without profile
         Try the different node features
         """
-        msg = 'HELLO WORLD'
-
         # start exp with idle firmware
         files = [file_tuple('firmware', board_class.FW_IDLE)]
         ret = self.server.post(EXP_START, upload_files=files)
@@ -121,16 +119,14 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         time.sleep(1)
 
         # idle firmware, there should be no reply
-        self.assertNotIn(msg, self.send_n_cmds('echo %s' % msg, 5))
+        self._check_node_echo(echo=False)
 
         # flash echo firmware
-        files = [file_tuple('firmware', board_class.FW_AUTOTEST)]
-        ret = self.server.post('/open/flash', upload_files=files)
+        ret = self._flash(board_class.FW_AUTOTEST)
         self.assertEquals(0, ret.json['ret'])
-        time.sleep(1)
 
-        # Should echo <message>, do it multiple times for reliability
-        self.assertIn(msg, self.send_n_cmds('echo %s' % msg, 5))
+        # Should echo <message>
+        self._check_node_echo(echo=True)
 
         # open node reset and start stop
         self.assertEquals(0, self.server.put('/open/reset').json['ret'])
@@ -146,6 +142,25 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # reset firmware should fail and logger error will be called
         self.assertLessEqual(1, self.server.put('/open/reset').json['ret'])
         self.assertTrue(m_error.called)
+
+    def _flash(self, firmware):
+        """Flash firmware."""
+        files = [file_tuple('firmware', firmware)]
+        ret = self.server.post('/open/flash', upload_files=files)
+        time.sleep(1)
+        return ret
+
+    def _check_node_echo(self, echo=True, msg='HELLO WORLD', tries=5):
+        """Check that nodes echo or not."""
+
+        # do it multiple times for reliability
+        ret_list = self.send_n_cmds('echo %s' % msg, tries)
+
+        # Two different commands to have more verbosity on error
+        if echo:
+            self.assertIn(msg, ret_list)
+        else:
+            self.assertNotIn(msg, ret_list)
 
     @patch('gateway_code.control_node.cn_interface.LOGGER.error')
     def test_m3_exp_with_measures(self,  # pylint:disable=too-many-locals
