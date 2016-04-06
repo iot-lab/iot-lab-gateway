@@ -55,9 +55,9 @@ def _node_class(node):
     from gateway_code.open_nodes.node_m3 import NodeM3
     from gateway_code.open_nodes.node_fox import NodeFox
     from gateway_code.open_nodes.node_samr21 import NodeSamr21
-    from gateway_code.control_node.cn import ControlNode
+    from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
     _config_files = {
-        'CN': ControlNode,
+        'CN': ControlNodeIotlab,
         'M3': NodeM3,
         'FOX': NodeFox,
         'SAMR21': NodeSamr21,
