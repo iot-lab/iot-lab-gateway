@@ -36,7 +36,8 @@ from gateway_code.utils import elftarget
 
 import gateway_code.board_config as board_config
 
-from gateway_code.control_node import cn
+from gateway_code.control_nodes.cn_iotlab import (ControlNodeIotlab as
+                                                  ControlNode)
 from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER
@@ -55,8 +56,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # Nodes instance
         self.open_node = self.board_cfg.board_class()
-        self.control_node = cn.ControlNode(self.board_cfg.node_id,
-                                           self.board_cfg.default_profile)
+        self.control_node = ControlNode(self.board_cfg.node_id,
+                                        self.board_cfg.default_profile)
 
         # current experiment infos
         self.exp_id = None
