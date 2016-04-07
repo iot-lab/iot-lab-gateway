@@ -36,12 +36,12 @@ _SUB = PARSER.add_subparsers()
 
 _FLASH = _SUB.add_parser('flash')
 _FLASH.set_defaults(cmd='flash')
-_FLASH.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'),)
+_FLASH.add_argument('node', type=str, choices=('CN', 'M3', 'FOX', 'SAMR21'),)
 _FLASH.add_argument('firmware', type=str, help="Firmware name")
 
 _RESET = _SUB.add_parser('reset')
 _RESET.set_defaults(cmd='reset')
-_RESET.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'))
+_RESET.add_argument('node', type=str, choices=('CN', 'M3', 'FOX', 'SAMR21'))
 
 _DEBUG = _SUB.add_parser('debug')
 _DEBUG.set_defaults(cmd='debug')
@@ -49,15 +49,17 @@ _DEBUG.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'))
 
 
 def _node_class(node):
-    """ Get node openocd config for 'node' in ('CN', 'M3', 'FOX') """
+    """ Get node openocd config for 'node' in ('CN', 'M3', 'FOX', 'SAMR21') """
     # This is a HACK for the moment, nodes should be deduced otherwise
     from gateway_code.open_nodes.node_m3 import NodeM3
     from gateway_code.open_nodes.node_fox import NodeFox
+    from gateway_code.open_nodes.node_samr21 import NodeSamr21
     from gateway_code.control_node.cn import ControlNode
     _config_files = {
         'CN': ControlNode,
         'M3': NodeM3,
         'FOX': NodeFox,
+        'SAMR21': NodeSamr21,
     }
     return _config_files[node]
 
