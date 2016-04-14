@@ -43,16 +43,16 @@ _RESET.set_defaults(cmd='reset')
 _RESET.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'))
 
 
-def _node_config(node):
+def _node_class(node):
     """ Get node openocd config for 'node' in ('CN', 'M3', 'FOX') """
     # This is a HACK for the moment, nodes should be deduced otherwise
     from gateway_code.open_nodes.node_m3 import NodeM3
     from gateway_code.open_nodes.node_fox import NodeFox
     from gateway_code.control_node.cn import ControlNode
     _config_files = {
-        'CN': ControlNode.OPENOCD_CFG_FILE,
-        'M3': NodeM3.OPENOCD_CFG_FILE,
-        'FOX': NodeFox.OPENOCD_CFG_FILE,
+        'CN': ControlNode,
+        'M3': NodeM3,
+        'FOX': NodeFox,
     }
     return _config_files[node]
 
@@ -60,8 +60,8 @@ def _node_config(node):
 def main():
     """ openocd main function """
     opts = PARSER.parse_args()
-    cfg_file = _node_config(opts.node)
-    ocd = openocd.OpenOCD(cfg_file, verb=True)
+    node = _node_class(opts.node)
+    ocd = openocd.OpenOCD(node.OPENOCD_CFG_FILE, node.OPENOCD_OPTS, verb=True)
 
     if opts.cmd == 'reset':
         ret = ocd.reset()

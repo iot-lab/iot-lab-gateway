@@ -41,6 +41,7 @@ class NodeM3(object):
     TTY = '/dev/ttyON_M3'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-m3.cfg')
+    OPENOCD_OPTS = ('target/stm32f1x.cfg',)
     FW_IDLE = static_path('idle_m3.elf')
     FW_AUTOTEST = static_path('m3_autotest.elf')
     ALIM = '3.3V'

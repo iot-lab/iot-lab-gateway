@@ -39,6 +39,7 @@ class ControlNode(object):
     TTY = '/dev/ttyCN'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')
+    OPENOCD_OPTS = ('target/stm32f1x.cfg',)
     FW_CONTROL_NODE = static_path('control_node.elf')
     default_profile = None
 
@@ -46,7 +47,7 @@ class ControlNode(object):
         self.node_id = node_id
         self.default_profile = default_profile
 
-        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
+        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE, self.OPENOCD_OPTS)
         self.cn_serial = cn_interface.ControlNodeSerial(self.TTY)
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
         self.open_node_state = 'stop'

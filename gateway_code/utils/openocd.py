@@ -38,7 +38,8 @@ class OpenOCD(object):
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-    OPENOCD = ('openocd --debug=0 -f "{cfg}" -f "target/stm32f1x.cfg"'
+    OPENOCD = ('openocd --debug=0'
+               ' {config}'
                ' -c "init"'
                ' -c "targets"'
                ' {cmd}')
@@ -55,12 +56,33 @@ class OpenOCD(object):
 
     DEBUG = ' -c "reset halt"'
 
-    def __init__(self, config_file, verb=False):
-        self.cfg_file = common.abspath(config_file)
+    def __init__(self, config_file, opts=(), verb=False):
+        self.config = self._config(config_file, opts)
+
         self.out = None if verb else self.DEVNULL
 
         self._debug = None
         atexit.register(self.debug_stop)
+
+    @staticmethod
+    def _config(config_file, opts=()):
+        """Return config options for `config_file` and `opts`.
+
+        >>> OpenOCD._config('/dev/null')
+        '-f "/dev/null"'
+
+        >>> OpenOCD._config('/dev/null', ['target/stm32.cfg'])
+        '-f "/dev/null" -f "target/stm32.cfg"'
+
+        # Abspath
+        >>> OpenOCD._config('gateway_code/static/iot-lab-m3.cfg')
+        ... # doctest: +ELLIPSIS
+        '-f "/.../gateway_code/static/iot-lab-m3.cfg"'
+        """
+        cfg_file = common.abspath(config_file)
+        opts = [cfg_file] + list(opts)
+        opts = ('-f "%s"' % opt for opt in opts)
+        return ' '.join(opts)
 
     def reset(self):
         """ Reset """
@@ -110,6 +132,6 @@ class OpenOCD(object):
     def _openocd_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
-        cmd = self.OPENOCD.format(cfg=self.cfg_file, cmd=command_str)
+        cmd = self.OPENOCD.format(config=self.config, cmd=command_str)
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}

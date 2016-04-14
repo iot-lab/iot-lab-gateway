@@ -41,6 +41,7 @@ class NodeFox(object):
     TTY = '/dev/ttyON_FOX'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-fox.cfg')
+    OPENOCD_OPTS = ('target/stm32f1x.cfg',)
     FW_IDLE = static_path('idle_fox.elf')
     FW_AUTOTEST = static_path('fox_autotest.elf')
 
@@ -58,7 +59,7 @@ class NodeFox(object):
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE)
+        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE, self.OPENOCD_OPTS)
 
     @logger_call("Node Fox : Setup of fox node")
     def setup(self, firmware_path):
