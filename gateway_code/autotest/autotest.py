@@ -365,7 +365,8 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         # echo arg1 arg2: ['arg1', 'arg2']
         cmd = ['echo', 'HELLO', 'WORLD']
         answer = self.on_serial.send_command(cmd)
-        test_ok = answer[0:2] == ['HELLO', 'WORLD']
+        _answer = answer or []  # Replace None
+        test_ok = _answer[0:2] == ['HELLO', 'WORLD']
         self._assert(tst_ok(test_ok), 'on_serial_echo', answer,
                      "echo failed. Can't communicate with open node")
 
