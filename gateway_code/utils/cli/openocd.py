@@ -27,6 +27,7 @@ Usage:
         openocdcmd reset <node>
 
 """
+import signal
 import argparse
 from .. import openocd
 
@@ -41,6 +42,10 @@ _FLASH.add_argument('firmware', type=str, help="Firmware name")
 _RESET = _SUB.add_parser('reset')
 _RESET.set_defaults(cmd='reset')
 _RESET.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'))
+
+_DEBUG = _SUB.add_parser('debug')
+_DEBUG.set_defaults(cmd='debug')
+_DEBUG.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'))
 
 
 def _node_class(node):
@@ -57,6 +62,21 @@ def _node_class(node):
     return _config_files[node]
 
 
+def _debug(ocd):
+    """Start debugging, wait for Ctrl+C, and quit."""
+    ret = ocd.debug_start()
+    if ret:
+        return ret
+    try:
+        print 'Type Ctrl+C to quit'
+        signal.pause()
+    except KeyboardInterrupt:
+        print 'Ctrl+C'
+    finally:
+        ocd.debug_stop()
+    return 0
+
+
 def main():
     """ openocd main function """
     opts = PARSER.parse_args()
@@ -67,6 +87,8 @@ def main():
         ret = ocd.reset()
     elif opts.cmd == 'flash':
         ret = ocd.flash(opts.firmware)
+    elif opts.cmd == 'debug':
+        ret = _debug(ocd)
     else:  # pragma: no cover
         raise ValueError('Uknown Command %s', opts.command)
 
