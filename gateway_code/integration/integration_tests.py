@@ -38,7 +38,7 @@ from gateway_code.tests.rest_server_test import query_string
 from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
 from gateway_code.utils.node_connection import OpenNodeConnection
-from gateway_code.common import wait_cond
+from gateway_code.common import wait_cond, abspath
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -178,14 +178,15 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         if not hasattr(board_class, 'OPENOCD_CFG_FILE'):
             return 0  # Only openocd debug tested here (arm)
 
+        firmware = abspath(board_class.FW_AUTOTEST)
         gdb_cmd = [
             'gdb',
+            '-ex', 'set confirm off',
             '-ex', 'target remote localhost:3333',
             '-ex', 'monitor reset halt',
-            '-ex', 'load %s' % board_class.FW_AUTOTEST,
+            '-ex', 'monitor flash write_image erase %s' % firmware,
             '-ex', 'monitor reset init',
-            '-ex', 'continue',
-            '-ex', 'set confirm off',
+            '-ex', 'monitor reset run',
             '-ex', 'quit',
         ]
 
