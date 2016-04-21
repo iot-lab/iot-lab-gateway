@@ -33,6 +33,7 @@ class TestsOpenOCDcli(unittest.TestCase):
     def setUp(self):
         ocd_class = mock.patch('gateway_code.utils.openocd.OpenOCD').start()
         self.ocd = ocd_class.return_value
+        ocd_class.from_node.return_value = self.ocd  # pylint:disable=no-member
 
     def tearDown(self):
         mock.patch.stopall()

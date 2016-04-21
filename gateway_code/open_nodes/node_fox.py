@@ -59,7 +59,7 @@ class NodeFox(object):
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE, self.OPENOCD_OPTS)
+        self.openocd = OpenOCD.from_node(self)
 
     @logger_call("Node Fox : Setup of fox node")
     def setup(self, firmware_path):

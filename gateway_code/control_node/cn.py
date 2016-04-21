@@ -47,7 +47,7 @@ class ControlNode(object):
         self.node_id = node_id
         self.default_profile = default_profile
 
-        self.openocd = OpenOCD(self.OPENOCD_CFG_FILE, self.OPENOCD_OPTS)
+        self.openocd = OpenOCD.from_node(self)
         self.cn_serial = cn_interface.ControlNodeSerial(self.TTY)
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
         self.open_node_state = 'stop'

@@ -135,3 +135,14 @@ class OpenOCD(object):
         cmd = self.OPENOCD.format(config=self.config, cmd=command_str)
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
+
+    @classmethod
+    def from_node(cls, nodeclass, *args, **kwargs):
+        """Return an instance of OpenOCD configured for node.
+
+        * nodeclass.OPENOCD_CFG_FILE configuration file
+        * nodeclass.OPENOCD_OPTS iterable telling other config options
+             They will be added after configuration file with '-f'
+        """
+        return cls(nodeclass.OPENOCD_CFG_FILE, nodeclass.OPENOCD_OPTS,
+                   *args, **kwargs)

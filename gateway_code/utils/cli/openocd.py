@@ -61,7 +61,7 @@ def main():
     """ openocd main function """
     opts = PARSER.parse_args()
     node = _node_class(opts.node)
-    ocd = openocd.OpenOCD(node.OPENOCD_CFG_FILE, node.OPENOCD_OPTS, verb=True)
+    ocd = openocd.OpenOCD.from_node(node, verb=True)
 
     if opts.cmd == 'reset':
         ret = ocd.reset()

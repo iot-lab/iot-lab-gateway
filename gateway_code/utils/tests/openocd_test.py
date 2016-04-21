@@ -38,8 +38,7 @@ from gateway_code.open_nodes.node_m3 import NodeM3  # config file
 class TestsMethods(unittest.TestCase):
     """ Tests openocd methods """
     def setUp(self):
-        self.ocd = openocd.OpenOCD(NodeM3.OPENOCD_CFG_FILE,
-                                   NodeM3.OPENOCD_OPTS)
+        self.ocd = openocd.OpenOCD.from_node(NodeM3)
 
     def test_flash(self, call_mock):
         """ Test flash """
