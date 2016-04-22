@@ -23,7 +23,7 @@ endif
 CFLAGS    += -std=c99 -g -O3 -fstrict-aliasing
 CFLAGS    += $(WARNINGS) $(COV) $(PROF) $(DEP_RULES) $(LIBS) -pthread
 
-OMLFLAGS  = -Wl,-rpath,/usr/local/lib -loml2
+OMLFLAGS  = -Wl,-rpath,/usr/local/lib -loml2 -locomm
 LDFLAGS   += $(CFLAGS) -lpthread $(OMLFLAGS)
 
 SRCS       = $(wildcard $(SRCDIR)/*.c)
@@ -47,6 +47,10 @@ test: all
 	make -C tests --no-print-directory run
 coverage: all
 	make -C tests --no-print-directory coverage
+
+.PHONY: $(SRCDIR)/control_node_measures_oml.h
+$(SRCDIR)/control_node_measures_oml.h:
+	make -C $(SRCDIR) control_node_measures_oml.h
 
 $(TARGET): $(OBJS)
 	$(call quiet-cmd, $(CC) -o $@ $^ $(LDFLAGS),   "  LD      $@")

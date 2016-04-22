@@ -16,7 +16,7 @@ else
 endif
 
 COV          = -fprofile-arcs -ftest-coverage
-OMLFLAGS     = -Wl,-rpath,/usr/local/lib -loml2
+OMLFLAGS     = -Wl,-rpath,/usr/local/lib -loml2 -locomm
 
 GTEST_DIR    = utils/gtest
 CMOCKA_DIR   = utils/cmocka-0.4.1
