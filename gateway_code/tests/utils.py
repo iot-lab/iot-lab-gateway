@@ -34,6 +34,7 @@ def read_config_mock(board_type, **kwargs):
 
     config_dict = kwargs.copy()
     config_dict['board_type'] = board_type
+    config_dict.setdefault('hostname', '%s-00' % board_type)
 
     def read_config(key, default=IOError):
         """ read_config_mock """
