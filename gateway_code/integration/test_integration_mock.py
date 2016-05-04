@@ -34,6 +34,17 @@ import gateway_code.board_config
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 
+def run_integration():
+    """Tell if integration tests should be run."""
+    # iotlab-gateways
+    if os.uname()[4] == 'armv7l':
+        return True
+    # manual tests without control node
+    if 'IOTLAB_GATEWAY_CFG_DIR' in os.environ:
+        return True
+    return False
+
+
 # pylint: disable=too-many-public-methods
 @attr('integration')
 class GatewayCodeMock(unittest.TestCase):
@@ -42,7 +53,7 @@ class GatewayCodeMock(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
 
-        if os.uname()[4] != 'armv7l':
+        if not run_integration():
             raise unittest.SkipTest("Skip board embedded tests")
 
         cls.gateway_manager = gateway_code.rest_server.GatewayManager('.')
