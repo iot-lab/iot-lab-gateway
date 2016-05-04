@@ -39,7 +39,9 @@ def static_path(static_file):
     return os.path.join(STATIC_DIR, static_file)
 
 
-GATEWAY_CONFIG_PATH = '/var/local/config/'
+GATEWAY_CONFIG_PATH = os.environ.get('IOTLAB_GATEWAY_CFG_DIR',
+                                     '/var/local/config/')
+GATEWAY_CONFIG_PATH = os.path.abspath(GATEWAY_CONFIG_PATH)
 
 EXP_FILES_DIR = '/iotlab/users/{user}/.iot-lab/{exp_id}/'
 EXP_FILES = {
