@@ -29,10 +29,13 @@ import os
 import time
 import math
 import subprocess
+import logging
 from itertools import izip
 
 import mock
 from mock import patch
+from testfixtures import LogCapture
+
 from gateway_code.tests.rest_server_test import query_string
 
 from gateway_code.integration import test_integration_mock
@@ -64,10 +67,12 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
         super(ExperimentRunningMock, self).setUp()
         # config experiment and create folder
         self.g_m._create_user_exp_folders(USER, EXP_ID)
+        self.log_error = LogCapture('gateway_code', level=logging.ERROR)
 
     def tearDown(self):
         super(ExperimentRunningMock, self).tearDown()
         self.g_m._destroy_user_exp_folders(USER, EXP_ID)
+        self.log_error.uninstall()
 
     @staticmethod
     def send_n_cmds(command, num_times, step=0.5):
@@ -85,18 +90,17 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 class TestComplexExperimentRunning(ExperimentRunningMock):
     """ Run complete experiment test """
 
-    @patch('gateway_code.control_node.cn_interface.LOGGER.error')
-    def test_simple_experiment(self, m_error):
+    def test_simple_experiment(self):
         """ Test simple experiment"""
         board_class = self.board_cfg.board_class
 
         # The A8 node is really different from the others
         if board_class.TYPE == 'a8':
-            self._run_simple_experiment_a8(m_error)
+            self._run_simple_experiment_a8()
         else:
-            self._run_simple_experiment_node(m_error, board_class)
+            self._run_simple_experiment_node(board_class)
 
-    def _run_simple_experiment_a8(self, moc):  # pylint:disable=unused-argument
+    def _run_simple_experiment_a8(self):  # pylint:disable=unused-argument
         """ Run an experiment for a8 nodes """
 
         self.assertEquals(0, self.server.post(EXP_START).json['ret'])
@@ -106,7 +110,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
 
-    def _run_simple_experiment_node(self, m_error, board_class):
+    def _run_simple_experiment_node(self, board_class):
         """
         Run a simple experiment on a node without profile
         Try the different node features
@@ -136,10 +140,12 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         time.sleep(1)  # wait started
 
+        # No log error
+        self.log_error.check()
+
         # Check debug
-        self.assertEquals([], m_error.call_args_list)
         self._check_debug(board_class)
-        m_error.reset_mock()
+        self.log_error.clear()
 
         # Stop should work with stopped node
         self.assertEquals(0, self.server.put('/open/stop').json['ret'])
@@ -147,11 +153,11 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
 
         # Got no error during tests (use call_args_list for printing on error)
-        self.assertEquals([], m_error.call_args_list)
+        self.log_error.check()
 
         # reset firmware should fail and logger error will be called
         self.assertLessEqual(1, self.server.put('/open/reset').json['ret'])
-        self.assertTrue(m_error.called)
+        self.assertNotEqual('', str(self.log_error))
 
     def _flash(self, firmware):
         """Flash firmware."""
@@ -220,9 +226,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         ret = self.server.put('/open/debug/stop')
         self.assertEquals(0, ret.json['ret'])
 
-    @patch('gateway_code.control_node.cn_interface.LOGGER.error')
-    def test_m3_exp_with_measures(self,  # pylint:disable=too-many-locals
-                                  m_error):
+    def test_m3_exp_with_measures(self):  # pylint:disable=too-many-locals
         """ Run an experiment with measures and profile update """
         board_class = self.board_cfg.board_class
         app_json = 'application/json'
@@ -287,7 +291,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # Stop experiment
         self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
         # Got no error during tests (use assertEquals for printing result)
-        self.assertEquals([], m_error.call_args_list)
+        self.log_error.check()
 
         # # # # # # # # # # # # # # # # # # # # # #
         # Test OML Files still exists after stop  #

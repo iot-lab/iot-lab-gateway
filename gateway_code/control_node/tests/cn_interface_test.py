@@ -29,10 +29,12 @@
 
 import Queue
 import unittest
+import logging
 import mock
+from testfixtures import LogCapture
 
-from gateway_code.control_node import cn_interface
 from gateway_code.tests import utils
+from .. import cn_interface
 
 
 class TestControlNodeSerial(unittest.TestCase):
@@ -50,10 +52,12 @@ class TestControlNodeSerial(unittest.TestCase):
         self.readline_ret_vals.put('cn_serial_ready\n')
 
         self.cn = cn_interface.ControlNodeSerial('tty')
+        self.log_error = LogCapture('gateway_code', level=logging.ERROR)
 
     def tearDown(self):
         self.cn.stop()
         mock.patch.stopall()
+        self.log_error.uninstall()
 
     def _terminate(self):
         self.readline_ret_vals.put('')
@@ -67,23 +71,22 @@ class TestControlNodeSerial(unittest.TestCase):
         self.assertTrue(self.popen.terminate.called)
         self.assertTrue(self.readline_ret_vals.empty())
 
-    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
-    def test_start_error_in_cn_serial(self, mock_logger):
+    def test_start_error_in_cn_serial(self):
 
         # poll should return an error
         self.popen.poll.return_value = 2
 
         ret_start = self.cn.start()
         self.assertNotEquals(0, ret_start)
-        mock_logger.assert_called_with(
-            'Control node serial reader thread ended prematurely')
+        self.log_error.check(
+            ('gateway_code', 'ERROR',
+             'Control node serial reader thread ended prematurely'))
         self.cn.stop()
 
     def test_stop_before_start(self):
         self.cn.stop()
 
-    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
-    def test_stop_with_cn_interface_allready_stopped(self, mock_logger):
+    def test_stop_with_cn_interface_allready_stopped(self):
 
         # Simulate cn_interface stopped
         self.readline_ret_vals.put('')
@@ -95,12 +98,15 @@ class TestControlNodeSerial(unittest.TestCase):
         # try sending command
         ret = self.cn.send_command(['test', 'cmd'])
         self.assertEquals(None, ret)
-        mock_logger.assert_called_with(
-            'control_node_serial process is terminated')
+        self.log_error.check(
+            ('gateway_code', 'ERROR',
+             'control_node_serial process is terminated'))
 
+        self.log_error.clear()
         self.cn.stop()
-        mock_logger.assert_called_with(
-            'Control node process already terminated')
+        self.log_error.check(
+            ('gateway_code', 'ERROR',
+             'Control node process already terminated'))
 
 # Test command sending
     def test_send_command(self):
@@ -122,8 +128,7 @@ class TestControlNodeSerial(unittest.TestCase):
         ret = self.cn.send_command(['lala'])
         self.assertIsNone(ret)
 
-    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
-    def test_answer_and_answer_with_queue_full(self, mock_logger):
+    def test_answer_and_answer_with_queue_full(self):
         # get two answers without sending command
         self.readline_ret_vals.put('set ACK\n')
         self.readline_ret_vals.put('start ACK\n')
@@ -131,10 +136,12 @@ class TestControlNodeSerial(unittest.TestCase):
         self.cn.start()
         self.cn.stop()
 
-        mock_logger.assert_called_with('Control node answer queue full: %r',
-                                       ['start', 'ACK'])
+        self.log_error.check(
+            ('gateway_code', 'ERROR',
+             'Control node answer queue full: %r' % ['start', 'ACK']))
 
 # _cn_interface_args
+
     def test__cn_interface_args(self):
         args = self.cn._cn_interface_args()
         self.assertIn(self.cn.tty, args)
@@ -192,27 +199,33 @@ class TestHandleAnswer(unittest.TestCase):
 
     def setUp(self):
         self.cn = cn_interface.ControlNodeSerial('tty')
+        self.log = LogCapture('gateway_code', level=logging.DEBUG)
 
-    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.info')
-    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.debug')
-    def test_config_ack(self, mock_logger, mock_logger_info):
+    def tearDown(self):
+        self.log.uninstall()
+
+    def test_config_ack(self):
         self.cn._handle_answer('config_ack set_time 0.123456')
-        mock_logger.assert_called_with('config_ack %s', 'set_time')
-        mock_logger_info.assert_called_with(
-            'Control Node set time delay: %d us', 123456)
+        self.log.check(
+            ('gateway_code', 'DEBUG', 'config_ack set_time'),
+            ('gateway_code', 'INFO', 'Control Node set time delay: 123456 us')
+        )
 
+        self.log.clear()
         self.cn._handle_answer('config_ack anything')
-        mock_logger.assert_called_with('config_ack %s', 'anything')
+        self.log.check(
+            ('gateway_code', 'DEBUG', 'config_ack anything'),
+        )
 
-    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
-    def test_error(self, mock_logger):
+    def test_error(self):
         self.cn._handle_answer('error 42')
-        mock_logger.assert_called_with('Control node error: %r', '42')
+        self.log.check(
+            ('gateway_code', 'ERROR', 'Control node error: %r' % '42'))
 
-    @mock.patch('gateway_code.control_node.cn_interface.LOGGER.error')
-    def test_cn_serial_error(self, mock_logger):
+    def test_cn_serial_error(self):
         self.cn._handle_answer('cn_serial_error: any error msg')
-        mock_logger.assert_called_with('cn_serial_error: any error msg')
+        self.log.check(
+            ('gateway_code', 'ERROR', 'cn_serial_error: any error msg'))
 
     def test_measures_debug(self):
         msg = ('measures_debug: consumption_measure 1377268768.841070:'
