@@ -22,7 +22,6 @@
 
 """ Board Config """
 
-import os
 import functools
 import gateway_code.config as config  # allow mocking as 'gateway_code.config'
 from gateway_code import profile
@@ -43,7 +42,7 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
         self.cn_class = config.control_node_class(cn_type)
 
         self.robot_type = config.read_config('robot', None)
-        self.node_id = os.uname()[1]
+        self.node_id = config.read_config('hostname')
 
         self.profile_from_dict = functools.partial(profile.Profile.from_dict,
                                                    self.board_class)
