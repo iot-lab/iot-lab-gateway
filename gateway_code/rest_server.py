@@ -78,7 +78,7 @@ class GatewayRest(bottle.Bottle):
         self.conditional_route('flash', '/open/flash', 'POST',
                                self.open_flash)
         self.conditional_route('reset', '/open/reset', 'PUT',
-                               self.open_soft_reset)
+                               self.open_reset)
         self.conditional_route('debug_start', '/open/debug/start', 'PUT',
                                self.open_debug_start)
         self.conditional_route('debug_stop', '/open/debug/stop', 'PUT',
@@ -186,15 +186,15 @@ class GatewayRest(bottle.Bottle):
         if firmware_file is None:
             return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
 
-        ret = self.gateway_manager.node_flash('open', firmware_file.name)
+        ret = self.gateway_manager.open_flash(firmware_file.name)
 
         firmware_file.close()
         return {'ret': ret}
 
-    def open_soft_reset(self):
+    def open_reset(self):
         """ Soft reset open node """
         LOGGER.debug('REST: Reset OpenNode')
-        ret = self.gateway_manager.node_soft_reset('open')
+        ret = self.gateway_manager.open_reset()
         return {'ret': ret}
 
     def open_start(self):

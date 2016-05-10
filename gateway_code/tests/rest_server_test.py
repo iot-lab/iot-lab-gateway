@@ -194,7 +194,7 @@ class TestRestMethods(unittest.TestCase):
         self.g_m.exp_update_profile.reset_mock()
 
     def test_flash_function(self):
-        self.g_m.node_flash.return_value = 0
+        self.g_m.open_flash.return_value = 0
         files = [('firmware', 'idle.elf', 'elf32arm0X1234')]
 
         # valid command
@@ -206,7 +206,7 @@ class TestRestMethods(unittest.TestCase):
         self.assertEquals(1, ret.json['ret'])
 
     def test_reset_wrappers(self):
-        self.g_m.node_soft_reset.return_value = 0
+        self.g_m.open_reset.return_value = 0
 
         ret = self.server.put('/open/reset')
         self.assertEquals(0, ret.json['ret'])
