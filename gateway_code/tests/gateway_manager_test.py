@@ -47,7 +47,7 @@ class TestGatewayManager(unittest.TestCase):
     def test_setup(self):
         """ Test running gateway_manager with setup without error """
         g_m = gateway_manager.GatewayManager()
-        g_m.node_flash = mock.Mock(return_value=0)
+        g_m.control_node.setup = mock.Mock(return_value=0)
         try:
             g_m.setup()
         except StandardError:
@@ -56,7 +56,7 @@ class TestGatewayManager(unittest.TestCase):
     def test_setup_fail_flash(self):
         """ Run setup with a flash fail error """
         g_m = gateway_manager.GatewayManager()
-        g_m.node_flash = mock.Mock(return_value=1)
+        g_m.control_node.setup = mock.Mock(return_value=1)
         self.assertRaises(StandardError, g_m.setup)
 
     def test_exp_update_profile_error(self):
