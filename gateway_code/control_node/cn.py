@@ -42,7 +42,6 @@ class ControlNode(object):
     OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')
     OPENOCD_OPTS = ('target/stm32f1x.cfg',)
     FW_CONTROL_NODE = static_path('control_node.elf')
-    default_profile = None
 
     def __init__(self, node_id, default_profile):
         self.node_id = node_id
@@ -65,6 +64,14 @@ class ControlNode(object):
         ret_val += self.cn_serial.start(oml_cfg)
         ret_val += self.open_start('dc')
         return ret_val
+
+    @logger_call("Control node: Setup")
+    def setup(self):
+        """Setup control node.
+
+        Flash default firmware
+        """
+        return self.flash()
 
     @logger_call("Control node : Stop control node serial interface")
     def stop(self):
