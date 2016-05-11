@@ -102,6 +102,27 @@ class ControlNode(object):
         ret_val += self.protocol.green_led_on()
         return ret_val
 
+    @logger_call("Control node : autotest setup.""")
+    def autotest_setup(self, measures_handler):
+        """Setup node for autotests."""
+        ret_val = 0
+        ret_val += self.reset()
+
+        self.cn_serial.measures_debug = measures_handler
+        self.cn_serial.start()
+
+        ret_val += self.protocol.set_time()
+        return ret_val
+
+    @logger_call("Control node : autotest teardown.""")
+    def autotest_teardown(self, stop_on):
+        """Teardown node after autotests."""
+        ret_val = 0
+        if stop_on:
+            ret_val += self.open_stop('dc')
+        self.cn_serial.stop()
+        return ret_val
+
     @logger_call("Control node : profile configuration")
     def configure_profile(self, profile=None):
         """ Configure the given profile on the control node """

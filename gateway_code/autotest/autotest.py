@@ -116,12 +116,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         ret_val = 0
 
         # configure Control Node
-        ret_val += self.g_m.control_node.reset()
-
-        self.g_m.control_node.cn_serial.measures_debug = self._measures_handler
-        self.g_m.control_node.cn_serial.start()
-
-        ret_val += self.g_m.control_node.protocol.set_time()
+        ret_val += self.g_m.control_node.autotest_setup(self._measures_handler)
 
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
@@ -210,6 +205,32 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         if ret_val != 0:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
 
+    def _teardown_open_node(self, stop):
+        """ Stop open node connection
+        * Flash firmware
+        * Start serial interface """
+        ret_val = 0
+        ret_val += self._on_serial_stop()
+        ret_val += self.g_m.open_node.serial_redirection.stop()
+
+        # Teardown to stop open node when not blinking
+        if stop:
+            ret_val += self.g_m.open_node.teardown()
+            LOGGER.debug("Stop open node, no blinking")
+
+        return ret_val
+
+    def _on_serial_stop(self):
+        """Stop open node serial without crash."""
+        ret_val = 0
+        try:
+            self.on_serial.stop()
+        except AttributeError:  # pragma: no cover
+            ret_val += 1   # access NoneType attribute
+        finally:
+            self.on_serial = None
+        return ret_val
+
     def teardown(self, blink):
         """ cleanup """
         ret_val = 0
@@ -218,23 +239,10 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         # ensure DC alim
         ret_val += self.g_m.control_node.open_start('dc')
 
-        try:
-            self.on_serial.stop()
-        except AttributeError:  # pragma: no cover
-            ret_val += 1   # access NoneType attribute
-        finally:
-            self.on_serial = None
+        ret_val += self.set_result_leds(blink)
+        ret_val += self._teardown_open_node(stop=(not blink))
 
-        if not blink:
-            ret_val += self.g_m.open_node.teardown()
-            LOGGER.debug("Stop open node, no blinking")
-            ret_val += self.g_m.control_node.open_stop('dc')
-        else:
-            # Can't call teardown as it flashes 'idle'
-            ret_val += self.g_m.open_node.serial_redirection.stop()
-            LOGGER.debug("Set status on LEDs")
-
-        self.g_m.control_node.cn_serial.stop()
+        self.g_m.control_node.autotest_teardown(stop_on=(not blink))
         LOGGER.debug("cn_serial stopped")
 
         return self._check(ret_val, 'teardown', ret_val)
@@ -299,8 +307,6 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
             # run test_gps if requested
             ret_val += self.test_gps(gps)
 
-            # set_leds
-            self.set_result_leds(ret_val)
         except FatalError as err:
             # Fatal Error during test, don't run further tests
             LOGGER.error("Fatal Error in tests, stop further tests: %s",
@@ -363,11 +369,20 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
 # Test implementation
     @autotest_checker('leds_off', 'leds_blink')
-    def set_result_leds(self, ret_val):
-        """ Make leds blink in case of success. Turn off on failure """
+    def set_result_leds(self, blink):
+        """Make leds blink in case of success. Turn off on failure."""
+        try:
+            self._set_results_leds(blink)
+            return 0
+        except FatalError:
+            LOGGER.error('Set blinking leds failed.')
+            return 1
+
+    def _set_results_leds(self, blink):
+        """Make leds blink in case of success. Turn off on failure."""
         # Clean leds state
         self._on_call(['leds_off', '7'])
-        if ret_val != 0:  # pragma: no cover
+        if not blink:  # pragma: no cover
             return
 
         # Blink leds on success
