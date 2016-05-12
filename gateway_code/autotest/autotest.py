@@ -25,13 +25,13 @@
 
 import time
 import re
-import functools
 import logging
 from bisect import bisect
 
 from subprocess import check_output, STDOUT
 from collections import defaultdict
 
+from gateway_code import common
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
 from gateway_code.utils.node_connection import OpenNodeConnection
@@ -44,27 +44,16 @@ MAC_RE = re.compile(r'([0-9a-f]{2}:){5}[0-9a-f]{2}')
 
 
 def autotest_checker(*required):
-    """ Only run tests if required `commands` is implemented.
+    """Only run tests if required `commands` is implemented.
 
     Allow selecting test launch if the required commads are present in
     board AUTOTEST_AVAILABLE list. """
-    required = set(required)
+    def store_tested_features(self):
+        """Store tested features."""
+        self.TESTED_FEATURES.update(required)
 
-    def _wrap(func):
-        """ Decorator implementation """
-        @functools.wraps(func)
-        def _wrapped_f(self, *args, **kwargs):
-            """ Function wrapped with test """
-            available = set(self.open_node.AUTOTEST_AVAILABLE)
-
-            if not required.issubset(available):
-                return 0
-
-            # Store tested features
-            self.TESTED_FEATURES.update(required)
-            return func(self, *args, **kwargs)
-        return _wrapped_f
-    return _wrap
+    return common.class_attr_has('open_node.AUTOTEST_AVAILABLE', required,
+                                 pre_func=store_tested_features)
 
 
 class FatalError(Exception):
