@@ -52,7 +52,7 @@ class GatewayRest(bottle.Bottle):
     def __init__(self, gateway_manager):
         super(GatewayRest, self).__init__()
         self.gateway_manager = gateway_manager
-        self.board_class = board_config.BoardConfig().board_class
+        self.board_config = board_config.BoardConfig()
         self._app_routing()
 
     def _app_routing(self):
@@ -75,16 +75,14 @@ class GatewayRest(bottle.Bottle):
         self.route('/sleep/<seconds:int>', 'GET', self.sleep)
 
         # Add open_node functions if available
-        self.conditional_route('flash', '/open/flash', 'POST',
-                               self.open_flash)
-        self.conditional_route('flash', '/open/flash/idle', 'PUT',
-                               self.open_flash_idle)
-        self.conditional_route('reset', '/open/reset', 'PUT',
-                               self.open_soft_reset)
-        self.conditional_route('debug_start', '/open/debug/start', 'PUT',
-                               self.open_debug_start)
-        self.conditional_route('debug_stop', '/open/debug/stop', 'PUT',
-                               self.open_debug_stop)
+        self.on_conditional_route('flash', '/open/flash', 'POST',
+                                  self.open_flash)
+        self.on_conditional_route('reset', '/open/reset', 'PUT',
+                                  self.open_reset)
+        self.on_conditional_route('debug_start', '/open/debug/start', 'PUT',
+                                  self.open_debug_start)
+        self.on_conditional_route('debug_stop', '/open/debug/stop', 'PUT',
+                                  self.open_debug_stop)
 
     def exp_start(self, user, exp_id):
         """
@@ -188,22 +186,15 @@ class GatewayRest(bottle.Bottle):
         if firmware_file is None:
             return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
 
-        ret = self.gateway_manager.node_flash('open', firmware_file.name)
+        ret = self.gateway_manager.open_flash(firmware_file.name)
 
         firmware_file.close()
         return {'ret': ret}
 
-    # Open node commands
-    def open_flash_idle(self):
-        """Flash open node."""
-        LOGGER.debug('REST: Flash Idle OpenNode')
-        ret = self.gateway_manager.node_flash('open', None)
-        return {'ret': ret}
-
-    def open_soft_reset(self):
+    def open_reset(self):
         """ Soft reset open node """
         LOGGER.debug('REST: Reset OpenNode')
-        ret = self.gateway_manager.node_soft_reset('open')
+        ret = self.gateway_manager.open_reset()
         return {'ret': ret}
 
     def open_start(self):
@@ -285,15 +276,20 @@ class GatewayRest(bottle.Bottle):
         LOGGER.debug('REST: Status')
         return {'ret': self.gateway_manager.status()}
 
-    def conditional_route(self, node_func, path, *route_args, **route_kwargs):
-        """ Add route if node implements 'node_func' """
-        has_fct = callable(getattr(self.board_class, node_func, None))
-        if not has_fct:
+    def on_conditional_route(self, func, path, *route_args, **route_kwargs):
+        """Add route if node implements 'func'."""
+        return self._cond_route(self.board_config.board_class, func, path,
+                                *route_args, **route_kwargs)
+
+    def _cond_route(self, obj, func, path, *route_args, **route_kwargs):
+        """Add route if `obj.func` exists and is callable."""
+        has_fct = callable(getattr(obj, func, None))
+        if has_fct:
+            LOGGER.info('REST: Route %s registered', path)
+            return self.route(path, *route_args, **route_kwargs)
+        else:
             LOGGER.debug('REST: Route %s not available', path)
             return None
-
-        LOGGER.info('REST: Route %s registered', path)
-        return self.route(path, *route_args, **route_kwargs)
 
     def route(self, path, method='GET', callback=None, *args, **kwargs):
         """Add a route but catch some exceptions."""
