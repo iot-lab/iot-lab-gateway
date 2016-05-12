@@ -118,8 +118,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_id = exp_id
         self.user = user
 
-        if self.board_cfg.robot_type == 'turtlebot2':  # pragma: no cover
-            LOGGER.info("I'm a Turtlebot2")
+        if (self.board_cfg.robot_type == 'turtlebot2' or
+                self.board_cfg.cn_class.TYPE == 'no'):  # pragma: no cover
+            LOGGER.info('Create user exp folder')
             self._create_user_exp_folders(user, exp_id)
 
         self.exp_files = self.create_user_exp_files(self.board_cfg.node_id,
