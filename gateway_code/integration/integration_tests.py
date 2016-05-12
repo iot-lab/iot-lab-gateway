@@ -43,6 +43,7 @@ from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
 from gateway_code.utils.node_connection import OpenNodeConnection
 from gateway_code.common import wait_cond, abspath
+from gateway_code.common import class_attr_has, object_attr_has
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -60,6 +61,9 @@ def file_tuple(fieldname, file_path):
         content = file_fd.read()
 
     return (fieldname, filename, content)
+
+
+CN_FEATURES_ATTR = 'board_cfg.cn_class.FEATURES'
 
 
 class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
@@ -88,6 +92,10 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
             answers.append(ans)
             time.sleep(step)
         return answers
+
+    def control_node_has(self, *features):
+        """Checks that control_node has given `features`."""
+        return object_attr_has(self, CN_FEATURES_ATTR, *features)
 
 
 class TestComplexExperimentRunning(ExperimentRunningMock):
@@ -138,8 +146,9 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # open node reset and start stop
         self.assertEquals(0, self.server.put('/open/reset').json['ret'])
-        self.assertEquals(0, self.server.put('/open/stop').json['ret'])
-        self.assertEquals(0, self.server.put('/open/start').json['ret'])
+        if self.control_node_has('open_node_power'):
+            self.assertEquals(0, self.server.put('/open/stop').json['ret'])
+            self.assertEquals(0, self.server.put('/open/start').json['ret'])
 
         time.sleep(1)  # wait started
 
@@ -150,17 +159,19 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self._check_debug(board_class)
         self.log_error.clear()
 
-        # Stop should work with stopped node
-        self.assertEquals(0, self.server.put('/open/stop').json['ret'])
+        if self.control_node_has('open_node_power'):
+            # Stop should work with stopped node
+            self.assertEquals(0, self.server.put('/open/stop').json['ret'])
         # stop exp
         self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
 
         # Got no error during tests (use call_args_list for printing on error)
         self.log_error.check()
 
-        # reset firmware should fail and logger error will be called
-        self.assertLessEqual(1, self.server.put('/open/reset').json['ret'])
-        self.assertNotEqual('', str(self.log_error))
+        if self.control_node_has('open_node_power'):
+            # reset firmware should fail and logger error will be called
+            self.assertLessEqual(1, self.server.put('/open/reset').json['ret'])
+            self.assertNotEqual('', str(self.log_error))
 
     def _flash(self, firmware):
         """Flash firmware."""
@@ -281,7 +292,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             self.assertEquals(0, ret.json['ret'])
         return ret
 
-    def test_m3_exp_with_measures(self):
+    @class_attr_has(CN_FEATURES_ATTR, 'radio', 'consumption')
+    def test_m3_exp_with_measures(self):  # pylint:disable=too-many-locals
         """ Run an experiment with measures and profile update """
 
         if self.board_cfg.board_class.TYPE != 'm3':
