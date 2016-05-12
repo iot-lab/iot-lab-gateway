@@ -72,22 +72,22 @@ class TestRestMethods(unittest.TestCase):
     def test_routes(self):
         with mock.patch.object(self.s_r, 'route') as m_route:
 
-            def _func():
+            def func():
                 pass
 
-            ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('flash', '/test', 'POST', func)
             self.assertTrue(m_route.called)
             self.assertIsNotNone(ret)
             m_route.reset_mock()
 
             # Not a function
-            ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('TTY', '/test', 'POST', func)
             self.assertFalse(m_route.called)
             self.assertIsNone(ret)
             m_route.reset_mock()
 
             # Non existant
-            ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('UNK', '/test', 'POST', func)
             self.assertFalse(m_route.called)
             self.assertIsNone(ret)
             m_route.reset_mock()

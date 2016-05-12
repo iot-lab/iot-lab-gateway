@@ -52,7 +52,7 @@ class GatewayRest(bottle.Bottle):
     def __init__(self, gateway_manager):
         super(GatewayRest, self).__init__()
         self.gateway_manager = gateway_manager
-        self.board_class = board_config.BoardConfig().board_class
+        self.board_config = board_config.BoardConfig()
         self._app_routing()
 
     def _app_routing(self):
@@ -75,14 +75,14 @@ class GatewayRest(bottle.Bottle):
         self.route('/sleep/<seconds:int>', 'GET', self.sleep)
 
         # Add open_node functions if available
-        self.conditional_route('flash', '/open/flash', 'POST',
-                               self.open_flash)
-        self.conditional_route('reset', '/open/reset', 'PUT',
-                               self.open_reset)
-        self.conditional_route('debug_start', '/open/debug/start', 'PUT',
-                               self.open_debug_start)
-        self.conditional_route('debug_stop', '/open/debug/stop', 'PUT',
-                               self.open_debug_stop)
+        self.on_conditional_route('flash', '/open/flash', 'POST',
+                                  self.open_flash)
+        self.on_conditional_route('reset', '/open/reset', 'PUT',
+                                  self.open_reset)
+        self.on_conditional_route('debug_start', '/open/debug/start', 'PUT',
+                                  self.open_debug_start)
+        self.on_conditional_route('debug_stop', '/open/debug/stop', 'PUT',
+                                  self.open_debug_stop)
 
     def exp_start(self, user, exp_id):
         """
@@ -276,9 +276,14 @@ class GatewayRest(bottle.Bottle):
         LOGGER.debug('REST: Status')
         return {'ret': self.gateway_manager.status()}
 
-    def conditional_route(self, node_func, path, *route_args, **route_kwargs):
-        """ Add route if node implements 'node_func' """
-        has_fct = callable(getattr(self.board_class, node_func, None))
+    def on_conditional_route(self, func, path, *route_args, **route_kwargs):
+        """Add route if node implements 'func'."""
+        return self._cond_route(self.board_config.board_class, func, path,
+                                *route_args, **route_kwargs)
+
+    def _cond_route(self, obj, func, path, *route_args, **route_kwargs):
+        """Add route if `obj.func` exists and is callable."""
+        has_fct = callable(getattr(obj, func, None))
         if has_fct:
             LOGGER.info('REST: Route %s registered', path)
             return self.route(path, *route_args, **route_kwargs)
