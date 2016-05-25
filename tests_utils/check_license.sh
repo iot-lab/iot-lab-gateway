@@ -30,6 +30,7 @@ files_list=$(echo "${files_list}" | grep -v \
     -e 'control_node_serial/tests/utils/' \
     -e 'control_node_serial/examples/' \
     -e 'control_node_serial/src/control_node_measures.rb'\
+    -e 'control_node_serial/src/control_node_measures_oml.h'\
     -e 'Makefile'\
     -e '.dot'\
 )

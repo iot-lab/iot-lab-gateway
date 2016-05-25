@@ -52,7 +52,7 @@ coverage: all
 $(SRCDIR)/control_node_measures_oml.h:
 	make -C $(SRCDIR) control_node_measures_oml.h
 
-$(TARGET): $(OBJS)
+$(TARGET): $(SRCDIR)/control_node_measures_oml.h $(OBJS)
 	$(call quiet-cmd, $(CC) -o $@ $^ $(LDFLAGS),   "  LD      $@")
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c Makefile
