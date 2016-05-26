@@ -26,11 +26,14 @@
 import os
 import shlex
 import subprocess
+
 import atexit
 
 import logging
 
 from gateway_code import common
+from . import subprocess_timeout
+
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -55,9 +58,11 @@ class OpenOCD(object):
              ' -c "shutdown"')
 
     DEBUG = ' -c "reset halt"'
+    TIMEOUT = 15
 
-    def __init__(self, config_file, opts=(), verb=False):
+    def __init__(self, config_file, opts=(), verb=False, timeout=TIMEOUT):
         self.config = self._config(config_file, opts)
+        self.timeout = timeout
 
         self.out = None if verb else self.DEVNULL
 
@@ -127,7 +132,12 @@ class OpenOCD(object):
             LOGGER.error("OpenOCD is in 'debug' mode, stop it to flash/reset")
             return 1
 
-        return subprocess.call(**self._openocd_args(command_str))
+        kwargs = self._openocd_args(command_str)
+        try:
+            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
+        except subprocess_timeout.TimeoutExpired as exc:
+            LOGGER.error("Openocd '%s' timeout: %s", command_str, exc)
+            return 1
 
     def _openocd_args(self, command_str):
         """ Get subprocess arguments for command_str """

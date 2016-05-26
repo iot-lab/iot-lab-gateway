@@ -25,13 +25,14 @@
 
 import os
 import shlex
-import subprocess
 
 import logging
 import serial
 
 from gateway_code import common
 from gateway_code.common import logger_call
+from . import subprocess_timeout
+
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -43,8 +44,11 @@ class AvrDude(object):
     AVRDUDE = 'avrdude -p {model} -P {tty} -c {programmer} -b {baudrate} {cmd}'
     FLASH = ' -D -U {0}'
 
-    def __init__(self, avrdude_conf, verb=False):
+    TIMEOUT = 15
+
+    def __init__(self, avrdude_conf, verb=False, timeout=TIMEOUT):
         assert set(avrdude_conf.keys()) == self._ARVDUDE_CONF_KEYS
+        self.timeout = timeout
         self.conf = avrdude_conf
         self.out = None if verb else self.DEVNULL
 
@@ -60,7 +64,13 @@ class AvrDude(object):
 
     def _call_cmd(self, command_str):
         """ Create the subprocess """
-        return subprocess.call(**self._avrdude_args(command_str))
+        kwargs = self._avrdude_args(command_str)
+        try:
+            return subprocess_timeout.call(timeout=self.timeout,
+                                           **kwargs)
+        except subprocess_timeout.TimeoutExpired as exc:
+            LOGGER.error("Openocd '%s' timeout: %s", command_str, exc)
+            return 1
 
     def _avrdude_args(self, command_str):
         """ Get subprocess arguments for command_str """

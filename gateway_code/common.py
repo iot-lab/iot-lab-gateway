@@ -121,7 +121,7 @@ def syncronous(tlockname):
         def _wrapped_f(self, *args, **kwargs):
             """ Function protected by 'rlock' """
             tlock = self.__getattribute__(tlockname)
-            tlock.acquire()
+            tlock.acquire()  # may add a timeout with python3
             try:
                 return func(self, *args, **kwargs)
             finally:

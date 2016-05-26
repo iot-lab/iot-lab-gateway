@@ -81,6 +81,9 @@ SCRIPTS = glob('bin/scripts/*')
 SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
+if sys.version_info[0] < 3:
+    # Python3 backports of subprocess, support 'timeout' option
+    INSTALL_REQUIRES += ['subprocess32']
 
 UDEV_RULES = glob('bin/rules.d/*.rules')
 
