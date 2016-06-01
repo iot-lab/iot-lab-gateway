@@ -25,7 +25,6 @@
 Manage sending commands and receiving messages
 """
 
-import subprocess
 from subprocess import PIPE
 import Queue
 import threading
@@ -34,6 +33,7 @@ from tempfile import NamedTemporaryFile
 import atexit
 
 from gateway_code import common
+from gateway_code.utils import subprocess_timeout
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -86,7 +86,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         common.empty_queue(self._wait_ready)
 
         args = self._cn_interface_args(oml_xml_config)
-        self.process = subprocess.Popen(args, stderr=PIPE, stdin=PIPE)
+        self.process = subprocess_timeout.Popen(args, stderr=PIPE, stdin=PIPE)
 
         self.reader_thread = threading.Thread(target=self._reader)
         self.reader_thread.start()
@@ -138,11 +138,9 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         Stop `control node serial program` and answers handler.  """
 
         try:
-            self.process.terminate()
+            self._process_stop(timeout=5)
         except OSError:
             LOGGER.error('Control node process already terminated')
-        except AttributeError:
-            pass  # None
 
         if self.reader_thread is not None:
             self.reader_thread.join()
@@ -156,6 +154,22 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
             self._oml_cfg_file.close()
             self._oml_cfg_file = None
         return 0
+
+    def _process_stop(self, timeout=None):
+        """Stop or kill control node interface.
+
+        :raises: OSError if already terminated
+        """
+        try:
+            LOGGER.debug('Control node serial process terminate')
+            self.process.terminate()
+            self.process.wait(timeout=timeout)
+        except subprocess_timeout.TimeoutExpired:
+            # may not have been killed sometime
+            LOGGER.warning('Control node serial not terminated, kill it')
+            self.process.kill()
+        except AttributeError:
+            pass  # None
 
     def _handle_answer(self, line):
         """Handle control node answers

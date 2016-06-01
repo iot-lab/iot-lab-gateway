@@ -40,7 +40,8 @@ from .. import cn_interface
 class TestControlNodeSerial(unittest.TestCase):
 
     def setUp(self):
-        self.popen_patcher = mock.patch('subprocess.Popen')
+        self.popen_patcher = mock.patch(
+            'gateway_code.utils.subprocess_timeout.Popen')
         popen_class = self.popen_patcher.start()
         self.popen = popen_class.return_value
 
@@ -52,7 +53,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.readline_ret_vals.put('cn_serial_ready\n')
 
         self.cn = cn_interface.ControlNodeSerial('tty')
-        self.log_error = LogCapture('gateway_code', level=logging.ERROR)
+        self.log_error = LogCapture('gateway_code', level=logging.WARNING)
 
     def tearDown(self):
         self.cn.stop()
@@ -107,6 +108,23 @@ class TestControlNodeSerial(unittest.TestCase):
         self.log_error.check(
             ('gateway_code', 'ERROR',
              'Control node process already terminated'))
+
+    def test_stop_terminate_failed(self):
+        """Stop cn_interface but terminate does not stop it."""
+        # terminate does not stop process
+        self.popen.terminate.side_effect = None
+        timeout_expired = cn_interface.subprocess_timeout.TimeoutExpired
+        self.popen.wait.side_effect = timeout_expired('cn_serial_interface', 3)
+        # kill does it
+        self.popen.kill.side_effect = self._terminate
+
+        self.cn.start()
+        self.cn.stop()
+
+        self.assertTrue(self.popen.kill.called)
+        self.log_error.check(('gateway_code', 'WARNING',
+                              'Control node serial not terminated, kill it'))
+
 
 # Test command sending
     def test_send_command(self):
