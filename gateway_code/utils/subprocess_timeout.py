@@ -20,7 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 """Compatibility module to use subprocess32 timeout compatible functions.
 
-Add 'call' and 'TimeoutExpired' for the moment.
+Add 'call', 'Popen' and 'TimeoutExpired' for the moment.
 
 It should help mocking tests as it is not necessary to know if using
 subprocess32 on subrocess.
@@ -28,10 +28,10 @@ subprocess32 on subrocess.
 
 import sys
 if sys.version_info[0] < 3:
-    from subprocess32 import call, TimeoutExpired
+    from subprocess32 import call, Popen, TimeoutExpired
 else:  # pragma: no cover
-    from subprocess import call
+    from subprocess import call, Popen
     from subprocess import TimeoutExpired  # pylint:disable=no-name-in-module
 
 
-__all__ = ['call', 'TimeoutExpired']
+__all__ = ['call', 'Popen', 'TimeoutExpired']
