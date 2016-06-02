@@ -65,3 +65,24 @@ Version 2.0.0
  + Run c tests from 'tox'
 
 + Version 2.0.1: Fix Pylint 1.5 messages
+
+
+Version 2.1.0
+-------------
+
+### Bug fixing ###
+
+* Add a timeout for flashing/reset nodes.
+* Do terminate or kill for cn_serial_interface as it sometimes does not stop.
+
+### Features ###
+
+* Upgrade to oml2.11 and rebuild oml header at each compilation.
+* Put openocd 'target/stm32f1x.cfg' as an option as it not required for all
+  nodes. Wont be needed for samr21x-pro nodes.
+
+### Tests ###
+
+* Use texstfixtures.LogCapture for testing logs instead of mock.
+* Fix integration tests with openocd-0.9
+* Don't crash autotest on no return from 'echo'
