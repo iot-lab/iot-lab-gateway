@@ -30,6 +30,7 @@ import gateway_code.config as config
 from gateway_code import common
 from gateway_code.common import logger_call
 from gateway_code.autotest import autotest
+from gateway_code.utils import elftarget
 
 import gateway_code.board_config as board_config
 
@@ -105,6 +106,10 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             profile = self.board_cfg.profile_from_dict(profile_dict)
         except ValueError as err:
             LOGGER.error('%r', err)
+            return 1
+        if not elftarget.is_compatible_with_node(firmware_path,
+                                                 self.open_node):
+            LOGGER.error('Invalid firmware target, aborting experiment.')
             return 1
 
         ret_val = 0
@@ -284,7 +289,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         assert node in ['control', 'open'], "Invalid node name"
         LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
 
-        ret = self._nodes[node].flash(firmware_path)
+        target_node = self._nodes[node]
+
+        if not elftarget.is_compatible_with_node(firmware_path, target_node):
+            LOGGER.error('Invalid firmware target, not flashing.')
+            return 1
+
+        ret = target_node.flash(firmware_path)
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret

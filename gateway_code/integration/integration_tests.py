@@ -226,6 +226,46 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         ret = self.server.put('/open/debug/stop')
         self.assertEquals(0, ret.json['ret'])
 
+    def test_m3_exp_invalid_fw_target(self):
+        """Run an experiment with an invalid firmware."""
+        if self.board_cfg.board_class.TYPE != 'm3':
+            return
+
+        # Invalid firmware for m3
+        node_z1 = CURRENT_DIR + 'node.z1'
+
+        with patch.object(self.g_m.open_node, 'flash') as flash_mock:
+            flash_mock.return_value = 0
+
+            files = [file_tuple('firmware', node_z1)]
+            ret = self.server.post(EXP_START, upload_files=files)
+
+            # Error and flash not called
+            self.assertNotEquals(0, ret.json['ret'])
+            self.assertFalse(flash_mock.called)
+
+        ret = self.server.delete('/exp/stop')
+        self.assertEquals(0, ret.json['ret'])
+
+    def test_m3_flash_inval_fw(self):
+        """Flash an invalid firmware during an experiment."""
+        if self.board_cfg.board_class.TYPE != 'm3':
+            return
+        ret = self.server.post(EXP_START)
+        self.assertEquals(0, ret.json['ret'])
+
+        # Invalid firmware for m3
+        node_z1 = CURRENT_DIR + 'node.z1'
+        with patch.object(self.g_m.open_node, 'flash') as flash_mock:
+            flash_mock.return_value = 0
+            ret = self._flash(node_z1)
+            # Error and flash not called
+            self.assertNotEquals(0, ret.json['ret'])
+            self.assertFalse(flash_mock.called)
+
+        ret = self.server.delete('/exp/stop')
+        self.assertEquals(0, ret.json['ret'])
+
     def test_m3_exp_with_measures(self):  # pylint:disable=too-many-locals
         """ Run an experiment with measures and profile update """
         board_class = self.board_cfg.board_class

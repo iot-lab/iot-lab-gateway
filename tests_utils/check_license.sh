@@ -14,6 +14,7 @@ files_list=$(echo "${files_list}" | grep -v \
     -e '.md$' \
     -e '.elf' \
     -e '.hex' \
+    -e 'node.z1' \
     -e '.json'\
     -e 'AUTHORS' \
     -e 'COPYING' \
