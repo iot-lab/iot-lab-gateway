@@ -24,7 +24,6 @@
 
 import stat
 import os
-import importlib
 import json
 
 STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
@@ -68,28 +67,6 @@ def clean_user_file(file_path):
 
 
 DEFAULT_PROFILE = json.load(open(static_path('default_profile.json')))
-
-OPEN_NODES_PATH = 'gateway_code.open_nodes.node_{board_type}'
-OPEN_CLASS_NAME = 'Node{board_title}'
-
-
-def open_node_class(board_type):
-    """ Return the open node class implementation for `board_type`
-    :raises ValueError: if board class can't be found """
-    try:
-        module_path = OPEN_NODES_PATH.format(board_type=board_type)
-        class_name = OPEN_CLASS_NAME.format(board_title=board_type.title())
-
-        # Get node class from board_type
-        module = importlib.import_module(module_path)
-        board_class = getattr(module, class_name)
-
-        # Class sanity check
-        assert board_class.TYPE == board_type
-    except (ImportError, AttributeError) as err:
-        raise ValueError('Board %s not implemented: %r' % (board_type, err))
-    else:
-        return board_class
 
 
 def read_config(key, default=IOError):

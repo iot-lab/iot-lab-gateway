@@ -32,30 +32,11 @@ import unittest
 
 import mock
 
-from gateway_code.open_nodes.node_m3 import NodeM3
-from gateway_code.open_nodes.node_a8 import NodeA8
-
 from gateway_code import config
 from . import utils
 
 
 class TestConfig(unittest.TestCase):
-
-    def test_open_node_class(self):
-        self.assertEquals(NodeM3, config.open_node_class('m3'))
-        self.assertEquals(NodeA8, config.open_node_class('a8'))
-
-    def test_open_node_class_errors(self):
-        # No module
-        self.assertRaisesRegexp(
-            ValueError, '^Board unknown not implemented: ImportError.*$',
-            config.open_node_class, 'unknown')
-
-        # No Class in module
-        with mock.patch('gateway_code.config.OPEN_CLASS_NAME', 'UnknownClass'):
-            self.assertRaisesRegexp(
-                ValueError, '^Board m3 not implemented: AttributeError.*$',
-                config.open_node_class, 'm3')
 
     def test_read_config(self):
         with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot')):

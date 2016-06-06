@@ -20,3 +20,54 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 """ gateway_code open node files """
+
+import os
+import glob
+import importlib
+
+
+OPEN_NODES_MODULE = 'node_{type}'
+OPEN_CLASS_NAME = 'Node{title}'
+
+
+def node_class(board_type):
+    """Return the open node class implementation for `board_type`.
+
+    :raises ValueError: if board class can't be found """
+    try:
+        module_path = '%s.%s' % (
+            __name__, OPEN_NODES_MODULE.format(type=board_type))
+        class_name = OPEN_CLASS_NAME.format(title=board_type.title())
+
+        # Get node class from board_type
+        module = importlib.import_module(module_path)
+        board_class = getattr(module, class_name)
+
+        # Class sanity check
+        _assert_class_valid(board_class, board_type)
+    except (ImportError, AttributeError) as err:
+        raise ValueError('Board %s not implemented: %r' % (board_type, err))
+    else:
+        return board_class
+
+
+def _assert_class_valid(board_class, board_type):
+    """Check expected values on classes."""
+    assert board_class.TYPE == board_type
+
+
+def all_nodes_types():
+    """Find all implemented node types."""
+
+    current_directory = os.path.dirname(__file__)
+
+    open_node_glob = OPEN_NODES_MODULE.format(type='*')
+    open_node_glob = '%s.%s' % (open_node_glob, 'py')
+    open_node_glob = os.path.join(current_directory, open_node_glob)
+
+    nodes = glob.glob(open_node_glob)
+    nodes = [os.path.basename(node) for node in nodes]
+    nodes = [node.replace('node_', '') for node in nodes]
+    nodes = [node.replace('.py', '') for node in nodes]
+
+    return nodes
