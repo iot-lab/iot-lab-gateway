@@ -38,6 +38,7 @@ class NodeFox(object):
     # Contrary to m3 node, fox node need some time to be visible.
     # Also flash/reset may fail after a node start_dc but don't care
     TYPE = 'fox'
+    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/ttyON_FOX'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-fox.cfg')
