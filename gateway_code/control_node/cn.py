@@ -36,6 +36,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 class ControlNode(object):
     """ Control Node implemenation """
+    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/ttyCN'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')

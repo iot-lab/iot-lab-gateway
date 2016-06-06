@@ -24,6 +24,7 @@
 import os
 import glob
 import importlib
+from gateway_code.utils import elftarget
 
 
 OPEN_NODES_MODULE = 'node_{type}'
@@ -54,6 +55,13 @@ def node_class(board_type):
 def _assert_class_valid(board_class, board_type):
     """Check expected values on classes."""
     assert board_class.TYPE == board_type
+    # Tuple with (class, machine) run 'elftarget.py' on a node firmware
+    assert len(board_class.ELF_TARGET) == 2
+
+    for firmware_attr in ('FW_IDLE', 'FW_AUTOTEST'):
+        firmware = getattr(board_class, firmware_attr, None)
+        assert elftarget.is_compatible_with_node(firmware, board_class), \
+            firmware
 
 
 def all_nodes_types():
