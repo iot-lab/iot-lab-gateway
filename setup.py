@@ -105,9 +105,8 @@ class BuildExt(build_ext):
             exit(err.returncode)
 
 
-class Release(Command):
-    """ Install and do the 'post installation' procedure too.
-    Meant to be used directly on the gateways """
+class PostInstall(Command):
+    """Execute post-install configuration."""
     user_options = []
 
     def initialize_options(self):
@@ -116,15 +115,8 @@ class Release(Command):
     def finalize_options(self):
         pass
 
-    def run(self):
-        try:
-            subprocess.check_call(['python', 'setup.py', 'install'])
-        except subprocess.CalledProcessError as err:
-            exit(err.returncode)
-        self.post_install()
-
     @staticmethod
-    def post_install():
+    def run():
         """ Install init.d script
         Install the udev rules files
         Add www-data user to dialout group """
@@ -147,6 +139,25 @@ class Release(Command):
         subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
 
 
+class Release(Command):
+    """Install and do the 'post installation' procedure too.
+    Meant to be used directly on the gateways """
+    user_options = []
+
+    def initialize_options(self):
+        pass
+
+    def finalize_options(self):
+        pass
+
+    def run(self):
+        try:
+            subprocess.check_call(['python', 'setup.py', 'install'])
+        except subprocess.CalledProcessError as err:
+            exit(err.returncode)
+        PostInstall.run()
+
+
 setup(name=PACKAGE,
       version=get_version(PACKAGE),
       description='Linux Gateway code',
@@ -164,5 +175,6 @@ setup(name=PACKAGE,
       cmdclass={
           'build_ext': BuildExt,
           'release': Release,
+          'post_install': PostInstall,
       },
       install_requires=INSTALL_REQUIRES)

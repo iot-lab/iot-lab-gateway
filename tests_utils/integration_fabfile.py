@@ -104,6 +104,16 @@ def release():
     server_restart()
 
 
+@task
+def post_install():
+    """PostInstall python package."""
+    upload()
+    kill()
+    with cd(REMOTE):
+        run('source /etc/profile; python setup.py post_install')
+    server_restart()
+
+
 @task(default=True)
 def python_test(*attrs):
     """ Execute python integration tests
