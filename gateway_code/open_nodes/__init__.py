@@ -63,6 +63,9 @@ def _assert_class_valid(board_class, board_type):
         assert elftarget.is_compatible_with_node(firmware, board_class), \
             firmware
 
+    required_autotest = {'echo', 'get_time'}  # mandatory
+    assert required_autotest.issubset(board_class.AUTOTEST_AVAILABLE)
+
 
 def all_nodes_types():
     """Find all implemented node types."""
