@@ -39,6 +39,11 @@ if not env.hosts:
     env.hosts = ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci']
 
 
+def chown_www_data():
+    """Set files as www_data."""
+    run('chown -R www-data:www-data {dir}'.format(dir=REMOTE))
+
+
 @runs_once
 @task
 def upload():
@@ -53,7 +58,7 @@ def _do_upload():
     rsync_project(local_dir=LOCAL + '/', remote_dir=REMOTE, upload=True,
                   ssh_opts=SSH_OPTS, extra_opts=extra_opts,
                   exclude=EXCLUDE, delete=True)
-    run('chown -R www-data:www-data {dir}'.format(dir=REMOTE))
+    chown_www_data()
 
 
 @task
@@ -108,6 +113,7 @@ def python_test(*attrs):
     """
     upload()
     kill()
+    chown_www_data()
     ret = tox_call('integration', 'www-data', *attrs)
     download()
     return ret
