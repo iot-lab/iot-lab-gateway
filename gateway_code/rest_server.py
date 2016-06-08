@@ -65,8 +65,10 @@ class GatewayRest(bottle.Bottle):
         self.route('/status', 'GET', self.status)
         # Control node functions
         self.route('/exp/update', 'POST', self.exp_update_profile)
-        self.route('/open/start', 'PUT', self.open_start)
-        self.route('/open/stop', 'PUT', self.open_stop)
+        self.cn_conditional_route('open_start', '/open/start', 'PUT',
+                                  self.open_start)
+        self.cn_conditional_route('open_stop', '/open/stop', 'PUT',
+                                  self.open_stop)
         # Autotest functions
         # query_string: channel=int[11:26]
         self.route('/autotest', 'PUT', self.auto_tests)
@@ -279,6 +281,11 @@ class GatewayRest(bottle.Bottle):
     def on_conditional_route(self, func, path, *route_args, **route_kwargs):
         """Add route if node implements 'func'."""
         return self._cond_route(self.board_config.board_class, func, path,
+                                *route_args, **route_kwargs)
+
+    def cn_conditional_route(self, func, path, *route_args, **route_kwargs):
+        """Add route if control node implements 'func'."""
+        return self._cond_route(self.board_config.cn_class, func, path,
                                 *route_args, **route_kwargs)
 
     def _cond_route(self, obj, func, path, *route_args, **route_kwargs):
