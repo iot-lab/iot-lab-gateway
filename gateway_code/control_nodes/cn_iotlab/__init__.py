@@ -43,6 +43,10 @@ class ControlNodeIotlab(object):
     OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')
     OPENOCD_OPTS = ('target/stm32f1x.cfg',)
     FW_CONTROL_NODE = static_path('control_node.elf')
+    FEATURES = ['leds',
+                'open_node_power',
+                'open_node_gpio', 'open_node_i2c',
+                'radio', 'consumption']
 
     def __init__(self, node_id, default_profile):
         self.node_id = node_id
