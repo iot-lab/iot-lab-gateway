@@ -63,7 +63,8 @@ class GatewayCodeMock(unittest.TestCase):
         self.board_cfg = gateway_code.board_config.BoardConfig()
 
         self.cn_measures = []
-        self.g_m.control_node.cn_serial.measures_debug = self.cn_measure
+        if hasattr(self.g_m.control_node, 'cn_serial'):
+            self.g_m.control_node.cn_serial.measures_debug = self.cn_measure
 
     def cn_measure(self, measure):
         """ Store control node measures """
