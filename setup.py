@@ -141,6 +141,7 @@ class Release(Command):
         # Udev rules
         for rule in UDEV_RULES:
             shutil.copy(rule, '/etc/udev/rules.d/')
+        subprocess.check_call(['udevadm', 'control', '--reload'])
 
         #  add `www-data` user to `dialout` group
         subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
