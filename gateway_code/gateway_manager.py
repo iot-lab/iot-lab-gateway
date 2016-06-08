@@ -56,6 +56,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.open_node = self.board_cfg.board_class()
         self.control_node = self.board_cfg.cn_class(
             self.board_cfg.node_id, self.board_cfg.default_profile)
+        self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
         self.exp_id = None
@@ -71,9 +72,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Run commands that might crash
         Must be run before running other commands """
         # Setup control node
-        ret = self.control_node.setup()
+        ret = self.node_flash('control', None)  # Flash default
         if ret != 0:
-            raise StandardError("Control node setup failed: {ret:%d}", ret)
+            raise StandardError("Control node flash failed: {ret:%d}", ret)
 
     # R0913 too many arguments 6/5
     @common.syncronous('rlock')
@@ -254,7 +255,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Start open node debugger """
         LOGGER.info('Open node debugger start')
 
-        ret = self.open_node.debug_start()
+        ret = self._nodes['open'].debug_start()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger start failed')
         return ret
@@ -264,40 +265,49 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         """ Stop open node debugger """
         LOGGER.info('Open node debugger stop')
 
-        ret = self.open_node.debug_stop()
+        ret = self._nodes['open'].debug_stop()
         if ret != 0:  # pragma: no cover
             LOGGER.error('Open node debugger stop failed')
         return ret
 
     @common.syncronous('rlock')
     @logger_call("Gateway Manager : Soft reset of open node")
-    def open_reset(self):
-        """Reset open node."""
-        LOGGER.info('Open Node reset')
+    def node_soft_reset(self, node):
+        """
+        Reset the given node using reset pin
 
-        ret = self.open_node.reset()
+        :param node: Node type in {'control', 'open'}
+        """
+        assert node in ['control', 'open'], "Invalid node type"
+        LOGGER.info('Node %s reset', node)
+
+        ret = self._nodes[node].reset()
 
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Open Node reset failed : %d', ret)
+            LOGGER.error('Reset failed on %s node: %d', node, ret)
         return ret
 
     @common.syncronous('rlock')
-    @logger_call("Gateway Manager : Flash of open node")
-    def open_flash(self, firmware_path):
-        """Flash the given firmware on open node.
-
-        :param firmware_path: Path to the firmware to flash
+    @logger_call("Gateway Manager : Flash of node")
+    def node_flash(self, node, firmware_path):
         """
-        LOGGER.info('Flash firmware on open node: %s', firmware_path)
+        Flash the given firmware on the given node
 
-        if not elftarget.is_compatible_with_node(firmware_path,
-                                                 self.open_node):
+        :param node: Node name in {'control', 'open'}
+        :param firmware_path: Path to the firmware to be flashed on `node`.
+        """
+        assert node in ['control', 'open'], "Invalid node name"
+        LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
+
+        target_node = self._nodes[node]
+
+        if not elftarget.is_compatible_with_node(firmware_path, target_node):
             LOGGER.error('Invalid firmware target, not flashing.')
             return 1
 
-        ret = self.open_node.flash(firmware_path)
+        ret = target_node.flash(firmware_path)
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Flash firmware failed on open node node: %d', ret)
+            LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret
 
     @common.syncronous('rlock')

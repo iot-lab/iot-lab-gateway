@@ -25,6 +25,7 @@
 
 import time
 import re
+import functools
 import logging
 from bisect import bisect
 
@@ -48,12 +49,23 @@ def autotest_checker(*required):
 
     Allow selecting test launch if the required commads are present in
     board AUTOTEST_AVAILABLE list. """
-    def store_tested_features(self):
-        """Store tested features."""
-        self.TESTED_FEATURES.update(required)
+    required = set(required)
 
-    return common.class_attr_has('on_class.AUTOTEST_AVAILABLE', required,
-                                 pre_func=store_tested_features)
+    def _wrap(func):
+        """ Decorator implementation """
+        @functools.wraps(func)
+        def _wrapped_f(self, *args, **kwargs):
+            """ Function wrapped with test """
+            available = set(self.on_class.AUTOTEST_AVAILABLE)
+
+            if not required.issubset(available):
+                return 0
+
+            # Store tested features
+            self.TESTED_FEATURES.update(required)
+            return func(self, *args, **kwargs)
+        return _wrapped_f
+    return _wrap
 
 
 def autotest_control_node_checker(*required):
@@ -89,7 +101,6 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
-
         board_cfg = board_config.BoardConfig()
         self.on_class = board_cfg.board_class
         self.cn_class = board_cfg.cn_class
@@ -672,7 +683,10 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         """ Try consumption for Battery """
 
-        ret_val = 0
+        # Disable battery tests as they have been unplugged
+        return 0
+
+        ret_val = 0  # pylint: disable=unreachable
 
         ret_val += self.g_m.control_node.open_start('battery')
 

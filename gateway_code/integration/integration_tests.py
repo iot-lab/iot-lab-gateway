@@ -42,7 +42,7 @@ from gateway_code.tests.rest_server_test import query_string
 from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
 from gateway_code.utils.node_connection import OpenNodeConnection
-from gateway_code.common import wait_cond, abspath, wait_no_tty, wait_tty
+from gateway_code.common import wait_cond, abspath, wait_tty, wait_no_tty
 from gateway_code.common import class_attr_has, object_attr_has
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
@@ -372,7 +372,6 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
 
-    @class_attr_has(CN_FEATURES_ATTR, 'radio', 'consumption')
     def test_exp_with_fastest_measures(self):
         """ Run an experiment with fastest measures."""
 
