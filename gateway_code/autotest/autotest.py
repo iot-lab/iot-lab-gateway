@@ -52,8 +52,16 @@ def autotest_checker(*required):
         """Store tested features."""
         self.TESTED_FEATURES.update(required)
 
-    return common.class_attr_has('open_node.AUTOTEST_AVAILABLE', required,
+    return common.class_attr_has('on_class.AUTOTEST_AVAILABLE', required,
                                  pre_func=store_tested_features)
+
+
+def autotest_control_node_checker(*required):
+    """Only run tests if control_node has feature.
+
+    Allow selecting test launch if the required commads are present in
+    control_node FEATURES list. """
+    return common.class_attr_has('cn_class.FEATURES', required)
 
 
 class FatalError(Exception):
@@ -81,7 +89,10 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
-        self.open_node = board_config.BoardConfig().board_class
+
+        board_cfg = board_config.BoardConfig()
+        self.on_class = board_cfg.board_class
+        self.cn_class = board_cfg.cn_class
 
         self.on_serial = None
         self.a8_connection = None
@@ -122,7 +133,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         * Start serial interface """
         ret_val = 0
 
-        ret = self.g_m.open_node.setup(self.open_node.FW_AUTOTEST)
+        ret = self.g_m.open_node.setup(self.on_class.FW_AUTOTEST)
         ret_val += self._check(ret, 'open_node_setup', ret)
 
         self.on_serial = OpenNodeConnection()
@@ -139,7 +150,9 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
           * get
 
         """
-        assert self.open_node.TYPE == 'a8'
+        assert self.on_class.TYPE == 'a8'
+        # Should be adapted if already booted, so not enabled for cn_no
+        assert self.cn_class.TYPE == 'iotlab'
 
         ret_val = 0
         ret = self.g_m.open_node.setup(None, debug=False)
@@ -180,11 +193,11 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         Should be done on DC"""
 
         ret_val = 0
-        ret_val += self.g_m.control_node.open_start('dc')
+        ret_val += self._open_node_start()
 
         # setup
         # A8 node is very different from the generic way
-        if self.open_node.TYPE == 'a8':
+        if self.on_class.TYPE == 'a8':
             ret_val += self._setup_open_node_a8()
         else:
             ret_val += self._setup_open_node()
@@ -226,7 +239,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         LOGGER.info("Teardown autotests")
 
         # ensure DC alim
-        ret_val += self.g_m.control_node.open_start('dc')
+        ret_val += self._open_node_start()
 
         ret_val += self.set_result_leds(blink)
         ret_val += self._teardown_open_node(stop=(not blink))
@@ -263,7 +276,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
             # Other tests, run on DC
 
-            ret = self.g_m.control_node.open_start('dc')
+            ret = self._open_node_start()
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
             # Test using leds commands
@@ -376,6 +389,11 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         # Blink leds on success
         self._on_call(['leds_blink', '7', '500'])
+        self._control_node_leds_blink()
+
+    @autotest_control_node_checker('leds')
+    def _control_node_leds_blink(self):
+        """Set control nodes blink."""
         self.g_m.control_node.protocol.green_led_blink()
 
     # Require 'echo' command
@@ -508,11 +526,13 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
 # Control Node <--> Open Node Interraction
     @autotest_checker('test_gpio')
+    @autotest_control_node_checker('open_node_gpio')
     def test_gpio(self):
         """ test GPIO connections """
         return self._test_on_cn(5, ['test_gpio'])
 
     @autotest_checker('test_i2c')
+    @autotest_control_node_checker('open_node_i2c')
     def test_i2c(self):
         """ test i2c communication """
         return self._test_on_cn(1, ['test_i2c'])
@@ -574,6 +594,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
 # Radio tests
     @autotest_checker('radio_ping_pong')
+    @autotest_control_node_checker('radio')
     def test_radio_ping_pong(self, channel):
         """ test Radio Ping-pong with control-node """
         if channel is None:
@@ -583,6 +604,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
                                 ['radio_ping_pong'], [str(channel), '3dBm'])
 
     @autotest_checker('radio_pkt')
+    @autotest_control_node_checker('radio')
     def test_radio_with_rssi(self, channel):
         """ Test radio with rssi"""
         self.cn_measures = []
@@ -615,6 +637,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
 # Consumption tests
 
+    @autotest_control_node_checker('consumption')
     def test_consumption_dc(self):
         """ Try consumption for DC """
 
@@ -624,7 +647,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         conso = Consumption(self.g_m.open_node.ALIM, 'dc',
                             '1100', '64', True, True, True)
-        ret_val += self.g_m.control_node.open_start('dc')
+        ret_val += self._open_node_start()
 
         self.cn_measures = []
         # store 2 secs of measures
@@ -643,22 +666,21 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         return ret_val
 
+    @autotest_control_node_checker('battery')  # no more batteries
+    @autotest_control_node_checker('consumption')
     def test_consumption_batt(self):  # pragma: no cover
 
         """ Try consumption for Battery """
 
-        # Disable battery tests as they have been unplugged
-        return 0
-
-        ret_val = 0  # pylint: disable=unreachable
+        ret_val = 0
 
         ret_val += self.g_m.control_node.open_start('battery')
 
         # set a firmware on m3 to ensure corret consumption measures
         # on a8, linux is consuming enough I think
-        if self.open_node.TYPE == 'm3':  # pragma: no branch
+        if self.on_class.TYPE == 'm3':  # pragma: no branch
             time.sleep(1)
-            ret = self.g_m.open_node.flash(self.open_node.FW_AUTOTEST)
+            ret = self.g_m.open_node.flash(self.on_class.FW_AUTOTEST)
             ret_val += self._check(ret, 'flash_m3_on_battery', ret)
 
         # configure consumption
@@ -689,6 +711,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         return ret_val
 
     @autotest_checker('leds_consumption', 'leds_on', 'leds_off')
+    @autotest_control_node_checker('consumption')
     def test_leds_with_consumption(self):
         """ Test Leds with consumption
 
@@ -705,7 +728,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         ret_val = 0
         conso = Consumption(self.g_m.open_node.ALIM, 'dc',
                             '1100', '64', True, True, True)
-        ret_val += self.g_m.control_node.open_start('dc')
+        ret_val += self._open_node_start()
 
         self.cn_measures = []
         leds_timestamps = []
@@ -742,6 +765,10 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         ret_val += self._check(tst_ok(test_ok), 'leds_using_conso',
                                (led_0, led_consumption))
         return ret_val
+
+    @autotest_control_node_checker('open_node_power')
+    def _open_node_start(self):
+        return self.g_m.control_node.open_start('dc')
 
 
 def extract_measures(meas_list):

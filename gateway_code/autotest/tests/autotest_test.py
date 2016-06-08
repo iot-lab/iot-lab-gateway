@@ -139,7 +139,8 @@ class TestAutotestChecker(unittest.TestCase):
 
     def setUp(self):
         self.func = mock.Mock()
-        self.open_node = mock.Mock()
+        self.on_class = mock.Mock()
+        self.cn_class = mock.Mock()
         self.TESTED_FEATURES.clear()
 
     def function(self, *args, **kwargs):
@@ -148,7 +149,8 @@ class TestAutotestChecker(unittest.TestCase):
 
     def test_autotest_checker(self):
 
-        self.open_node.AUTOTEST_AVAILABLE = ['echo', 'get_time']
+        self.on_class.AUTOTEST_AVAILABLE = ['echo', 'get_time']
+        self.cn_class.FEATURES = []
 
         # Should call the function
         # func_cmd == decorated function
