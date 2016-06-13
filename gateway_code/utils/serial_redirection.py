@@ -25,6 +25,7 @@
 import os
 import time
 import subprocess
+import signal
 import shlex
 import threading
 import atexit
@@ -78,11 +79,13 @@ class SerialRedirection(threading.Thread):
         """ Stop the running thread """
         self._run = False
         LOGGER.debug('SerialRedirection stop')
+        signals = self.signals_iter()
 
         # kill
         while self.is_alive():
             try:
-                self.redirector.terminate()
+                sig = signals.next()
+                self.redirector.send_signal(sig)
             except OSError as err:
                 # errno == 3 'No such proccess', already terminated: OK
                 assert err.errno == 3, 'Unknown error num: %r' % err.errno
@@ -94,6 +97,32 @@ class SerialRedirection(threading.Thread):
         # Re-init thread to allow calling 'start' once again
         self._thread_init()
         return 0
+
+    @staticmethod
+    def signals_iter(sigterm=10, sigint=10):
+        """Generator to incrementally send more important signals.
+
+        Yields:
+
+        * SIGTERM `sigterm` times
+        * then SIGINT `sigint` times
+        * then SIGKILL indefinitely
+
+        Signals information:
+          ftp://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_24.html#SEC472  # pylint:disable=line-too-long  # noqa
+        """
+        sigterm = int(sigterm)
+        sigint = int(sigint)
+        for _ in xrange(0, sigterm):
+            yield signal.SIGTERM
+
+        LOGGER.info('SerialRedirection signal: escalading to SIGINT')
+        for _ in xrange(0, sigint):
+            yield signal.SIGINT
+
+        LOGGER.warning('SerialRedirection signal: escalading to SIGKILL')
+        while True:
+            yield signal.SIGKILL
 
     def _target(self):
         """ Starts a while loop running a socat command """
