@@ -86,3 +86,6 @@ Version 2.1.0
 * Use texstfixtures.LogCapture for testing logs instead of mock.
 * Fix integration tests with openocd-0.9
 * Don't crash autotest on no return from 'echo'
+
+
++ 2.1.1: Fix: `node_leonardo` wait tty ready, add some delay.

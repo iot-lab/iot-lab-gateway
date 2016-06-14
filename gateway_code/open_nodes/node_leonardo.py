@@ -21,6 +21,7 @@
 
 """ Open Node Leonardo experiment implementation """
 
+import time
 import logging
 
 from gateway_code.config import static_path
@@ -42,6 +43,7 @@ class NodeLeonardo(object):
     TTY_PROG = '/dev/ttyON_LEONARDO_PROG'
     # Regular TTY will be restored after 8 seconds
     TTY_RESTORE_TIME = 8 + common.TTY_DETECT_TIME
+    TTY_READY_DELAY = 1
 
     BAUDRATE = 9600
     FW_IDLE = static_path('idle_leonardo.elf')
@@ -69,10 +71,7 @@ class NodeLeonardo(object):
         """ Flash open node, create serial redirection """
         ret_val = 0
 
-        # Same code as 'node_fox'
-        common.wait_no_tty(self.TTY)
-        # pylint:disable=duplicate-code
-        ret_val += common.wait_tty(self.TTY, LOGGER)
+        ret_val += self._wait_tty_ready()
         ret_val += self.flash(firmware_path)
         ret_val += self.serial_redirection.start()
         return ret_val
@@ -82,12 +81,7 @@ class NodeLeonardo(object):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
 
-        # ON may have been stopped at the end of the experiment.
-        # And then restarted again in cn teardown.
-        # This leads to problem where the TTY disappears and reappears during
-        # the first 2 seconds. So let some time if it wants to disappear first.
-        common.wait_no_tty(self.TTY)
-        ret_val += common.wait_tty(self.TTY, LOGGER)
+        ret_val += self._wait_tty_ready()
         ret_val += self.serial_redirection.stop()
         ret_val += self.flash(None)
         return ret_val
@@ -121,3 +115,20 @@ class NodeLeonardo(object):
         """ Check Leonardo node status """
         # It's impossible for us to check the status of the leonardo node
         return 0
+
+    def _wait_tty_ready(self):
+        """Wait that the tty is ready to use.
+
+        Node may have been stopped at the end of the experiment.
+        And then restarted again in cn teardown.
+        This leads to problem where the TTY disappears and reappears during
+        the first 2 seconds. So let some time if it wants to disappear first.
+
+        Also, got some problems when using the tty directly after appearing, so
+        git it some delay.
+        """
+        common.wait_no_tty(self.TTY)
+        ret = common.wait_tty(self.TTY, LOGGER)
+        # wait tty ready to speak
+        time.sleep(self.TTY_READY_DELAY)
+        return ret
