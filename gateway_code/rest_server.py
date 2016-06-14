@@ -29,6 +29,7 @@ import json
 import errno
 import logging
 import functools
+import traceback
 from tempfile import NamedTemporaryFile
 
 import bottle
@@ -306,6 +307,10 @@ class GatewayRest(bottle.Bottle):
                     return 'Error: 503 Service Unavailable\n'
                 LOGGER.error('RestServer: %r', err)
                 raise err
+            except:
+                # Catch all for debugging
+                traceback.print_exc()
+                raise
         return _wrapped_f
 
 # Command line functions
