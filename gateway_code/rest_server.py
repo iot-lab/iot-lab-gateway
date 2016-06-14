@@ -26,7 +26,9 @@ REST server listening to the experiment handler
 """
 
 import json
+import errno
 import logging
+import functools
 from tempfile import NamedTemporaryFile
 
 import bottle
@@ -68,6 +70,8 @@ class GatewayRest(bottle.Bottle):
         # query_string: channel=int[11:26]
         self.route('/autotest', 'PUT', self.auto_tests)
         self.route('/autotest/<mode>', 'PUT', self.auto_tests)
+        # Test function
+        self.route('/sleep/<seconds:int>', 'GET', self.sleep)
 
         # Add open_node functions if available
         self.conditional_route('flash', '/open/flash', 'POST',
@@ -259,6 +263,11 @@ class GatewayRest(bottle.Bottle):
         ret_dict = self.gateway_manager.auto_tests(channel, blink, flash, gps)
         return ret_dict
 
+    def sleep(self, seconds):
+        """Sleep `seconds` seconds."""
+        LOGGER.debug('REST: sleep %d', seconds)
+        return {'ret': self.gateway_manager.sleep(seconds)}
+
     def status(self):
         """ Return node status
          * Check nodes ftdi
@@ -276,6 +285,28 @@ class GatewayRest(bottle.Bottle):
             LOGGER.debug('REST: Route %s not available', path)
             return None
 
+    def route(self, path, method='GET', callback=None, **options):
+        """Add a route but catch some exceptions."""
+        callback = self._cb_wrap(callback)
+        return super(GatewayRest, self).route(path, method, callback,
+                                              **options)
+
+    @staticmethod
+    def _cb_wrap(func):
+        """Wrap function to catch EnvironmentError(EWOULDBLOCK)."""
+        @functools.wraps(func)
+        def _wrapped_f(*args, **kwargs):
+            """Wrapped function."""
+            try:
+                return func(*args, **kwargs)
+            except EnvironmentError as err:
+                if err.errno == errno.EWOULDBLOCK:
+                    LOGGER.error('RestServer: Request would block, abort')
+                    bottle.response.status = 503
+                    return 'Error: 503 Service Unavailable\n'
+                LOGGER.error('RestServer: %r', err)
+                raise err
+        return _wrapped_f
 
 # Command line functions
 

@@ -24,6 +24,8 @@
 """ Gateway manager """
 
 import os
+import time
+import errno
 from threading import RLock, Timer
 
 import gateway_code.config as config
@@ -153,9 +155,17 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         Should stop only if experiment is the same as the experiment
         that started the timer """
         LOGGER.info("Timeout experiment: %r %r", user, exp_id)
-        if (self.exp_id, self.user) == (exp_id, user):
-            LOGGER.info("Still running. Stop exp")
+        if (self.exp_id, self.user) != (exp_id, user):
+            return
+
+        LOGGER.info('Still running. Stop exp')
+        try:
             self.exp_stop()
+        except EnvironmentError as err:
+            if err.errno == errno.EWOULDBLOCK:
+                LOGGER.warning('timeout_exp_stop would block hope its OK')
+                return
+            raise
 
     @common.syncronous('rlock')
     @logger_call("Gateway Manager : Stop experiment")
@@ -313,6 +323,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         ret += self.control_node.status()
         ret += self.open_node.status()
         return ret
+
+    @common.syncronous('rlock')
+    def sleep(self, seconds):  # pylint:disable=no-self-use
+        """Sleep `seconds` seconds."""
+        time.sleep(seconds)
+        return 0
 
 # Experiment files and folder management methods
 

@@ -25,6 +25,7 @@
 
 import os
 import time
+import errno
 # http://code.activestate.com/recipes/\
 #     577105-synchronization-decorator-for-class-methods/
 # About `functools.wraps` http://stackoverflow.com/a/309000/395687
@@ -116,12 +117,16 @@ def wait_no_tty(dev_tty, timeout=TTY_DETECT_TIME):
 def syncronous(tlockname):
     """A decorator to place an instance based lock around a method """
     def _wrap(func):
-        """ Decorator implementation """
+        """Decorator implementation."""
         @functools.wraps(func)
         def _wrapped_f(self, *args, **kwargs):
             """ Function protected by 'rlock' """
             tlock = self.__getattribute__(tlockname)
-            tlock.acquire()  # may add a timeout with python3
+            if not tlock.acquire(blocking=False):
+                err = errno.EWOULDBLOCK
+                name = self.__class__.__name__
+                raise EnvironmentError(err, os.strerror(err), name)
+
             try:
                 return func(self, *args, **kwargs)
             finally:

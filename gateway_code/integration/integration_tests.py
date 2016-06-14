@@ -30,6 +30,7 @@ import time
 import math
 import subprocess
 import logging
+from threading import Thread
 from itertools import izip
 
 import mock
@@ -342,6 +343,22 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
                 os.remove(exp_files[meas_type])
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
+
+
+class TestManagerLocked(ExperimentRunningMock):
+    """Test that when manager is locked raises error 503."""
+    def test_concurrent_requests(self):
+        """Test running a new experiment when manager is stuck."""
+        thr_blocking = Thread(target=self.server.get, args=('/sleep/5',))
+        thr_blocking.start()
+        time.sleep(0.5)
+        try:
+            # RestServer busy with 'sleep', cannot start a new experiment
+            # Error 503
+            error_status = 503
+            self.server.post(EXP_START, status=error_status)
+        finally:
+            thr_blocking.join()
 
 
 class TestExperimentTimeout(ExperimentRunningMock):

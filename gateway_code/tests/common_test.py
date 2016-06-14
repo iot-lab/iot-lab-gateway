@@ -108,19 +108,18 @@ class TestSyncronousDecorator(unittest.TestCase):
                 self.item_list = []
 
             @common.syncronous('rlock')
-            def put_after_time(self, delay, item):
+            def put_after_time(self, item, delay=0):
                 time.sleep(delay)
                 self.item_list.append(item)
 
         class_put = PutAfterTime()
 
-        thr_a = Thread(target=class_put.put_after_time, args=(2, 'a'))
-        thr_b = Thread(target=class_put.put_after_time, args=(0, 'b'))
+        thr_a = Thread(target=class_put.put_after_time, args=('a', 2))
 
         thr_a.start()
         time.sleep(0.5)
-        thr_b.start()
-        time.sleep(0.5)
-        class_put.put_after_time(0, 'c')
+        self.assertRaises(EnvironmentError, class_put.put_after_time, 'b')
+        time.sleep(2)
+        class_put.put_after_time('c')
 
-        self.assertEquals(['a', 'b', 'c'], class_put.item_list)
+        self.assertEquals(['a', 'c'], class_put.item_list)
