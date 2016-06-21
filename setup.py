@@ -21,8 +21,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-"""
-setup.py deployement script
+"""setup.py deployement script.
 
 Install all the `gateway code` on a gateway
 
@@ -39,12 +38,11 @@ Pylint and pep8 checker:
 
     python setup.py lint
     python setup.py pep8
-
-
 """
 
 from setuptools import setup, Command, Extension, find_packages
 from setuptools.command.build_ext import build_ext
+from distutils.command.install import install
 
 import sys
 import os
@@ -52,19 +50,14 @@ import subprocess
 import shutil
 from glob import glob
 
-# pylint: disable=attribute-defined-outside-init
-# pylint <= 1.3
-# pylint: disable=too-many-public-methods
-# pylint >= 1.4
-# pylint: disable=too-few-public-methods
-
 PACKAGE = 'gateway_code'
 # GPL compatible http://www.gnu.org/licenses/license-list.html#CeCILL
 LICENSE = 'CeCILL v2.1'
 
 
 def get_version(package):
-    """ Extract package version without importing file
+    """Extract package version without importing file.
+
     Importing cause issues with coverage,
         (modules can be removed from sys.modules to prevent this)
     Importing __init__.py triggers importing rest and then requests too
@@ -90,10 +83,10 @@ UDEV_RULES = glob('bin/rules.d/*.rules')
 
 
 class BuildExt(build_ext):
-    """ Overwrite build_ext to build control node serial """
+    """Overwrite build_ext to build control node serial."""
 
     def run(self):
-        """ Build control node serial interface """
+        """Build control node serial interface."""
         # Don't build for Pylint
         if self.distribution.script_args == ['lint']:
             return
@@ -105,57 +98,81 @@ class BuildExt(build_ext):
             exit(err.returncode)
 
 
-class PostInstall(Command):
-    """Execute post-install configuration."""
-    user_options = []
+def simple_command(function):
+    """Return a simple command without options."""
+    class SimpleCommand(Command):
+        """Command without options."""
 
-    def initialize_options(self):
-        pass
+        user_options = []
 
-    def finalize_options(self):
-        pass
+        def initialize_options(self):
+            pass
 
-    @staticmethod
-    def run():
-        """ Install init.d script
-        Install the udev rules files
-        Add www-data user to dialout group """
+        def finalize_options(self):
+            pass
 
-        # setup init script
-        init_script = 'gateway-server-daemon'
-        update_rc_d_args = ['update-rc.d', init_script,
-                            'start', '80', '2', '3', '4', '5', '.',
-                            'stop', '20', '0', '1', '6', '.']
-        shutil.copy('bin/init_script/' + init_script, '/etc/init.d/')
-        os.chmod('/etc/init.d/' + init_script, 0755)
-        subprocess.check_call(update_rc_d_args)
+        def run(self):
+            """Run function with or without self argument."""
+            try:
+                execute(self, function, [self])
+            except TypeError:
+                execute(self, function)
 
-        # Udev rules
-        for rule in UDEV_RULES:
-            shutil.copy(rule, '/etc/udev/rules.d/')
-        subprocess.check_call(['udevadm', 'control', '--reload'])
-
-        #  add `www-data` user to `dialout` group
-        subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
+    return SimpleCommand
 
 
-class Release(Command):
+def execute(self, function, args=()):
+    """Run distutils execute function with args and auto-doc."""
+    msg = function.__doc__.splitlines()[0]
+    msg = 'running %s: %s' % (function.__name__, msg)
+    self.execute(function, args, msg)
+
+
+def post_install(self):
+    """System configuration.
+
+    * install init.d script
+    * install udev rules files
+    * Add www-data user to dialout group
+    """
+    execute(self, setup_initd_script)
+    execute(self, udev_rules)
+    execute(self, add_www_data_to_dialout)
+
+
+def setup_initd_script():
+    """Setup init.d script."""
+    init_script = 'gateway-server-daemon'
+    update_rc_d_args = ['update-rc.d', init_script,
+                        'start', '80', '2', '3', '4', '5', '.',
+                        'stop', '20', '0', '1', '6', '.']
+    shutil.copy('bin/init_script/' + init_script, '/etc/init.d/')
+    os.chmod('/etc/init.d/' + init_script, 0755)
+    subprocess.check_call(update_rc_d_args)
+
+
+def udev_rules():
+    """Install udev rules files."""
+    for rule in UDEV_RULES:
+        shutil.copy(rule, '/etc/udev/rules.d/')
+    subprocess.check_call(['udevadm', 'control', '--reload'])
+
+
+def add_www_data_to_dialout():
+    """Add `www-data` user to `dialout` group."""
+    subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
+
+
+class Release(install):
     """Install and do the 'post installation' procedure too.
-    Meant to be used directly on the gateways """
-    user_options = []
 
-    def initialize_options(self):
-        pass
-
-    def finalize_options(self):
-        pass
+    Meant to be used directly on the gateways
+    """
 
     def run(self):
-        try:
-            subprocess.check_call(['python', 'setup.py', 'install'])
-        except subprocess.CalledProcessError as err:
-            exit(err.returncode)
-        PostInstall.run()
+        """Run `install` and `post_install`."""
+        install.run(self)
+        execute(self, post_install, [self])
 
 
 setup(name=PACKAGE,
@@ -175,6 +192,6 @@ setup(name=PACKAGE,
       cmdclass={
           'build_ext': BuildExt,
           'release': Release,
-          'post_install': PostInstall,
+          'post_install': simple_command(post_install),
       },
       install_requires=INSTALL_REQUIRES)
