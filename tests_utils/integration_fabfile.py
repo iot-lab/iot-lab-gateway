@@ -114,6 +114,14 @@ def post_install():
     server_restart()
 
 
+@task
+def udev_rules_install():
+    """Install udev rules."""
+    upload()
+    with cd(REMOTE):
+        run('source /etc/profile; python setup.py udev_rules_install')
+
+
 @task(default=True)
 def python_test(*attrs):
     """ Execute python integration tests
@@ -123,6 +131,7 @@ def python_test(*attrs):
     """
     upload()
     kill()
+    udev_rules_install()
     chown_www_data()
     ret = tox_call('integration', 'www-data', *attrs)
     download()

@@ -193,5 +193,6 @@ setup(name=PACKAGE,
           'build_ext': BuildExt,
           'release': Release,
           'post_install': simple_command(post_install),
+          'udev_rules_install': simple_command(udev_rules),
       },
       install_requires=INSTALL_REQUIRES)
