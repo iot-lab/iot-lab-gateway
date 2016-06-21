@@ -73,7 +73,7 @@ Version 2.1.0
 ### Bug fixing ###
 
 * Add a timeout for flashing/reset nodes.
-* Do terminate or kill for cn_serial_interface as it sometimes does not stop.
+* Do terminate or kill for `cn_serial_interface` as it sometimes does not stop.
 
 ### Features ###
 
@@ -87,5 +87,34 @@ Version 2.1.0
 * Fix integration tests with openocd-0.9
 * Don't crash autotest on no return from 'echo'
 
-
 + 2.1.1: Fix: `node_leonardo` wait tty ready, add some delay.
+
+
+Version 2.2.0
+-------------
+
+### Features ###
+
++ Verify firmware elf target before using them.
+  Invalid firmware may be uploaded, mainly with custom nodes so fail early.
++ Reject concurrent requests on `gateway_manager` instead of waiting for
+  termination. Ensures only one REST request is processed at a time.
+  Prevent the server to be blocked and crash on many requests if one is stuck
+  infinitely.
++ verify open nodes classes implementation for given AUTOTESTS in firmware.
+
+### Bug fixing ###
+
+- Ensure `serial_redirection` gets stopped. It rarely does not close on
+  SIGTERM. So try several sigterms/sigint and then sigkill.
+- Wait a bit before using leonardo tty when visible, as may not be ready.
+
+### Tests ###
+
++ Release udev rules before running integration tests. Will allow running tests
+  with new nodes implementation.
++ Catch all REST methods exceptions and display a stacktrace, will help debug
+  errors instead of only showing the 500 error.
++ Fix permissions just before running integration tests to make it work when
+  doing `release python_test`.
++ Add `post_install` and `udev_rules_install` setup.py and fabric commands.
