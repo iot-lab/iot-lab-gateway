@@ -58,6 +58,8 @@ def autotest_checker(*required):
             available = set(self.open_node.AUTOTEST_AVAILABLE)
 
             if required.issubset(available):
+                # Store tested features
+                self.TESTED_FEATURES.update(required)
                 return func(self, *args, **kwargs)
             else:
                 return 0
@@ -84,6 +86,9 @@ def tst_ok(bool_value):
 
 class AutoTestManager(object):  # pylint:disable=too-many-public-methods
     """ Gateway and open node auto tests """
+
+    # Global used in tests to store checked open node features
+    TESTED_FEATURES = set()
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
@@ -239,6 +244,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         run auto-tests on nodes and gateway using 'gateway_manager'
         """
         ret_val = 0
+        self.TESTED_FEATURES.clear()
         try:
             self.setup_control_node()
 
@@ -335,12 +341,18 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
             values.append(parse_function(answer))
         return values
 
+    def _on_serial_send_command(self, cmd):
+        """Set command to open node serial."""
+        # Also register called commands.
+        self.TESTED_FEATURES.add(cmd[0])
+        return self.on_serial.send_command(cmd)
+
     def _on_call(self, cmd):
         """ Call command to Open Node and expect correct answer
         cmd args
         ACK cmd [answer_args]
         """
-        answer = self.on_serial.send_command(cmd)
+        answer = self._on_serial_send_command(cmd)
         if (answer is None) or (answer[0:2] != ['ACK', cmd[0]]):
             self._check(1, "On Command: %r" % cmd, answer)
             return (1, answer)
@@ -364,7 +376,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         """ run the echo command on the serial port """
         # echo arg1 arg2: ['arg1', 'arg2']
         cmd = ['echo', 'HELLO', 'WORLD']
-        answer = self.on_serial.send_command(cmd)
+        answer = self._on_serial_send_command(cmd)
         _answer = answer or []  # Replace None
         test_ok = _answer[0:2] == ['HELLO', 'WORLD']
         self._assert(tst_ok(test_ok), 'on_serial_echo', answer,

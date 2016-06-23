@@ -29,6 +29,7 @@ import sys
 
 from nose.plugins.attrib import attr
 
+from gateway_code.autotest.autotest import AutoTestManager
 from gateway_code.integration import test_integration_mock
 from gateway_code.utils.node_connection import OpenNodeConnection
 from gateway_code.tests.rest_server_test import query_string
@@ -60,6 +61,10 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
             ret = OpenNodeConnection.send_one_command(['get_time'])
             self.g_m.open_node.serial_redirection.stop()
             self.assertIsNotNone(ret)
+
+        not_tested = (set(self.g_m.open_node.AUTOTEST_AVAILABLE) -
+                      set(AutoTestManager.TESTED_FEATURES))
+        self.assertEquals(not_tested, set())
 
     def test_mode_no_blink_no_radio(self):
         """ Try running autotest without blinking leds and without radio """

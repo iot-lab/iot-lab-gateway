@@ -135,9 +135,12 @@ class TestProtocolGPS(unittest.TestCase):
 
 class TestAutotestChecker(unittest.TestCase):
 
+    TESTED_FEATURES = set()
+
     def setUp(self):
         self.func = mock.Mock()
         self.open_node = mock.Mock()
+        self.TESTED_FEATURES.clear()
 
     def function(self, *args, **kwargs):
         """ Should mock a real function to let 'wraps' work """
