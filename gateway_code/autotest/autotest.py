@@ -269,6 +269,9 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
             ret = self.g_m.control_node.open_start('dc')
             ret_val += self._check(ret, 'switch_to_dc', ret)
 
+            # Test using leds commands
+            self.set_leds_off_and_on()
+
             # test IMU
             ret_val += self.test_gyro()
             ret_val += self.test_magneto()
@@ -415,6 +418,15 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         ret_val = self._check(tst_ok(test_ok), 'get_uid', values)
         return ret_val
+
+    @autotest_checker('leds_on', 'leds_off')
+    def set_leds_off_and_on(self):
+        """Turn leds off and on."""
+        # Clean leds state
+        self._on_call(['leds_off', '7'])
+        time.sleep(1)
+        self._on_call(['leds_on', '7'])
+
 # sensors and flash
 
     @autotest_checker('test_flash')
