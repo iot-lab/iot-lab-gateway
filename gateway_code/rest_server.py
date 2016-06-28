@@ -292,7 +292,6 @@ class GatewayRest(bottle.Bottle):
         """Add route if `obj.func` exists and is callable."""
         has_fct = callable(getattr(obj, func, None))
         if has_fct:
-            LOGGER.info('REST: Route %s registered', path)
             return self.route(path, *route_args, **route_kwargs)
         else:
             LOGGER.debug('REST: Route %s not available', path)
@@ -302,6 +301,7 @@ class GatewayRest(bottle.Bottle):
         """Add a route but catch some exceptions."""
         # pylint:disable=arguments-differ
         callback = self._cb_wrap(callback)
+        LOGGER.info('REST: Route %s registered', path)
         return super(GatewayRest, self).route(path, method, callback,
                                               *args, **kwargs)
 
