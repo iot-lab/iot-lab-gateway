@@ -53,6 +53,7 @@ enum frame_type {
      */
     CONFIG_CONSUMPTION   = 0xCC,
 
+    CONFIG_GPIO          = 0xCD,
 
     /*
      * Asyncronous frames

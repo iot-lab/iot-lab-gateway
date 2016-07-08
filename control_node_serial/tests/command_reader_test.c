@@ -175,6 +175,21 @@ TEST(test_parse_cmd, consumption)
         ASSERT_NE(0, ret);
 }
 
+TEST(test_parse_cmd, gpio_event)
+{
+        int ret;
+        char cmd[256];
+        struct command_buffer cmd_buff;
+
+        strcpy(cmd, "config_gpio_event stop");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(3, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_GPIO, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(STOP, cmd_buff.u.s.payload[1]);
+
+}
+
 TEST(test_parse_cmd, radio_stop)
 {
         int ret;
