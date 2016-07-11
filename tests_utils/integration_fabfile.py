@@ -22,7 +22,8 @@ EXCLUDE += ['control_node_serial/tests/results/']
 EXCLUDE += ['control_node_serial/tests/obj/']
 EXCLUDE += ['control_node_serial/tests/bin/']
 
-SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+FILE = __file__.rstrip('c')  # Use real file not .pyc
+SCRIPT_DIR = os.path.dirname(os.path.realpath(FILE))
 LOCAL = os.path.dirname(SCRIPT_DIR)
 REMOTE = "/tmp/iot-lab-gateway"
 
