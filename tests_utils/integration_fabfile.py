@@ -128,6 +128,12 @@ def deploy():
 
 
 @task
+def status():
+    """Run gateway status command."""
+    run('curl -s http://localhost:8080/status')
+
+
+@task
 def post_install():
     """PostInstall python package."""
     upload()
