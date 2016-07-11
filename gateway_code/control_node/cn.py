@@ -107,6 +107,8 @@ class ControlNode(object):
         # Monitoring
         ret_val += self.protocol.config_consumption(self.profile.consumption)
         ret_val += self.protocol.config_radio(self.profile.radio)
+        ret_val += self.protocol.config_gpio()
+
         return ret_val
 
     @logger_call("Control node : start power of open node")

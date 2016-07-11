@@ -168,3 +168,13 @@ class Protocol(object):
     def _stop_radio(self):
         """ Stop the radio """
         return self.send_cmd(['config_radio_stop'])
+
+    def config_gpio(self):
+        """Configure radio measures on control nodeo stub, for tests."""
+        cmd = ['config_gpio_event']
+        cmd.append('start')
+        cmd.append('%d' % 1)
+
+        ret = self.send_cmd(cmd)
+        return ret
+
