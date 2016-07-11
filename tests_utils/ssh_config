@@ -1,4 +1,4 @@
-Host *-ci
+Host *-ci a8-*
   User root
   StrictHostKeyChecking no
   ProxyCommand ssh -p 2222 root@devgrenoble.iot-lab.info -W %h:%p

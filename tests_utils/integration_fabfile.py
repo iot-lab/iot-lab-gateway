@@ -33,6 +33,7 @@ env.use_ssh_config = True
 
 
 env.roledefs = {
+    'all-a8': ['a8-%d' % i for i in range(50, 65)],
     'all-ci': ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci'],
 }
 
@@ -46,6 +47,7 @@ def set_targets():
         return
 
     env.roles = ['all-ci']
+    env.roles = ['all-a8']  # overwrite for moctar
 
 
 set_targets()
@@ -114,6 +116,15 @@ def release():
     with cd(REMOTE):
         run('source /etc/profile; python setup.py release')
     server_restart()
+
+
+@task
+@runs_once
+def deploy():
+    """Deploy newer server on test a8 nodes."""
+    with settings(roles=[], hosts=['a8-50']):
+        release()
+    execute(server_restart)
 
 
 @task
