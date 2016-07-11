@@ -22,7 +22,7 @@ EXCLUDE += ['control_node_serial/tests/results/']
 EXCLUDE += ['control_node_serial/tests/obj/']
 EXCLUDE += ['control_node_serial/tests/bin/']
 
-SCRIPT_DIR = os.path.dirname((__file__))
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 LOCAL = os.path.dirname(SCRIPT_DIR)
 REMOTE = "/tmp/iot-lab-gateway"
 
@@ -31,12 +31,24 @@ SSH_CFG = os.path.join(SCRIPT_DIR, 'ssh_config')
 env.ssh_config_path = SSH_CFG
 env.use_ssh_config = True
 
+
+env.roledefs = {
+    'all-ci': ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci'],
+}
+
 # Required to re-add SSH_OPTS on the integration server
 SSH_OPTS = '-F {0}'.format(SSH_CFG)
 
-# Default to all targets
-if not env.hosts:
-    env.hosts = ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci']
+
+def set_targets():
+    """Set default roles, or use command line args."""
+    if env.hosts or env.roles:
+        return
+
+    env.roles = ['all-ci']
+
+
+set_targets()
 
 
 def chown_www_data():
@@ -157,6 +169,12 @@ def tox_call(cmd, user, *attrs):
     with cd(REMOTE):
         ret = safe_su(cmd, user=user)
     return ret.return_code
+
+
+@task
+def uptime():
+    """Simply run 'uptime' command."""
+    run('uptime')
 
 
 @task
