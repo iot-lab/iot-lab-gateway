@@ -93,15 +93,6 @@ void oml_measures_consumption(uint32_t timestamp_s, uint32_t timestamp_us,
                 timestamp_s, timestamp_us, power, voltage, current);
 }
 
-void oml_measures_gpio(uint32_t timestamp_s, uint32_t timestamp_us,
-                       uint8_t value, uint8_t source)
-{
-    if (oml_measure_started)
-        oml_inject_gpio(g_oml_mps_control_node_measures->gpio, timestamp_s, timestamp_us, value, source);
-    if (oml_print)
-        PRINT_MEASURE("gpio %u.%06u %u %u \n", timestamp_s, timestamp_us, value, source);
-}
-
 void oml_measures_radio(uint32_t timestamp_s, uint32_t timestamp_us,
         uint32_t channel, int32_t rssi)
 {

@@ -50,8 +50,8 @@ struct radio_measure {
 };
 
 struct gpio_measure {
-    uint8_t value;
-    uint8_t source;
+    uint32_t value;
+    uint32_t source;
 };
 
 static struct _measure_handler_state {
@@ -230,9 +230,16 @@ static void gpio_handler(uint8_t *buf, struct timeval *time)
     struct gpio_measure gpio_meas;
     memcpy(&gpio_meas, buf, sizeof(gpio_meas));
 
-    size_t i = 0;
+    char* source;
+    switch (gpio_meas.source) {
+        case 0:
+            source = strdup("pps");
+            break;
+        default:
+            return;
+    }
 
-    oml_measures_gpio(time->tv_sec, time->tv_usec, gpio_meas.value, gpio_meas.source);
+    oml_measures_event(time->tv_sec, time->tv_usec, gpio_meas.value, source);
 }
 
 static void config_consumption(int power_source, int p, int v, int c)
@@ -327,10 +334,11 @@ int handle_measure_pkt(uint8_t *data, size_t len)
             meas_str  = "radio";
             meas_size = sizeof(struct radio_measure);
             break;
-        case GPIO_FRAME:
+        case EVENT_FRAME:
             handler = gpio_handler;
-            meas_str = "gpio"
-            meas_size = sizeof(struct gpio_measure); 
+            meas_str = "gpio";
+            meas_size = sizeof(struct gpio_measure);
+            break; 
 
         default:
             return -1;

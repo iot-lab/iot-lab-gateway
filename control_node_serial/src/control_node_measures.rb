@@ -56,7 +56,7 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
     mp.defMetric('crc_ok', :boolean)
     mp.defMetric('length', :uint32)
   end
-
+ 
   app.defMeasurement("event") do |mp|
     mp.defMetric('timestamp_s', :uint32)
     mp.defMetric('timestamp_us', :uint32)

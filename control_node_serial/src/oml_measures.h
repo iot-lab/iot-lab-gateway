@@ -35,7 +35,4 @@ void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
 void oml_measures_event(uint32_t timestamp_s, uint32_t timestamp_us,
                         uint32_t value, const char* name);
 
-void oml_measures_gpio(uint32_t timestamp_s, uint32_t timestamp_us,
-                       uint8_t value, uint8_t source);
-
 #endif // OML_MEASURES_H

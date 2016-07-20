@@ -68,7 +68,7 @@ enum frame_type {
     CONSUMPTION_FRAME    = 0xFC,
 
     LOGGER_FRAME         = 0xEE,  // log messages
-
+    EVENT_FRAME          = 0xFE,
 
     /*
      * Test commands
@@ -79,7 +79,6 @@ enum frame_type {
 
     TEST_PPS             = 0x74,
     TEST_GOT_PPS         = 0x76,
-
 };
 
 enum ack_nack {
