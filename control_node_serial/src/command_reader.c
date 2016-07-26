@@ -422,17 +422,18 @@ static int cmd_gpio_event(char *cmd_str, struct command_buffer *cmd_buff,
 
     sscanf(cmd_str, command->fmt, start_stop, &flag);
 
+    /* Add state byte */
     ret |= get_val(start_stop, state_d, &state);
     append_data(cmd_buff, &state, sizeof(uint8_t));
 
-    uint8_t aux = 0;
+    /* Add flag byte */
     if (state == START) {
         ret |= !(flag == 1 || flag == 2 || flag == 4);
-        append_data(cmd_buff, &flag, sizeof(uint8_t));
-
     } else { // state == STOP
-        append_data(cmd_buff, &aux, sizeof(uint8_t));
+        flag = 0;
     }
+    append_data(cmd_buff, &flag, sizeof(uint8_t));
+
     return ret;
 }
 
