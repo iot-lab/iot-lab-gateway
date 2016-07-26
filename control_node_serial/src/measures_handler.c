@@ -342,6 +342,7 @@ int handle_measure_pkt(uint8_t *data, size_t len)
             meas_str = "event";
             meas_size = sizeof(struct event_measure);
             break;
+
         default:
             return -1;
     }
