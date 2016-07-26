@@ -225,19 +225,22 @@ static void consumption_handler(uint8_t *buf, struct timeval *time)
     oml_measures_consumption(time->tv_sec, time->tv_usec, p, v, c);
 }
 
+static char *event_source_str(uint32_t source)
+{
+    switch (source) {
+    case 0:
+        return "pps";
+    default:
+        return NULL;
+    }
+}
+
 static void event_handler(uint8_t *buf, struct timeval *time)
 {
     struct event_measure event_meas;
     memcpy(&event_meas, buf, sizeof(event_meas));
 
-    char* source;
-    switch (event_meas.source) {
-        case 0:
-            source = "pps";
-            break;
-        default:
-            return;
-    }
+    char* source = event_source_str(event_meas.source);
 
     oml_measures_event(time->tv_sec, time->tv_usec, event_meas.value, source);
 }
