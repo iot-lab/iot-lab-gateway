@@ -66,9 +66,9 @@ enum frame_type {
     RADIO_MEAS_FRAME     = 0xF1,
     RADIO_SNIFFER_FRAME  = 0xF3,
     CONSUMPTION_FRAME    = 0xFC,
+    EVENT_FRAME          = 0xFE,
 
     LOGGER_FRAME         = 0xEE,  // log messages
-    EVENT_FRAME          = 0xFE,
 
     /*
      * Test commands
