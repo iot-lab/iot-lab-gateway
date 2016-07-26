@@ -428,7 +428,7 @@ static int cmd_gpio_event(char *cmd_str, struct command_buffer *cmd_buff,
 
     /* Add flag byte */
     if (state == START) {
-        ret |= !(flag == 1 || flag == 2 || flag == 4);
+        ret |= !(flag == 1 || flag == 2 || flag == 4);  // TODO flag in [1, 7]
     } else { // state == STOP
         flag = 0;
     }
