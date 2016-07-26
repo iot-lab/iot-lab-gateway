@@ -177,4 +177,3 @@ class Protocol(object):
 
         ret = self.send_cmd(cmd)
         return ret
-
