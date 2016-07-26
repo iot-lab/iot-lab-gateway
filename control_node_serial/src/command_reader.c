@@ -427,7 +427,7 @@ static int cmd_gpio_event(char *cmd_str, struct command_buffer *cmd_buff,
 
     uint8_t aux = 0;
     if (state == START) {
-        ret |= !(flag == 1 || flag == 2 || flag == 4); 
+        ret |= !(flag == 1 || flag == 2 || flag == 4);
         append_data(cmd_buff, &flag, sizeof(uint8_t));
 
     } else { // state == STOP

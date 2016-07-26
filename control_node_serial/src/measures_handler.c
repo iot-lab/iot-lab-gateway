@@ -338,8 +338,7 @@ int handle_measure_pkt(uint8_t *data, size_t len)
             handler = gpio_handler;
             meas_str = "gpio";
             meas_size = sizeof(struct gpio_measure);
-            break; 
-
+            break;
         default:
             return -1;
     }
