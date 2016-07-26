@@ -233,7 +233,7 @@ static void gpio_handler(uint8_t *buf, struct timeval *time)
     char* source;
     switch (gpio_meas.source) {
         case 0:
-            source = strdup("pps");
+            source = "pps";
             break;
         default:
             return;
