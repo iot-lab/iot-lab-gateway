@@ -114,9 +114,11 @@ def release():
     """Release python package."""
     upload()
     kill()
+    # Use pip with options to re-install it every times even without changes
     with cd(REMOTE):
-        run('source /etc/profile; python setup.py release')
-    server_restart()
+        run('source /etc/profile;'
+            ' pip install . --force-reinstall --no-deps --ignore-installed')
+    post_install()
 
 
 @task
