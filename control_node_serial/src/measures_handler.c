@@ -225,13 +225,17 @@ static void consumption_handler(uint8_t *buf, struct timeval *time)
     oml_measures_consumption(time->tv_sec, time->tv_usec, p, v, c);
 }
 
+/* Returns either Named value for known sources or hexa value */
 static char *event_source_str(uint32_t source)
 {
+    static char source_str[16];
+
     switch (source) {
     case 0:
         return "pps";
     default:
-        return NULL;
+        snprintf(source_str, sizeof(source_str), "0x%x", source);
+        return source_str;
     }
 }
 
