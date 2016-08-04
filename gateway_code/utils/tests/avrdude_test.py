@@ -35,8 +35,8 @@ import unittest
 import serial
 import mock
 
-from .. import avrdude
 from gateway_code.open_nodes.node_leonardo import NodeLeonardo
+from .. import avrdude
 
 
 class TestsMethods(unittest.TestCase):

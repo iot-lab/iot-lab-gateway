@@ -31,8 +31,8 @@ import time
 import unittest
 import mock
 
-from .. import openocd
 from gateway_code.open_nodes.node_m3 import NodeM3  # config file
+from .. import openocd
 
 
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
