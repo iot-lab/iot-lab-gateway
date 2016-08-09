@@ -36,7 +36,7 @@ DAEMON=/usr/bin/gateway-rest-server
 DAEMON_OPTS="0.0.0.0 8080 --log-folder=$LOGDIR"
 
 # add path for finding openocd
-export PATH=$PATH:/usr/local/bin
+export PATH=/usr/local/bin:$PATH
 
 
 
