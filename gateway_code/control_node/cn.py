@@ -26,6 +26,7 @@ import logging
 
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
+from gateway_code.utils.periodic_timer import PeriodicTimer
 from gateway_code.config import static_path
 from gateway_code.control_node import cn_interface, cn_protocol
 
@@ -53,6 +54,8 @@ class ControlNode(object):
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
         self.open_node_state = 'stop'
         self.profile = self.default_profile
+
+        self._set_time_timer = PeriodicTimer(60, self.protocol.set_time)
 
     @logger_call("Control node : Starting of control node serial interface")
     def start(self, exp_id, exp_files=None):
@@ -83,6 +86,7 @@ class ControlNode(object):
         ret_val += self.protocol.set_time()
         ret_val += self.protocol.set_node_id(self.node_id)
         ret_val += self.configure_profile(profile)
+        self._set_time_timer.start()
         return ret_val
 
     @logger_call("Control node : stop of the experiment")
@@ -90,6 +94,7 @@ class ControlNode(object):
         """ Cleanup the control node configuration
         Also start open node for cleanup """
         ret_val = 0
+        self._set_time_timer.stop()
         ret_val += self.configure_profile(None)
         ret_val += self.open_start('dc')
         ret_val += self.protocol.green_led_on()
