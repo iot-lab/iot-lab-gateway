@@ -118,3 +118,15 @@ Version 2.2.0
 + Fix permissions just before running integration tests to make it work when
   doing `release python_test`.
 + Add `post_install` and `udev_rules_install` setup.py and fabric commands.
+
+
+Version 2.3.0
+-------------
+
+### Features ###
+
++ Add samr21-xpro board support
++ Autotests:
+    - Verify that all open nodes features have been tested, should help detect
+      missing tests in autotests.
+    - Add a test that verifies only `leds_on` and `leds_off`.
