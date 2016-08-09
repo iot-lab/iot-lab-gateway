@@ -94,7 +94,7 @@ class ControlNode(object):
         """ Cleanup the control node configuration
         Also start open node for cleanup """
         ret_val = 0
-        self._set_time_timer.stop()
+        self._set_time_timer.cancel()
         ret_val += self.configure_profile(None)
         ret_val += self.open_start('dc')
         ret_val += self.protocol.green_led_on()
