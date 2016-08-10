@@ -88,6 +88,15 @@ void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
         check_expected(length);
 }
 
+void oml_measures_event(uint32_t timestamp_s, uint32_t timestamp_us,
+                uint32_t value, const char* name)
+{
+        count_call();
+        check_expected(timestamp_s);
+        check_expected(timestamp_us);
+        check_expected(value);
+        check_expected(name);
+}
 
 size_t sniffer_server_send_packet(const uint8_t *data, size_t len)
 {
