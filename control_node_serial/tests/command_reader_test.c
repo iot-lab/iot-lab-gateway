@@ -56,8 +56,8 @@ TEST(test_parse_cmd, simple_commands)
         struct command_buffer cmd_buff;
         char cmd[256];
         struct timeval time_now;
-        gettimeofday(&time_now, NULL);
 
+        gettimeofday(&time_now, NULL);
         strcpy(cmd, "set_time");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
@@ -65,8 +65,8 @@ TEST(test_parse_cmd, simple_commands)
         ASSERT_EQ(SET_TIME, cmd_buff.u.s.payload[0]);
         // check time stored in the packet is correct
         memcpy(&time_s, &cmd_buff.u.s.payload[1], sizeof(uint32_t));
-        ASSERT_TRUE(time_s <= time_now.tv_sec);
-        ASSERT_TRUE(time_s + 2 >= time_now.tv_sec);
+        ASSERT_TRUE(time_now.tv_sec <= time_s);
+        ASSERT_TRUE(time_s < time_now.tv_sec + 2);
 
         uint16_t node_id;
         strcpy(cmd, "set_node_id m3 1");
