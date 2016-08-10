@@ -130,6 +130,12 @@ class TestProtocol(unittest.TestCase):
         self.sender.assert_called_with(['set_node_id', 'a8', '256'])
         self.assertEquals(0, ret)
 
+    def test_set_node_id_not_managed(self):
+        """Test set_node_id with unsupported archi."""
+        ret = self.protocol.set_node_id('custom-1')
+        self.assertEquals(0, ret)
+        self.assertEquals(self.sender.call_count, 0)
+
     def test_led_control(self):
 
         self.sender.return_value = ['green_led_blink', 'ACK']
