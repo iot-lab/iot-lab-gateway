@@ -29,6 +29,7 @@ Usage:
 """
 import argparse
 from .. import avrdude
+from . import log_to_stderr
 
 PARSER = argparse.ArgumentParser()
 _SUB = PARSER.add_subparsers()
@@ -48,8 +49,10 @@ def _node_type(node):
     return _config[node]
 
 
+@log_to_stderr
 def main():
     """ openocd main function """
+
     opts = PARSER.parse_args()
     node = _node_type(opts.node)
     ret = avrdude.AvrDude.trigger_bootloader(node.TTY, node.TTY_PROG)

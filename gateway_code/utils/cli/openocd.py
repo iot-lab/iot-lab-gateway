@@ -30,6 +30,7 @@ Usage:
 import signal
 import argparse
 from .. import openocd
+from . import log_to_stderr
 
 PARSER = argparse.ArgumentParser()
 _SUB = PARSER.add_subparsers()
@@ -79,6 +80,7 @@ def _debug(ocd):
     return 0
 
 
+@log_to_stderr
 def main():
     """ openocd main function """
     opts = PARSER.parse_args()

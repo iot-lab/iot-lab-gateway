@@ -29,12 +29,14 @@ Usage: serial_redirection <tty> <baudrate>
 import argparse
 import signal
 from .. import serial_redirection
+from . import log_to_stderr
 
 PARSER = argparse.ArgumentParser()
 PARSER.add_argument('tty', type=str, help="Serial device")
 PARSER.add_argument('baudrate', type=int, help="Serial baudrate")
 
 
+@log_to_stderr
 def main():
     """ serial_redirection cli main function """
 
