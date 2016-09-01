@@ -46,6 +46,7 @@ EXP_FILES = {
     'radio': 'radio/{node_id}.oml',
     'event': 'event/{node_id}.oml',
     'sniffer': 'sniffer/{node_id}.oml',
+    'clock': 'clock_{node_id}.oml',
     'log': 'log/{node_id}.log',
 }
 
