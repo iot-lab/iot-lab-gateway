@@ -64,6 +64,17 @@ defApplication('iotlab:app:control_node_measures', 'control_node_measures') do |
     mp.defMetric('name', :string)
   end
 
+  app.defMeasurement("clock") do |mp|
+    mp.defMetric('timestamp_s', :uint32)
+    mp.defMetric('timestamp_us', :uint32)
+    mp.defMetric('time0', :uint64)
+    mp.defMetric('tref_sec', :uint32)
+    mp.defMetric('tref_usec', :uint32)
+    mp.defMetric('kfrequency', :uint32)
+    mp.defMetric('last_set_time', :uint64)
+  end
+
+
 end
 
 # Local Variables:

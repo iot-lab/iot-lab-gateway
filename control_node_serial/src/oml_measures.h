@@ -34,5 +34,7 @@ void oml_measures_sniffer(uint32_t timestamp_s, uint32_t timestamp_us,
                           uint8_t crc_ok, uint32_t length);
 void oml_measures_event(uint32_t timestamp_s, uint32_t timestamp_us,
                         uint32_t value, const char* name);
+void oml_measures_clock(uint32_t timestamp_s, uint32_t timestamp_us,
+        uint64_t time0, uint32_t tref_sec, uint32_t tref_usec, uint32_t kfrequency, uint64_t last_set_time);
 
 #endif // OML_MEASURES_H
