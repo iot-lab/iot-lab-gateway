@@ -67,7 +67,7 @@ enum frame_type {
     RADIO_SNIFFER_FRAME  = 0xF3,
     CONSUMPTION_FRAME    = 0xFC,
     EVENT_FRAME          = 0xFE,
-
+    CLOCK_FRAME          = 0xFD,
     LOGGER_FRAME         = 0xEE,  // log messages
 
     /*
