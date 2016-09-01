@@ -54,6 +54,14 @@ struct event_measure {
     uint32_t source;
 };
 
+struct clock_measure {
+    uint64_t time0;
+    uint32_t tref_sec;
+    uint32_t tref_usec;
+    uint32_t kfrequency;
+    uint64_t last_set_time;
+};
+
 static struct _measure_handler_state {
     struct {
         int p;
@@ -239,6 +247,19 @@ static char *event_source_str(uint32_t source)
     }
 }
 
+static void clock_handler(uint8_t *buf, struct timeval *time)
+{
+    struct clock_measure clock_meas;
+    memcpy(&(clock_meas.time0), buf, 8);
+    memcpy(&(clock_meas.tref_sec), buf + 8 , 4);
+    memcpy(&(clock_meas.tref_usec), buf + 12 , 4);
+    memcpy(&(clock_meas.kfrequency), buf + 16, 4);
+    memcpy(&(clock_meas.last_set_time), buf + 20, 8);
+    
+    oml_measures_clock(time->tv_sec, time->tv_usec, clock_meas.time0, clock_meas.tref_sec, clock_meas.tref_usec, clock_meas.kfrequency, clock_meas.last_set_time);
+}
+
+
 static void event_handler(uint8_t *buf, struct timeval *time)
 {
     struct event_measure event_meas;
@@ -346,7 +367,13 @@ int handle_measure_pkt(uint8_t *data, size_t len)
             meas_str = "event";
             meas_size = sizeof(struct event_measure);
             break;
-
+    
+        case CLOCK_FRAME:
+            handler = clock_handler;
+            meas_str = "clock";
+            meas_size = 28;
+            break;
+            
         default:
             return -1;
     }
