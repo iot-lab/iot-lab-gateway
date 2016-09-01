@@ -55,6 +55,9 @@ OML_XML = '''
   <collect url='file:{sniffer}' encoding='text'>
     <stream name="sniffer" mp="sniffer" samples='1' />
   </collect>
+  <collect url='file:{clock}' encoding='text'>
+    <stream name="clock" mp="clock" samples='1' />
+  </collect>
 </omlc>
 '''
 
