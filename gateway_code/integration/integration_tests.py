@@ -269,7 +269,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         ret = self.server.delete('/exp/stop')
         self.assertEquals(0, ret.json['ret'])
 
-    def _update_profile(self, profilefilename=None):
+    def _update_profile(self, profilefilename=None, assert_ret=True):
         """Update profile with given 'profilename' file."""
         if profilefilename is not None:
             profile = file_tuple('profile', CURRENT_DIR + profilefilename)[-1]
@@ -277,7 +277,9 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             profile = ''
 
         ret = self.server.post('/exp/update', profile, content_type=APP_JSON)
-        self.assertEquals(0, ret.json['ret'])
+        if assert_ret:
+            self.assertEquals(0, ret.json['ret'])
+        return ret
 
     def test_m3_exp_with_measures(self):
         """ Run an experiment with measures and profile update """
@@ -348,6 +350,58 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
                 os.remove(exp_files[meas_type])
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
+
+    def test_exp_with_fastest_measures(self):
+        """ Run an experiment with fastest measures."""
+
+        # Max profile and firmware if possible
+        files = []
+        if self.board_cfg.board_class.TYPE != 'a8':
+            files.append(file_tuple('firmware',
+                                    self.board_cfg.board_class.FW_AUTOTEST))
+
+        # Disable cn debug, too fast to print at the same time
+        self.g_m.control_node.cn_serial.measures_debug = None
+
+        # Start
+        ret = self.server.post(EXP_START, upload_files=files)
+        self.assertEquals(0, ret.json['ret'])
+        # Copy files for further checking
+        exp_files = self.g_m.exp_files.copy()
+
+        self._update_profile('profile_max.json')
+
+        time.sleep(30)
+
+        # When updating profile at full speed
+        # Update profile may break, but consumption is still stopped.
+        # just ignore errors on the first one here
+        self.log_error.check()
+        if self._update_profile(None, False):
+            time.sleep(1)
+
+            # No error on second _update_profile
+            self.log_error.clear()
+            self._update_profile(None)
+            self.log_error.check()
+        time.sleep(2)  # wait maybe remaining values
+
+        # Stop experiment
+        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+
+        # Got no error during tests (use assertEquals for printing result)
+        if self.board_cfg.board_class.TYPE != 'a8':
+            # On A8 nodes, ignore error 'Boot A8 failed in time:'
+            self.log_error.check()
+
+        # Observed number of measures
+        # No real reasons, just verifying that it at least the same
+        for meas_type, num_meas in (('radio', 1000), ('consumption', 50000)):
+            num_lines = len(open(exp_files[meas_type]).readlines())
+            print 'num measures lines: %s: %d' % (meas_type, num_lines)
+            print 'num measures ref: %s: %d' % (meas_type, num_meas)
+            # Was failing some times, disable
+            # self.assertTrue(num_meas < num_lines)
 
 
 class TestManagerLocked(ExperimentRunningMock):

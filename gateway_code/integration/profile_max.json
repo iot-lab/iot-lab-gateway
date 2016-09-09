@@ -1,0 +1,19 @@
+{
+    "profilename": "test_profile_max",
+    "power": "dc",
+
+    "consumption": {
+        "period" : 140,
+        "average": 1,
+
+        "power"  : true,
+        "voltage": true,
+        "current": true
+    },
+    "radio": {
+        "mode" : "rssi",
+        "channels" : [11, 12],
+        "period" : 1,
+        "num_per_channel" : 1
+    }
+}
