@@ -50,6 +50,8 @@ USER = 'harter'
 EXP_ID = 123
 EXP_START = '/exp/start/{exp_id}/{user}'.format(user=USER, exp_id=123)
 
+APP_JSON = 'application/json'
+
 
 def file_tuple(fieldname, file_path):
     """ Return upload_file tuple """
@@ -267,34 +269,37 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         ret = self.server.delete('/exp/stop')
         self.assertEquals(0, ret.json['ret'])
 
-    def test_m3_exp_with_measures(self):  # pylint:disable=too-many-locals
-        """ Run an experiment with measures and profile update """
-        board_class = self.board_cfg.board_class
-        app_json = 'application/json'
+    def _update_profile(self, profilefilename=None):
+        """Update profile with given 'profilename' file."""
+        if profilefilename is not None:
+            profile = file_tuple('profile', CURRENT_DIR + profilefilename)[-1]
+        else:
+            profile = ''
 
-        if board_class.TYPE != 'm3':
+        ret = self.server.post('/exp/update', profile, content_type=APP_JSON)
+        self.assertEquals(0, ret.json['ret'])
+
+    def test_m3_exp_with_measures(self):
+        """ Run an experiment with measures and profile update """
+
+        if self.board_cfg.board_class.TYPE != 'm3':
             return
         t_start = time.time()
 
-        files = [file_tuple('firmware', board_class.FW_AUTOTEST)]
+        files = [
+            file_tuple('firmware', self.board_cfg.board_class.FW_AUTOTEST),
+        ]
         ret = self.server.post(EXP_START, upload_files=files)
         self.assertEquals(0, ret.json['ret'])
 
         # Copy files for further checking
         exp_files = self.g_m.exp_files.copy()
 
-        # Set first profile
-        profile = file_tuple('profile', CURRENT_DIR + 'profile.json')[-1]
-        ret = self.server.post('/exp/update', profile, content_type=app_json)
-        self.assertEquals(0, ret.json['ret'])
-
-        time.sleep(10)  # wait measures here
-
-        # Remove profile
-        ret = self.server.post('/exp/update', content_type=app_json)
-        self.assertEquals(0, ret.json['ret'])
-
-        time.sleep(2)  # wait maybe remaining values
+        # Set a profile for 10s, remove it and wait remaining measures
+        self._update_profile('profile.json')
+        time.sleep(10)
+        self._update_profile(None)
+        time.sleep(2)
 
         measures = autotest.extract_measures(self.cn_measures)
         self.cn_measures = []
