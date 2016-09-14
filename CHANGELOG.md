@@ -130,3 +130,12 @@ Version 2.3.0
     - Verify that all open nodes features have been tested, should help detect
       missing tests in autotests.
     - Add a test that verifies only `leds_on` and `leds_off`.
+
+Version 2.4.0
+-------------
+
++ Update control node firmware to new version:
+    - More reliable serial, allows faster monitoring measures
+    - Fix 120ppm constant drift
++ Fix samr21 flash timeout
++ Add a logger for cli scripts, helps debugging on boards
