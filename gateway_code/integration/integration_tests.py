@@ -372,6 +372,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
 
+    @class_attr_has(CN_FEATURES_ATTR, 'radio', 'consumption')
     def test_exp_with_fastest_measures(self):
         """ Run an experiment with fastest measures."""
 
