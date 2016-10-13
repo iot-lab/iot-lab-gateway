@@ -1,0 +1,9 @@
+# Arduino Zero Node
+
+# Serial link
+
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_VENDOR}=="Atmel_Corp.", ENV{ID_MODEL}=="EDBG_CMSIS-DAP", ENV{ID_USB_INTERFACE_NUM}=="01", SYMLINK+="ttyON_ARDUINO_ZERO"
+SUBSYSTEM=="usb", ATTR{idProduct}=="2157", ATTR{idVendor}=="03eb", MODE="0664", GROUP="dialout"
+
+# Flashing interface
+KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0664", GROUP="dialout"
