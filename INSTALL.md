@@ -10,7 +10,7 @@ Dependencies
 ### Mandatory ###
 
 ```
-sudo apt-get install  python-dev python-setuptools socat
+sudo apt-get install python-dev python-setuptools socat
 ```
 
 #### liboml2 ####
@@ -21,7 +21,7 @@ https://oml.mytestbed.net/projects/oml/wiki/BuildingSource
 
 Tested version 2.11 compiled from source.
 
-``
+```
 wget http://mytestbed.net/attachments/download/1104/oml2-2.11.0.tar.gz
 tar xf oml2-2.11.0.tar.gz
 cd oml2-2.11.0
@@ -58,7 +58,6 @@ Required for leonardo/mega/zigduino arduino nodes
 
 Tested version 6.0.1
 
-
 ```
 sudo apt-get install avrdude
 ```
@@ -73,8 +72,9 @@ Compiled and installed in `/usr/bin` or `/usr/local/bin`.
 
 ```
 make
-make install
+sudo make install
 ```
+
 
 Installing
 ----------
@@ -86,7 +86,7 @@ Installing the application is done by running
     sudo python setup.py install
     sudo python setup.py post_install
 
-In order to take into account the www-data user into dialout group, restart a new session or reboot computer. 
+In order to take into account the www-data user into dialout group, restart a new session or reboot computer.
 
 > Check `post_install` steps from `setup.py` for other GNU/Linux distrib.
 > Please check home_dir for user www-data, if not exists :
@@ -95,6 +95,7 @@ In order to take into account the www-data user into dialout group, restart a ne
 mkdir /var/www
 chown www-data:www-data /var/www
 ```
+
 
 Configuration
 -------------
@@ -121,6 +122,7 @@ And server can be started with
 
 Or by restarting the host
 
+
 Test installation
 -----------------
 
@@ -139,7 +141,7 @@ and expid 123) please create the following directories and launch test scripts
 ```
 mkdir -p /iotlab/users/test
 chown www-data:www-data /iotlab/users/test
-./test_utils/curl_scripts/start_exp_fw_custom.sh gateway_code/static/samr21_autotest.elf
+./tests_utils/curl_scripts/start_exp_fw_custom.sh gateway_code/static/samr21_autotest.elf
 ```
 
 Interact with the auto_test firmware :
