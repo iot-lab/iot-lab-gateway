@@ -55,8 +55,8 @@ class NodeZigduino(object):
         common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
         ret_val += common.wait_tty(self.TTY, LOGGER,
                                    timeout=common.TTY_DETECT_TIME)
-        ret_val += self.flash(firmware_path)
-        #ret_val += self.serial_redirection.start()
+        ret_val += self.flash(firmware_path, redirect=False)
+        ret_val += self.serial_redirection.start()
         return ret_val
 
     @logger_call("Teardown of Zigduino node")
@@ -70,11 +70,11 @@ class NodeZigduino(object):
         ret_val += self.serial_redirection.stop()
         # Reboot needs 8 seconds before ending linux sees it in < 2 seconds
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
-        ret_val += self.flash(None)
+        ret_val += self.flash(None, redirect=False)
         return ret_val
 
     @logger_call("Flash of Zigduino node")
-    def flash(self, firmware_path=None):
+    def flash(self, firmware_path=None, redirect=True):
         """ Flash the given firmware on Zigduino node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware """
@@ -86,12 +86,14 @@ class NodeZigduino(object):
         common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
         ret_val += common.wait_tty(
             self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
-        ret_val += self.serial_redirection.stop()
+        if redirect:
+            ret_val += self.serial_redirection.stop()
 	# Then flash
         ret_val += self.avrdude.flash(firmware_path)
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
 	# Finally restore serial redirection
-        ret_val += self.serial_redirection.start()
+        if redirect:
+            ret_val += self.serial_redirection.start()
         LOGGER.info("end flash")
         return ret_val
 
