@@ -43,7 +43,8 @@ GATEWAY_CONFIG_PATH = os.environ.get('IOTLAB_GATEWAY_CFG_DIR',
                                      '/var/local/config/')
 GATEWAY_CONFIG_PATH = os.path.abspath(GATEWAY_CONFIG_PATH)
 
-EXP_FILES_DIR = '/iotlab/users/{user}/.iot-lab/{exp_id}/'
+IOTLAB_USERS = os.environ.get('IOTLAB_USERS_DIR', '/iotlab/users')
+EXP_FILES_DIR = os.path.join(IOTLAB_USERS, '{user}/.iot-lab/{exp_id}/')
 EXP_FILES = {
     'consumption': 'consumption/{node_id}.oml',
     'radio': 'radio/{node_id}.oml',
