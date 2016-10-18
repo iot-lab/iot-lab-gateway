@@ -101,16 +101,16 @@ Configuration
 
 Create directory /var/local/config/ for configuration files  :
 
-* `board_type`: open node type `['M3', 'A8', 'LEONARDO', ...]`
+* `board_type`: open node type `['M3', 'A8', 'SAMR21', ...]`
 * `control_node_type`: open node type `['iotlab', 'no']` default `iotlab`
 * `hostname`: hostname to use format should be `'{node}-{num}[-ANYTHING]'`
 
 
-Example below for Arduino Leonardo
+Example below for SAMR21
 
 ```
 mkdir /var/local/config/
-echo "LEONARDO" > /var/local/config/board_type
+echo "SAMR21" > /var/local/config/board_type
 echo "no" > /var/local/config/control_node_type
 echo "custom-123" > /var/local/config/hostname
 ```
@@ -121,8 +121,8 @@ And server can be started with
 
 Or by restarting the host
 
-User measure files
-------------------
+Test installation
+-----------------
 
 User measure files and logs will be stored in `/iotlab/users`.
 
@@ -132,4 +132,31 @@ over nfs, or should be created manually if it is not the case.
 In the last scenario, `www-data` user should be allowed to write in this
 directory.
 
+In order to test a stand-alone iot-lab-gateway installation (e.g. for user test
+and expid 123) please create the following directories and launch test scripts
+:
 
+```
+mkdir -p /iotlab/users/test
+chown www-data:www-data /iotlab/users/test
+./test_utils/curl_scripts/start_exp_fw_custom.sh gateway_code/static/samr21_autotest.elf
+```
+
+Interact with the auto_test firmware :
+
+```
+nc localhost 20000
+help
+Command              Description
+---------------------------------------
+echo                 Simply write 'echo'
+get_time             Simply return current timer value
+leds_on              Turn led on
+leds_off             Turn led off
+```
+
+Stop experiment :
+
+```
+./tests_utils/curl_scripts/stop_exp.sh
+```
