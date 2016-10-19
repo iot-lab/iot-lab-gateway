@@ -1,6 +1,11 @@
 # -*- coding:utf-8 -*-
 """ Open Node Zigduino r2 experiment implementation """
 
+import time
+import logging
+
+import serial
+
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
@@ -8,10 +13,6 @@ from gateway_code.common import logger_call
 from gateway_code.utils.avrdude import AvrDude
 from gateway_code.utils.serial_redirection import SerialRedirection
 
-import serial
-import time
-
-import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -32,8 +33,8 @@ class NodeZigduino(object):
     }
 
     AUTOTEST_AVAILABLE = [
-                'echo', 'get_time',  # mandatory
-                        'leds_on', 'leds_off'
+        'echo', 'get_time',  # mandatory
+        'leds_on', 'leds_off'
     ]
 
     #AUTOTEST_AVAILABLE = ['test_echo',
