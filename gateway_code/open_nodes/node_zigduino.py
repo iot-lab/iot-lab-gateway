@@ -37,11 +37,6 @@ class NodeZigduino(object):
         'leds_on', 'leds_off'
     ]
 
-    #AUTOTEST_AVAILABLE = ['test_echo',
-    #                      'test_time',
-    #                      'test_uid',
-    #                      ]
-
     ALIM = '5V'
 
     def __init__(self):
@@ -82,17 +77,17 @@ class NodeZigduino(object):
         ret_val = 0
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Zigduino: %s', firmware_path)
-	# First stop serial redirection, flash hangup if an
-	# user session is openened on port 20000
+        # First stop serial redirection, flash hangup if an
+        # user session is openened on port 20000
         common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
         ret_val += common.wait_tty(
             self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
         if redirect:
             ret_val += self.serial_redirection.stop()
-	# Then flash
+        # Then flash
         ret_val += self.avrdude.flash(firmware_path)
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
-	# Finally restore serial redirection
+        # Finally restore serial redirection
         if redirect:
             ret_val += self.serial_redirection.start()
         LOGGER.info("end flash")
