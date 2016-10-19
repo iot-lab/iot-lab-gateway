@@ -33,8 +33,7 @@ class NodeZigduino(object):
     }
 
     AUTOTEST_AVAILABLE = [
-        'echo', 'get_time',  # mandatory
-        'leds_on', 'leds_off'
+        'echo', 'get_time'  # mandatory
     ]
 
     ALIM = '5V'
