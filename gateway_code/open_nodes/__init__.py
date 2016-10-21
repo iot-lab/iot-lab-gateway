@@ -62,8 +62,7 @@ def _node_title(board_type):
     >>> _node_title('samr21')
     'Samr21'
     """
-    return board_type.title().replace('_','')
-
+    return board_type.title().replace('_', '')
 
 
 def _assert_class_valid(board_class, board_type):
