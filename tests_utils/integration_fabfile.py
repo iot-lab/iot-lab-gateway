@@ -37,7 +37,7 @@ SSH_OPTS = '-F {0}'.format(SSH_CFG)
 # Default to all targets
 if not env.hosts:
     env.hosts = ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci']
-    env.hosts += ['samr21-00-ci']
+    env.hosts += ['samr21-00-ci', 'zigduino-00-ci']
 
 
 def chown_www_data():
