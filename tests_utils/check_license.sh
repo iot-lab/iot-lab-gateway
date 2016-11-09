@@ -27,6 +27,7 @@ files_list=$(echo "${files_list}" | grep -v \
     -e 'gateway_code/tests/config/'\
     -e 'bin/rules.d'\
     -e 'doc' \
+    -e '.jpg' \
     \
     -e 'control_node_serial/tests/utils/' \
     -e 'control_node_serial/examples/' \
