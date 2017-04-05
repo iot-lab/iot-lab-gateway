@@ -205,6 +205,13 @@ class TestRestMethods(unittest.TestCase):
         ret = self.server.post('/open/flash', upload_files=[])
         self.assertEquals(1, ret.json['ret'])
 
+    def test_flash_idle(self):
+        self.g_m.node_flash.return_value = 0
+
+        ret = self.server.put('/open/flash/idle')
+        self.assertEquals(0, ret.json['ret'])
+        self.g_m.node_flash.assert_called_with('open', None)
+
     def test_reset_wrappers(self):
         self.g_m.node_soft_reset.return_value = 0
 

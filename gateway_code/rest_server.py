@@ -77,6 +77,8 @@ class GatewayRest(bottle.Bottle):
         # Add open_node functions if available
         self.conditional_route('flash', '/open/flash', 'POST',
                                self.open_flash)
+        self.conditional_route('flash', '/open/flash/idle', 'PUT',
+                               self.open_flash_idle)
         self.conditional_route('reset', '/open/reset', 'PUT',
                                self.open_soft_reset)
         self.conditional_route('debug_start', '/open/debug/start', 'PUT',
@@ -189,6 +191,13 @@ class GatewayRest(bottle.Bottle):
         ret = self.gateway_manager.node_flash('open', firmware_file.name)
 
         firmware_file.close()
+        return {'ret': ret}
+
+    # Open node commands
+    def open_flash_idle(self):
+        """Flash open node."""
+        LOGGER.debug('REST: Flash Idle OpenNode')
+        ret = self.gateway_manager.node_flash('open', None)
         return {'ret': ret}
 
     def open_soft_reset(self):

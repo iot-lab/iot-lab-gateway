@@ -162,10 +162,13 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertLessEqual(1, self.server.put('/open/reset').json['ret'])
         self.assertNotEqual('', str(self.log_error))
 
-    def _flash(self, firmware):
+    def _flash(self, firmware=None):
         """Flash firmware."""
-        files = [file_tuple('firmware', firmware)]
-        ret = self.server.post('/open/flash', upload_files=files)
+        if firmware:
+            files = [file_tuple('firmware', firmware)]
+            ret = self.server.post('/open/flash', upload_files=files)
+        else:
+            ret = self.server.put('/open/flash/idle')
         time.sleep(1)
         return ret
 
@@ -200,7 +203,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         ]
 
         # Flash idle firmware
-        ret = self._flash(board_class.FW_IDLE)
+        ret = self._flash()
         self.assertEquals(0, ret.json['ret'])
 
         # idle firmware, there should be no reply
@@ -219,7 +222,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self._check_node_echo(echo=True)
 
         # Flash idle firmware should fail
-        ret = self._flash(board_class.FW_IDLE)
+        ret = self._flash()
         self.assertNotEquals(0, ret.json['ret'])
 
         # No flash, Autotest fw should be still be running
