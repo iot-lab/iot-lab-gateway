@@ -42,7 +42,7 @@ from gateway_code.tests.rest_server_test import query_string
 from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
 from gateway_code.utils.node_connection import OpenNodeConnection
-from gateway_code.common import wait_cond, abspath
+from gateway_code.common import wait_cond, abspath, wait_tty, wait_no_tty
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -51,6 +51,7 @@ EXP_ID = 123
 EXP_START = '/exp/start/{exp_id}/{user}'.format(user=USER, exp_id=123)
 
 APP_JSON = 'application/json'
+GATEWAY_LOGGER = logging.getLogger('gateway_code')
 
 
 def file_tuple(fieldname, file_path):
@@ -141,7 +142,12 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals(0, self.server.put('/open/stop').json['ret'])
         self.assertEquals(0, self.server.put('/open/start').json['ret'])
 
-        time.sleep(1)  # wait started
+        # It is normal to fail if you flash just after starting a node
+        # In these tests, I want the node to be "ready" so I ensure that
+        wait_no_tty(self.g_m.open_node.TTY, timeout=10)
+        wait_tty(self.g_m.open_node.TTY, GATEWAY_LOGGER, timeout=15)
+
+        time.sleep(1)  # wait firmware started
 
         # No log error
         self.log_error.check()
