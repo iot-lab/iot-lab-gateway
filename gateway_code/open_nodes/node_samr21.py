@@ -50,11 +50,10 @@ class NodeSamr21(object):
     ]
 
     ALIM = '5V'
-    FLASH_TIMEOUT = 60  # Got 40 seconds at max with riot gnrc_networking
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.openocd = OpenOCD.from_node(self, timeout=self.FLASH_TIMEOUT)
+        self.openocd = OpenOCD.from_node(self)
 
     @logger_call("Node SAMR21 : Setup of samr21 node")
     def setup(self, firmware_path):
