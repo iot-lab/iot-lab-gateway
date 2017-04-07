@@ -36,15 +36,17 @@ _SUB = PARSER.add_subparsers()
 
 _FLASH = _SUB.add_parser('flash')
 _FLASH.set_defaults(cmd='flash')
-_FLASH.add_argument('node', type=str, choices=('LEONARDO', 'MEGA'),)
+_FLASH.add_argument('node', type=str, choices=('LEONARDO', 'ZIGDUINO'),)
 _FLASH.add_argument('firmware', type=str, help="Firmware name")
 
 
 def _node_type(node):
-    """ Get node avrdude config for 'node' in ('LEONARDO') """
+    """ Get node avrdude config for 'node' in ('LEONARDO', 'ZIGDUINO') """
     from gateway_code.open_nodes.node_leonardo import NodeLeonardo
+    from gateway_code.open_nodes.node_zigduino import NodeZigduino
     _config = {
         'LEONARDO': NodeLeonardo,
+        'ZIGDUINO': NodeZigduino,
     }
     return _config[node]
 
@@ -55,7 +57,9 @@ def main():
 
     opts = PARSER.parse_args()
     node = _node_type(opts.node)
-    ret = avrdude.AvrDude.trigger_bootloader(node.TTY, node.TTY_PROG)
+    ret = 0
+    if opts.node == 'LEONARDO':
+        ret += avrdude.AvrDude.trigger_bootloader(node.TTY, node.TTY_PROG)
     avr = avrdude.AvrDude(node.AVRDUDE_CONF, verb=True)
 
     if opts.cmd == 'flash':
