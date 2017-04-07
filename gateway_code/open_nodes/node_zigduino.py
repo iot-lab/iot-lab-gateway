@@ -17,8 +17,8 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeZigduino(object):
+    """Open node Zigduino implemention."""
 
-    """ Open node Mega implemention """
     TYPE = "zigduino"
     ELF_TARGET = ('ELFCLASS32', 'EM_AVR')
     TTY = '/dev/ttyON_ZIGDUINO'
