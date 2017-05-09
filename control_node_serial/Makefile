@@ -23,6 +23,10 @@ endif
 CFLAGS    += -std=c99 -g -O3 -fstrict-aliasing
 CFLAGS    += $(WARNINGS) $(COV) $(PROF) $(DEP_RULES) $(LIBS) -pthread
 
+# Define Feature Macros
+CFLAGS    += -D_POSIX_C_SOURCE=200809L
+CFLAGS    += -D_DEFAULT_SOURCE
+
 OMLFLAGS  = -Wl,-rpath,/usr/local/lib -loml2 -locomm
 LDFLAGS   += $(CFLAGS) -lpthread $(OMLFLAGS)
 
