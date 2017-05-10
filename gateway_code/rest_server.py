@@ -288,12 +288,12 @@ class GatewayRest(bottle.Bottle):
     def conditional_route(self, node_func, path, *route_args, **route_kwargs):
         """ Add route if node implements 'node_func' """
         has_fct = callable(getattr(self.board_class, node_func, None))
-        if has_fct:
-            LOGGER.info('REST: Route %s registered', path)
-            return self.route(path, *route_args, **route_kwargs)
-        else:
+        if not has_fct:
             LOGGER.debug('REST: Route %s not available', path)
             return None
+
+        LOGGER.info('REST: Route %s registered', path)
+        return self.route(path, *route_args, **route_kwargs)
 
     def route(self, path, method='GET', callback=None, **options):
         """Add a route but catch some exceptions."""

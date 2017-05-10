@@ -147,10 +147,11 @@ def two_bytes_signed_int(h_byte, l_byte):
     double_bytes = (h_byte << 8) + l_byte
     top_bit = (double_bytes >> 15) & 0x0001
     if top_bit == 1:
-        double_bytes = double_bytes - 1
-        return double_bytes - 0xFFFF
+        signed_value = double_bytes - 1 - 0xFFFF
     else:
-        return double_bytes & 0x7FFF
+        signed_value = double_bytes & 0x7FFF
+
+    return signed_value
 
 
 def two_bytes_unsigned_int(h_byte, l_byte):

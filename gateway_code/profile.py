@@ -61,11 +61,10 @@ class Profile(object):
         """ Create Profile object from `profile_dict` and `open_node_type`
         If profile_dict is None, None is returned
         :raises: ValueError on invalid profile_dict """
+        if profile_dict is None:
+            return None
         try:
-            if profile_dict is None:
-                return None
-            else:
-                return Profile(open_node_type, **profile_dict)
+            return Profile(open_node_type, **profile_dict)
         except (ValueError, TypeError, AssertionError) as err:
             raise ValueError('Invalid profile: %r' % err)
 

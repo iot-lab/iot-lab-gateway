@@ -57,12 +57,12 @@ def autotest_checker(*required):
             """ Function wrapped with test """
             available = set(self.open_node.AUTOTEST_AVAILABLE)
 
-            if required.issubset(available):
-                # Store tested features
-                self.TESTED_FEATURES.update(required)
-                return func(self, *args, **kwargs)
-            else:
+            if not required.issubset(available):
                 return 0
+
+            # Store tested features
+            self.TESTED_FEATURES.update(required)
+            return func(self, *args, **kwargs)
         return _wrapped_f
     return _wrap
 
