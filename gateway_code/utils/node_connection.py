@@ -83,8 +83,7 @@ class OpenNodeConnection(object):
 
     def send_command(self, command_list):
         """ Send command and wait for answer """
-        assert (isinstance(command_list, list) or
-                isinstance(command_list, tuple))
+        assert isinstance(command_list, (list, tuple))
         packet = ' '.join(command_list)
 
         LOGGER.debug("Command send:   %r", packet)
