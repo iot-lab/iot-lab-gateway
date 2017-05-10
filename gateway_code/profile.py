@@ -113,7 +113,7 @@ class Radio(object):
 
     def __init__(self, mode, channels, period=None, num_per_channel=None):
         # power=None, pkt_size=None
-        assert len(channels), 'No channels'
+        assert channels, 'No channels'
         for channel in channels:
             assert channel in self.choices['radio']['channels'], 'Channel'
 
