@@ -37,7 +37,7 @@ from bottle import request
 
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code import board_config
-
+import sys
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -55,6 +55,7 @@ class GatewayRest(bottle.Bottle):
         self.board_config = board_config.BoardConfig()
         self._app_routing()
 
+
     def _app_routing(self):
         """
         Declare the REST supported methods depending on board config
@@ -63,6 +64,7 @@ class GatewayRest(bottle.Bottle):
         self.route('/exp/start/<exp_id:int>/<user>', 'POST', self.exp_start)
         self.route('/exp/stop', 'DELETE', self.exp_stop)
         self.route('/status', 'GET', self.status)
+
         # Control node functions
         self.route('/exp/update', 'POST', self.exp_update_profile)
         self.cn_conditional_route('open_start', '/open/start', 'PUT',
@@ -370,4 +372,7 @@ def _main(args):
     g_m.setup()
 
     server = GatewayRest(g_m)
-    server.run(host=host, port=port, server='paste')
+    server.run(host=host, port=port, server='paste', reloader=True)
+
+if __name__ == '__main__':
+    _main(sys.argv)
