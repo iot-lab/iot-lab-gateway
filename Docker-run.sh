@@ -1,8 +1,12 @@
 docker run \
   -v /home/cedric/POLYTECH/stage/Environnement/Work/iot-lab-gateway/:/setup_dir/iot-lab-gateway/ \
-  -d \
+  --rm \
   -p 8080:8080 \
   --name "gateway_test" \
+  -ti \
+  --privileged \
+  --cap-add=ALL \
+  -v /dev:/dev \
   iot_gateway
 
 

@@ -35,20 +35,18 @@ RUN apt-get update &&\
       avrdude &&\
     apt-get clean
 
+#To do http requests (to upload an experiment for instance)
+RUN apt-get update &&\
+   apt-get install -y \
+     curl &&\
+   apt-get clean
 
-#Clean the apt cache to save image size
-
+#Making a work directory to setup the gateway
 RUN mkdir /setup_dir
 WORKDIR /setup_dir
 
 #liboml2 install
-
 RUN mkdir /var/www && chown www-data:www-data /var/www
-
-
-
-#ADD pourrait extraire directement le fichier dans l'image (pas d'import nécessaire)
-#ADD oml2-2.11.0.tar.gz /
 
 COPY ./oml2-2.11.0.tar.gz /setup_dir
 RUN tar xf oml2-2.11.0.tar.gz &&\
@@ -61,7 +59,6 @@ RUN tar xf oml2-2.11.0.tar.gz &&\
     rm oml2-2.11.0.tar.gz
 
 #openocd install (for M3 and SAMR21)
-
 RUN git clone https://github.com/ntfreak/openocd &&\
     cd openocd &&\
     git checkout v0.9.0 &&\
@@ -82,21 +79,33 @@ RUN git clone https://github.com/iot-lab/iot-lab-ftdi-utils/  &&\
     cd .. && rm -rf iot-lab-ftdi-utils
 
 #for all
-
 RUN mkdir iot-lab-gateway
-COPY ./iot-lab-gateway /setup_dir/iot-lab-gateway
+COPY . /setup_dir/iot-lab-gateway/.
 RUN cd iot-lab-gateway &&\
     sudo python setup.py install &&\
-    sudo python setup.py post_install
+    sudo python setup.py setup_initd_script_install &&\
+    sudo python setup.py add_group_install 
 #problem from udev. Unable to interact with while in containers.
+#So we will install the dev-rules on the user's computer and redirect it to the docker
 
-#test with SAMR21 config
 
+#test with M3 config
  RUN mkdir -p /var/local/config/ &&\
      echo "M3" > /var/local/config/board_type &&\
      echo "no" > /var/local/config/control_node_type &&\
-     echo "custom-123" > /var/local/config/hostname
-#
+     echo "custom-123" > /var/local/config/hostname &&\
+     mkdir -p /iotlab/users/test &&\
+     chown www-data:www-data /iotlab/users/test &&\
+     echo "/setup_dir/iot-lab-gateway/tests_utils/curl_scripts/start_exp_fw_custom.sh /setup_dir/iot-lab-gateway/gateway_code/static/m3_autotest.elf" > test_m3.sh &&\
+     chmod +x test_m3.sh &&\
+     echo "/setup_dir/iot-lab-gateway/tests_utils/curl_scripts/stop_exp.sh" > stop_exp.sh &&\
+     chmod +x stop_exp.sh &&\
+     echo "/etc/init.d/gateway-server-daemon start" > start_serv.sh &&\
+     chmod +x start_serv.sh &&\
+     echo "/etc/init.d/gateway-server-daemon stop" > stop_serv.sh &&\
+     chmod +x stop_serv.sh
+
+
 # #Let's go
 #
 #CMD ["/etc/init.d/gateway-server-daemon","restart"]
