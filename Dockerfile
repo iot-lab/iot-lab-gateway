@@ -103,10 +103,14 @@ RUN cd iot-lab-gateway &&\
      echo "/etc/init.d/gateway-server-daemon start" > start_serv.sh &&\
      chmod +x start_serv.sh &&\
      echo "/etc/init.d/gateway-server-daemon stop" > stop_serv.sh &&\
-     chmod +x stop_serv.sh
+     chmod +x stop_serv.sh &&\
+     echo "python /setup_dir/iot-lab-gateway/gateway_code/rest_server.py 0.0.0.0 8080 &" > rest_server.sh &&\
+     chmod +x rest_server.sh
+
+
 
 
 # #Let's go
-#
+CMD ["python", "/setup_dir/iot-lab-gateway/gateway_code/rest_server.py", "0.0.0.0", "8080"]
 #CMD ["/etc/init.d/gateway-server-daemon","restart"]
 #CMD ["/bin/bash"]
