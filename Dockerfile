@@ -87,6 +87,7 @@ RUN cd iot-lab-gateway &&\
     sudo python setup.py add_group_install 
 #problem from udev. Unable to interact with while in containers.
 #So we will install the dev-rules on the user's computer and redirect it to the docker
+RUN rm -rf /setup_dir
 
 
 #test with M3 config
