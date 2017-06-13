@@ -95,19 +95,7 @@ RUN cd iot-lab-gateway &&\
      echo "no" > /var/local/config/control_node_type &&\
      echo "custom-123" > /var/local/config/hostname &&\
      mkdir -p /iotlab/users/test &&\
-     chown www-data:www-data /iotlab/users/test &&\
-     echo "/setup_dir/iot-lab-gateway/tests_utils/curl_scripts/start_exp_fw_custom.sh /setup_dir/iot-lab-gateway/gateway_code/static/m3_autotest.elf" > test_m3.sh &&\
-     chmod +x test_m3.sh &&\
-     echo "/setup_dir/iot-lab-gateway/tests_utils/curl_scripts/stop_exp.sh" > stop_exp.sh &&\
-     chmod +x stop_exp.sh &&\
-     echo "/etc/init.d/gateway-server-daemon start" > start_serv.sh &&\
-     chmod +x start_serv.sh &&\
-     echo "/etc/init.d/gateway-server-daemon stop" > stop_serv.sh &&\
-     chmod +x stop_serv.sh &&\
-     echo "python /setup_dir/iot-lab-gateway/gateway_code/rest_server.py 0.0.0.0 8080 &" > rest_server.sh &&\
-     chmod +x rest_server.sh
-
-
+     chown www-data:www-data /iotlab/users/test
 
 
 # #Let's go
