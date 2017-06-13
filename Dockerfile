@@ -98,8 +98,10 @@ RUN rm -rf /setup_dir
      mkdir -p /iotlab/users/test &&\
      chown www-data:www-data /iotlab/users/test
 
+WORKDIR /home
+COPY ./wrapper.sh /home/.
+RUN chmod +x /home/wrapper.sh
 
 # #Let's go
-CMD ["python", "/setup_dir/iot-lab-gateway/gateway_code/rest_server.py", "0.0.0.0", "8080"]
-#CMD ["/etc/init.d/gateway-server-daemon","restart"]
-#CMD ["/bin/bash"]
+
+CMD ["/home/wrapper.sh"]
