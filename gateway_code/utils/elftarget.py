@@ -23,6 +23,7 @@
 
 import logging
 
+from elftools.elf.constants import SH_FLAGS
 from elftools.elf.elffile import ELFFile
 import elftools.common.exceptions
 
@@ -67,6 +68,16 @@ def is_compatible_with_node(firmware_path, node_class):
     except ValueError as err:
         LOGGER.warning('Invalid firmware: %s', err)
         return False
+
+
+def get_elf_load_addr(firmware_path):
+    """ Read the load offset for the given elf """
+    with open(firmware_path, 'rb') as firmware_file:
+        elf_file = ELFFile(firmware_file)
+        for section in elf_file.iter_sections():
+            sh_flags = section['sh_flags']
+            if sh_flags & SH_FLAGS.SHF_EXECINSTR:
+                return section['sh_addr']
 
 
 def main():

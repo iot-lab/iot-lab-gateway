@@ -109,6 +109,13 @@ RUN git clone https://github.com/iot-lab/iot-lab-ftdi-utils/  && \
     make install && \
     cd .. && rm -rf iot-lab-ftdi-utils
 
+# cc2538 for firefly
+RUN git clone https://github.com/JelmerT/cc2538-bsl && \
+    cp cc2538-bsl/cc2538-bsl.py /usr/bin/. && \
+    apt-get update && \
+    apt-get install -y python-pip binutils && \
+    pip install intelhex
+
 #for all
 
 RUN rm -rf /setup_dir
