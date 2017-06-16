@@ -35,6 +35,19 @@ RUN apt-get update &&\
       avrdude &&\
     apt-get clean
 
+#for firefly node
+RUN git clone https://github.com/JelmerT/cc2538-bsl &&\
+    cp cc2538-bsl/cc2538-bsl.py /usr/bin/. &&\
+    apt-get update &&\
+    apt-get install -y python-pip \
+                       python-serial \
+                       gcc-arm-none-eabi \
+                       gdb-arm-none-eabi &&\
+    apt-get clean &&\
+    pip install --upgrade pip &&\
+    pip install intelhex &&\
+    pip install python-magic
+
 #To do http requests (to upload an experiment for instance)
 RUN apt-get update &&\
    apt-get install -y \
@@ -89,7 +102,7 @@ COPY . /home/iot-lab-gateway/
 RUN cd iot-lab-gateway && \
     python setup.py install
 
-#test with M3 config
+#test with Firefly config
  RUN mkdir -p /var/local/config/ &&\
      mkdir -p /iotlab/users/test &&\
      chown www-data:www-data /iotlab/users/test
