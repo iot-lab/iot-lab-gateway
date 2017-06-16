@@ -36,6 +36,13 @@ class CC2538(object):
 
     DEBUG = ('')
 
+    TOHEX = ('arm-none-eabi-objcopy'
+                ' -I elf32-bigarm'
+                ' -O ihex'
+                ' {elf}'
+                ' {hex}'
+                )
+
     TIMEOUT = 15
 
 
@@ -51,13 +58,29 @@ class CC2538(object):
 
     def reset(self):
         """ Reset """
-        return self._call_cmd(self.RESET)
+        cmd = self.CC2538BSL.format(port=self.port, cmd=flash_cmd)
+        return self._call_cmd(cmd)
 
     def flash(self, elf_file):
         """ Flash firmware """
         try:
             elf_path = common.abspath(elf_file)
-            return self._call_cmd(self.FLASH.format(baudrate=self.baud, hex=elf_path))
+            LOGGER.info('Creating hexary path from %s',elf_path)
+            hex_path = self.to_hex_path(elf_path)
+            LOGGER.info('Created hex path %s',hex_path)
+
+            #creating hex file
+            cmd = self.TOHEX.format(elf=elf_path, hex=hex_path)
+            ret_value = self._call_cmd(cmd)
+            LOGGER.info('To hex convertion ret value : %d', ret_value)
+
+            #Flashing
+            flash_cmd = self.FLASH.format(baudrate=self.baud, hex=hex_path)
+            cmd = self.CC2538BSL.format(port=self.port, cmd=flash_cmd)
+            ret_value += self._call_cmd(cmd)
+            LOGGER.info('Flashing ret value : %d', ret_value)
+
+            return ret_value
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
@@ -103,6 +126,15 @@ class CC2538(object):
     def _cc2538_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
-        cmd = self.CC2538BSL.format(port=self.port, cmd=command_str)
-        args = shlex.split(cmd)
+
+        args = shlex.split(command_str)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
+
+    def to_hex_path(self, elf_path):
+        """ Creates a hex file to be used by the bsl script """
+        hex_path = elf_path.split('/')
+        hex_name = hex_path[-1].split('.')
+        hex_name[1] = 'hex'
+        hex_path[-1] = ".".join(hex_name)
+        path = "/".join(hex_path)
+        return path
