@@ -37,7 +37,7 @@ class CC2538(object):
     DEBUG = ('')
 
     TOHEX = ('arm-none-eabi-objcopy'
-                ' -I elf32-bigarm'
+                ' -I elf32-big'
                 ' -O ihex'
                 ' {elf}'
                 ' {hex}'
@@ -64,15 +64,17 @@ class CC2538(object):
     def flash(self, elf_file):
         """ Flash firmware """
         try:
+            ret_value = 0
+
             elf_path = common.abspath(elf_file)
-            LOGGER.info('Creating hexary path from %s',elf_path)
+            LOGGER.info('Creating hex path from %s',elf_path)
             hex_path = self.to_hex_path(elf_path)
             LOGGER.info('Created hex path %s',hex_path)
 
             #creating hex file
             cmd = self.TOHEX.format(elf=elf_path, hex=hex_path)
             ret_value = self._call_cmd(cmd)
-            LOGGER.info('To hex convertion ret value : %d', ret_value)
+            LOGGER.info('To hex conversion ret value : %d', ret_value)
 
             #Flashing
             flash_cmd = self.FLASH.format(baudrate=self.baud, hex=hex_path)
@@ -80,6 +82,9 @@ class CC2538(object):
             ret_value += self._call_cmd(cmd)
             LOGGER.info('Flashing ret value : %d', ret_value)
 
+            #removing hex file
+            os.remove(hex_path)
+            
             return ret_value
         except IOError as err:
             LOGGER.error('%s', err)
@@ -132,9 +137,9 @@ class CC2538(object):
 
     def to_hex_path(self, elf_path):
         """ Creates a hex file to be used by the bsl script """
-        hex_path = elf_path.split('/')
-        hex_name = hex_path[-1].split('.')
+        elf_path_split = elf_path.split('/')
+        hex_name = elf_path_split[-1].split('.')
         hex_name[1] = 'hex'
-        hex_path[-1] = ".".join(hex_name)
+        hex_path = ['tmp',".".join(hex_name)]
         path = "/".join(hex_path)
         return path
