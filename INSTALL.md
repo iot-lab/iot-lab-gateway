@@ -74,7 +74,23 @@ Compiled and installed in `/usr/bin` or `/usr/local/bin`.
 make
 sudo make install
 ```
+#### CC2538 ####
 
+Required for nodes equiped with Zoul module (such as Firefly node)
+
+```
+git clone https://github.com/JelmerT/cc2538-bsl &&\
+cp cc2538-bsl/cc2538-bsl.py /usr/bin/.
+apt-get update &&\
+apt-get install -y python-pip \
+                   python-serial \
+                   gcc-arm-none-eabi \
+                   gdb-arm-none-eabi
+
+pip install --upgrade pip
+pip install intelhex
+pip install python-magic
+```
 
 Installing
 ----------
