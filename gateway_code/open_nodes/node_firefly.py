@@ -21,7 +21,8 @@ class NodeFirefly(object):
 
     TTY = '/dev/ttyON_firefly'
     # The tty as named in the udev rule
-    BAUDRATE = 460800
+    BAUDRATE = 115200
+    PROGRAM_BAUDRATE = 460800
     # The baudrate used to communicate with the open-node on the serial port
     FW_IDLE = static_path('idle_firefly.elf')
     # The name of the idle firmware
@@ -34,9 +35,9 @@ class NodeFirefly(object):
 
     FIREFLY_CONF = {
                 'port': TTY,
-                'baudrate': BAUDRATE,
+                'baudrate': PROGRAM_BAUDRATE,
                 }
-    AUTOTEST_AVAILABLE = ['echo', 'get_time']
+    AUTOTEST_AVAILABLE = ['echo', 'get_time', 'leds_on', 'leds_off', 'leds_blink']
 
     # The list of autotest available for your node.
     # As describe in the document,
