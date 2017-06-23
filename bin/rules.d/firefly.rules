@@ -1,3 +1,3 @@
 # open nodes firefly
 
-KERNEL=="ttyUSB[0-9]*" , SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4" , ATTRS{idProduct}=="ea60" , ATTRS{product}=="Zolertia Firefly platform" , ATTRS{serial}=="ZOL-B001-A20000560",MODE="0664", GROUP="dialout", SYMLINK+="ttyON_firefly"
+KERNEL=="ttyUSB[0-9]*" , SUBSYSTEMS=="usb", ATTRS{idVendor}=="10c4" , ATTRS{idProduct}=="ea60" , ATTRS{product}=="Zolertia Firefly platform" , MODE="0664", GROUP="dialout", SYMLINK+="ttyON_firefly"
