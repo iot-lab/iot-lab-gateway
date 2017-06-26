@@ -92,9 +92,6 @@ RUN rm -rf /setup_dir
 
 #test with M3 config
  RUN mkdir -p /var/local/config/ &&\
-     echo "M3" > /var/local/config/board_type &&\
-     echo "no" > /var/local/config/control_node_type &&\
-     echo "custom-123" > /var/local/config/hostname &&\
      mkdir -p /iotlab/users/test &&\
      chown www-data:www-data /iotlab/users/test
 
