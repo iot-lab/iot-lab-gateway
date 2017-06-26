@@ -59,7 +59,7 @@ class CC2538(object):
 
     def reset(self):
         """ Reset """
-        cmd = self.CC2538BSL.format(port=self.port, cmd=flash_cmd)
+        cmd = self.CC2538BSL.format(port=self.port, cmd=RESET)
         return self._call_cmd(cmd)
 
     def flash(self, elf_file):
