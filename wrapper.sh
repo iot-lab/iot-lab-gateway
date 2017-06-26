@@ -1,5 +1,10 @@
 #!/bin/bash
 
+echo $BOARD_TYPE > /var/local/config/board_type
+echo $CONTROL_NODE_TYPE > /var/local/config/control_node_type
+echo $HOSTNAME > /var/local/config/hostname
+
+
 # Start the first process
 /etc/init.d/gateway-server-daemon start -D
 status=$?
@@ -20,7 +25,7 @@ while /bin/true; do
   # If the greps above find anything, they will exit with 0 status
   # If they are not both 0, then something is wrong
   if [ $PROCESS_STATUS ]; then
-    echo "gatewau server daemon has exited."
+    echo "gateway server daemon has exited."
     exit -1
   fi
   sleep 60
