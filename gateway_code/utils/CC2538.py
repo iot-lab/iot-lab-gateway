@@ -20,10 +20,9 @@ class CC2538(object):
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-
     CC2538BSL = ('/usr/bin/cc2538-bsl.py'
-               ' -p {port}'
-               ' {cmd}')
+                 ' -p {port}'
+                 ' {cmd}')
     RESET = ('')
 
     FLASH = ('-b {baudrate}'
@@ -31,21 +30,23 @@ class CC2538(object):
              ' -w'
              ' -a 0x{addr}'
              ' -v'
-             ' {hex}'
-             )
+             ' {hex}')
 
     DEBUG = ('')
-    ADDR_COM=('arm-none-eabi-objdump -h {elf} | grep -B1 LOAD | grep -Ev "LOAD|\-\-"| sed "s/  */%/g" |cut -d% -f6 | sort |head -1')
+    ADDR_COM = ('arm-none-eabi-objdump -h {elf} |'
+                ' grep -B1 LOAD |'
+                ' grep -Ev "LOAD|\-\-"|'
+                ' sed "s/  */%/g" |'
+                ' cut -d% -f6 |'
+                ' sort |head -1')
 
     TOHEX = ('arm-none-eabi-objcopy'
-                ' -I elf32-big'
-                ' -O ihex'
-                ' {elf}'
-                ' {hex}'
-                )
+             ' -I elf32-big'
+             ' -O ihex'
+             ' {elf}'
+             ' {hex}')
 
     TIMEOUT = 15
-
 
     def __init__(self, config, verb=False, timeout=TIMEOUT):
         self.port = config['port']
@@ -59,7 +60,7 @@ class CC2538(object):
 
     def reset(self):
         """ Reset """
-        cmd = self.CC2538BSL.format(port=self.port, cmd=RESET)
+        cmd = self.CC2538BSL.format(port=self.port, cmd=self.RESET)
         return self._call_cmd(cmd)
 
     def flash(self, elf_file):
@@ -68,31 +69,33 @@ class CC2538(object):
             ret_value = 0
 
             elf_path = common.abspath(elf_file)
-            LOGGER.info('Creating hex path from %s',elf_path)
+            LOGGER.info('Creating hex path from %s', elf_path)
             hex_path = self.to_hex_path(elf_path)
-            LOGGER.info('Created hex path %s',hex_path)
+            LOGGER.info('Created hex path %s', hex_path)
 
-            #creating hex file
+            # creating hex file
             cmd = self.TOHEX.format(elf=elf_path, hex=hex_path)
             ret_value = self._call_cmd(cmd)
             LOGGER.info('To hex conversion ret value : %d', ret_value)
 
-            #getting flash addr
+            # getting flash addr
             address = self.get_elf_addr(elf_path)
 
-            #Flashing
-            flash_cmd = self.FLASH.format(baudrate=self.baud, hex=hex_path,addr=address,elf=elf_path)
+            # Flashing
+            flash_cmd = self.FLASH.format(
+                baudrate=self.baud, hex=hex_path, addr=address, elf=elf_path)
             cmd = self.CC2538BSL.format(port=self.port, cmd=flash_cmd)
             ret_value += self._call_cmd(cmd)
             LOGGER.info('Flashing ret value : %d', ret_value)
 
-            #removing hex file
+            # removing hex file
             os.remove(hex_path)
 
             return ret_value
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
+
     def debug_start(self):
         """ Start a debugger process """
         LOGGER.debug('Debug start')
@@ -139,17 +142,19 @@ class CC2538(object):
         args = shlex.split(command_str)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
-    def to_hex_path(self, elf_path):
+    @classmethod
+    def to_hex_path(cls, elf_path):
         """ Creates a hex file to be used by the bsl script """
         elf_path_split = elf_path.split('/')
         hex_name = elf_path_split[-1].split('.')
         hex_name[1] = 'hex'
-        hex_path = ['/tmp',".".join(hex_name)]
+        hex_path = ['/tmp', ".".join(hex_name)]
         path = "/".join(hex_path)
         return path
 
-    def get_elf_addr(self,elf_path):
+    def get_elf_addr(self, elf_path):
         """ Returns the flash address taken from the elf file"""
-        proc =subprocess.Popen(self.ADDR_COM.format(elf=elf_path), stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(self.ADDR_COM.format(elf=elf_path),
+                                stdout=subprocess.PIPE, shell=True)
         out = int(proc.communicate()[0])
         return out

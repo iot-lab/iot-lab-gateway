@@ -1,6 +1,8 @@
 # -*- coding:utf-8 -*-
 """ Blank file for the implemention of an open-node called firefly """
 
+import logging
+
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
@@ -8,13 +10,12 @@ from gateway_code.common import logger_call
 from gateway_code.utils.CC2538 import CC2538
 from gateway_code.utils.serial_redirection import SerialRedirection
 
-import time
 
-import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeFirefly(object):
+    """Open node firefly implementation"""
 
     TYPE = 'firefly'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
@@ -32,12 +33,12 @@ class NodeFirefly(object):
     # The tension of alimentation (will be 5V in most of the case)
     TTY_READY_DELAY = 1
 
-
     FIREFLY_CONF = {
-                'port': TTY,
-                'baudrate': PROGRAM_BAUDRATE,
-                }
-    AUTOTEST_AVAILABLE = ['echo', 'get_time', 'leds_on', 'leds_off', 'leds_blink']
+        'port': TTY,
+        'baudrate': PROGRAM_BAUDRATE,
+    }
+    AUTOTEST_AVAILABLE = ['echo', 'get_time',  # mandatory
+                          'leds_on', 'leds_off', 'leds_blink']
 
     # The list of autotest available for your node.
     # As describe in the document,
@@ -79,7 +80,8 @@ class NodeFirefly(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on firefly: %s', firmware_path)
-        LOGGER.info('Firmware path : %s -- Firmware idle path : %s', firmware_path, self.FW_IDLE)
+        LOGGER.info('Firmware path : %s -- Firmware idle path : %s',
+                    firmware_path, self.FW_IDLE)
         return self.firefly.flash(firmware_path)
 
     @logger_call("Node firefly : reset of firefly node")
@@ -100,6 +102,7 @@ class NodeFirefly(object):
 
     @staticmethod
     def status():
+        """ Check your node """
         # Here you will check your node (for exemple with ftdi chip)
         # if you are unable to check your node, just return 0
         return 0
