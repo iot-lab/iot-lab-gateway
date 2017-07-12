@@ -79,23 +79,21 @@ RUN git clone https://github.com/iot-lab/iot-lab-ftdi-utils/  &&\
     cd .. && rm -rf iot-lab-ftdi-utils
 
 #for all
-RUN mkdir iot-lab-gateway
-COPY . /setup_dir/iot-lab-gateway/.
-RUN cd iot-lab-gateway &&\
-    sudo python setup.py install &&\
-    sudo python setup.py setup_initd_script_install &&\
-    sudo python setup.py add_group_install 
-#problem from udev. Unable to interact with while in containers.
-#So we will install the dev-rules on the user's computer and redirect it to the docker
+
 RUN rm -rf /setup_dir
 
+WORKDIR /home
+
+RUN mkdir iot-lab-gateway
+COPY . /home/iot-lab-gateway/
+RUN cd iot-lab-gateway && \
+    python setup.py install
 
 #test with M3 config
  RUN mkdir -p /var/local/config/ &&\
      mkdir -p /iotlab/users/test &&\
      chown www-data:www-data /iotlab/users/test
 
-WORKDIR /home
 COPY ./wrapper.sh /home/.
 RUN chmod +x /home/wrapper.sh
 
