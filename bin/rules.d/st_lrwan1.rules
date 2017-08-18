@@ -1,0 +1,3 @@
+# open nodes TTY
+KERNEL=="ttyACM*",SUBSYSTEM=="tty", SUBSYSTEMS=="usb", SYMLINK+="ttyON_ST_LRWAN1"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", MODE="0664", GROUP="dialout"

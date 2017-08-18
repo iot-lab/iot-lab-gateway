@@ -64,6 +64,10 @@ def _node_title(board_type):
     'ArduinoZero'
     >>> _node_title('samr21')
     'Samr21'
+    >>> _node_title('st_lrwan1')
+    'StLrwan1'
+    >>> _node_title('st-lrwan1')
+    'StLrwan1'
     """
     return board_type.title().replace('_', '').replace('-', '')
 
