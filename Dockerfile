@@ -48,15 +48,19 @@ WORKDIR /setup_dir
 #liboml2 install
 RUN mkdir /var/www && chown www-data:www-data /var/www
 
-COPY ./oml2-2.11.0.tar.gz /setup_dir
-RUN tar xf oml2-2.11.0.tar.gz &&\
-    cd ./oml2-2.11.0 &&\
+RUN apt-get update &&\
+   apt-get install -y\
+     autoconf automake libtool gnulib libpopt-dev libxml2 libsqlite3-dev pkg-config libxml2-utils &&\
+   apt-get clean
+
+RUN git clone https://github.com/mytestbed/oml.git && \
+    cd oml &&\
+    git checkout tags/v2.11.0 &&\
+    ./autogen.sh &&\
     ./configure --disable-doc --disable-doxygen-doc --disable-doxygen-dot --disable-android --disable-doxygen-html --disable-option-checking &&\
     make &&\
     sudo make install &&\
-    cd .. &&\
-    rm -rf oml2-2.11.0 &&\
-    rm oml2-2.11.0.tar.gz
+    cd .. && rm -rf oml
 
 #openocd install (for M3 and SAMR21)
 RUN git clone https://github.com/ntfreak/openocd &&\
