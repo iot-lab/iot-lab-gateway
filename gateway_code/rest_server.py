@@ -356,6 +356,9 @@ def _parse_arguments(args):
     parser.add_argument(
         '--log-folder', dest='log_folder', default='.',
         help="Folder where to write logs, default current folder")
+    parser.add_argument(
+        '--log-stdout', dest='log_stdout', action='store_true',
+        help="Whether to write logs to stdout, default False")
     arguments = parser.parse_args(args)
 
     return arguments
@@ -367,7 +370,7 @@ def _main(args):
     """
 
     args = _parse_arguments(args[1:])
-    g_m = GatewayManager(args.log_folder)
+    g_m = GatewayManager(args.log_folder, args.log_stdout)
     g_m.setup()
 
     server = GatewayRest(g_m)
