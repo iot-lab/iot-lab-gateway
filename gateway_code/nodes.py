@@ -20,17 +20,18 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 """ Common logic for plugin nodes classes """
-
+import abc
 import os
 import pkgutil
 
 from gateway_code.utils import elftarget
 
 
-class MetaNode(type):
-    """Metaclass for Control Nodes or Open Nodes"""
+class MetaNode(abc.ABCMeta):
+    """ metaclass combining registry and abstract contract """
+
     def __init__(cls, name, bases, class_dict):
-        type.__init__(cls, name, bases, class_dict)
+        super(MetaNode, cls).__init__(name, bases, class_dict)
         if not hasattr(cls, '__registry__'):
             cls.__registry__ = {}
         else:
@@ -38,14 +39,64 @@ class MetaNode(type):
                 cls.__registry__[cls.TYPE] = cls
 
 
-class ControlNode(object): # pylint: disable=too-few-public-methods
-    """class to inherit for control node classes"""
+class ControlNode(object):
+    """class to inherit, for control node classes"""
     __metaclass__ = MetaNode
 
+    @abc.abstractmethod
+    def start(self, exp_id, exp_files=None):
+        """ This method is called when starting an experiment """
+        pass
 
-class OpenNode(object): # pylint: disable=too-few-public-methods
-    """class to inherit for open node class"""
+    @abc.abstractmethod
+    def stop():
+        pass
+
+    @abc.abstractmethod
+    def setup():
+        pass
+
+    @abc.abstractmethod
+    def start_experiment(self, profile):
+        pass
+
+    @abc.abstractmethod
+    def stop_experiment(self):
+        pass
+
+    @abc.abstractmethod
+    def autotest_setup(measures_handler):
+        pass
+
+    @abc.abstractmethod
+    def autotest_teardown(stop_on):
+        pass
+
+    @abc.abstractmethod
+    def configure_profile(self, profile=None):
+        pass
+
+    @abc.abstractmethod
+    def status(self):
+        """ Status of the node """
+        pass
+
+
+class OpenNode(object):
+    """ class to inherit, for open node classes """
     __metaclass__ = MetaNode
+
+    @abc.abstractmethod
+    def setup(self, firmware_path):
+        pass
+
+    @abc.abstractmethod
+    def teardown(self):
+        pass
+
+    @abc.abstractmethod
+    def status():
+        pass
 
 
 # import all the nodes/plugins

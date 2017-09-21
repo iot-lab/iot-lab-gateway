@@ -70,7 +70,7 @@ class NodeA8(OpenNode):
         self._a8_expect = None
 
     @logger_call("Node A8 : setup of a8 node")
-    def setup(self, _firmware, debug=True):  # pylint: disable=unused-argument
+    def setup(self, _firmware, debug=True):  # pylint: disable=arguments-differ
         """ Wait that open nodes tty appears and start A8 boot log """
         ret_val = 0
         common.wait_no_tty(self.TTY)
