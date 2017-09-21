@@ -89,11 +89,12 @@ Installing the application is done by running
 In order to take into account the www-data user into dialout group, restart a new session or reboot computer.
 
 > Check `post_install` steps from `setup.py` for other GNU/Linux distrib.
-> Please check home_dir for user www-data, if not exists :
+
+Check home_dir for user www-data, if not exists :
 
 ```
-mkdir /var/www
-chown www-data:www-data /var/www
+sudo mkdir /var/www
+sudo chown www-data:www-data /var/www
 ```
 
 
@@ -110,15 +111,15 @@ Create directory /var/local/config/ for configuration files  :
 Example below for SAMR21
 
 ```
-mkdir /var/local/config/
-echo "SAMR21" > /var/local/config/board_type
-echo "no" > /var/local/config/control_node_type
-echo "custom-123" > /var/local/config/hostname
+sudo mkdir /var/local/config/
+echo "SAMR21" | sudo tee /var/local/config/board_type
+echo "no" | sudo tee /var/local/config/control_node_type
+echo "custom-123" | sudo tee /var/local/config/hostname
 ```
 
 And server can be started with
 
-    /etc/init.d/gateway-server-daemon restart
+    sudo /etc/init.d/gateway-server-daemon restart
 
 Or by restarting the host
 
@@ -139,8 +140,8 @@ and expid 123) please create the following directories and launch test scripts
 :
 
 ```
-mkdir -p /iotlab/users/test
-chown www-data:www-data /iotlab/users/test
+sudo mkdir -p /iotlab/users/test
+sudo chown www-data:www-data /iotlab/users/test
 ./tests_utils/curl_scripts/start_exp_fw_custom.sh gateway_code/static/samr21_autotest.elf
 ```
 
