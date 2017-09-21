@@ -1,5 +1,3 @@
-# -*- coding:utf-8 -*-
-
 # This file is a part of IoT-LAB gateway_code
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
 # Contributor(s) : see AUTHORS file
@@ -18,41 +16,22 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-""" open nodes plugins tests """
-
+""" control nodes plugins tests """
 from __future__ import print_function
 import unittest
 
-from gateway_code.nodes import open_node_class, all_open_nodes_types
-from gateway_code.open_nodes.node_a8 import NodeA8
-from gateway_code.open_nodes.node_m3 import NodeM3
+from gateway_code.nodes import all_control_nodes_types, control_node_class
 
 
-class TestsOpenNodes(unittest.TestCase):
-    """Test open_nodes package functions."""
-
-    def test_node_class(self):
-        """Test loading essential open node classes."""
-        self.assertEquals(NodeM3, open_node_class('m3'))
-        self.assertEquals(NodeA8, open_node_class('a8'))
-
-    def test_open_node_class_errors(self):
-        """Test error while loading an open node class."""
-        # No module
-        self.assertRaisesRegexp(
-            ValueError, '^Board unknown not implemented*$',
-            open_node_class, 'unknown')
-
-
-class TestsOpenNodesImplementations(unittest.TestCase):
-    """Test loading implemented open nodes implementation."""
+class TestsControlNodesImplementations(unittest.TestCase):
+    """Test loading implemented control nodes implementation."""
 
     @staticmethod
     def test_nodes_classes():
-        """Test loading all implemented open nodes implementation."""
-        for node in all_open_nodes_types():
+        """Test loading all implemented control nodes implementation."""
+        for node in all_control_nodes_types():
             # No exception
             print(node)
-            node_class = open_node_class(node)
-            node_class()
+            node_class = control_node_class(node)
+            node_class(None, None)
             print(node_class)
