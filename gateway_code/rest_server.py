@@ -359,6 +359,10 @@ def _parse_arguments(args):
     parser.add_argument(
         '--log-stdout', dest='log_stdout', action='store_true',
         help="Whether to write logs to stdout, default False")
+    parser.add_argument(
+        '--reloader', dest='reloader', action='store_true',
+        help="Whether to auto-reload the bottle server on source code changes")
+
     arguments = parser.parse_args(args)
 
     return arguments
@@ -374,4 +378,4 @@ def _main(args):
     g_m.setup()
 
     server = GatewayRest(g_m)
-    server.run(host=args.host, port=args.port, server='paste', reloader=True)
+    server.run(host=args.host, port=args.port, server='paste', reloader=args.reloader)

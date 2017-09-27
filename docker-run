@@ -37,12 +37,14 @@ parser.add_argument('-b', '--board-type', dest='board_type', help='Set node boar
 parser.add_argument('-h', '--host', dest='host', help='Set hostname', default=default.host)
 parser.add_argument('-c', '--node_type', dest='node_type', help='Set control_node_type', default=default.node_type)
 parser.add_argument('-d', '--daemon', dest='daemon', action='store_true',help='Daemon mode', default=False)
-parser.add_argument('add', nargs='*', help='Additional arguments to pass to docker run')
+parser.add_argument('-r', '--reloader', dest='reloader', action='store_true',help='Reloader', default=False)
+parser.add_argument('cmd', nargs=argparse.REMAINDER, help='Command to run inside the docker container')
 
 args = parser.parse_args()
 
 args.opt_dir = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.opt_dir) if args.opt_dir else ''
 args.daemon = '-d' if args.daemon else ''
+args.reloader = '-e RELOADER=1' if args.reloader else ''
 
 cmd = ' '.join(args.cmd)
 
@@ -55,6 +57,7 @@ docker run \
   -e HOSTNAME={0.host} \
   -e HOST=0.0.0.0 \
   -e PORT=8080 \
+  {0.reloader} \
   -p 8080:8080 \
   -p 20000:20000 \
   --name "gateway_test" \
