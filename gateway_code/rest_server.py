@@ -373,6 +373,3 @@ def _main(args):
 
     server = GatewayRest(g_m)
     server.run(host=host, port=port, server='paste', reloader=True)
-
-if __name__ == '__main__':
-    _main(sys.argv)
