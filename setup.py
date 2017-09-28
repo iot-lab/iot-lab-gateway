@@ -193,8 +193,6 @@ setup(name=PACKAGE,
           'build_ext': BuildExt,
           'release': Release,
           'post_install': simple_command(post_install),
-          'setup_initd_script_install': simple_command(setup_initd_script),
           'udev_rules_install': simple_command(udev_rules),
-          'add_group_install': simple_command(add_www_data_to_dialout)
       },
       install_requires=INSTALL_REQUIRES)
