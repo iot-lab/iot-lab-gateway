@@ -354,11 +354,11 @@ def _parse_arguments(args):
     parser.add_argument('host', type=str, help="Server address to bind to")
     parser.add_argument('port', type=int, help="Server port to bind to")
     parser.add_argument(
-        '--log-folder', default='.',
+        '--log-folder', dest='log_folder', default='.',
         help="Folder where to write logs, default current folder")
     arguments = parser.parse_args(args)
 
-    return arguments.host, arguments.port, arguments.log_folder
+    return arguments
 
 
 def _main(args):
@@ -366,10 +366,9 @@ def _main(args):
     Command line main function
     """
 
-    host, port, log_folder = _parse_arguments(args[1:])
-
-    g_m = GatewayManager(log_folder)
+    args = _parse_arguments(args[1:])
+    g_m = GatewayManager(args.log_folder)
     g_m.setup()
 
     server = GatewayRest(g_m)
-    server.run(host=host, port=port, server='paste', reloader=True)
+    server.run(host=args.host, port=args.port, server='paste', reloader=True)

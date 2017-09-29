@@ -127,3 +127,17 @@ def read_config(key, default=IOError):
         if default is IOError:  # not provided
             raise
         return default
+
+def write_config(key, value):
+    """ Write value for 'key' into config.
+
+        :param key: Write configuration for 'key'
+        :param value: Value to save
+        :raises IOError: when 'key' can't be written """
+
+    entry = os.path.join(GATEWAY_CONFIG_PATH, key)
+
+    if value is not None:
+        with open(entry, 'w') as _conf:
+            _conf.write(value)
+            

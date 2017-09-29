@@ -94,9 +94,4 @@ RUN cd iot-lab-gateway && \
      mkdir -p /iotlab/users/test &&\
      chown www-data:www-data /iotlab/users/test
 
-COPY ./wrapper.sh /home/.
-RUN chmod +x /home/wrapper.sh
-
-# #Let's go
-
-CMD ["/home/wrapper.sh"]
+CMD ["/home/iot-lab-gateway/docker-gateway-rest-server"]

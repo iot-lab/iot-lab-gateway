@@ -1,0 +1,71 @@
+#!/usr/bin/env python
+
+# This file is a part of IoT-LAB gateway_code
+# Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
+# Contributor(s) : see AUTHORS file
+#
+# This software is governed by the CeCILL license under French law
+# and abiding by the rules of distribution of free software.  You can  use,
+# modify and/ or redistribute the software under the terms of the CeCILL
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# http://www.cecill.info.
+#
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license and that you accept its terms.
+
+# Use Docker-run
+# to run the docker container built by Docker-build.sh
+
+import argparse
+from collections import namedtuple
+
+import os
+
+Options = namedtuple('Options', ['opt_dir', 'board_type', 'node_type', 'host'])
+default = Options(None, 'm3', 'no', 'custom-123')
+
+parser = argparse.ArgumentParser(add_help=False, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser.add_argument('--help', action='help')
+parser.add_argument('-o', '--opt-dir', dest='opt_dir',help='Optional opt dir to mount gateway_code', default=default.opt_dir)
+parser.add_argument('-b', '--board-type', dest='board_type', help='Set node board type', default=default.board_type)
+parser.add_argument('-h', '--host', dest='host', help='Set hostname', default=default.host)
+parser.add_argument('-c', '--node_type', dest='node_type', help='Set control_node_type', default=default.node_type)
+parser.add_argument('-d', '--daemon', dest='daemon', action='store_true',help='Daemon mode', default=False)
+parser.add_argument('add', nargs='*', help='Additional arguments to pass to docker run')
+
+args = parser.parse_args()
+
+args.opt_dir = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.opt_dir) if args.opt_dir else ''
+args.daemon = '-d' if args.daemon else ''
+
+cmd = ' '.join(args.cmd)
+
+running = '''
+docker run \
+  {0.opt_dir} \
+  --rm \
+  -e BOARD_TYPE={0.board_type} \
+  -e CONTROL_NODE_TYPE={0.node_type} \
+  -e HOSTNAME={0.host} \
+  -e HOST=0.0.0.0 \
+  -e PORT=8080 \
+  -p 8080:8080 \
+  -p 20000:20000 \
+  --name "gateway_test" \
+  --privileged \
+  -v /dev:/dev \
+  {0.daemon} \
+  iot_gateway \
+  {1}
+'''.format(args, cmd)
+
+print('running docker command:')
+print(running)
+
+os.system(running)
