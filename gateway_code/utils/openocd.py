@@ -58,7 +58,7 @@ class OpenOCD(object):
              ' -c "shutdown"')
 
     DEBUG = ' -c "reset halt"'
-    TIMEOUT = 15
+    TIMEOUT = 100
 
     def __init__(self, config_file, opts=(), verb=False, timeout=TIMEOUT):
         self.config = self._config(config_file, opts)

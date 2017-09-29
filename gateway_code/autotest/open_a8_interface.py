@@ -85,7 +85,7 @@ class OpenA8Connection(object):
                                     "open_a8_ssh_connection_failed")
 
         output = self.ssh_run('touch /tmp/boot_errors; cat /tmp/boot_errors')
-        if len(output):  # pragma: no cover
+        if output:  # pragma: no cover
             raise A8ConnectionError("Open A8 FTDI config failed", output)
 
         # test if config OK for OPEN A8 m3

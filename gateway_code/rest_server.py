@@ -297,12 +297,16 @@ class GatewayRest(bottle.Bottle):
             LOGGER.debug('REST: Route %s not available', path)
             return None
 
-    def route(self, path, method='GET', callback=None, **options):
+        LOGGER.info('REST: Route %s registered', path)
+        return self.route(path, *route_args, **route_kwargs)
+
+    def route(self, path, method='GET', callback=None, *args, **kwargs):
         """Add a route but catch some exceptions."""
+        # pylint:disable=arguments-differ
         callback = self._cb_wrap(callback)
         LOGGER.info('REST: Route %s registered', path)
         return super(GatewayRest, self).route(path, method, callback,
-                                              **options)
+                                              *args, **kwargs)
 
     @staticmethod
     def _cb_wrap(func):

@@ -38,7 +38,7 @@ def node_class(board_type):
     try:
         module_path = '%s.%s' % (
             __name__, OPEN_NODES_MODULE.format(type=board_type))
-        class_name = OPEN_CLASS_NAME.format(title=board_type.title())
+        class_name = OPEN_CLASS_NAME.format(title=_node_title(board_type))
 
         # Get node class from board_type
         module = importlib.import_module(module_path)
@@ -50,6 +50,19 @@ def node_class(board_type):
         raise ValueError('Board %s not implemented: %r' % (board_type, err))
     else:
         return board_class
+
+
+def _node_title(board_type):
+    """Format node title in CamelCase from board type.
+
+    >>> _node_title('m3')
+    'M3'
+    >>> _node_title('arduino_zero')
+    'ArduinoZero'
+    >>> _node_title('samr21')
+    'Samr21'
+    """
+    return board_type.title().replace('_', '')
 
 
 def _assert_class_valid(board_class, board_type):
