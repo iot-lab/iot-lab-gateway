@@ -87,7 +87,7 @@ WORKDIR /home
 RUN mkdir iot-lab-gateway
 COPY . /home/iot-lab-gateway/
 RUN cd iot-lab-gateway && \
-    python setup.py install
+    python setup.py develop
 
 #test with M3 config
  RUN mkdir -p /var/local/config/ &&\
