@@ -43,7 +43,7 @@ parser.add_argument('cmd', nargs=argparse.REMAINDER, help='Command to run inside
 args = parser.parse_args()
 
 args.opt_dir = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.opt_dir) if args.opt_dir else ''
-args.daemon = '-d' if args.daemon else ''
+args.daemon = '-d' if args.daemon else '--rm'
 args.reloader = '-e RELOADER=1' if args.reloader else ''
 
 cmd = ' '.join(args.cmd)
@@ -58,7 +58,6 @@ if args.node_type != 'no':
 running = '''
 docker run \
   {0.opt_dir} \
-  --rm \
   -e BOARD_TYPE={0.board_type} \
   -e CONTROL_NODE_TYPE={0.node_type} \
   -e HOSTNAME={0.host} \
