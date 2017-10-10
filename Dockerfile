@@ -90,6 +90,16 @@ RUN git clone https://github.com/ntfreak/openocd && \
     sudo make install && \
     cd .. && rm -rf openocd
 
+#openocd 0.10
+RUN git clone https://github.com/ntfreak/openocd openocd10 && \
+    cd openocd10 && \
+    git checkout v0.10.0 && \
+    ./bootstrap && \
+    ./configure --prefix=/opt/openocd-0.10.0 --enable-cmsis-dap --enable-hidapi-libusb && \
+    make && \
+    sudo make install && \
+    cd .. && rm -rf openocd10
+
 #iot-lab-ftdi-utils install
 
 #(for M3 Nodes and Hikob IoT-LAB Gateway)
