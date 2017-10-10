@@ -139,3 +139,9 @@ Version 2.4.0
     - Fix 120ppm constant drift
 + Fix samr21 flash timeout
 + Add a logger for cli scripts, helps debugging on boards
+
+Version 2.4.1
+-------------
+
++ Increase flash timeout to 100s
++ Fix pylint 1.7 issues
