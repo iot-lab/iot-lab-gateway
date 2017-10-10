@@ -199,7 +199,7 @@ class GatewayRest(bottle.Bottle):
     def open_flash_idle(self):
         """Flash open node."""
         LOGGER.debug('REST: Flash Idle OpenNode')
-        ret = self.gateway_manager.node_flash('open', None)
+        ret = self.gateway_manager.open_flash(board_config.board_class.FW_IDLE)
         return {'ret': ret}
 
     def open_reset(self):
