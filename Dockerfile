@@ -125,4 +125,6 @@ RUN mkdir -p /var/local/config/ && \
     mkdir -p /iotlab/users/test && \
     chown www-data:www-data /iotlab/users/test
 
+WORKDIR /home/iot-lab-gateway
+
 CMD ["/home/iot-lab-gateway/docker-gateway-rest-server"]
