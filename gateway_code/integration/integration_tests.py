@@ -96,7 +96,7 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
 
     def control_node_has(self, *features):
         """Checks that control_node has given `features`."""
-        return object_attr_has(self, CN_FEATURES_ATTR, *features)
+        return object_attr_has(self, CN_FEATURES_ATTR, features)
 
 
 class TestComplexExperimentRunning(ExperimentRunningMock):
