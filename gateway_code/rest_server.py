@@ -55,7 +55,6 @@ class GatewayRest(bottle.Bottle):
         self.board_config = board_config.BoardConfig()
         self._app_routing()
 
-
     def _app_routing(self):
         """
         Declare the REST supported methods depending on board config

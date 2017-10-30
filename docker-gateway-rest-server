@@ -40,12 +40,13 @@ write_config('robot', os.environ['CONTROL_NODE_TYPE'])
 
 def manual_udev(env, clazz):
     if env in os.environ and hasattr(clazz, 'TTY'):
-        cmd = 'ln -nfs %s %s'% (os.environ[env], clazz.TTY)
+        cmd = 'ln -nfs %s %s' % (os.environ[env], clazz.TTY)
         print('Manual udev: ' + cmd)
         os.system(cmd)
 
-manual_udev('ON_TTY',board_class)
-manual_udev('CN_TTY',control_class)
+
+manual_udev('ON_TTY', board_class)
+manual_udev('CN_TTY', control_class)
 
 
 rest_server._main(['', os.environ.get('HOST'), os.environ.get('PORT'), '--log-stdout'])

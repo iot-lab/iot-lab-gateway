@@ -128,6 +128,7 @@ def read_config(key, default=IOError):
             raise
         return default
 
+
 def write_config(key, value):
     """ Write value for 'key' into config.
 
@@ -140,4 +141,3 @@ def write_config(key, value):
     if value is not None:
         with open(entry, 'w') as _conf:
             _conf.write(value)
-            

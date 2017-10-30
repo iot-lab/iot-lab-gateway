@@ -23,11 +23,10 @@
 # to run the docker container built by Docker-build.sh
 
 import os
+import sys
 
 import argparse
 from collections import namedtuple
-
-import sys
 
 Options = namedtuple('Options', ['volume', 'board_type', 'node_type', 'host'])
 default = Options(None, 'm3', 'no', 'custom-123')
@@ -44,41 +43,46 @@ parser.add_argument('-r', '--reloader', dest='reloader', action='store_true', he
 parser.add_argument('cmd', nargs='*', help='Command to run inside the docker container')
 
 
-args = parser.parse_args()
+def main(cli_args):
+    args = parser.parse_args(cli_args)
 
-args.volume = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.volume) if args.volume else ''
-args.daemon = '-d' if args.daemon else '--rm'
-args.reloader = '-e RELOADER=1' if args.reloader else ''
+    args.volume = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.volume) if args.volume else ''
+    args.daemon = '-d' if args.daemon else '--rm'
+    args.reloader = '-e RELOADER=1' if args.reloader else ''
 
-cmd = ' '.join(args.cmd)
+    cmd = ' '.join(args.cmd)
 
-symlink_tty = '/dev/ttyON_%s' % args.board_type.upper()
-real_tty = os.path.realpath(symlink_tty)
-args.device_on_cn_tty = ' --device=%s -e ON_TTY=%s' % (real_tty, real_tty)
-if args.node_type != 'no':
-    real_tty = os.path.realpath('/dev/ttyCN')
-    args.device_on_cn_tty += ' --device=%s -e CN_TTY=%s' % (real_tty,  real_tty)
+    symlink_tty = '/dev/ttyON_%s' % args.board_type.upper()
+    real_tty = os.path.realpath(symlink_tty)
+    args.device_on_cn_tty = ' --device=%s -e ON_TTY=%s' % (real_tty, real_tty)
+    if args.node_type != 'no':
+        real_tty = os.path.realpath('/dev/ttyCN')
+        args.device_on_cn_tty += ' --device=%s -e CN_TTY=%s' % (real_tty,  real_tty)
 
-running = '''
-docker run \
-  {0.volume} \
-  -e BOARD_TYPE={0.board_type} \
-  -e CONTROL_NODE_TYPE={0.node_type} \
-  -e HOSTNAME={0.hostname} \
-  -e HOST=0.0.0.0 \
-  -e PORT=8080 \
-  {0.reloader} \
-  -p 8080:8080 \
-  -p 20000:20000 \
-  --name "gateway_test" \
-  --privileged \
-  {0.device_on_cn_tty} \
-  {0.daemon} \
-  fitiotlab/iot-lab-gateway \
-  {1}
-'''.format(args, cmd)
+    running = '''
+    docker run \
+      {0.volume} \
+      -e BOARD_TYPE={0.board_type} \
+      -e CONTROL_NODE_TYPE={0.node_type} \
+      -e HOSTNAME={0.hostname} \
+      -e HOST=0.0.0.0 \
+      -e PORT=8080 \
+      {0.reloader} \
+      -p 8080:8080 \
+      -p 20000:20000 \
+      --name "gateway_test" \
+      --privileged \
+      {0.device_on_cn_tty} \
+      {0.daemon} \
+      fitiotlab/iot-lab-gateway \
+      {1}
+    '''.format(args, cmd)
 
-print('running docker command:')
-print(running)
+    print('running docker command:')
+    print(running)
 
-os.system(running)
+    os.system(running)
+
+
+if __name__ == '__main__':
+    main(sys.argv[1:])

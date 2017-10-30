@@ -100,6 +100,7 @@ class BuildExt(build_ext):
 
 def simple_command(function):
     """Return a simple command without options."""
+
     class SimpleCommand(Command):
         """Command without options."""
 
