@@ -1,56 +1,75 @@
 Docker Image of iot-lab-gateway
 ===============================
 
-The included Dockerfile includes all the necessary dependencies listed in `INSTALL.md`:
+The included Dockerfile includes all the necessary dependencies listed in `INSTALL.md`, without you having
+to install them on your host machine.
 
-* liboml2
-* openocd 0.9.0
-* iot-lab-ftdi-utils
+The only prerequisite before running the image for the first time is installing udev rules on the host
 
-To build the image:
+    python setup.py udev_rules_install
 
-    sudo .\docker-build
+For the following commands sudo might be needed depending on whether your user is in the `docker` group:
 
-To run the image
+To build the image :
 
-  * Prerequisite, install udev rules
-      python setup.py udev_rules_install
-  * Then
-      sudo .\docker-run
+    ./docker-build
+
+To run the image:
+
+    ./docker-run
 
 Command line arguments for docker-run:
 
-    docker-run [--help] [-o OPT_DIR] [-b BOARD_TYPE] [-h HOST]
-                [-c NODE_TYPE] [-d] [-r]
-                [cmd]
+    usage: docker-run [--help] [-v VOLUME] [-b BOARD_TYPE] [-h HOSTNAME]
+                      [-c NODE_TYPE] [-d] [-r]
+                      [cmd [cmd ...]]
 
     positional arguments:
-    cmd                   Command to run inside the docker container
+      cmd                   Command to run inside the docker container (default:
+                            None)
 
     optional arguments:
-    --help
-    -o OPT_DIR, --opt-dir OPT_DIR
-                        Optional opt dir to mount gateway_code (default: None)
-    -b BOARD_TYPE, --board-type BOARD_TYPE
-                        Set node board type (default: m3)
-    -h HOST, --host HOST  Set hostname (default: custom-123)
-    -c NODE_TYPE, --node_type NODE_TYPE
-                        Set control_node_type (default: no)
-    -d, --daemon          Daemon mode (default: False)
-    -r, --reloader        Reloader (default: False)
+      --help
+      -v VOLUME, --volume VOLUME
+                            Host directory containing gateway_code (default: None)
+      -b BOARD_TYPE, --board-type BOARD_TYPE
+                            Set node board type (default: m3)
+      -h HOSTNAME, --hostname HOSTNAME
+                            Set hostname (default: custom-123)
+      -c NODE_TYPE, --node_type NODE_TYPE
+                            Set control_node_type (default: no)
 
-You can mount a gateway_code folder into the docker container so you can modify your code, and have it used inside the container
-directly:
+    options:
+      -d, --daemon          Daemon mode
+      -r, --reloader        Reloader
 
-    .\docker-run -o gateway_code
+
+You can mount a gateway_code folder into the docker container, so that you can modify your code, and have it used inside the container
+directly, usually:
+
+    ./docker-run -v gateway_code
+
+## Examples
 
 You can use any type of open node:
 
-    \docker-run -b samr21
+    ./docker-run -b samr21 -h samr21-test1
+
+You can mount your gateway_code and have the gateway API auto reload on code change, working in the background
+
+    ./docker-run -v gateway_code --reloader
 
 You can have the gateway run in the background by using a `-d` or `--daemon` argument
 
-Once the gateway runs in the background with `docker-run`, you can interact with its REST server on `http://localhost:8080`, and the serial port
+    ./docker-run -v
+
+Instead of launching the API, you can do something inside the container, like building the control node C interface:
+
+    ./docker-run -- python setup.py build_ext
+
+
+
+Once the gateway runs in the background with `docker-run -d`, you can interact with its REST server on `http://localhost:8080`, and the serial port
 of the node is redirected on `localhost` TCP socket on port `20000`.
 
 ## Running under macOS

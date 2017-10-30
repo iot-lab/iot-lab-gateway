@@ -22,27 +22,31 @@
 # Use Docker-run
 # to run the docker container built by Docker-build.sh
 
+import os
+
 import argparse
 from collections import namedtuple
 
-import os
+import sys
 
-Options = namedtuple('Options', ['opt_dir', 'board_type', 'node_type', 'host'])
+Options = namedtuple('Options', ['volume', 'board_type', 'node_type', 'host'])
 default = Options(None, 'm3', 'no', 'custom-123')
 
 parser = argparse.ArgumentParser(add_help=False, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--help', action='help')
-parser.add_argument('-o', '--opt-dir', dest='opt_dir',help='Optional opt dir to mount gateway_code', default=default.opt_dir)
+parser.add_argument('-v', '--volume', dest='volume', help='Host directory containing gateway_code',
+                    default=default.volume)
 parser.add_argument('-b', '--board-type', dest='board_type', help='Set node board type', default=default.board_type)
-parser.add_argument('-h', '--host', dest='host', help='Set hostname', default=default.host)
+parser.add_argument('-h', '--hostname', dest='hostname', help='Set hostname', default=default.host)
 parser.add_argument('-c', '--node_type', dest='node_type', help='Set control_node_type', default=default.node_type)
-parser.add_argument('-d', '--daemon', dest='daemon', action='store_true',help='Daemon mode', default=False)
-parser.add_argument('-r', '--reloader', dest='reloader', action='store_true',help='Reloader', default=False)
-parser.add_argument('cmd', nargs=argparse.REMAINDER, help='Command to run inside the docker container')
+parser.add_argument('-d', '--daemon', dest='daemon', action='store_true', help='Daemon mode', default=False)
+parser.add_argument('-r', '--reloader', dest='reloader', action='store_true', help='Reloader', default=False)
+parser.add_argument('cmd', nargs='*', help='Command to run inside the docker container')
+
 
 args = parser.parse_args()
 
-args.opt_dir = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.opt_dir) if args.opt_dir else ''
+args.volume = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.volume) if args.volume else ''
 args.daemon = '-d' if args.daemon else '--rm'
 args.reloader = '-e RELOADER=1' if args.reloader else ''
 
@@ -57,10 +61,10 @@ if args.node_type != 'no':
 
 running = '''
 docker run \
-  {0.opt_dir} \
+  {0.volume} \
   -e BOARD_TYPE={0.board_type} \
   -e CONTROL_NODE_TYPE={0.node_type} \
-  -e HOSTNAME={0.host} \
+  -e HOSTNAME={0.hostname} \
   -e HOST=0.0.0.0 \
   -e PORT=8080 \
   {0.reloader} \
