@@ -21,4 +21,4 @@
 
 import os
 
-os.system('docker build -t iot_gateway .')
+os.system('docker build -t fitiotlab/iot-lab-gateway .')

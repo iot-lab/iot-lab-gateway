@@ -70,7 +70,7 @@ docker run \
   --privileged \
   {0.device_on_cn_tty} \
   {0.daemon} \
-  iot_gateway \
+  fitiotlab/iot-lab-gateway \
   {1}
 '''.format(args, cmd)
 
