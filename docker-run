@@ -26,9 +26,10 @@ import os
 import sys
 
 import argparse
+import tempfile
 from collections import namedtuple
 
-Options = namedtuple('Options', ['volume', 'board_type', 'node_type', 'host'])
+Options = namedtuple('Options', ['volume', 'board_type', 'control_node_type', 'host'])
 default = Options(None, 'm3', 'no', 'custom-123')
 
 parser = argparse.ArgumentParser(add_help=False, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
@@ -37,7 +38,7 @@ parser.add_argument('-v', '--volume', dest='volume', help='Host directory contai
                     default=default.volume)
 parser.add_argument('-b', '--board-type', dest='board_type', help='Set node board type', default=default.board_type)
 parser.add_argument('-h', '--hostname', dest='hostname', help='Set hostname', default=default.host)
-parser.add_argument('-c', '--node_type', dest='node_type', help='Set control_node_type', default=default.node_type)
+parser.add_argument('-c', '--node_type', dest='control_node_type', help='Set control_node_type', default=default.control_node_type)
 parser.add_argument('-d', '--daemon', dest='daemon', action='store_true', help='Daemon mode', default=False)
 parser.add_argument('-r', '--reloader', dest='reloader', action='store_true', help='Reloader', default=False)
 parser.add_argument('cmd', nargs='*', help='Command to run inside the docker container')
@@ -55,18 +56,24 @@ def main(cli_args):
     symlink_tty = '/dev/ttyON_%s' % args.board_type.upper()
     real_tty = os.path.realpath(symlink_tty)
     args.device_on_cn_tty = ' --device=%s -e ON_TTY=%s' % (real_tty, real_tty)
-    if args.node_type != 'no':
+    if args.control_node_type != 'no':
         real_tty = os.path.realpath('/dev/ttyCN')
         args.device_on_cn_tty += ' --device=%s -e CN_TTY=%s' % (real_tty,  real_tty)
+
+    cfg_dir = tempfile.mkdtemp()
+    open(os.path.join(cfg_dir, 'board_type'), 'w').write(args.board_type)
+    open(os.path.join(cfg_dir, 'control_node_type'), 'w').write(args.control_node_type)
+    open(os.path.join(cfg_dir, 'hostname'), 'w').write(args.hostname)
 
     running = '''
     docker run \
       {0.volume} \
       -e BOARD_TYPE={0.board_type} \
-      -e CONTROL_NODE_TYPE={0.node_type} \
+      -e CONTROL_NODE_TYPE={0.control_node_type} \
       -e HOSTNAME={0.hostname} \
       -e HOST=0.0.0.0 \
       -e PORT=8080 \
+      -v {2}:/var/local/config \
       {0.reloader} \
       -p 8080:8080 \
       -p 20000:20000 \
@@ -76,7 +83,7 @@ def main(cli_args):
       {0.daemon} \
       fitiotlab/iot-lab-gateway \
       {1}
-    '''.format(args, cmd)
+    '''.format(args, cmd, cfg_dir)
 
     print('running docker command:')
     print(running)

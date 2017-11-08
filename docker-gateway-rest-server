@@ -25,17 +25,12 @@ import os
 from gateway_code.open_nodes import node_class
 
 from gateway_code import rest_server
-from gateway_code.config import write_config, control_node_class
+from gateway_code.config import control_node_class
 
 board_type = os.environ['BOARD_TYPE']
 board_class = node_class(board_type)
 control_node_type = os.environ['CONTROL_NODE_TYPE']
 control_class = control_node_class(control_node_type)
-
-write_config('board_type', board_type)
-write_config('control_node_type', control_node_type)
-write_config('hostname', os.environ['HOSTNAME'])
-write_config('robot', os.environ['CONTROL_NODE_TYPE'])
 
 
 def manual_udev(env, clazz):
