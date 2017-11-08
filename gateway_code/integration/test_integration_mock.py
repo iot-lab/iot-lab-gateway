@@ -36,6 +36,8 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 def run_integration():
     """Tell if integration tests should be run."""
+    if 'IOTLAB_GATEWAY_NO_INTEGRATION_TESTS' in os.environ:
+        return False
     # iotlab-gateways
     if os.uname()[4] == 'armv7l':
         return True

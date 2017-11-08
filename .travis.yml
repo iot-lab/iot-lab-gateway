@@ -9,4 +9,4 @@ before_install:
   - docker build -t iot-lab-gateway-test tests
 
 script:
-  - docker run -v gateway_code:/home/iot-lab-gateway/gateway_code -v $CWD/tests_utils/cfg_dir:/var/local/config -e BOARD_TYPE=m3 -e CONTROL_NODE_TYPE=no -e HOSTNAME=m3-00 --privileged iot-lab-gateway-test
+  - docker run -v gateway_code:/home/iot-lab-gateway/gateway_code -v $CWD/tests_utils/cfg_dir:/var/local/config -e BOARD_TYPE=m3 -e CONTROL_NODE_TYPE=no -e HOSTNAME=m3-00 -e IOTLAB_GATEWAY_NO_INTEGRATION_TESTS --privileged iot-lab-gateway-test
