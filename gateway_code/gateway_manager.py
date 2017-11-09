@@ -46,8 +46,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     Manages experiments, open node and control node """
 
-    def __init__(self, log_folder='.'):
-        gateway_logging.init_logger(log_folder)
+    def __init__(self, log_folder='.', log_stdout=False):
+        gateway_logging.init_logger(log_folder, log_stdout)
 
         self.board_cfg = board_config.BoardConfig()
         self.rlock = RLock()

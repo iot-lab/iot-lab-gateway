@@ -76,6 +76,24 @@ Then run
 The user running the command should be in the `dialout` group
 
 
+Testing using your PC as a gateway requires creating a stub config directory.
+Take example at `tests_utils/cfg_dir/` and make a copy adapted for your node.
+
+Testing using your PC as a gateway is best done with the included Docker image (see `DOCKER.md`)
+
+Ensure that udev-rules are correctly installed to detect nodes.
+See `python setup.py release` procedure mentionned in `INSTALL.md` and
+do at least the udev-rules install part, or run the full release.
+
+Then run
+
+    tox -e local <config_directory_path>
+    # Example with m3 node
+    tox -e local tests_utils/cfg_dir/
+
+The user running the command should be in the `dialout` group
+
+
 Server REST (testing)
 ---------------------
 

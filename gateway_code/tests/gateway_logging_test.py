@@ -24,8 +24,13 @@
 # pylint: disable=too-many-public-methods
 
 import os
+import tempfile
 import unittest
 import logging
+
+import mock
+from StringIO import StringIO
+
 from gateway_code import gateway_logging
 
 
@@ -42,19 +47,34 @@ class TestGatewayLogging(unittest.TestCase):
         self.assertEquals(handlers_one, handlers_two)
 
     def test_user_logger(self):
-
         logger = logging.getLogger(__name__)
 
-        log_file = 'test_log_file.log'
-        log_handler = gateway_logging.user_logger(log_file)
+        with tempfile.NamedTemporaryFile() as log_file:
+            log_handler = gateway_logging.user_logger(log_file.name)
 
-        logger.addHandler(log_handler)
+            logger.addHandler(log_handler)
+            test_log = 'Test log'
 
-        for i in range(0, 100):
-            logger.info('Test log %d', i)
-        log_handler.close()
+            logger.info(test_log)
+            log_handler.close()
 
-        # file has data
-        self.assertNotEquals(0, os.path.getsize(log_file))
+            # file has data
+            log_content = log_file.read()
+            self.assertNotEquals(0, len(log_content))
+            self.assertIn(test_log, log_content)
 
-        os.remove(log_file)
+    @mock.patch('sys.stdout', new_callable=StringIO)
+    def test_stdout_logging(self, fake_stdout):
+        logger = logging.getLogger('gateway_code')
+        for h in logger.handlers:
+            logger.removeHandler(h)
+
+        gateway_logging.init_logger(tempfile.gettempdir(), log_stdout=True)
+
+        test_log = 'Test log'
+        logger.info(test_log)
+
+        # sys.stdout received some data
+        log_content = fake_stdout.getvalue()
+        self.assertNotEquals(0, len(log_content))
+        self.assertIn(test_log, log_content)

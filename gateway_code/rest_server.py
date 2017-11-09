@@ -37,7 +37,7 @@ from bottle import request
 
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code import board_config
-
+import sys
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -63,6 +63,7 @@ class GatewayRest(bottle.Bottle):
         self.route('/exp/start/<exp_id:int>/<user>', 'POST', self.exp_start)
         self.route('/exp/stop', 'DELETE', self.exp_stop)
         self.route('/status', 'GET', self.status)
+
         # Control node functions
         self.route('/exp/update', 'POST', self.exp_update_profile)
         self.cn_conditional_route('open_start', '/open/start', 'PUT',
@@ -352,11 +353,18 @@ def _parse_arguments(args):
     parser.add_argument('host', type=str, help="Server address to bind to")
     parser.add_argument('port', type=int, help="Server port to bind to")
     parser.add_argument(
-        '--log-folder', default='.',
+        '--log-folder', dest='log_folder', default='.',
         help="Folder where to write logs, default current folder")
+    parser.add_argument(
+        '--log-stdout', dest='log_stdout', action='store_true',
+        help="Whether to write logs to stdout, default False")
+    parser.add_argument(
+        '--reloader', dest='reloader', action='store_true',
+        help="Whether to auto-reload the bottle server on source code changes")
+
     arguments = parser.parse_args(args)
 
-    return arguments.host, arguments.port, arguments.log_folder
+    return arguments
 
 
 def _main(args):
@@ -364,10 +372,9 @@ def _main(args):
     Command line main function
     """
 
-    host, port, log_folder = _parse_arguments(args[1:])
-
-    g_m = GatewayManager(log_folder)
+    args = _parse_arguments(args[1:])
+    g_m = GatewayManager(args.log_folder, args.log_stdout)
     g_m.setup()
 
     server = GatewayRest(g_m)
-    server.run(host=host, port=port, server='paste')
+    server.run(host=args.host, port=args.port, server='paste', reloader=args.reloader)

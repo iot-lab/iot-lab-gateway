@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+# This file is a part of IoT-LAB gateway_code
+# Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
+# Contributor(s) : see AUTHORS file
+#
+# This software is governed by the CeCILL license under French law
+# and abiding by the rules of distribution of free software.  You can  use,
+# modify and/ or redistribute the software under the terms of the CeCILL
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# http://www.cecill.info.
+#
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license and that you accept its terms.
+
+# Start the first process
+import os
+
+from gateway_code.open_nodes import node_class
+
+from gateway_code import rest_server
+from gateway_code.config import control_node_class
+
+board_type = os.environ['BOARD_TYPE']
+board_class = node_class(board_type)
+control_node_type = os.environ['CONTROL_NODE_TYPE']
+control_class = control_node_class(control_node_type)
+
+
+def manual_udev(env, clazz):
+    if env in os.environ and hasattr(clazz, 'TTY'):
+        cmd = 'ln -nfs %s %s' % (os.environ[env], clazz.TTY)
+        print('Manual udev: ' + cmd)
+        os.system(cmd)
+
+
+manual_udev('ON_TTY', board_class)
+manual_udev('CN_TTY', control_class)
+
+
+rest_server._main(['', os.environ.get('HOST'), os.environ.get('PORT'), '--log-stdout'])
