@@ -19,51 +19,43 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-# Use Docker-run
-# to run the docker container built by Docker-build.sh
+# Use docker-run to run the gateway in a container
 
 import os
 import sys
 
 import argparse
 import tempfile
-from collections import namedtuple
-
-Options = namedtuple('Options', ['volume', 'board_type', 'control_node_type', 'host'])
-default = Options(None, 'm3', 'no', 'custom-123')
-
-parser = argparse.ArgumentParser(add_help=False, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-parser.add_argument('--help', action='help')
-parser.add_argument('-v', '--volume', dest='volume', help='Host directory containing gateway_code',
-                    default=default.volume)
-parser.add_argument('-b', '--board-type', dest='board_type', help='Set node board type', default=default.board_type)
-parser.add_argument('-h', '--hostname', dest='hostname', help='Set hostname', default=default.host)
-parser.add_argument('-c', '--node_type', dest='control_node_type', help='Set control_node_type', default=default.control_node_type)
-parser.add_argument('-d', '--daemon', dest='daemon', action='store_true', help='Daemon mode', default=False)
-parser.add_argument('-r', '--reloader', dest='reloader', action='store_true', help='Reloader', default=False)
-parser.add_argument('cmd', nargs='*', help='Command to run inside the docker container')
 
 
-def main(cli_args):
-    args = parser.parse_args(cli_args)
-
-    args.volume = "-v %s:/home/iot-lab-gateway/gateway_code" % os.path.abspath(args.volume) if args.volume else ''
+def main(args):
+    args.volume = ('-v {}:/home/iot-lab-gateway/gateway_code'
+                   .format(os.path.abspath(args.volume))
+                           if args.volume is not None else '')
     args.daemon = '-d' if args.daemon else '--rm'
     args.reloader = '-e RELOADER=1' if args.reloader else ''
 
     cmd = ' '.join(args.cmd)
 
-    symlink_tty = '/dev/ttyON_%s' % args.board_type.upper()
+    symlink_tty = '/dev/ttyON_{}'.format(args.board_type.upper())
     real_tty = os.path.realpath(symlink_tty)
-    args.device_on_cn_tty = ' --device=%s -e ON_TTY=%s' % (real_tty, real_tty)
+    args.device_on_cn_tty = (' --device={0} -e ON_TTY={0}'.format(real_tty))
+
     if args.control_node_type != 'no':
         real_tty = os.path.realpath('/dev/ttyCN')
-        args.device_on_cn_tty += ' --device=%s -e CN_TTY=%s' % (real_tty,  real_tty)
+        args.device_on_cn_tty += (' --device={0} -e CN_TTY={0}'
+                                  .format(real_tty))
 
+    # Writing local gateway configuration
     cfg_dir = tempfile.mkdtemp()
-    open(os.path.join(cfg_dir, 'board_type'), 'w').write(args.board_type)
-    open(os.path.join(cfg_dir, 'control_node_type'), 'w').write(args.control_node_type)
-    open(os.path.join(cfg_dir, 'hostname'), 'w').write(args.hostname)
+    with open(os.path.join(cfg_dir, 'board_type'), 'w') as f:
+        f.write(args.board_type)
+
+    with open(os.path.join(cfg_dir, 'control_node_type'), 'w') as f:
+        f.write(args.control_node_type)
+
+    with open(os.path.join(cfg_dir, 'hostname'), 'w') as f:
+        f.write(args.hostname)
 
     running = '''
     docker run \
@@ -81,7 +73,7 @@ def main(cli_args):
       --privileged \
       {0.device_on_cn_tty} \
       {0.daemon} \
-      fitiotlab/iot-lab-gateway \
+      iot-lab-gateway \
       {1}
     '''.format(args, cmd, cfg_dir)
 
@@ -90,6 +82,25 @@ def main(cli_args):
 
     os.system(running)
 
-
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    parser = argparse.ArgumentParser(
+        add_help=False, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser.add_argument('--help', action='help')
+    parser.add_argument('-v', '--volume', dest='volume',
+                        help='Host directory containing gateway_code',
+                        default=None)
+    parser.add_argument('-b', '--board-type', dest='board_type', default='m3',
+                        help='Set node board type')
+    parser.add_argument('-h', '--hostname', dest='hostname',
+                        default='custom-123',
+                        help='Set hostname')
+    parser.add_argument('-c', '--control-node-type', dest='control_node_type',
+                        default='no',
+                        help='Set node as control node')
+    parser.add_argument('-d', '--daemon', dest='daemon', action='store_true',
+                        help='Daemon mode')
+    parser.add_argument('-r', '--reloader', dest='reloader',
+                        action='store_true', help='Reloader')
+    parser.add_argument('cmd', nargs='*',
+                        help='Command to run inside the docker container')
+    main(parser.parse_args(sys.argv[1:]))
