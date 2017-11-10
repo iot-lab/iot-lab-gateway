@@ -24,13 +24,8 @@ import os
 
 from gateway_code.open_nodes import node_class
 
-from gateway_code import rest_server
+from gateway_code.rest_server import _main as rest_server_main
 from gateway_code.config import control_node_class
-
-board_type = os.environ['BOARD_TYPE']
-board_class = node_class(board_type)
-control_node_type = os.environ['CONTROL_NODE_TYPE']
-control_class = control_node_class(control_node_type)
 
 
 def manual_udev(env, clazz):
@@ -40,8 +35,17 @@ def manual_udev(env, clazz):
         os.system(cmd)
 
 
-manual_udev('ON_TTY', board_class)
-manual_udev('CN_TTY', control_class)
+def main():
+    board_type = os.environ['BOARD_TYPE']
+    board_class = node_class(board_type)
+    control_node_type = os.environ['CONTROL_NODE_TYPE']
+    control_class = control_node_class(control_node_type)
 
+    manual_udev('ON_TTY', board_class)
+    manual_udev('CN_TTY', control_class)
 
-rest_server._main(['', os.environ.get('HOST'), os.environ.get('PORT'), '--log-stdout'])
+    rest_server_main(
+        ['', os.environ.get('HOST'), os.environ.get('PORT'), '--log-stdout'])
+
+if __name__ == '__main__':
+    main()
