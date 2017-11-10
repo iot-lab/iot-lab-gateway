@@ -28,19 +28,16 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 # set default logger level to DEBUG to log everything
-import sys
-
 LOGLEVEL = logging.DEBUG
 FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-def init_logger(log_folder, log_stdout=False):
+def init_logger(log_folder):
     """ Create global logger and handlers
 
     :param log_folder: log destination folder
-    :param log_stdout: whether to log everything to stdout
     """
 
     logger = LOGGER
@@ -56,15 +53,8 @@ def init_logger(log_folder, log_stdout=False):
     server.setLevel(logging.DEBUG)
     server.setFormatter(FORMATTER)
 
-    # stdout log (useful for dockerized)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(FORMATTER)
-
     # add handlers
     logger.addHandler(server)
-    if log_stdout:
-        logger.addHandler(ch)
 
 
 def user_logger(log_file_path):

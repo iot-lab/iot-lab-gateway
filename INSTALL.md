@@ -3,8 +3,6 @@ Install
 
 Tested on Ubuntu 14.04 LTS.
 
-To simplify this setup, we've developed a Docker image, see `DOCKER.md`
-
 
 Dependencies
 ------------
