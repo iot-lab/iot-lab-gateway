@@ -56,6 +56,12 @@ class ControlNodeNo(object):
         """Setup control node."""
         return 0
 
+    @staticmethod
+    @logger_call("Control node: Flash")
+    def flash(*args, **kwargs):
+        """Setup control node."""
+        return 0
+
     @logger_call("Control node : Start experiment")
     def start_experiment(self, profile):
         """ Configure the experiment """
