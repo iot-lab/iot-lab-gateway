@@ -24,12 +24,11 @@
 Logger configuration for gateway code
 """
 
+import sys
 import logging
 from logging.handlers import RotatingFileHandler
 
 # set default logger level to DEBUG to log everything
-import sys
-
 LOGLEVEL = logging.DEBUG
 FORMATTER = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
