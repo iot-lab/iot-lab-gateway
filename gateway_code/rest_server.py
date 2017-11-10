@@ -37,7 +37,7 @@ from bottle import request
 
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code import board_config
-import sys
+
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -377,4 +377,5 @@ def _main(args):
     g_m.setup()
 
     server = GatewayRest(g_m)
-    server.run(host=args.host, port=args.port, server='paste', reloader=args.reloader)
+    server.run(host=args.host, port=args.port, server='paste',
+               reloader=args.reloader)
