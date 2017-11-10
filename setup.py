@@ -71,7 +71,6 @@ def get_version(package):
 
 
 SCRIPTS = glob('bin/scripts/*')
-SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
 INSTALL_REQUIRES += ['pyelftools']
@@ -187,7 +186,8 @@ setup(name=PACKAGE,
 
       scripts=SCRIPTS,
       include_package_data=True,
-      package_data={'static': ['static/*']},
+      package_data={'static': ['static/*'],
+                    'control_node_serial_interface':'control_node_serial/control_node_serial_interface'},
       ext_modules=[Extension('control_node_serial_interface', [])],
 
       cmdclass={
