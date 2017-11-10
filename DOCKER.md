@@ -12,7 +12,7 @@ For the following commands sudo might be needed depending on whether your user i
 
 To build the image :
 
-    ./docker-build
+    docker build -t iot-lab-gateway .
 
 To run the image:
 
@@ -31,7 +31,7 @@ Command line arguments for docker-run:
     optional arguments:
       --help
       -v VOLUME, --volume VOLUME
-                            Host directory containing gateway_code (default: None)
+                            Host directory containing the gateway code, usually gateway_code (default: None)
       -b BOARD_TYPE, --board-type BOARD_TYPE
                             Set node board type (default: m3)
       -h HOSTNAME, --hostname HOSTNAME
@@ -61,7 +61,7 @@ You can mount your gateway_code and have the gateway API auto reload on code cha
 
 You can have the gateway run in the background by using a `-d` or `--daemon` argument
 
-    ./docker-run -v
+    ./docker-run -d
 
 Instead of launching the API, you can do something inside the container, like building the control node C interface:
 
@@ -93,5 +93,4 @@ Start Docker Toolbox with the Docker Quickstart Terminal, then do this additionn
         $ VBoxManage controlvm default natpf1 "bottle,tcp,127.0.0.1,8080,,8080"
         $ VBoxManage controlvm default natpf1 "serial_redirection,tcp,127.0.0.1,20000,,20000"
 
-Run `docker-build`and `docker-run` as explained above.
->>>>>>> 512ae0d... add documentation to run in a Docker container under macOS
+Build the docker image and run `docker-run` as explained above.
