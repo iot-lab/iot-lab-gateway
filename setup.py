@@ -175,9 +175,9 @@ class Release(install):
         execute(self, post_install, [self])
 
 
-control_node_serial_data = 'control_node_serial/control_node_serial_interface'
 PACKAGE_DATA = {'static': ['static/*'],
-                'control_node_serial_interface': control_node_serial_data}
+                'control_node_serial_interface': \
+                    'control_node_serial/control_node_serial_interface'}
 
 setup(name=PACKAGE,
       version=get_version(PACKAGE),
