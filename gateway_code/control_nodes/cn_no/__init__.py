@@ -59,7 +59,7 @@ class ControlNodeNo(object):
     @staticmethod
     @logger_call("Control node: Flash")
     def flash(*args, **kwargs):
-        """Setup control node."""
+        """Flash control node"""
         return 0
 
     @logger_call("Control node : Start experiment")
