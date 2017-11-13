@@ -4,10 +4,20 @@ sudo: required
 services:
   - docker
 
+cache:
+  directories:
+    - docker
+
 before_install:
-  - docker pull fitiotlab/iot-lab-gateway:latest
-  - docker build -t iot-lab-gateway .
-  - docker build -t iot-lab-gateway-test tests
+    # If there is a cache, load it in docker
+  - if [ -e docker/previous_image.tar.gz ]; then docker load -i docker/previous_image.tar.gz; fi
+
+install:
+  - docker build -t iot-lab-gateway --cache-from=iot-lab-gateway .
+  - docker build -t iot-lab-gateway-tests tests
+
+before_cache:
+  - docker save -o docker/previous_image.tar.gz iot-lab-gateway
 
 script:
   - >
@@ -17,4 +27,4 @@ script:
     -e CONTROL_NODE_TYPE=no
     -e HOSTNAME=m3-00 
     -e IOTLAB_GATEWAY_NO_INTEGRATION_TESTS
-    --privileged iot-lab-gateway-test
+    --privileged iot-lab-gateway-tests
