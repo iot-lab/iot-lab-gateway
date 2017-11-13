@@ -51,5 +51,8 @@ class TestBoardConfig(unittest.TestCase):
         self.assertEquals('m3', board_cfg.board_type)
         self.assertEquals(None, board_cfg.robot_type)
 
+    def get_invalid(self):
+        return BoardConfig.from_file(utils.test_cfg_dir('invalid_board_type'))
+
     def test_board_type_not_found(self):
-        self.assertRaises(ValueError, BoardConfig.from_file(utils.test_cfg_dir('invalid_board_type')))
+        self.assertRaises(ValueError, self.get_invalid)
