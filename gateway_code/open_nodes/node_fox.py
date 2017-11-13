@@ -25,6 +25,7 @@ import logging
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.nodes import OpenNode
 
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.utils.serial_redirection import SerialRedirection
@@ -32,8 +33,8 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeFox(object):
-    """ Open node FOX implemention """
+class NodeFox(OpenNode):
+    """ Open node FOX implementation """
 
     # Contrary to m3 node, fox node need some time to be visible.
     # Also flash/reset may fail after a node start_dc but don't care

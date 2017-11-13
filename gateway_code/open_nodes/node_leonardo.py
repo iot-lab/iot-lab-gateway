@@ -27,6 +27,7 @@ import logging
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.nodes import OpenNode
 
 from gateway_code.utils.avrdude import AvrDude
 from gateway_code.utils.serial_redirection import SerialRedirection
@@ -34,7 +35,7 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeLeonardo(object):
+class NodeLeonardo(OpenNode):
     """ Open node Leonardo implemention """
 
     TYPE = 'leonardo'

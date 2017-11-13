@@ -21,11 +21,10 @@
 """open_nodes package tests."""
 
 import unittest
-import mock
 
-from .. import node_class, all_nodes_types
-from ..node_m3 import NodeM3
-from ..node_a8 import NodeA8
+from gateway_code.nodes import open_node_class, all_open_nodes_types
+from gateway_code.open_nodes.node_a8 import NodeA8
+from gateway_code.open_nodes.node_m3 import NodeM3
 
 
 class TestsOpenNodes(unittest.TestCase):
@@ -33,15 +32,15 @@ class TestsOpenNodes(unittest.TestCase):
 
     def test_node_class(self):
         """Test loading an open node class."""
-        self.assertEquals(NodeM3, node_class('m3'))
-        self.assertEquals(NodeA8, node_class('a8'))
+        self.assertEquals(NodeM3, open_node_class('m3'))
+        self.assertEquals(NodeA8, open_node_class('a8'))
 
     def test_open_node_class_errors(self):
         """Test error while loading an open node class."""
         # No module
         self.assertRaisesRegexp(
             ValueError, '^Board unknown not implemented*$',
-            node_class, 'unknown')
+            open_node_class, 'unknown')
 
 
 class TestsOpenNodesImplementations(unittest.TestCase):
@@ -50,7 +49,7 @@ class TestsOpenNodesImplementations(unittest.TestCase):
     @staticmethod
     def test_nodes_classes():
         """Test loading all implemented open nodes implementation."""
-        for node in all_nodes_types():
+        for node in all_open_nodes_types():
             # No exception
             print node
-            print node_class(node)
+            print open_node_class(node)

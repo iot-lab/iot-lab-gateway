@@ -24,11 +24,12 @@
 import logging
 
 from gateway_code.common import logger_call
+from gateway_code.nodes import ControlNode
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-class ControlNodeNo(object):
+class ControlNodeNo(ControlNode):
     """ No Control Node """
     TYPE = 'no'
     FEATURES = []

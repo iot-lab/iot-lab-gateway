@@ -26,6 +26,7 @@ import serial
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.nodes import OpenNode
 
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.utils.serial_redirection import SerialRedirection
@@ -33,7 +34,7 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeStLrwan1(object):
+class NodeStLrwan1(OpenNode):
     """ Open node STM32 LRWAN1 implemention """
 
     TYPE = 'st_lrwan1'

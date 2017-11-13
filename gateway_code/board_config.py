@@ -25,7 +25,7 @@
 import functools
 import gateway_code.config as config  # allow mocking as 'gateway_code.config'
 from gateway_code import profile
-from gateway_code import open_nodes
+from gateway_code import nodes
 
 
 # Implemented as a class to be loaded dynamically and allow mocking in tests
@@ -37,9 +37,9 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
 
     def __init__(self):
         board_type = config.read_config('board_type')
-        self.board_class = open_nodes.node_class(board_type)
+        self.board_class = nodes.open_node_class(board_type)
         cn_type = config.read_config('control_node_type', 'iotlab')
-        self.cn_class = config.control_node_class(cn_type)
+        self.cn_class = nodes.control_node_class(cn_type)
 
         self.robot_type = config.read_config('robot', None)
         self.node_id = config.read_config('hostname')
