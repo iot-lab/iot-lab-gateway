@@ -340,12 +340,13 @@ class GatewayRest(bottle.Bottle):
 # Command line functions
 
 
-def _parse_arguments(args, parse_file=False):
+def _parse_arguments(args, board_config_extra_args=False):
     """
     Parse arguments:
         [host, port]
 
     :param args: arguments, without the script name == sys.argv[1:]
+    :param board_config_extra_args: whether to add new argument parsing for board_config
     :type args: list
     """
     import argparse
@@ -362,7 +363,7 @@ def _parse_arguments(args, parse_file=False):
     parser.add_argument(
         '--reloader', dest='reloader', action='store_true',
         help="Whether to auto-reload the bottle server on source code changes")
-    if not parse_file:
+    if board_config_extra_args:
         parser.add_argument('--board-type', '-b', dest='board_type',
                             help="the open node board type", required=True)
         parser.add_argument('--control-node-type', '-c',
@@ -378,18 +379,17 @@ def _parse_arguments(args, parse_file=False):
     return arguments
 
 
-def _main(args, board_cfg=None, parse_file=True):
+def _main(args, parse_file=True):
     """
     Command line main function
     """
 
-    args = _parse_arguments(args[1:], parse_file)
-    if board_cfg is None:
-        if parse_file:
-            board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
-        else:
-            board_cfg = BoardConfig(args.board_type, args.hostname,
-                                    args.control_node_type, args.robot)
+    args = _parse_arguments(args[1:], not parse_file)
+    if parse_file:
+        board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
+    else:
+        board_cfg = BoardConfig(args.board_type, args.hostname,
+                                args.control_node_type, args.robot)
     g_m = GatewayManager(board_cfg, args.log_folder, args.log_stdout)
     g_m.setup()
 
