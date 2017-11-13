@@ -33,22 +33,20 @@ import unittest
 import mock
 
 from gateway_code import config
+from gateway_code.board_config import BoardConfig
 from . import utils
 
 
 class TestConfig(unittest.TestCase):
 
     def test_read_config(self):
-        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot')):
-            self.assertEquals('m3', config.read_config('board_type'))
-            self.assertEquals('m3', config.read_config('board_type', 'def'))
+        board_config = BoardConfig.from_file(utils.test_cfg_dir('m3_no_robot'))
+        self.assertEquals('m3', board_config.board_type)
+        self.assertEquals(None, board_config.robot_type)
 
-            self.assertRaises(IOError, config.read_config, 'robot')
-            self.assertEquals(None, config.read_config('robot', None))
-
-        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_robot')):
-            self.assertEquals('m3', config.read_config('board_type'))
-            self.assertEquals('turtlebot2', config.read_config('robot'))
+        board_config = BoardConfig.from_file(utils.test_cfg_dir('m3_robot'))
+        self.assertEquals('m3', board_config.board_type)
+        self.assertEquals('turtlebot2', board_config.robot_type)
 
     def test_default_profile(self):
         default_profile_dict = {

@@ -31,30 +31,25 @@
 
 import unittest
 
-import mock
-
-import gateway_code.board_config as board_config
+from gateway_code.board_config import BoardConfig
 from . import utils
 
 
 class TestBoardConfig(unittest.TestCase):
 
-    @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_robot'))
     def test_board_type(self):
-        board_cfg = board_config.BoardConfig()
+        board_cfg = BoardConfig.from_file(utils.test_cfg_dir('m3_robot'))
 
         self.assertEquals('m3', board_cfg.board_type)
         self.assertEquals('m3', board_cfg.board_class.TYPE)
         self.assertEquals('turtlebot2', board_cfg.robot_type)
-        self.assertNotEquals('', board_config.BoardConfig().node_id)
+        self.assertNotEquals('', board_cfg.node_id)
 
-    @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot'))
     def test_board_type_no_robot(self):
-        board_cfg = board_config.BoardConfig()
+        board_cfg = BoardConfig.from_file(utils.test_cfg_dir('m3_no_robot'))
 
         self.assertEquals('m3', board_cfg.board_type)
         self.assertEquals(None, board_cfg.robot_type)
 
-    @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('invalid_board_type'))
     def test_board_type_not_found(self):
-        self.assertRaises(ValueError, board_config.BoardConfig)
+        self.assertRaises(ValueError, BoardConfig.from_file(utils.test_cfg_dir('invalid_board_type')))

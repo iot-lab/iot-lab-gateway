@@ -38,6 +38,7 @@ import webtest
 import mock
 
 from gateway_code import rest_server
+from gateway_code.tests.utils import get_config_mock
 from . import utils
 
 
@@ -60,14 +61,11 @@ class TestRestMethods(unittest.TestCase):
     PROFILE_DICT = {u'profilename': u'_default_profile', u'power': u'dc'}
 
     def setUp(self):
-        mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
 
         self.g_m = mock.Mock()
+        self.g_m.board_config = get_config_mock('m3')
         self.s_r = rest_server.GatewayRest(self.g_m)
         self.server = webtest.TestApp(self.s_r)
-
-    def tearDown(self):
-        mock.patch.stopall()
 
     def test_routes(self):
         with mock.patch.object(self.s_r, 'route') as m_route:
@@ -275,11 +273,14 @@ class TestRestMethods(unittest.TestCase):
 class TestServerRestMain(unittest.TestCase):
     """ Cover functions uncovered by unit tests """
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.utils.subprocess_timeout.call')  # CN flash
     @mock.patch('bottle.run')
     def test_main_function(self, run_mock, call_mock):
+        board_config = utils.get_config_mock('m3')
+        extra_args = ['--board-type',board_config.board_type,
+                      '--hostname', board_config.node_id,
+                      '--control-node-type', board_config.cn_type]
         call_mock.return_value = 0
-        args = ['rest_server.py', 'localhost', '8080']
-        rest_server._main(args)
+        args = ['rest_server.py', 'localhost', '8080'] + extra_args
+        rest_server._main(args, board_config, parse_file=False)
         self.assertTrue(run_mock.called)

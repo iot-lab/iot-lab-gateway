@@ -35,8 +35,9 @@ from tempfile import NamedTemporaryFile
 import bottle
 from bottle import request
 
+from gateway_code.board_config import BoardConfig
+from gateway_code.config import GATEWAY_CONFIG_PATH
 from gateway_code.gateway_manager import GatewayManager
-from gateway_code import board_config
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -52,7 +53,7 @@ class GatewayRest(bottle.Bottle):
     def __init__(self, gateway_manager):
         super(GatewayRest, self).__init__()
         self.gateway_manager = gateway_manager
-        self.board_config = board_config.BoardConfig()
+        self.board_config = gateway_manager.board_config
         self._app_routing()
 
     def _app_routing(self):
@@ -339,7 +340,7 @@ class GatewayRest(bottle.Bottle):
 # Command line functions
 
 
-def _parse_arguments(args):
+def _parse_arguments(args, parse_file=False):
     """
     Parse arguments:
         [host, port]
@@ -361,19 +362,35 @@ def _parse_arguments(args):
     parser.add_argument(
         '--reloader', dest='reloader', action='store_true',
         help="Whether to auto-reload the bottle server on source code changes")
+    if not parse_file:
+        parser.add_argument('--board-type', '-b', dest='board_type',
+                            help="the open node board type", required=True)
+        parser.add_argument('--control-node-type', '-c',
+                            dest='control_node_type',
+                            help="the control node board type",
+                            required=True, default='iotlab')
+        parser.add_argument('--robot', action='store_true',
+                            help="whether the node is a robot", default=False)
+        parser.add_argument('--hostname', help='the node id, or hostname')
 
     arguments = parser.parse_args(args)
 
     return arguments
 
 
-def _main(args):
+def _main(args, board_cfg=None, parse_file=True):
     """
     Command line main function
     """
 
-    args = _parse_arguments(args[1:])
-    g_m = GatewayManager(args.log_folder, args.log_stdout)
+    args = _parse_arguments(args[1:], parse_file)
+    if board_cfg is None:
+        if parse_file:
+            board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
+        else:
+            board_cfg = BoardConfig(args.board_type, args.hostname,
+                                    args.control_node_type, args.robot)
+    g_m = GatewayManager(board_cfg, args.log_folder, args.log_stdout)
     g_m.setup()
 
     server = GatewayRest(g_m)

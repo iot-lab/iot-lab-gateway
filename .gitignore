@@ -21,6 +21,7 @@ cover
 *.png
 
 .eggs
+.idea/
 # ignore the folder where we store docker images for caching in travis
 docker/
 # pycharm

@@ -101,7 +101,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
-        board_cfg = board_config.BoardConfig()
+        board_cfg = gateway_manager.board_config
         self.on_class = board_cfg.board_class
         self.cn_class = board_cfg.cn_class
 
