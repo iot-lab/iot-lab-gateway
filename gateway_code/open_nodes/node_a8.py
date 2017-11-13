@@ -31,6 +31,7 @@ import serial
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.nodes import OpenNode
 
 from gateway_code.utils.serial_expect import SerialExpectForSocket
 from gateway_code.utils.serial_redirection import SerialRedirection
@@ -38,7 +39,7 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeA8(object):
+class NodeA8(OpenNode):
     """ Open node A8 implementation """
 
     TYPE = 'a8'

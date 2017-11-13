@@ -26,6 +26,7 @@ import logging
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.nodes import OpenNode
 
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
@@ -34,7 +35,7 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeM3(object):
+class NodeM3(OpenNode):
     """ Open node M3 implemenation """
 
     TYPE = 'm3'

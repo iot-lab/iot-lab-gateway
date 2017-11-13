@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 # This file is a part of IoT-LAB gateway_code
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
 # Contributor(s) : see AUTHORS file
@@ -18,6 +16,3 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-
-
-""" Control Node management and communication specific modules """

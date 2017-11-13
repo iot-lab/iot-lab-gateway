@@ -27,12 +27,13 @@ from gateway_code import common
 from gateway_code.common import logger_call
 
 from gateway_code.utils.cc2538 import CC2538
+from gateway_code.nodes import OpenNode
 from gateway_code.utils.serial_redirection import SerialRedirection
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeFirefly(object):
+class NodeFirefly(OpenNode):
     """ implementation of The Zolertia Firefly open node"""
     TYPE = 'firefly'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
