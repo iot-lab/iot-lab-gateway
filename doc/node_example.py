@@ -5,12 +5,12 @@ import logging
 
 from gateway_code.config import static_path
 from gateway_code.common import logger_call
-
+from gateway_code.nodes import OpenNode
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeExample(object):
+class NodeExample(OpenNode):
     """ Example node """
 
     TTY = '/dev/ttyON_EXAMPLE'

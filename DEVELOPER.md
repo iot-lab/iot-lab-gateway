@@ -1,7 +1,6 @@
 Introduction
 ============
 
-[TODO]
 The IoT-LAB experimental platform allows users to conduct remote
 experiments on wireless sensor board (such as an Arduino board with an
 Xbee module). For this purpose,a board called *open-node*, can be
@@ -10,8 +9,11 @@ of an open-node connected to a gateway.
 
 ![Gateway and wireless sensor board (e.g. Fox node)](gateway.jpg)
 
-On the linux distribution installed on the gateway, runs a Python module providing a REST API for open-node management. The gateway can perform open-node commands like flashing a firmware or switch on his power supply. This document shows how to integrate a new open-node in the Iot-Lab platform. This integration is based on a plugin system provided by the Python module.
-[/TODO]
+On the linux distribution installed on the gateway, runs a Python module
+providing a REST API for open-node management. The gateway can perform
+open-node commands like flashing a firmware or switch on his power supply.
+This document shows how to integrate a new open-node in the Iot-Lab platform.
+This integration is based on a plugin system provided by the Python module.
 
 Requirements
 ============
@@ -91,25 +93,48 @@ it reads the name of your open node located in the file
 
     /var/local/config/board_type
 
-and then will use the class named Node{nameofyournode} located in
+and then will use the class that implements that type. Usually this
+class is in the python file
 
     gateway_code/open_node/node_{nameofyournode}.py
 
-to manage the experiment.
+but the `node_` naming is not mandatory, it just needs to be imported at some point
+(all the files inside gateway_code/open_node are imported to look for open node classes)
 
-If the name of your class or if your file is not formatted the right way, an
-explicit error will be raised at launch.
+In order to write plugin code for an open node, you just need to subclass
+`OpenNode` located in `gateway_code.nodes` and add a TYPE attribute in it:
 
-### Interface of the node class
+    from gateway_code.nodes import OpenNode
 
-The gateway code expects certain attributes and methods from
-the class for your custom open node.
+    class Customnode(OpenNode):
+      TYPE = 'custom_node'
+
+and put that file in `gateway_code/open_nodes`
+
+There are methods that are mandatory to implement (enforced through abc.abstractmethod)
+so that your class can be instantiated to control a node, you can look at `doc/node_example.py`
+for an open node example.
+
+For example, if `stm32nucleo` is registered on the gateway,
+the class used by the gateway will be
+
+    from gateway_code.nodes import OpenNode
+
+    class Customnode(OpenNode):
+      TYPE = 'stm32nucleo'
+
+### Interfacing the python code
 
 During the experiment and the tests, the application use several
 attributes located in your class. These attributes are the characteristics
 of your node and we can find for example, the name of your device as
-chosen in the udev rules (e.g. TTY); the baudrate which allows the
+chosen in the udev rules (e.g. tty); the baudrate which allows the
 communication between the gateway and your node (e.g. BAUDRATE).
+
+There are some mandatory attributes, and the gateway code will not
+start if your custom node doesn't implement them
+
+You can add your own attributes as needed by your class.
 
 The API provides services. These services are loaded dynamically,
 concerning what your open-node allows to do. These services are based on
@@ -139,7 +164,7 @@ look at `doc/node_example.py`
 
 When one of the function described above terminates with a success, the
 return value must be 0. When the return value is different from 0, the
-application know that something gone wrong. Except status, all the method
+application knows that something went wrong. Except status, all the methods
 in the template file return an error.
 
 ### Flashing the open node
@@ -149,7 +174,8 @@ with the serial port of the open node. To do this, you will have to use
 a programmer software and write code to interact with it. `Openocd`,
 `Avrdude`, and others, are already available but maybe you will need to use another
 programmer and implement your own python file in the `gateway_code/utils/`
-folder.
+folder. If you need a specific kernel driver to be available, don't
+hesitate to ask the IoT-lab admin team
 
 Writing firmwares
 -----------------
@@ -166,7 +192,7 @@ flashed on the open node when no experiment is running.
 
 ### Autotest firmware
 
-The autotest firmware is used during the testing phase. IotLAB-platform
+The autotest firmware is used during the testing phase. The IoT-LAB platform
 allows you to perform autotests for your device. It could be useful to
 see if the sensor on your node are still alive and send valid
 data. During the testing phase, the gateway will flash the autotest
@@ -174,10 +200,11 @@ firmware on the open-node and will then send some commands to the
 open-node. For example, if your node embeds a light sensor, the gateway
 will send the following command on the serial port: `get_light`. Your
 autotest firmware will receive this order, ask to the light sensor a
-measure and then send back to the gateway: `ACK get_light <value_of_measure> lux`. Thanks to this, the gateway will
+measure and then send back to the gateway:
+`ACK get_light <value_of_measure> lux`. Thanks to this, the gateway will
 know that the light sensor on your open-node works. An annex
 file gather all the autotest command which can be send by the gateway.
-Among all these tests, one is mandatory: `echo`.
+Among all these tests, two are mandatory: ` get_time` and `echo`.
 
 This test ensures that your open-node is answering on the serial.
 `echo` command must behave as described bellow:
@@ -264,11 +291,17 @@ Autotests available
 Bellow you will find commands that can be sent by the gateway during the
 tests and the corresponding format of the return expected.
 
+### Mandatory
 
 | Command                             | Expected answer format                 |
 | ----------------------------------- | -------------------------------------- |
 | `echo arg1 arg2 ...`                | `arg1 arg2 ...`                        |
 | `get_time`                          | `ACK get_time 122953 T_UNIT`           |
+
+### Optional
+
+| Command                             | Answer format                          |
+| ----------------------------------- | -------------------------------------- |
 | `get_uid`                           | `ACK get_uid 05D8FF323632483343037109` |
 | `get_gyro`                          | `ACK get_gyro X. Y. Z. dps`            |
 | `get_magneto`                       | `ACK get_magneto X. Y. Z. gauss`       |
