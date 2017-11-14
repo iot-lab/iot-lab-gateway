@@ -23,13 +23,12 @@
 # pylint: disable=missing-docstring
 # pylint: disable=too-many-public-methods
 
-import os
 import tempfile
 import unittest
 import logging
+from StringIO import StringIO
 
 import mock
-from StringIO import StringIO
 
 from gateway_code import gateway_logging
 
@@ -66,8 +65,8 @@ class TestGatewayLogging(unittest.TestCase):
     @mock.patch('sys.stdout', new_callable=StringIO)
     def test_stdout_logging(self, fake_stdout):
         logger = logging.getLogger('gateway_code')
-        for h in logger.handlers:
-            logger.removeHandler(h)
+        for handler in logger.handlers:
+            logger.removeHandler(handler)
 
         gateway_logging.init_logger(tempfile.gettempdir(), log_stdout=True)
 

@@ -56,14 +56,14 @@ def init_logger(log_folder, log_stdout=False):
     server.setFormatter(FORMATTER)
 
     # stdout log (useful for dockerized)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    ch.setFormatter(FORMATTER)
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setLevel(logging.DEBUG)
+    console_handler.setFormatter(FORMATTER)
 
     # add handlers
     logger.addHandler(server)
     if log_stdout:
-        logger.addHandler(ch)
+        logger.addHandler(console_handler)
 
 
 def user_logger(log_file_path):
