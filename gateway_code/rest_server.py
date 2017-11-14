@@ -330,7 +330,7 @@ class GatewayRest(bottle.Bottle):
                     return 'Error: 503 Service Unavailable\n'
                 LOGGER.error('RestServer: %r', err)
                 raise err
-            except:  # noqa: E722
+            except:
                 # Catch all for debugging
                 traceback.print_exc()
                 raise

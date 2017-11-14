@@ -725,7 +725,7 @@ class Roomba500(object):
                 except KeyError:
                     pass
 
-            except:  # noqa: E722
+            except:
                 pass
 
             sens = self.get_sensor()
@@ -769,7 +769,7 @@ class Roomba500(object):
             try:
                 if self.qsens.qsize > 0:
                     self.qsens.get_nowait()
-            except:  # noqa: E722
+            except:
                 pass
             # Put the value of all sensors and position
             # of the Roomba with Queue
