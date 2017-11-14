@@ -3,6 +3,7 @@ setuptools-lint
 pylint
 setuptools-pep8
 pep8
+flake8
 nosexcover
 mock
 WebTest
