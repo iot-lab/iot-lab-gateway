@@ -58,7 +58,7 @@ class ControlNodeNo(object):
 
     @staticmethod
     @logger_call("Control node: Flash")
-    def flash(*args, **kwargs):
+    def flash():
         """Flash control node"""
         return 0
 
@@ -77,15 +77,13 @@ class ControlNodeNo(object):
         return ret_val
 
     @staticmethod
-    def autotest_setup(measures_handler):
+    def autotest_setup(measures_handler):  # pylint:disable=unused-argument
         """Setup for autotests."""
-        _ = measures_handler  # pylint:disable=unused-argument
         return 0
 
     @staticmethod
-    def autotest_teardown(stop_on):
+    def autotest_teardown(stop_on):  # pylint:disable=unused-argument
         """Teardown autotests."""
-        _ = stop_on  # pylint:disable=unused-argument
         return 0
 
     @logger_call("Control node : profile configuration")
