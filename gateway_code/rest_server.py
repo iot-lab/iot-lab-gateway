@@ -346,7 +346,7 @@ def _parse_arguments(args, board_config_extra_args=False):
         [host, port]
 
     :param args: arguments, without the script name == sys.argv[1:]
-    :param board_config_extra_args: whether to add new argument parsing for board_config
+    :param board_config_extra_args: whether to add parsing for board_config
     :type args: list
     """
     import argparse

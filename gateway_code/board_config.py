@@ -26,9 +26,9 @@ import functools
 from gateway_code import profile
 from gateway_code import open_nodes
 
-
 # Implemented as a class to be loaded dynamically and allow mocking in tests
-from gateway_code.config import control_node_class, DEFAULT_PROFILE, read_config
+from gateway_code.config import (control_node_class,
+                                 DEFAULT_PROFILE, read_config)
 
 
 class BoardConfig(object):  # pylint:disable=too-few-public-methods
@@ -60,8 +60,10 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
 
     @staticmethod
     def from_file(path):
+        """ factory method, get config from a /var/local/config -like tree """
         board_type = read_config('board_type', path=path)
-        control_node_type = read_config('control_node_type', 'iotlab', path=path)
+        control_node_type = read_config('control_node_type',
+                                        'iotlab', path=path)
         robot = read_config('robot', None, path=path)
         hostname = read_config('hostname', path=path)
         return BoardConfig(board_type, hostname, control_node_type, robot)

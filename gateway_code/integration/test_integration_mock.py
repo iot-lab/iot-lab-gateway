@@ -27,9 +27,10 @@ import mock
 import webtest
 from nose.plugins.attrib import attr
 
-import gateway_code.rest_server
-import gateway_code.board_config
-
+from gateway_code.config import GATEWAY_CONFIG_PATH
+from gateway_code.board_config import BoardConfig
+from gateway_code.gateway_manager import GatewayManager
+from gateway_code.rest_server import GatewayRest
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -58,10 +59,10 @@ class GatewayCodeMock(unittest.TestCase):
         if not run_integration():
             raise unittest.SkipTest("Skip board embedded tests")
 
-        cls.gateway_manager = gateway_code.rest_server.GatewayManager('.')
+        cls.gateway_manager = GatewayManager('.')
         cls.gateway_manager.setup()
 
-        app = gateway_code.rest_server.GatewayRest(cls.gateway_manager)
+        app = GatewayRest(cls.gateway_manager)
         cls.server = webtest.TestApp(app)
 
     @classmethod
@@ -73,7 +74,7 @@ class GatewayCodeMock(unittest.TestCase):
         self.server = type(self).server
         self.g_m = type(self).gateway_manager
 
-        self.board_cfg = gateway_code.board_config.BoardConfig()
+        self.board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
 
         self.cn_measures = []
         if hasattr(self.g_m.control_node, 'cn_serial'):

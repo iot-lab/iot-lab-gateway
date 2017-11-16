@@ -30,8 +30,6 @@
 import os
 import unittest
 
-import mock
-
 from gateway_code import config
 from gateway_code.board_config import BoardConfig
 from . import utils

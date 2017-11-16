@@ -33,7 +33,6 @@ import logging
 import mock
 from testfixtures import LogCapture
 
-from gateway_code.tests import utils
 from .. import cn_interface
 
 

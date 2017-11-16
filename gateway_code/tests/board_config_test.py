@@ -35,6 +35,10 @@ from gateway_code.board_config import BoardConfig
 from . import utils
 
 
+def get_invalid():
+    return BoardConfig.from_file(utils.test_cfg_dir('invalid_board_type'))
+
+
 class TestBoardConfig(unittest.TestCase):
 
     def test_board_type(self):
@@ -51,8 +55,5 @@ class TestBoardConfig(unittest.TestCase):
         self.assertEquals('m3', board_cfg.board_type)
         self.assertEquals(None, board_cfg.robot_type)
 
-    def get_invalid(self):
-        return BoardConfig.from_file(utils.test_cfg_dir('invalid_board_type'))
-
     def test_board_type_not_found(self):
-        self.assertRaises(ValueError, self.get_invalid)
+        self.assertRaises(ValueError, get_invalid)

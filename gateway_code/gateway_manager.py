@@ -34,8 +34,6 @@ from gateway_code.common import logger_call
 from gateway_code.autotest import autotest
 from gateway_code.utils import elftarget
 
-import gateway_code.board_config as board_config
-
 from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER

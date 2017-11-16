@@ -277,7 +277,7 @@ class TestServerRestMain(unittest.TestCase):
     @mock.patch('bottle.run')
     def test_main_function(self, run_mock, call_mock):
         board_config = utils.get_config_mock('m3')
-        extra_args = ['--board-type',board_config.board_type,
+        extra_args = ['--board-type', board_config.board_type,
                       '--hostname', board_config.node_id,
                       '--control-node-type', board_config.cn_type]
         call_mock.return_value = 0
