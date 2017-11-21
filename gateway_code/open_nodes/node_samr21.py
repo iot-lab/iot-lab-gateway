@@ -40,7 +40,6 @@ class NodeSamr21(object):
     TTY = '/dev/ttyON_SAMR21'
     BAUDRATE = 115200
     OPENOCD_CFG_FILE = static_path('iot-lab-samr21.cfg')
-    OPENOCD_OPTS = ()
     FW_IDLE = static_path('samr21_idle.elf')
     FW_AUTOTEST = static_path('samr21_autotest.elf')
 
