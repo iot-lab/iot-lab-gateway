@@ -23,6 +23,9 @@ FROM iot-lab-gateway
 RUN apt-get update
 RUN apt-get install -y python-pip
 
+RUN apt-get update && \
+    apt-get install -y gdb
+
 # Install app dependencies
 RUN pip install --upgrade pip
 
