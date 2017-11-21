@@ -30,6 +30,7 @@ import time
 import math
 import subprocess
 import logging
+import unittest
 from threading import Thread
 from itertools import izip
 
@@ -372,6 +373,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
 
+    @class_attr_has(CN_FEATURES_ATTR, 'consumption')
     def test_exp_with_fastest_measures(self):
         """ Run an experiment with fastest measures."""
 
