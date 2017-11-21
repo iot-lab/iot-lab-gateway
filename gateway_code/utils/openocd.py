@@ -30,18 +30,21 @@ import subprocess
 import atexit
 
 import logging
+from collections import namedtuple
 
 from gateway_code import common
 from . import subprocess_timeout
 
 LOGGER = logging.getLogger('gateway_code')
 
+OpenOCDArgs = namedtuple("OpenOCDArgs", ['path', 'config_file', 'opts'])
+
 
 class OpenOCD(object):
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-    OPENOCD = ('openocd --debug=0'
+    OPENOCD = ('{openocd_path} --debug=0'
                ' {config}'
                ' -c "init"'
                ' -c "targets"'
@@ -60,8 +63,10 @@ class OpenOCD(object):
     DEBUG = ' -c "reset halt"'
     TIMEOUT = 100
 
-    def __init__(self, config_file, opts=(), verb=False, timeout=TIMEOUT):
-        self.config = self._config(config_file, opts)
+    def __init__(self, openocd_args,
+                 verb=False, timeout=TIMEOUT):
+        self.openocd_path = openocd_args.path
+        self.config = self._config(openocd_args.config_file, openocd_args.opts)
         self.timeout = timeout
 
         self.out = None if verb else self.DEVNULL
@@ -142,7 +147,8 @@ class OpenOCD(object):
     def _openocd_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
-        cmd = self.OPENOCD.format(config=self.config, cmd=command_str)
+        cmd = self.OPENOCD.format(openocd_path=self.openocd_path,
+                                  config=self.config, cmd=command_str)
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
@@ -151,8 +157,16 @@ class OpenOCD(object):
         """Return an instance of OpenOCD configured for node.
 
         * nodeclass.OPENOCD_CFG_FILE configuration file
+        * nodeclass.OPENOCD_PATH: openocd command full path (optional)
         * nodeclass.OPENOCD_OPTS iterable telling other config options
-             They will be added after configuration file with '-f'
+          (optional) They will be added after configuration file with '-f'
         """
-        return cls(nodeclass.OPENOCD_CFG_FILE, nodeclass.OPENOCD_OPTS,
+        if not hasattr(nodeclass, "OPENOCD_PATH"):
+            nodeclass.OPENOCD_PATH = "openocd"
+        if not hasattr(nodeclass, "OPENOCD_OPTS"):
+            nodeclass.OPENOCD_OPTS = ()
+
+        return cls(OpenOCDArgs(nodeclass.OPENOCD_PATH,
+                               nodeclass.OPENOCD_CFG_FILE,
+                               nodeclass.OPENOCD_OPTS),
                    *args, **kwargs)
