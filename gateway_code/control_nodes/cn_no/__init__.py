@@ -58,7 +58,7 @@ class ControlNodeNo(object):
 
     @staticmethod
     @logger_call("Control node: Flash")
-    def flash():
+    def flash(firmware_path=None):  # pylint:disable=unused-argument
         """Flash control node"""
         return 0
 
