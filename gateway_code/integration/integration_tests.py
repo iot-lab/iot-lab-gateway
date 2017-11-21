@@ -30,7 +30,6 @@ import time
 import math
 import subprocess
 import logging
-import unittest
 from threading import Thread
 from itertools import izip
 
