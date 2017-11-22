@@ -20,15 +20,11 @@
 FROM iot-lab-gateway
 
 # Update
-RUN apt-get update
-RUN apt-get install -y python-pip
-
 RUN apt-get update && \
-    apt-get install -y gdb
+    apt-get install -y python-pip gdb
 
 # Install app dependencies
-RUN pip install --upgrade pip
-
-RUN pip install tox
+RUN pip install --upgrade pip && \
+    pip install tox
 
 CMD [ "tox","--develop" ]
