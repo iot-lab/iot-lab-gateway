@@ -338,8 +338,6 @@ class GatewayRest(bottle.Bottle):
         return _wrapped_f
 
 # Command line functions
-
-
 def _parse_arguments(args, board_config_extra_args=False):
     """
     Parse arguments:
@@ -351,9 +349,10 @@ def _parse_arguments(args, board_config_extra_args=False):
     """
     import argparse
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='iot-lab-gateway', add_help=False)
     parser.add_argument('host', type=str, help="Server address to bind to")
     parser.add_argument('port', type=int, help="Server port to bind to")
+    parser.add_argument('--help', action='help')
     parser.add_argument(
         '--log-folder', dest='log_folder', default='.',
         help="Folder where to write logs, default current folder")
@@ -372,27 +371,52 @@ def _parse_arguments(args, board_config_extra_args=False):
                             required=True, default='iotlab')
         parser.add_argument('--robot', action='store_true',
                             help="whether the node is a robot", default=False)
-        parser.add_argument('--hostname', help='the node id, or hostname')
+        parser.add_argument('--hostname', '-h', help='the node id, or hostname')
 
     arguments = parser.parse_args(args)
 
     return arguments
 
 
-def _main(args, parse_file=True):
-    """
-    Command line main function
-    """
+def _common_main(board_cfg, args):
+    print '========================'
+    print 'board_cfg:'
+    print '  board_type: %s' % board_cfg.board_type
+    print '  control_node_type: %s' % board_cfg.cn_type
+    print '  hostname: %s' % board_cfg.node_id
+    print '  robot: %s' % board_cfg.robot_type
 
-    args = _parse_arguments(args[1:], not parse_file)
-    if parse_file:
-        board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
-    else:
-        board_cfg = BoardConfig(args.board_type, args.hostname,
-                                args.control_node_type, args.robot)
+    print 'args:'
+    print '  log_folder: %s' % args.log_folder
+    print '  log_stdout: %s' % args.log_stdout
+    print '  host: %s' % args.host
+    print '  port: %s' % args.port
+    print '========================'
+
     g_m = GatewayManager(board_cfg, args.log_folder, args.log_stdout)
     g_m.setup()
 
     server = GatewayRest(g_m)
     server.run(host=args.host, port=args.port, server='paste',
                reloader=args.reloader)
+
+
+def _main(args):
+    """
+    Command line main function
+    """
+
+    parsed_args = _parse_arguments(args[1:], False)
+    board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
+    _common_main(board_cfg, parsed_args)
+
+
+def _main2(args):
+    """
+    Command line main function
+    """
+
+    parsed_args = _parse_arguments(args[1:], True)
+    board_cfg = BoardConfig(parsed_args.board_type, parsed_args.hostname,
+                            parsed_args.control_node_type, parsed_args.robot)
+    _common_main(board_cfg, parsed_args)

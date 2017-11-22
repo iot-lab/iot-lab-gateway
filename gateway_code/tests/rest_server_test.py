@@ -282,5 +282,5 @@ class TestServerRestMain(unittest.TestCase):
                       '--control-node-type', board_config.cn_type]
         call_mock.return_value = 0
         args = ['rest_server.py', 'localhost', '8080'] + extra_args
-        rest_server._main(args, parse_file=False)
+        rest_server._main2(args)
         self.assertTrue(run_mock.called)
