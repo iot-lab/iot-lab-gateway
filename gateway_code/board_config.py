@@ -23,6 +23,9 @@
 """ Board Config """
 
 import functools
+
+import os
+
 from gateway_code import profile
 from gateway_code import open_nodes
 
@@ -66,4 +69,12 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
                                         'iotlab', path=path)
         robot = read_config('robot', None, path=path)
         hostname = read_config('hostname', path=path)
+        return BoardConfig(board_type, hostname, control_node_type, robot)
+
+    @staticmethod
+    def from_env():
+        board_type = os.environ.get('BOARD_TYPE', 'm3')
+        control_node_type = os.environ.get('CONTROL_NODE_TYPE', 'no')
+        robot = os.environ.get('ROBOT', None)
+        hostname = os.environ.get('HOSTNAME')
         return BoardConfig(board_type, hostname, control_node_type, robot)

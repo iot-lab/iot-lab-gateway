@@ -59,7 +59,9 @@ class GatewayCodeMock(unittest.TestCase):
         if not run_integration():
             raise unittest.SkipTest("Skip board embedded tests")
 
-        cls.gateway_manager = GatewayManager('.')
+        cls.board_cfg = BoardConfig.from_env()
+
+        cls.gateway_manager = GatewayManager(cls.board_cfg, '.')
         cls.gateway_manager.setup()
 
         app = GatewayRest(cls.gateway_manager)
@@ -73,8 +75,6 @@ class GatewayCodeMock(unittest.TestCase):
         # get quick access to class attributes
         self.server = type(self).server
         self.g_m = type(self).gateway_manager
-
-        self.board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
 
         self.cn_measures = []
         if hasattr(self.g_m.control_node, 'cn_serial'):
