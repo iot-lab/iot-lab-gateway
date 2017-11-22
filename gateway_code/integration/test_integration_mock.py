@@ -27,7 +27,6 @@ import mock
 import webtest
 from nose.plugins.attrib import attr
 
-from gateway_code.config import GATEWAY_CONFIG_PATH
 from gateway_code.board_config import BoardConfig
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code.rest_server import GatewayRest
@@ -37,15 +36,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 def run_integration():
     """Tell if integration tests should be run."""
-    if 'IOTLAB_GATEWAY_NO_INTEGRATION_TESTS' in os.environ:
-        return False
-    # iotlab-gateways
-    if os.uname()[4] == 'armv7l':
-        return True
-    # manual tests without control node
-    if 'IOTLAB_GATEWAY_CFG_DIR' in os.environ:
-        return True
-    return False
+    return 'IOTLAB_GATEWAY_INTEGRATION_TESTS' in os.environ
 
 
 # pylint: disable=too-many-public-methods

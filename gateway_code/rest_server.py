@@ -337,6 +337,7 @@ class GatewayRest(bottle.Bottle):
                 raise
         return _wrapped_f
 
+
 # Command line functions
 def _parse_arguments(args, board_config_extra_args=False):
     """
@@ -361,7 +362,7 @@ def _parse_arguments(args, board_config_extra_args=False):
         help="Whether to write logs to stdout, default False")
     parser.add_argument(
         '--reloader', dest='reloader', action='store_true',
-        help="Whether to auto-reload the bottle server on source code changes")
+        help="Whether to auto-reload the API on source code changes")
     if board_config_extra_args:
         parser.add_argument('--board-type', '-b', dest='board_type',
                             help="the open node board type", required=True)
@@ -371,7 +372,7 @@ def _parse_arguments(args, board_config_extra_args=False):
                             required=True, default='iotlab')
         parser.add_argument('--robot', action='store_true',
                             help="whether the node is a robot", default=False)
-        parser.add_argument('--hostname', '-h', help='the node id, or hostname')
+        parser.add_argument('--hostname', '-h', help='the node id/hostname')
 
     arguments = parser.parse_args(args)
 

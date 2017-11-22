@@ -73,6 +73,7 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
 
     @staticmethod
     def from_env():
+        """ factory method, get config from environment variables """
         board_type = os.environ.get('BOARD_TYPE', 'm3')
         control_node_type = os.environ.get('CONTROL_NODE_TYPE', 'no')
         robot = os.environ.get('ROBOT', None)
