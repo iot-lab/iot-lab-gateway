@@ -22,7 +22,6 @@
 
 """ Board Config """
 
-import os
 import functools
 import gateway_code.config as config  # allow mocking as 'gateway_code.config'
 from gateway_code import profile
@@ -37,11 +36,24 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
     """
 
     def __init__(self):
-        self.board_type = config.read_config('board_type')
-        self.board_class = open_nodes.node_class(self.board_type)
+        board_type = config.read_config('board_type')
+        self.board_class = open_nodes.node_class(board_type)
+        cn_type = config.read_config('control_node_type', 'iotlab')
+        self.cn_class = config.control_node_class(cn_type)
+
         self.robot_type = config.read_config('robot', None)
-        self.node_id = os.uname()[1]
+        self.node_id = config.read_config('hostname')
 
         self.profile_from_dict = functools.partial(profile.Profile.from_dict,
                                                    self.board_class)
         self.default_profile = self.profile_from_dict(config.DEFAULT_PROFILE)
+
+    @property
+    def board_type(self):
+        """Open node type."""
+        return self.board_class.TYPE
+
+    @property
+    def cn_type(self):
+        """Control node type."""
+        return self.cn_class.TYPE

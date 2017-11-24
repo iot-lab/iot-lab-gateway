@@ -71,7 +71,6 @@ def get_version(package):
 
 
 SCRIPTS = glob('bin/scripts/*')
-SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
 INSTALL_REQUIRES += ['pyelftools']
@@ -100,6 +99,7 @@ class BuildExt(build_ext):
 
 def simple_command(function):
     """Return a simple command without options."""
+
     class SimpleCommand(Command):
         """Command without options."""
 
@@ -175,6 +175,10 @@ class Release(install):
         execute(self, post_install, [self])
 
 
+PACKAGE_DATA = {'static': ['static/*'],
+                'control_node_serial_interface':
+                'control_node_serial/control_node_serial_interface'}
+
 setup(name=PACKAGE,
       version=get_version(PACKAGE),
       description='Linux Gateway code',
@@ -186,7 +190,7 @@ setup(name=PACKAGE,
 
       scripts=SCRIPTS,
       include_package_data=True,
-      package_data={'static': ['static/*']},
+      package_data=PACKAGE_DATA,
       ext_modules=[Extension('control_node_serial_interface', [])],
 
       cmdclass={

@@ -24,25 +24,29 @@
 import time
 import logging
 
+from gateway_code.common import logger_call
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.config import static_path
-from gateway_code.control_node import cn_interface, cn_protocol
+from . import cn_interface, cn_protocol
 
-from gateway_code.common import logger_call
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-class ControlNode(object):
+class ControlNodeIotlab(object):
     """ Control Node implemenation """
+    TYPE = 'iotlab'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/ttyCN'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')
     OPENOCD_OPTS = ('target/stm32f1x.cfg',)
     FW_CONTROL_NODE = static_path('control_node.elf')
-    default_profile = None
+    FEATURES = ['leds',
+                'open_node_power',
+                'open_node_gpio', 'open_node_i2c',
+                'radio', 'consumption']
 
     def __init__(self, node_id, default_profile):
         self.node_id = node_id
@@ -65,6 +69,14 @@ class ControlNode(object):
         ret_val += self.cn_serial.start(oml_cfg)
         ret_val += self.open_start('dc')
         return ret_val
+
+    @logger_call("Control node: Setup")
+    def setup(self):
+        """Setup control node.
+
+        Flash default firmware
+        """
+        return self.flash()
 
     @logger_call("Control node : Stop control node serial interface")
     def stop(self):
@@ -93,6 +105,27 @@ class ControlNode(object):
         ret_val += self.configure_profile(None)
         ret_val += self.open_start('dc')
         ret_val += self.protocol.green_led_on()
+        return ret_val
+
+    @logger_call("Control node : autotest setup.""")
+    def autotest_setup(self, measures_handler):
+        """Setup node for autotests."""
+        ret_val = 0
+        ret_val += self.reset()
+
+        self.cn_serial.measures_debug = measures_handler
+        self.cn_serial.start()
+
+        ret_val += self.protocol.set_time()
+        return ret_val
+
+    @logger_call("Control node : autotest teardown.""")
+    def autotest_teardown(self, stop_on):
+        """Teardown node after autotests."""
+        ret_val = 0
+        if stop_on:
+            ret_val += self.open_stop('dc')
+        self.cn_serial.stop()
         return ret_val
 
     @logger_call("Control node : profile configuration")

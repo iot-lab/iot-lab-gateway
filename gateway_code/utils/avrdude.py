@@ -44,7 +44,7 @@ class AvrDude(object):
     AVRDUDE = 'avrdude -p {model} -P {tty} -c {programmer} -b {baudrate} {cmd}'
     FLASH = ' -D -U {0}'
 
-    TIMEOUT = 15
+    TIMEOUT = 100
 
     def __init__(self, avrdude_conf, verb=False, timeout=TIMEOUT):
         assert set(avrdude_conf.keys()) == self._ARVDUDE_CONF_KEYS

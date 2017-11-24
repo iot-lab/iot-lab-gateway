@@ -140,3 +140,37 @@ def abspath(path):
     abs_path = os.path.abspath(path)
     open(abs_path, 'rb').close()  # can be open by this user
     return abs_path
+
+
+def deepgetattr(obj, attr):
+    """Recurses through an attribute chain to get the ultimate value.
+
+    http://pingfive.typepad.com/blog/2010/04/deep-getattr-python-function.html
+    """
+    return reduce(getattr, attr.split('.'), obj)
+
+
+def object_attr_has(obj, features_attr, required_list):
+    """Return if obj.features_attr has required_list members in it."""
+    required = set(required_list)
+    available = set(deepgetattr(obj, features_attr))
+    return required.issubset(available)
+
+
+def class_attr_has(features_attr, required_list, pre_func=None):
+    """Only run tests if required `commands` are in self.features_attr."""
+
+    def _wrap(func):
+        """ Decorator implementation """
+        @functools.wraps(func)
+        def _wrapped_f(self, *args, **kwargs):
+            """ Function wrapped with test """
+            has_required = object_attr_has(self, features_attr, required_list)
+            if has_required:
+                if pre_func is not None:
+                    pre_func(self)
+                return func(self, *args, **kwargs)
+            else:
+                return 0
+        return _wrapped_f
+    return _wrap

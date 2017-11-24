@@ -1,0 +1,30 @@
+language: generic
+sudo: required
+
+services:
+  - docker
+
+cache:
+  directories:
+    - docker
+
+before_install:
+    # If there is a cache, load it in docker
+  - if [ -e docker/previous_image.tar.gz ]; then docker load -i docker/previous_image.tar.gz; fi
+
+install:
+  - docker build -t iot-lab-gateway --cache-from=iot-lab-gateway .
+  - docker build -t iot-lab-gateway-tests tests
+
+before_cache:
+  - docker save -o docker/previous_image.tar.gz iot-lab-gateway
+
+script:
+  - >
+    docker run -v gateway_code:/home/iot-lab-gateway/gateway_code
+    -v $CWD/tests_utils/cfg_dir:/var/local/config
+    -e BOARD_TYPE=m3
+    -e CONTROL_NODE_TYPE=no
+    -e HOSTNAME=m3-00 
+    -e IOTLAB_GATEWAY_NO_INTEGRATION_TESTS
+    --privileged iot-lab-gateway-tests

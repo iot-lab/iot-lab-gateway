@@ -21,10 +21,6 @@
 
 #include <gtest/gtest.h>
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif
-#define _POSIX_C_SOURCE  200809L
 #include <sys/types.h>
 #include <signal.h>
 

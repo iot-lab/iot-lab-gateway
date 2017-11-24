@@ -24,6 +24,7 @@
 
 import stat
 import os
+import importlib
 import json
 
 STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
@@ -38,9 +39,12 @@ def static_path(static_file):
     return os.path.join(STATIC_DIR, static_file)
 
 
-GATEWAY_CONFIG_PATH = '/var/local/config/'
+GATEWAY_CONFIG_PATH = os.environ.get('IOTLAB_GATEWAY_CFG_DIR',
+                                     '/var/local/config/')
+GATEWAY_CONFIG_PATH = os.path.abspath(GATEWAY_CONFIG_PATH)
 
-EXP_FILES_DIR = '/iotlab/users/{user}/.iot-lab/{exp_id}/'
+IOTLAB_USERS = os.environ.get('IOTLAB_USERS_DIR', '/iotlab/users')
+EXP_FILES_DIR = os.path.join(IOTLAB_USERS, '{user}/.iot-lab/{exp_id}/')
 EXP_FILES = {
     'consumption': 'consumption/{node_id}.oml',
     'radio': 'radio/{node_id}.oml',
@@ -67,6 +71,43 @@ def clean_user_file(file_path):
 
 
 DEFAULT_PROFILE = json.load(open(static_path('default_profile.json')))
+
+
+CONTROL_NODES_MODULE = 'gateway_code.control_nodes.cn_{type}'
+CONTROL_NODE_CLASS_NAME = 'ControlNode{title}'
+
+
+def control_node_class(cn_type):
+    """ Return the control node class implementation for `cn_type`
+    :raises ValueError: if control node class can't be found """
+    return _node_class(cn_type, CONTROL_NODES_MODULE, CONTROL_NODE_CLASS_NAME)
+
+
+def _node_class(node_type, module_fmt, class_fmt):
+    """Import module_fmt.class_fmt for node_type.
+
+    * module_fmt is formatted with node_type
+    * class_fmt is formatted wit node_type.title()
+    """
+    module_path = module_fmt.format(type=node_type)
+    class_name = class_fmt.format(title=node_type.title())
+
+    node_class = get_module_attr(module_path, class_name)
+
+    # Class sanity check
+    assert node_class.TYPE == node_type
+    return node_class
+
+
+def get_module_attr(module_path, attr_name):
+    """Return attribute `attr_name` from module `module_path`."""
+    try:
+        module = importlib.import_module(module_path)
+        module_class = getattr(module, attr_name)
+    except (ImportError, AttributeError) as err:
+        raise ValueError('Could not import %s.%s: %r' %
+                         (module_path, attr_name, err))
+    return module_class
 
 
 def read_config(key, default=IOError):

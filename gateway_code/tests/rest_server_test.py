@@ -72,22 +72,22 @@ class TestRestMethods(unittest.TestCase):
     def test_routes(self):
         with mock.patch.object(self.s_r, 'route') as m_route:
 
-            def _func():
+            def func():
                 pass
 
-            ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('flash', '/test', 'POST', func)
             self.assertTrue(m_route.called)
             self.assertIsNotNone(ret)
             m_route.reset_mock()
 
             # Not a function
-            ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('TTY', '/test', 'POST', func)
             self.assertFalse(m_route.called)
             self.assertIsNone(ret)
             m_route.reset_mock()
 
             # Non existant
-            ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('UNK', '/test', 'POST', func)
             self.assertFalse(m_route.called)
             self.assertIsNone(ret)
             m_route.reset_mock()
@@ -204,6 +204,13 @@ class TestRestMethods(unittest.TestCase):
         # Error no firmware
         ret = self.server.post('/open/flash', upload_files=[])
         self.assertEquals(1, ret.json['ret'])
+
+    def test_flash_idle(self):
+        self.g_m.node_flash.return_value = 0
+
+        ret = self.server.put('/open/flash/idle')
+        self.assertEquals(0, ret.json['ret'])
+        self.g_m.node_flash.assert_called_with('open', None)
 
     def test_reset_wrappers(self):
         self.g_m.node_soft_reset.return_value = 0

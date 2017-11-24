@@ -36,7 +36,6 @@ from gateway_code.utils import elftarget
 
 import gateway_code.board_config as board_config
 
-from gateway_code.control_node import cn
 from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER
@@ -47,16 +46,16 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     Manages experiments, open node and control node """
 
-    def __init__(self, log_folder='.'):
-        gateway_logging.init_logger(log_folder)
+    def __init__(self, log_folder='.', log_stdout=False):
+        gateway_logging.init_logger(log_folder, log_stdout)
 
         self.board_cfg = board_config.BoardConfig()
         self.rlock = RLock()
 
         # Nodes instance
         self.open_node = self.board_cfg.board_class()
-        self.control_node = cn.ControlNode(self.board_cfg.node_id,
-                                           self.board_cfg.default_profile)
+        self.control_node = self.board_cfg.cn_class(
+            self.board_cfg.node_id, self.board_cfg.default_profile)
         self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
@@ -120,8 +119,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_id = exp_id
         self.user = user
 
-        if self.board_cfg.robot_type == 'turtlebot2':  # pragma: no cover
-            LOGGER.info("I'm a Turtlebot2")
+        if (self.board_cfg.robot_type == 'turtlebot2' or
+                self.board_cfg.cn_class.TYPE == 'no'):  # pragma: no cover
+            LOGGER.info('Create user exp folder')
             self._create_user_exp_folders(user, exp_id)
 
         self.exp_files = self.create_user_exp_files(self.board_cfg.node_id,
@@ -288,7 +288,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         return ret
 
     @common.syncronous('rlock')
-    @logger_call("Gateway Manager : Flash of open node")
+    @logger_call("Gateway Manager : Flash of node")
     def node_flash(self, node, firmware_path):
         """
         Flash the given firmware on the given node

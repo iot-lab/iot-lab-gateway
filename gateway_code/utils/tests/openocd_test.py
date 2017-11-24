@@ -32,6 +32,7 @@ import unittest
 import mock
 
 from gateway_code.open_nodes.node_m3 import NodeM3  # config file
+from gateway_code.utils.openocd import OpenOCDArgs
 from .. import openocd
 
 
@@ -134,8 +135,15 @@ class TestsCall(unittest.TestCase):
 
 class TestsFlashInvalidPaths(unittest.TestCase):
     def test_invalid_config_file_path(self):
-        self.assertRaises(IOError, openocd.OpenOCD, '/invalid/path')
+        self.assertRaises(IOError, openocd.OpenOCD,
+                          OpenOCDArgs('openocd', '/invalid/path', ()))
+
+    def test_invalid_openocd_path(self):
+        self.assertRaises(IOError, openocd.OpenOCD,
+                          OpenOCDArgs('/wrong/openocd', '/invalid/path', ()))
 
     def test_invalid_firmware_path(self):
-        ret = openocd.OpenOCD(NodeM3.OPENOCD_CFG_FILE).flash('/invalid/path')
+        ret = openocd.OpenOCD(
+            OpenOCDArgs('openocd', NodeM3.OPENOCD_CFG_FILE, ())
+        ).flash('/invalid/path')
         self.assertNotEqual(0, ret)
