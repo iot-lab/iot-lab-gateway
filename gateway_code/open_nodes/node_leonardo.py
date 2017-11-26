@@ -47,7 +47,7 @@ class NodeLeonardo(object):
     TTY_READY_DELAY = 1
 
     BAUDRATE = 9600
-    FW_IDLE = static_path('idle_leonardo.elf')
+    FW_IDLE = static_path('leonardo_idle.elf')
     FW_AUTOTEST = static_path('leonardo_autotest.elf')
     AVRDUDE_CONF = {
         'tty': TTY_PROG,
