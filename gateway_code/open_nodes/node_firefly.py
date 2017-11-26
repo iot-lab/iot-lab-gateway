@@ -42,7 +42,7 @@ class NodeFirefly(object):
     BAUDRATE = 115200
     PROGRAM_BAUDRATE = 460800
     # The baudrate used to communicate with the open-node on the serial port
-    FW_IDLE = static_path('idle_firefly.elf')
+    FW_IDLE = static_path('firefly_idle.elf')
     # The name of the idle firmware
     FW_AUTOTEST = static_path('firefly_autotest.elf')
     # The name of the autotest firmware

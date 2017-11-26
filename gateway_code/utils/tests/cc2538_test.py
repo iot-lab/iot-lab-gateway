@@ -35,6 +35,6 @@ class TestCC2538(unittest.TestCase):
         elf = os.path.abspath(static_path('firefly_autotest.elf'))
         elf_addr = get_elf_load_addr(elf)
         self.assertEquals(0x00200000, elf_addr)
-        elf = os.path.abspath(static_path('idle_firefly.elf'))
+        elf = os.path.abspath(static_path('firefly_idle.elf'))
         elf_addr = get_elf_load_addr(elf)
         self.assertEquals(0x00202000, elf_addr)

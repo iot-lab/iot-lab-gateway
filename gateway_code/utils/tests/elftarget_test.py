@@ -45,9 +45,9 @@ class TestElfTarget(unittest.TestCase):
 
     def test_elf_target_valid(self):
         """Test valid elf targets."""
-        target = elftarget.elf_target(firmware('idle_m3.elf'))
+        target = elftarget.elf_target(firmware('m3_idle.elf'))
         self.assertEqual(target, ('ELFCLASS32', 'EM_ARM'))
-        target = elftarget.elf_target(firmware('idle_leonardo.elf'))
+        target = elftarget.elf_target(firmware('leonardo_idle.elf'))
         self.assertEqual(target, ('ELFCLASS32', 'EM_AVR'))
 
     def test_invalid_elf(self):
@@ -75,7 +75,7 @@ class TestElfTargetIsCompatibleWithNode(unittest.TestCase):
 
     def test_m3_like_elf_check(self):
         """Test elftarget for an m3 like node."""
-        ret = elftarget.is_compatible_with_node(firmware('idle_m3.elf'),
+        ret = elftarget.is_compatible_with_node(firmware('m3_idle.elf'),
                                                 self.m3_class)
         self.assertTrue(ret)
         self.log.check()
@@ -99,7 +99,7 @@ class TestElftargetMain(unittest.TestCase):
 
     def test_main(self):
         """Test running script."""
-        argv = ['elftarget.py', firmware('idle_m3.elf')]
+        argv = ['elftarget.py', firmware('m3_idle.elf')]
         stdout = StringIO()
         stderr = StringIO()
 

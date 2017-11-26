@@ -43,7 +43,7 @@ This section present the module architecture.
         |   |
         |   +-static/..... Contains the firmwares and the configuration file
         |   |   |
-        |   |   +-----idle_m3.elf
+        |   |   +-----m3_idle.elf
         |   |   +-----m3_autotest.elf
         |   |   +-----iot-lab-m3.cnf
         |   |
@@ -238,7 +238,7 @@ application with proper comment, free to you to use it and modify it:
         # The tty as named in the udev rule
         BAUDRATE = 9600
         # The baudrate used to communicate with the open-node on the serial port
-        FW_IDLE = static_path('idle_nodename.elf')
+        FW_IDLE = static_path('nodename_idle.elf')
         # The name of the idle firmware
         FW_AUTOTEST = static_path('nodename_autotest.elf')
         # The name of the autotest firmware
