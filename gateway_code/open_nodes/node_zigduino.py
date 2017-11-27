@@ -23,7 +23,7 @@ class NodeZigduino(object):
     ELF_TARGET = ('ELFCLASS32', 'EM_AVR')
     TTY = '/dev/ttyON_ZIGDUINO'
     BAUDRATE = 57600
-    FW_IDLE = static_path('idle_zigduino.elf')
+    FW_IDLE = static_path('zigduino_idle.elf')
     FW_AUTOTEST = static_path('zigduino_autotest.elf')
     AVRDUDE_CONF = {
         'tty': TTY,
