@@ -23,3 +23,5 @@ cover
 .eggs
 # ignore the folder where we store docker images for caching in travis
 docker/
+# pycharm
+.idea/
