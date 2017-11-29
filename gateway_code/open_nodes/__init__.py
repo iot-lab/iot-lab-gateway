@@ -37,7 +37,8 @@ def node_class(board_type):
     :raises ValueError: if board class can't be found """
     try:
         module_path = '%s.%s' % (
-            __name__, OPEN_NODES_MODULE.format(type=board_type))
+            __name__, OPEN_NODES_MODULE.format(
+                type=board_type.replace('-', '_')))
         class_name = OPEN_CLASS_NAME.format(title=_node_title(board_type))
 
         # Get node class from board_type
@@ -59,10 +60,12 @@ def _node_title(board_type):
     'M3'
     >>> _node_title('arduino_zero')
     'ArduinoZero'
+    >>> _node_title('arduino-zero')
+    'ArduinoZero'
     >>> _node_title('samr21')
     'Samr21'
     """
-    return board_type.title().replace('_', '')
+    return board_type.title().replace('_', '').replace('-', '')
 
 
 def _assert_class_valid(board_class, board_type):

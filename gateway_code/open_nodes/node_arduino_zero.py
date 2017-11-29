@@ -35,7 +35,7 @@ LOGGER = logging.getLogger('gateway_code')
 class NodeArduinoZero(object):
     """ Open node Arduino Zero implementation """
 
-    TYPE = 'arduino-zero'
+    TYPE = 'arduino_zero'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/ttyON_ARDUINO_ZERO'
     BAUDRATE = 115200
