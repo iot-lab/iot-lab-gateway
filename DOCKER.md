@@ -53,7 +53,7 @@ directly, usually:
 
 You can use any type of open node:
 
-    ./docker-run -b samr21 -h samr21-test1
+    ./docker-run -b samr21 -h samr21-test1 /dev/ttyACM0
 
 You can mount your gateway_code and have the gateway API auto reload on code change, working in the background
 
