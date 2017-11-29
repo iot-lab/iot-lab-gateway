@@ -20,11 +20,4 @@ before_cache:
   - docker save -o docker/previous_image.tar.gz iot-lab-gateway
 
 script:
-  - >
-    docker run -v gateway_code:/home/iot-lab-gateway/gateway_code
-    -v $CWD/tests_utils/cfg_dir:/var/local/config
-    -e BOARD_TYPE=m3
-    -e CONTROL_NODE_TYPE=no
-    -e HOSTNAME=m3-00 
-    -e IOTLAB_GATEWAY_NO_INTEGRATION_TESTS
-    --privileged iot-lab-gateway-tests
+  - docker run -t iot-lab-gateway-tests tox

@@ -27,4 +27,4 @@ RUN apt-get update && \
 RUN pip install --upgrade pip && \
     pip install tox
 
-CMD [ "tox","--develop" ]
+CMD [ "tox" ]
