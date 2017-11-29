@@ -43,7 +43,7 @@ class NodeA8(object):
 
     TYPE = 'a8'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/ttyON_A8'
+    TTY = '/dev/ttyON'
     BAUDRATE = 115200
     LOCAL_A8_M3_TTY = '/tmp/local_ttyA8_M3'
     A8_M3_TTY = '/dev/ttyA8_M3'
