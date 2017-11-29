@@ -134,4 +134,4 @@ RUN mkdir -p /var/local/config/ && \
 
 WORKDIR /home/iot-lab-gateway
 
-CMD ["/home/iot-lab-gateway/docker-gateway-rest-server"]
+CMD ["/home/iot-lab-gateway/bin/scripts/gateway-rest-server", "0.0.0.0", "8080", "--log-stdout"]
