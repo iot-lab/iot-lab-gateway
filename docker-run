@@ -71,7 +71,7 @@ def main(args):
 
 def volume_type(input_str):
     if input_str != '':
-        return ('-v {}:/home/iot-lab-gateway/gateway_code'
+        return ('-v {}:/home/iot-lab-gateway'
                 .format(os.path.abspath(input_str)))
     else:
         return ''
@@ -88,7 +88,7 @@ if __name__ == '__main__':
         add_help=False, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--help', action='help')
     parser.add_argument('-v', '--volume', dest='volume', type=volume_type,
-                        help='Host directory containing gateway_code',
+                        help='Host directory containing iot-lab-gateway code (usually $PWD)',
                         default='')
     parser.add_argument('-b', '--board-type', dest='board_type', default='m3',
                         help='Set node board type')
