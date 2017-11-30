@@ -13,11 +13,15 @@ before_install:
   - if [ -e docker/previous_image.tar.gz ]; then docker load -i docker/previous_image.tar.gz; fi
 
 install:
+  - ci_env=`bash <(curl -s https://codecov.io/env)`
   - docker build -t iot-lab-gateway --cache-from=iot-lab-gateway .
   - docker build -t iot-lab-gateway-tests tests
 
 before_cache:
   - docker save -o docker/previous_image.tar.gz iot-lab-gateway
 
+after_success:
+  - docker run -v $PWD:/home/iot-lab-gateway $ci_env --privileged iot-lab-gateway-tests tox -e upload_coverage
+
 script:
-  - docker run -t iot-lab-gateway-tests tox
+  - docker run -v $PWD:/home/iot-lab-gateway -t iot-lab-gateway-tests tox

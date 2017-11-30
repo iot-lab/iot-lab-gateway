@@ -8,3 +8,4 @@ nosexcover
 mock
 WebTest
 testfixtures
+codecov>=1.4.0
