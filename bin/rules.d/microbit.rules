@@ -1,0 +1,2 @@
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_MICROBIT"
+SUBSYSTEM=="usb", ATTR{idProduct}=="0204", ATTR{idVendor}=="0d28", MODE="0664", GROUP="dialout"
