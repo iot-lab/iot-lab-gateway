@@ -25,7 +25,7 @@ import logging
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
-from gateway_code.utils.daplink import DapLink
+from gateway_code.utils.pyocd import PyOCD
 
 from gateway_code.utils.serial_redirection import SerialRedirection
 
@@ -50,13 +50,9 @@ class NodeMicrobit(object):
     ALIM = '5V'
     FLASH_TIMEOUT = 60  # Got 40 seconds at max with riot gnrc_networking
 
-    LINK_CONF = {
-        'mount':'/media/MICROBIT'
-    }
-
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.dap = DapLink(self.LINK_CONF, True, self.FLASH_TIMEOUT)
+        self.ocd = PyOCD(True, self.FLASH_TIMEOUT)
 
     @logger_call("Node Micro:Bit : Setup of micro:bit node")
     def setup(self, firmware_path):
@@ -93,26 +89,23 @@ class NodeMicrobit(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Node Micro:Bit : %s', firmware_path)
-        return self.dap.flash(firmware_path)
+        return self.ocd.flash(firmware_path)
 
     @logger_call("Node Micro:Bit : reset of micro:bit node")
     def reset(self):
         """ Reset the Micro:Bit node """
         LOGGER.info('Reset Micro:Bit node')
-        return 0
-        #return self.dap.reset()
+        return self.ocd.reset()
 
     def debug_start(self):
         """ Start Micro:Bit node debugger """
         LOGGER.info('Micro:Bit Node debugger start')
-        return 0
-        #return self.dap.debug_start()
+        return self.ocd.debug_start()
 
     def debug_stop(self):
         """ Stop Micro:Bit node debugger """
         LOGGER.info('Micro:Bit Node debugger stop')
-        return 0
-        #return self.dap.debug_stop()
+        return self.ocd.debug_stop()
 
     @staticmethod
     def status():
