@@ -1,3 +1,4 @@
+#! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
 # This file is a part of IoT-LAB gateway_code
@@ -18,40 +19,53 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-""" DAPLink commands """
 
-import logging
+
+""" pyOCD commands """
+
 import os
 import shlex
-import tempfile
+import subprocess
 
-import shutil
-from time import sleep
+import atexit
+
+import logging
+import tempfile
 
 from gateway_code import common
 from . import subprocess_timeout
 
-
 LOGGER = logging.getLogger('gateway_code')
 
 
-class DapLink(object):
+class PyOCD(object):
+    """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
+    RESET = 'pyocd-tool reset'
+
+    FLASH = 'pyocd-flashtool -ce "{0}"'
+
+    DEBUG = 'pyocd-tool reset -H'
     TIMEOUT = 100
 
-    def __init__(self, config, verb=False, timeout=TIMEOUT):
-        self.mount = config['mount']
+    def __init__(self, verb=False, timeout=TIMEOUT):
         self.timeout = timeout
 
         self.out = None if verb else self.DEVNULL
 
+        self._debug = None
+        atexit.register(self.debug_stop)
+
+    def reset(self):
+        """ Reset """
+        return self._call_cmd(self.RESET)
+
     def flash(self, elf_file):
         """ Flash firmware """
         try:
-            ret_value = 0
-
             elf_path = common.abspath(elf_file)
+
             LOGGER.info('Creating hex path from %s', elf_path)
             hex_file = tempfile.NamedTemporaryFile(suffix='.hex')
             hex_path = hex_file.name
@@ -63,36 +77,49 @@ class DapLink(object):
             ret_value = self._call_cmd(cmd)
             LOGGER.info('To hex conversion ret value : %d', ret_value)
 
-            shutil.copy(hex_path, self.mount)
-            LOGGER.info('OK copied hex file to mount')
-            os.system('sync')
-            LOGGER.info('OK synced the fs before unmount')
-            os.system('umount %s' % self.mount)
-            LOGGER.info('OK unmounted')
-
-            # removing temporary hex file
-            hex_file.close()
-
-            sleep(2)
-
-            return ret_value
+            return self._call_cmd(self.FLASH.format(hex_path))
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
 
+    def debug_start(self):
+        """ Start a debugger process """
+        LOGGER.debug('Debug start')
+        self.debug_stop()  # kill previous process
+        self._debug = subprocess.Popen(**self._pyocd_args(self.DEBUG))
+        LOGGER.debug('Debug started')
+        return 0
+
+    def debug_stop(self):
+        """ Stop the debugger process """
+        try:
+            LOGGER.debug('Debug stop')
+            self._debug.terminate()
+        except AttributeError:
+            LOGGER.debug('Debug not started.')  # None
+        except OSError as err:
+            LOGGER.error('Debug stop error: %r', err)
+            return 1
+        finally:
+            self._debug = None
+            LOGGER.debug('Debug stopped')
+        return 0
+
     def _call_cmd(self, command_str):
-        """ Run the given command_str """
+        """ Run the given command_str with init on openocd.
+        If pyOCD is in 'debug' mode, return an error """
+        if self._debug:
+            LOGGER.error("pyOCD is in 'debug' mode, stop it to flash/reset")
+            return 1
 
-        kwargs = self._daplink_args(command_str)
-        LOGGER.info(kwargs)
-
+        kwargs = self._pyocd_args(command_str)
         try:
             return subprocess_timeout.call(timeout=self.timeout, **kwargs)
         except subprocess_timeout.TimeoutExpired as exc:
-            LOGGER.error("DapLink '%s' timeout: %s", command_str, exc)
+            LOGGER.error("pyOCD '%s' timeout: %s", command_str, exc)
             return 1
 
-    def _daplink_args(self, command_str):
+    def _pyocd_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
         args = shlex.split(command_str)
