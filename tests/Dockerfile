@@ -21,7 +21,7 @@ FROM iot-lab-gateway
 
 # Update
 RUN apt-get update && \
-    apt-get install -y python-pip gdb
+    apt-get install -y python-pip valgrind gdb
 
 # Install app dependencies
 RUN pip install --upgrade pip && \
