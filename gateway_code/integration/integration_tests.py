@@ -158,8 +158,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         time.sleep(1)  # wait firmware started
 
-        # No log error
-        self.log_error.check()
+        # Clear log error
+        self.log_error.clear()
 
         # Check debug
         self._check_debug(board_class)
