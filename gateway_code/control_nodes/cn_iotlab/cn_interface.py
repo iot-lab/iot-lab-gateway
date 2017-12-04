@@ -38,7 +38,8 @@ from gateway_code.utils import subprocess_timeout
 LOGGER = logging.getLogger('gateway_code')
 
 
-CONTROL_NODE_SERIAL_INTERFACE = 'control_node_serial_interface'
+CONTROL_NODE_SERIAL_INTERFACE = ('control_node_serial'
+                                 'control_node_serial_interface')
 
 
 OML_XML = '''
