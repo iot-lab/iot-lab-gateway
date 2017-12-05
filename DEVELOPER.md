@@ -1,20 +1,24 @@
 Introduction
 ============
 
-The Iot-LAB experimental platform allow users to conduct remote
+[TODO]
+The IoT-LAB experimental platform allows users to conduct remote
 experiments on wireless sensor board (such as an Arduino board with an
 Xbee module). For this purpose,a board called *open-node*, can be
-connected to the IoT-LAB gateway, via the usb port. Bellow, the picture
+connected to the IoT-LAB gateway, via the usb port. Below, the picture
 of an open-node connected to a gateway.
 
 ![Gateway and wireless sensor board (e.g. Fox node)](gateway.jpg)
 
 On the linux distribution installed on the gateway, runs a Python module providing a REST API for open-node management. The gateway can perform open-node commands like flashing a firmware or switch on his power supply. This document shows how to integrate a new open-node in the Iot-Lab platform. This integration is based on a plugin system provided by the Python module.
+[/TODO]
 
-Requirement
-===========
+Requirements
+============
 
-Your node must be powered by USB. You must have developed at least two firmwares for your node: an autotest firmware and an idle firmware (described bellow).
+Your node must be powered by USB. You must have developed at least
+two firmwares for your node: an autotest firmware and an idle firmware
+(described below).
 
 Adding a new open-node
 ======================
@@ -23,47 +27,51 @@ You can get the Python module code by cloning the git repository:
 
     $ git clone git@github.com:iot-lab/iot-lab-gateway.git
 
+You will need to implement:
+
+* firmwares
+* node_ Python class
+* udev rules
+
+
 Module architecture
 -------------------
 
 This section present the module architecture.
 
         |
-        |
         +-gateway_code/
-        |   |
-        |   +-rest-server.py ........... The API entry point
-        |   +-common.py
-        |   +-gateway_manager.py
-        |   +-autotest/............................... Directory for all the autotests
-        |   +-utils/.. Contains script for serial operation such as serial redirection or programmer
-        |   |   |
-        |   |   +-----avrdude.py
-        |   |   +-----openocd.py
         |   |
         |   +-static/..... Contains the firmwares and the configuration file
         |   |   |
         |   |   +-----m3_idle.elf
         |   |   +-----m3_autotest.elf
-        |   |   +-----iot-lab-m3.cnf
+        |   |   +-----[...]
         |   |
         |   +-open_nodes/... Contains the code to interact with the open-node, you will put your code here
         |       |
-        |       +-----node_a8.py
         |       +-----node_m3.py
-        |       +-----node_fox.py
-        |       +-----node_leonardo.py
-        |       +-----node_mega.py
-        |
+        |       +-----[...]
         |
         +-bin/
             |
             +-rules.d .................. Directory for the udev rules
                 +-----m3.rules
-                +-----a8.rules
+                +-----[...]
 
 
-Between two plugs, the name of the device as detected by the embedded linux running on the gateway can change: for example, an unique device can be succesively detected as ttyUSB0 and then as ttyUSB1. As it is essential to have a fixed name for your device, you have to write a udev rules specific for your device. To do such a thing, you must create a file named `your_node.rules` (with `your_node` the name of your node). Using the command `udevadm`, you have to retrieve some information to identify your node such as the serial id, the vendor id or the product id. You must set a name for the device and set the right group (dialout) and the right mode (664). The convention is to name device `ttyON_NODENAME`. Bellow the example of the udev rule for the M3 node:
+Between two plugs, the device name as detected by the
+embedded linux running on the gateway can change: for example,
+an unique device can be successively detected as ttyUSB0 and then
+as ttyUSB1. As it is essential to have a fixed name for your device,
+you have to write a udev rules specific for your device. To do such a
+thing, you must create a file named `your_node.rules` (with `your_node`
+the name of your node). Using the command `udevadm`, you have to
+retrieve some information to identify your node such as the serial
+id, the vendor id or the product id. You must set a name for the
+device and set the right group (dialout) and the right mode (664).
+The convention is to name device `ttyON_NODENAME`.
+Below the example of the udev rule for the M3 node:
 
     SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_M3",
     ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_M3"
@@ -78,39 +86,38 @@ Plugin integration
 
 As said previously, the application is based on a system of plugin: if
 you want to add a node, you just have to write a specific file to
-interface with the application. When the application is launched, it reads the name of your open node located in the file
+interface with the application. When the application is launched,
+it reads the name of your open node located in the file
 
     /var/local/config/board_type
 
 and then will use the class named Node{nameofyournode} located in
 
-    gateway-code/open_node/node_{nameofyournode}.py
+    gateway_code/open_node/node_{nameofyournode}.py
 
-to manage the expreriment.
+to manage the experiment.
 
-For example, if `smt32nucleo` is registered on the gateway, the class used by the gateway will be `NodeStm32nucleo`, declared in the file `gateway-code/open_node/node_stm32nucleo.py`.
+If the name of your class or if your file is not formatted the right way, an
+explicit error will be raised at launch.
 
-If the name of your class or if your file is not right formatted, an
-explicit error will be raised at the launching of the application.
+### Interface of the node class
 
-### Interfacing the python code
+The gateway code expects certain attributes and methods from
+the class for your custom open node.
 
 During the experiment and the tests, the application use several
-attributes located in your class. Those attributes are the characteristics
+attributes located in your class. These attributes are the characteristics
 of your node and we can find for example, the name of your device as
 chosen in the udev rules (e.g. TTY); the baudrate which allows the
-communication between the gateway and your node (e.g. BAUDRATE). The list
-of the mandatory attributes are present in the template file in the
-annex. These attribute are required by the gateway for a good
-working. You can add your own attribute if needed by your class.
+communication between the gateway and your node (e.g. BAUDRATE).
 
 The API provides services. These services are loaded dynamically,
-regarding what your open-node allows to do. These services are based on
+concerning what your open-node allows to do. These services are based on
 method implemented in your file: if the API need a specific method to
-create a service, the gateway-code will check if your class implement
+create a service, the gateway_code will check if your class implements
 this method. If it doesn’t, the service will not be available.
 
-Some services are always available, such as the start and stop of an experiment.
+Some services are always needed, such as the start and stop of an experiment.
 The methods required by these services are mandatory and are the following:
 
 + `setup`: Perform all the actions required to properly start an experiment.
@@ -124,14 +131,9 @@ These methods are the following:
 + `debug_start`: Start the open-node debugger.
 + `debug_stop`: Stop the open-node debugger.
 
-The template file, given in annex, gathers all the functions which interfaces
-with the code of the gateway. Here is a simple illustration of the
-execution of the `start_exp` command.
-
-![Command execution diagram](diag.jpg)
-
 Do not hesitate to watch the other implementations of open nodes to have
-a better idea of what the application expects.
+a better idea of what the application expects. For an example, you can
+look at `doc/node_example.py`
 
 ### Errors and return values
 
@@ -144,17 +146,17 @@ in the template file return an error.
 
 Some methods such as `reset`, `flash` or `debug_start`, need to interact
 with the serial port of the open node. To do this, you will have to use
-a programmer software and write code to interact with it. `Openocd` and
-`Avrdude` are already available but maybe you will need to use another
+a programmer software and write code to interact with it. `Openocd`,
+`Avrdude`, and others, are already available but maybe you will need to use another
 programmer and implement your own python file in the `gateway_code/utils/`
 folder.
 
 Writing firmwares
 -----------------
 
-To add your code in the IoT-Lab platform, you must have writen two
-firmwares. These firmwares must be put in the `gateway_code/static/` folder
-as shown by the directory architecture.
+To add your custom node in the IoT-Lab platform, you must write two
+firmwares. These firmwares must be put
+in the `gateway_code/static/` folder
 
 ### Idle firmware
 
@@ -190,106 +192,71 @@ To inform the application what kind of command your autotest firmware
 can handle, you must write the name of the test in the list
 `AUTOTEST_AVAILABLE` as shown in the template file.
 
+You can find the code (based on RIOT operating system) for the autotest and idle
+firmwares for some boards supported on IoT-LAB
+on [ci-firmwares](https://github.com/iot-lab/ci-firmwares)
+
 Testing your implementation
----------------------------
+===========================
+
+We've provided Dockerfiles with all the dependencies and a Makefile
+for you to build and use them. (if using MacOS, see Appendix below)
+
+Using Docker
+------------
+
+If you want to run tests with the Docker images, first build them:
+
+    make build-docker-image-test
 
 ### Unit tests
 
-When developing your implementation, you should verify that all unit tests pass on your computer by running `tox`.
+The purpose of unit tests is to verify your Python code,
+independently from connections to a physical board.
 
-> You need an up to date `tox` version. I recommend installing it with pip
->
->     sudo -H pip install --upgrade tox
+To run the unit tests with the provided Docker image, just run:
+
+    make test
 
 ### Integration tests
 
-To run the integration/system tests directly on the board, including the autotest use the following command:
+The purpose of integration tests is to verify that your flashing tool
+and firmwares behave as expected when called by the gateway code.
 
-    fab -f tests_utils/integration_fabfile.py python_test -H adress-of-your-node
+To run the integration tests with the provided Docker image, just run:
 
-> It requires also quite up to date fabric version, I'm running `fabric 1.10.2` with `paramiko 1.15.2`
+    make BOARD={node_name} integration-test
+
+without Docker
+--------------
+
+You will need to manually install all the needed
+dependencies, see [INSTALL.md](INSTALL.md), and `tox`
+for running the tests.
+
+> If you don't have tox, install it with
 >
->     sudo -H pip install --upgrade fabric
+>     pip install tox
 
+### Unit tests
 
-Annexe
-======
+Run:
 
-template file
--------------
+    make local-test
 
-Bellow you can find a template file which interface with the gateway
-application with proper comment, free to you to use it and modify it:
+### Integration tests
 
-    # -*- coding:utf-8 -*-
-    """ Blank file for the implemention of an open-node called Nodename """
+Run:
 
-    from gateway_code.config import static_path
-    from gateway_code import common
-    from gateway_code.common import logger_call
+    make BOARD={node_name} local-integration-test
 
-    import logging
-    LOGGER = logging.getLogger('gateway_code')
+This will create a temporary config directorty,
+containing the board_type and hostname,
+equivalent to the /var/local/config in the IoT-LAB infrastructure,
+and run `tox -e test`
 
-
-    class NodeNodename(object):
-
-        TTY = '/dev/ttyON_NODENAME'
-        # The tty as named in the udev rule
-        BAUDRATE = 9600
-        # The baudrate used to communicate with the open-node on the serial port
-        FW_IDLE = static_path('nodename_idle.elf')
-        # The name of the idle firmware
-        FW_AUTOTEST = static_path('nodename_autotest.elf')
-        # The name of the autotest firmware
-        ALIM = '5V'
-        # The tension of alimentation (will be 5V in most of the case)
-
-        AUTOTEST_AVAILABLE = ['echo']
-
-        # The list of autotest available for your node.
-        # As describe in the document,
-        # this list must contain at least 'echo'
-
-        def __init__(self):
-            # The initialization of your class
-
-        @logger_call("Node Nodename : Setup of Nodename")
-        def setup(self, firmware_path):
-            # Here you will perform all the necessary action needed
-            # by your node before the start of an experiment.
-            return 1
-
-        @logger_call("Node Nodename : teardown of nodename node")
-        def teardown(self):
-            # Here you will perform all the necessary action to
-            # properly terminate your node
-            return 1
-
-        @logger_call("Node Nodename : flash of nodename node")
-        def flash(self, firmware_path=None):
-            # Here
-            return 1
-
-        @logger_call("Node Nodename : reset of nodename node")
-        def reset(self):
-            # Not implemented
-            return 1
-
-        def debug_start(self):
-            # Here you will start the debug of your node
-            return 1
-
-        def debug_stop(self):
-            # Here you will stop the debug of your node
-            return 1
-
-        @staticmethod
-        def status():
-            # Here you will check your node (for exemple with ftdi chip)
-            # if you are unable to check your node, just return 0
-            return 0
-
+Appendices
+==========
 
 Autotests available
 -------------------
@@ -298,7 +265,7 @@ Bellow you will find commands that can be sent by the gateway during the
 tests and the corresponding format of the return expected.
 
 
-| Command                             | Answer format                          |
+| Command                             | Expected answer format                 |
 | ----------------------------------- | -------------------------------------- |
 | `echo arg1 arg2 ...`                | `arg1 arg2 ...`                        |
 | `get_time`                          | `ACK get_time 122953 T_UNIT`           |
@@ -318,3 +285,27 @@ tests and the corresponding format of the return expected.
 | `test_pps_start`                    | `ACK test_pps_start`                   |
 | `test_pps_get`                      | `ACK test_pps_get`                     |
 | `test_pps_stop`                     | `ACK test_pps_stop`                    |
+
+
+## Running under macOS
+
+Docker for Mac does not support adding a host device to a container (e.g. `docker run --device`). [source](https://docs.docker.com/docker-for-mac/faqs/#can-i-pass-through-a-usb-device-to-a-container)
+The use of [Docker Toolbox](https://docs.docker.com/toolbox/overview/) is recommended.
+
+Start Docker Toolbox with the Docker Quickstart Terminal, then do this additionnal steps on the boot2docker VM used by Docker Toolbox:
+1. Install udev rules.
+
+        $ docker-machine ssh
+        docker@default:~$ git clone https://www.github.com/iot-lab/iot-lab-gateway.git && cd iot-lab-gateway
+        docker@default:~$ sudo cp bin/rules.d/* /etc/udev/rules.d/.
+        docker@default:~$ sudo udevadm control --reload
+1. Thanks to the VirtualBox GUI or via VBoxManage command line, add a USB device filter for the device to be used as Open Node.
+
+        $ VBoxManage list usbhost
+        $ VBoxManage usbfilter add 1 --target default --name M3 --vendorid 0403 --productid 6010
+1. (optionnal) Thanks to the VirtualBox GUI or via VBoxManage command line, add a NAT port forwarding rule to be able to call `http://localhost:8080`from the host.
+
+        $ VBoxManage controlvm default natpf1 "bottle,tcp,127.0.0.1,8080,,8080"
+        $ VBoxManage controlvm default natpf1 "serial_redirection,tcp,127.0.0.1,20000,,20000"
+
+Build the docker image and run `docker-run` as explained above.

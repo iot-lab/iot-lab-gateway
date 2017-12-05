@@ -1,10 +1,9 @@
 Install
 =======
 
+This installs the dependencies for running the iot-lab-gateway code
+
 Tested on Ubuntu 14.04 LTS.
-
-To simplify this setup, we've developed a Docker image, see `DOCKER.md`
-
 
 Dependencies
 ------------
@@ -17,26 +16,38 @@ sudo apt-get install python-dev python-setuptools socat
 
 #### liboml2 ####
 
-[oml](https://mytestbed.net/projects/oml)
-
-https://oml.mytestbed.net/projects/oml/wiki/BuildingSource
-
 Tested version 2.11 compiled from source.
 
 ```
-wget http://mytestbed.net/attachments/download/1104/oml2-2.11.0.tar.gz
-tar xf oml2-2.11.0.tar.gz
-cd oml2-2.11.0
-./configure --disable-doc --disable-doxygen-doc --disable-doxygen-dot --disable-android --disable-doxygen-html --disable-option-checking
-make
-sudo make install
+git clone https://github.com/mytestbed/oml.git && \
+cd oml && \
+git checkout tags/v2.11.0 && \
+./autogen.sh && \
+./configure --disable-doc --disable-doxygen-doc --disable-doxygen-dot \
+    --disable-android --disable-doxygen-html --disable-option-checking && \
+make && \
+sudo make install && \
+cd .. && rm -rf oml
 ```
 
 ### Optional  ###
 
-#### openocd ####
+If you want to be able to flash boards, you will need flashing tools,
+depending on which board you want to test or support:
 
-Required for M3/samr21 nodes
+
+| Flashing tool  | Corresponding boards           |
+| -------------- |:------------------------------:|
+| openocd 0.9    | m3, samr21, fox                |
+| openocd 0.10.0 | st_lrwan1                      |
+| avrdude        | arduino_zero, leonardo         |
+| cc2538-bsl     | firefly                        |
+| pyOCD          | microbit                       |
+| edbg(flash)    | samr21, arduino_zero           |
+
+#### openocd 0.9.0 ####
+
+Required for M3/samr21 and other nodes
 
 Currently running version 0.9.0 with following compile options
 
@@ -54,6 +65,19 @@ make
 sudo make install
 ```
 
+#### openocd 0.10.0 ####
+
+```
+git clone https://github.com/ntfreak/openocd openocd10 && \
+    cd openocd10 && \
+    git checkout v0.10.0 && \
+    ./bootstrap && \
+    ./configure --prefix=/opt/openocd-0.10.0 --enable-cmsis-dap --enable-hidapi-libusb && \
+    make && \
+    sudo make install && \
+    cd .. && rm -rf openocd10
+```
+
 #### avrdude ####
 
 Required for leonardo/mega/zigduino arduino nodes
@@ -64,44 +88,35 @@ Tested version 6.0.1
 sudo apt-get install avrdude
 ```
 
-#### iot-lab-ftdi-utils ####
-
-For M3 Nodes and Hikob IoT-LAB Gateway only.
-
-[iot-lab-ftdi-utils](https://github.com/iot-lab/iot-lab-ftdi-utils/)
-
-Compiled and installed in `/usr/bin` or `/usr/local/bin`.
-
-```
-make
-sudo make install
-```
-#### CC2538 ####
+#### cc2538-bsl ####
 
 Required for nodes equiped with Zoul module (such as Firefly node)
 
 ```
-git clone https://github.com/JelmerT/cc2538-bsl &&\
-sudo cp cc2538-bsl/cc2538-bsl.py /usr/bin/.
-sudo apt-get update &&\
-sudo apt-get install -y binutils
+git clone https://github.com/JelmerT/cc2538-bsl && \
+cp cc2538-bsl/cc2538-bsl.py /usr/bin/. && \
+apt-get update && \
+apt-get install -y python-pip binutils && \
 pip install intelhex
-pip install python-magic #optional
 ```
 
-Installing
-----------
+#### pyOCD ####
+
+```
+pip install pyOCD
+```
+
+
+Local installation of the gateway_code
+--------------------------------------
 
 The install procedure is made for systems compatible with `update-rc.d`
 
 Installing the application is done by running
 
-    sudo python setup.py install
-    sudo python setup.py post_install
+    sudo python setup.py release
 
 In order to take into account the www-data user into dialout group, restart a new session or reboot computer.
-
-> Check `post_install` steps from `setup.py` for other GNU/Linux distrib.
 
 Check home_dir for user www-data, if not exists :
 
