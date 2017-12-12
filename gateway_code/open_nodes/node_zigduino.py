@@ -116,8 +116,15 @@ class NodeZigduino(object):
     def reset(self):
         """ Reset the Zigduino node using DTR"""
         ret_val = 0
+
+        # Check if Zigduino is up before DTR reset
         try:
             ser = serial.Serial(self.TTY, self.BAUDRATE)
+        except serial.serialutil.SerialException:
+            LOGGER.error("No serial port found")
+            return 1
+
+        try:
             ser.setDTR(False)
             time.sleep(0.5)
             ser.setDTR(True)
