@@ -20,15 +20,39 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 """ gateway_code open node files """
-
-import os
 import glob
 import importlib
-from gateway_code.utils import elftarget
+import os
+import pkgutil
+from string import lower
 
+from gateway_code.utils import elftarget
 
 OPEN_NODES_MODULE = 'node_{type}'
 OPEN_CLASS_NAME = 'Node{title}'
+
+registry = {}
+
+
+class MetaNode(type):
+    def __init__(cls, name, bases, class_dict):
+        type.__init__(cls, name, bases, class_dict)
+        if not hasattr(cls, '__ignore__'):
+            cls.__ignore__ = True
+        else:
+            registry[cls.TYPE] = cls
+
+
+class Node(object):
+    __metaclass__ = MetaNode
+
+
+def import_all_nodes():
+    pkg_dir = os.path.dirname(__file__)
+    for (module_loader, name, ispkg) in pkgutil.iter_modules([pkg_dir]):
+        importlib.import_module('.' + name, __package__)
+
+import_all_nodes()
 
 
 def node_class(board_type):
@@ -36,19 +60,11 @@ def node_class(board_type):
 
     :raises ValueError: if board class can't be found """
     try:
-        module_path = '%s.%s' % (
-            __name__, OPEN_NODES_MODULE.format(
-                type=board_type.replace('-', '_')))
-        class_name = OPEN_CLASS_NAME.format(title=_node_title(board_type))
-
-        # Get node class from board_type
-        module = importlib.import_module(module_path)
-        board_class = getattr(module, class_name)
-
+        board_class = registry[board_type]
         # Class sanity check
         _assert_class_valid(board_class, board_type)
-    except (ImportError, AttributeError) as err:
-        raise ValueError('Board %s not implemented: %r' % (board_type, err))
+    except KeyError:
+        raise ValueError('Board %s not implemented' % board_type)
     else:
         return board_class
 
@@ -90,15 +106,4 @@ def _assert_class_valid(board_class, board_type):
 def all_nodes_types():
     """Find all implemented node types."""
 
-    current_directory = os.path.dirname(__file__)
-
-    open_node_glob = OPEN_NODES_MODULE.format(type='*')
-    open_node_glob = '%s.%s' % (open_node_glob, 'py')
-    open_node_glob = os.path.join(current_directory, open_node_glob)
-
-    nodes = glob.glob(open_node_glob)
-    nodes = [os.path.basename(node) for node in nodes]
-    nodes = [node.replace('node_', '') for node in nodes]
-    nodes = [node.replace('.py', '') for node in nodes]
-
-    return nodes
+    return registry.keys()
