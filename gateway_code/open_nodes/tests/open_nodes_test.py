@@ -40,15 +40,8 @@ class TestsOpenNodes(unittest.TestCase):
         """Test error while loading an open node class."""
         # No module
         self.assertRaisesRegexp(
-            ValueError, '^Board unknown not implemented: ImportError.*$',
+            ValueError, '^Board unknown not implemented*$',
             node_class, 'unknown')
-
-        # No Class in module, import node_m3 but required name of class changed
-        with mock.patch('gateway_code.open_nodes.OPEN_CLASS_NAME',
-                        'UnknownClass'):
-            self.assertRaisesRegexp(
-                ValueError, '^Board m3 not implemented: AttributeError.*$',
-                node_class, 'm3')
 
 
 class TestsOpenNodesImplementations(unittest.TestCase):
