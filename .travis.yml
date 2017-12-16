@@ -21,7 +21,6 @@ before_cache:
   - docker save -o docker/previous_image.tar.gz iot-lab-gateway
 
 after_success:
-  - docker run -v $PWD:/home/iot-lab-gateway $ci_env --privileged iot-lab-gateway-tests tox -e upload_coverage
+  - docker run -v $PWD:/shared $ci_env iot-lab-gateway-tests tox -e upload_coverage
 
-script:
-  - docker run -v $PWD:/home/iot-lab-gateway -t iot-lab-gateway-tests tox
+script: make test
