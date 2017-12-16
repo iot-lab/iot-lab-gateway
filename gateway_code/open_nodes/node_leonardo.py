@@ -39,7 +39,7 @@ class NodeLeonardo(object):
 
     TYPE = 'leonardo'
     ELF_TARGET = ('ELFCLASS32', 'EM_AVR')
-    TTY = '/dev/ttyON_LEONARDO'
+    TTY = '/dev/iotlab/ttyON_LEONARDO'
     # The Leonardo node need a special open/close and then appear on a new TTY
     TTY_PROG = '/dev/ttyON_LEONARDO_PROG'
     # Regular TTY will be restored after 8 seconds

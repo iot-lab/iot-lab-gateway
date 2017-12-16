@@ -39,7 +39,7 @@ class NodeM3(object):
 
     TYPE = 'm3'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/ttyON_M3'
+    TTY = '/dev/iotlab/ttyON_M3'
     BAUDRATE = 500000
     OPENOCD_CFG_FILE = static_path('iot-lab-m3.cfg')
     OPENOCD_OPTS = ('target/stm32f1x.cfg',)

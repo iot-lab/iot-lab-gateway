@@ -38,7 +38,7 @@ class NodeSamr21(object):
 
     TYPE = 'samr21'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/ttyON_SAMR21'
+    TTY = '/dev/iotlab/ttyON_SAMR21'
     BAUDRATE = 115200
     OPENOCD_CFG_FILE = static_path('iot-lab-samr21.cfg')
     FW_IDLE = static_path('samr21_idle.elf')

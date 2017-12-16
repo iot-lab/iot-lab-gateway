@@ -42,7 +42,7 @@ class NodeZigduino(object):
 
     TYPE = "zigduino"
     ELF_TARGET = ('ELFCLASS32', 'EM_AVR')
-    TTY = '/dev/ttyON_ZIGDUINO'
+    TTY = '/dev/iotlab/ttyON_ZIGDUINO'
     BAUDRATE = 57600
     FW_IDLE = static_path('zigduino_idle.elf')
     FW_AUTOTEST = static_path('zigduino_autotest.elf')

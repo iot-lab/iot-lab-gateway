@@ -1,8 +1,8 @@
 # Leonardo Nodes
-SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_LLC_Arduino_Leonardo",  ATTRS{idProduct}=="8036", SYMLINK+="ttyON_LEONARDO", RUN+="/bin/stty -F /dev/ttyON_LEONARDO 9600"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_LLC_Arduino_Leonardo",  ATTRS{idProduct}=="8036", SYMLINK+="iotlab/ttyON_LEONARDO", RUN+="/bin/stty -F /dev/ttyON_LEONARDO 9600"
 
 # Rules for the pramming interface of the Leonardo (when he reboots and wait for a new firmware to be uploaded
-SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_LLC_Arduino_Leonardo",  ATTRS{idProduct}=="0036", SYMLINK+="ttyON_LEONARDO_PROG"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="Arduino_LLC_Arduino_Leonardo",  ATTRS{idProduct}=="0036", SYMLINK+="iotlab/ttyON_LEONARDO_PROG"
 
 SUBSYSTEMS=="usb", ATTRS{idProduct}=="8036", ATTRS{idVendor}=="2341", MODE="0664", GROUP="dialout"
 SUBSYSTEMS=="usb", ATTRS{idProduct}=="0036", ATTRS{idVendor}=="2341", MODE="0664", GROUP="dialout"
