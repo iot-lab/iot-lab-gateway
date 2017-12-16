@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # This file is a part of IoT-LAB gateway_code
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
 # Contributor(s) : see AUTHORS file
@@ -17,31 +19,14 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-FROM iot-lab-gateway
+USER_ID=${LOCAL_USER_ID:-9001}
 
-# Update
-RUN apt-get update && \
-    apt-get install -y python-pip valgrind gdb
+useradd --shell /bin/bash -u $USER_ID -o -c "" -m user -G dialout
 
-# Install app dependencies
-RUN pip install --upgrade pip && \
-    pip install tox
+# The gateway manager creates directories and files in /iotlab/users
+# the given USER_ID requires good rights to write there
+chown -R $USER_ID /iotlab/users
 
-RUN apt-get -y --no-install-recommends install \
-    ca-certificates \
-    curl
+export HOME=/shared
 
-RUN gpg --keyserver ha.pool.sks-keyservers.net --recv-keys B42F6819007F00F88E364FD4036A9C25BF357DD4
-RUN curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.4/gosu-$(dpkg --print-architecture)" \
-    && curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.4/gosu-$(dpkg --print-architecture).asc" \
-    && gpg --verify /usr/local/bin/gosu.asc \
-    && rm /usr/local/bin/gosu.asc \
-    && chmod +x /usr/local/bin/gosu
-
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-
-WORKDIR /shared
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-CMD ["/bin/bash"]
+exec /usr/local/bin/gosu user "$@"
