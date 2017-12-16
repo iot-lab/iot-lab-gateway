@@ -37,7 +37,7 @@ class NodeFirefly(object):
     TYPE = 'firefly'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
 
-    TTY = '/dev/ttyON_FIREFLY'
+    TTY = '/dev/iotlab/ttyON_FIREFLY'
     # The tty as named in the udev rule
     BAUDRATE = 115200
     PROGRAM_BAUDRATE = 460800
