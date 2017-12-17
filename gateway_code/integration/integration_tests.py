@@ -203,9 +203,9 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
     def _check_debug(self, board_class):
         if not hasattr(board_class, 'debug_stop'):
-            return 0  # no debug
+            return  # no debug
         if not hasattr(board_class, 'OPENOCD_CFG_FILE'):
-            return 0  # Only openocd debug tested here (arm)
+            return  # Only openocd debug tested here (arm)
 
         firmware = abspath(board_class.FW_AUTOTEST)
         gdb_cmd = [

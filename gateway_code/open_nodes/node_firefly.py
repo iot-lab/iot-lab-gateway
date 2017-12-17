@@ -26,7 +26,7 @@ from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
 
-from gateway_code.utils.CC2538 import CC2538
+from gateway_code.utils.cc2538 import CC2538
 from gateway_code.utils.serial_redirection import SerialRedirection
 
 LOGGER = logging.getLogger('gateway_code')

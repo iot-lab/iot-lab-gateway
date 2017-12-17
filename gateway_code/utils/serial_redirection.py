@@ -109,7 +109,8 @@ class SerialRedirection(threading.Thread):
         * then SIGKILL indefinitely
 
         Signals information:
-          ftp://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_24.html#SEC472  # pylint:disable=line-too-long  # noqa
+          ftp://ftp.gnu.org/old-gnu/Manuals/glibc-2.2.3/html_chapter/libc_24.html#SEC472
+          # pylint:disable=line-too-long  # noqa
         """
         sigterm = int(sigterm)
         sigint = int(sigint)

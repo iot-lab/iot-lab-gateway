@@ -78,6 +78,7 @@ def get_elf_load_addr(firmware_path):
             sh_flags = section['sh_flags']
             if sh_flags & SH_FLAGS.SHF_EXECINSTR:
                 return section['sh_addr']
+    return None
 
 
 def main():
