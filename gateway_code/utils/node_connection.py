@@ -110,7 +110,7 @@ class OpenNodeConnection(object):
                 return answer.strip().split(' ')
         except (socket.timeout, IOError) as err:
             LOGGER.warning("Read timeout: %s", err)
-            return None
+        return None
 
     @classmethod
     def send_one_command(cls, command_list, *args, **kwargs):

@@ -76,11 +76,11 @@ class SerialExpect(object):
             try:
                 read_bytes = self.fd.read(size=16)  # timeout 0.1
             except (serial.SerialException, AttributeError):
-                return ''
+                break
 
             if end_time <= time.time():
                 # last read_bytes may not be printed but don't care
-                return ''  # timeout
+                break  # timeout
 
             # no data, continue
             if not read_bytes:
@@ -115,6 +115,7 @@ class SerialExpect(object):
                 return match.group(0)
 
             # continue
+        return ''
 
     def __enter__(self):
         return self
@@ -141,6 +142,7 @@ class SerialExpectForSocket(SerialExpect):
 
         The goal is to be resilient to the fact that serial_aggregator might be
         (re)starting.  """
+        # pylint:disable=keyword-arg-before-vararg
         # Run 'tries -1' times with 'try except'
         for _ in range(0, tries - 1):
             try:

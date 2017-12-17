@@ -94,7 +94,7 @@ def main():
     elif opts.cmd == 'debug':
         ret = _debug(ocd)
     else:  # pragma: no cover
-        raise ValueError('Uknown Command %s', opts.command)
+        raise ValueError('Uknown Command {}'.format(opts.command))
 
     if ret == 0:
         print '%s OK\n' % opts.cmd

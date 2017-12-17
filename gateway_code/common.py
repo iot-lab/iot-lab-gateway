@@ -91,8 +91,9 @@ def wait_cond(timeout, value, fct, *args, **kwargs):
         if value == fct(*args, **kwargs):
             return True
         if time.time() > (time_ref + timeout):
-            return False
+            break
         time.sleep(0.1)
+    return False
 
 
 # The embedded need some time to detect the tty

@@ -310,7 +310,7 @@ class GatewayRest(bottle.Bottle):
 
     def route(self, path, method='GET', callback=None, *args, **kwargs):
         """Add a route but catch some exceptions."""
-        # pylint:disable=arguments-differ
+        # pylint:disable=arguments-differ, keyword-arg-before-vararg
         callback = self._cb_wrap(callback)
         return super(GatewayRest, self).route(path, method, callback,
                                               *args, **kwargs)

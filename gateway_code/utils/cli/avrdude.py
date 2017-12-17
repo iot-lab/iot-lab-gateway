@@ -65,7 +65,7 @@ def main():
     if opts.cmd == 'flash':
         ret += avr.flash(opts.firmware)
     else:  # pragma: no cover
-        raise ValueError('Uknown Command %s', opts.command)
+        raise ValueError('Uknown Command {}'.format(opts.command))
 
     # Same code as 'openocd'
     # pylint:disable=duplicate-code

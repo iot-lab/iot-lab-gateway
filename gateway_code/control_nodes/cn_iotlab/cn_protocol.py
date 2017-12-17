@@ -133,7 +133,7 @@ class Protocol(object):
         elif radio.mode == 'sniffer':
             return self._config_radio_sniffer(radio)
 
-        raise NotImplementedError("Uknown radio mode: %s", radio.mode)
+        raise NotImplementedError("Uknown radio mode: {}".format(radio.mode))
 
     def _config_radio_measure(self, radio):
         """ Configure radio measure """
