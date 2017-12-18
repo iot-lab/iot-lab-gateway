@@ -67,13 +67,15 @@ class SerialRedirection(threading.Thread):
         super(SerialRedirection, self).__init__(target=self._target)
         self.daemon = True
 
-    def start(self):
+    def start(self, delay=0):
         """ Start the serial redirection Thread """
         self._run = True
         LOGGER.debug('SerialRedirection start')
         super(SerialRedirection, self).start()
         # wait for 'Popen' to have been called
-        return 0 if self._started.wait(15.0) else 1
+        ret = 0 if self._started.wait(15.0) else 1
+        time.sleep(delay)
+        return ret
 
     def stop(self):
         """ Stop the running thread """
