@@ -24,6 +24,7 @@
 import time
 import logging
 
+import termios
 import serial
 
 from gateway_code.config import static_path
@@ -62,6 +63,22 @@ class NodeZigduino(object):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.avrdude = AvrDude(self.AVRDUDE_CONF)
 
+    def disable_dtr(self):
+        """ Disable serial port DTR in order to avoid
+            board autoreset at first connection
+        """
+        # Check if Zigduino is up before DTR reset
+        try:
+            ser = serial.Serial(self.TTY, self.BAUDRATE)
+        except serial.serialutil.SerialException:
+            LOGGER.error("No serial port found")
+            return 1
+        with open(self.TTY) as ser:
+            attrs = termios.tcgetattr(ser)
+            attrs[2] = attrs[2] & ~termios.HUPCL
+            termios.tcsetattr(ser, termios.TCSAFLUSH, attrs)
+        return 0
+
     @logger_call("Setup of Zigduino node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
@@ -71,6 +88,7 @@ class NodeZigduino(object):
         ret_val += common.wait_tty(self.TTY, LOGGER,
                                    timeout=common.TTY_DETECT_TIME)
         ret_val += self.flash(firmware_path, redirect=False)
+        ret_val += self.disable_dtr()
         ret_val += self.serial_redirection.start()
         return ret_val
 
@@ -108,6 +126,7 @@ class NodeZigduino(object):
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         # Finally restore serial redirection
         if redirect:
+            ret_val += self.disable_dtr()
             ret_val += self.serial_redirection.start()
         LOGGER.info("end flash")
         return ret_val
