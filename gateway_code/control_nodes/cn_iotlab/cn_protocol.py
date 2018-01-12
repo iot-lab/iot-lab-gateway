@@ -61,11 +61,14 @@ class Protocol(object):
         >>> Protocol._set_node_id_args('a8-256')
         ('a8', '256')
 
-        >>> Protocol._set_node_id_args('m3-00-ci')
+        >>> Protocol._set_node_id_args('m3-00')
         ('m3', '0')
+
+        >>> Protocol._set_node_id_args('arduino-zero-2')
+        ('arduino-zero', '2')
         """
-        archi, num_str = node_id.split('-')[0:2]
-        num = str(int(num_str))
+        archi = '-'.join(node_id.split('-')[:-1])
+        num = str(int(node_id.split('-')[-1]))
         return archi, num
 
     def set_node_id(self, node_id):
