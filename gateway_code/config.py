@@ -122,7 +122,7 @@ def read_config(key, default=IOError):
 
     try:
         with open(entry) as _conf:
-            return _conf.read().strip().lower()
+            return _conf.read().strip().lower().replace('-', '_')
     except IOError:
         if default is IOError:  # not provided
             raise
