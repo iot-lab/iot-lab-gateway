@@ -66,7 +66,11 @@ class Protocol(object):
 
         >>> Protocol._set_node_id_args('arduino-zero-2')
         ('arduino-zero', '2')
+
+        >>> Protocol._set_node_id_args('arduino_zero_1')
+        ('arduino-zero', '1')
         """
+        node_id = node_id.replace('_', '-')
         archi = '-'.join(node_id.split('-')[:-1])
         num = str(int(node_id.split('-')[-1]))
         return archi, num
