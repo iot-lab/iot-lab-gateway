@@ -55,7 +55,7 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         # test that ON still on
         if self.board_cfg.board_type == 'a8':
             # Don't know ip address, just check TTY
-            self.assertTrue(os.path.exists(self.board_cfg.board_class.TTY))
+            self.assertTrue(os.path.exists('/dev/ttyON'))
         else:
             self.g_m.open_node.serial_redirection.start()
             ret = OpenNodeConnection.send_one_command(['get_time'])

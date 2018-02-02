@@ -47,12 +47,12 @@ class TestMain(unittest.TestCase):
         redirect = m_serial_redirect_class.return_value
         m_pause.side_effect = KeyboardInterrupt()
 
-        args = ['serial_redirection.py', '/dev/ttyON_M3', '500000']
+        args = ['serial_redirection.py', '/dev/ttyON', '500000']
         with mock.patch('sys.argv', args):
             serial_redirection.main()
 
             self.assertTrue(m_pause.called)
-            m_serial_redirect_class.assert_called_with('/dev/ttyON_M3', 500000)
+            m_serial_redirect_class.assert_called_with('/dev/ttyON', 500000)
             self.assertTrue(redirect.start.called)
             self.assertTrue(redirect.stop.called)
 

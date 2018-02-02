@@ -29,22 +29,11 @@ import tempfile
 
 
 def main(args):
-    args.volume = ('-v {}:/home/iot-lab-gateway/gateway_code'
-                   .format(os.path.abspath(args.volume))
-                           if args.volume is not None else '')
     args.daemon = '-d' if args.daemon else '--rm'
     args.reloader = '-e RELOADER=1' if args.reloader else ''
 
-    cmd = ' '.join(args.cmd)
-
-    symlink_tty = '/dev/ttyON_{}'.format(args.board_type.upper())
-    real_tty = os.path.realpath(symlink_tty)
-    args.device_on_cn_tty = (' --device={0} -e ON_TTY={0}'.format(real_tty))
-
-    if args.control_node_type != 'no':
-        real_tty = os.path.realpath('/dev/ttyCN')
-        args.device_on_cn_tty += (' --device={0} -e CN_TTY={0}'
-                                  .format(real_tty))
+    if args.control_node_type != 'no' and args.cntty is None:
+        raise argparse.ArgumentError('cntty', 'cntty is needed when a control node is used')
 
     # Writing local gateway configuration
     cfg_dir = tempfile.mkdtemp()
@@ -57,38 +46,50 @@ def main(args):
     with open(os.path.join(cfg_dir, 'hostname'), 'w') as f:
         f.write(args.hostname)
 
+    args.cfg_dir = '-v %s:/var/local/config' % cfg_dir
+
     running = '''
     docker run \
       {0.volume} \
-      -e BOARD_TYPE={0.board_type} \
-      -e CONTROL_NODE_TYPE={0.control_node_type} \
-      -e HOSTNAME={0.hostname} \
-      -e HOST=0.0.0.0 \
-      -e PORT=8080 \
-      -v {2}:/var/local/config \
+      {0.cfg_dir} \
+      {0.ontty} \
+      {0.cntty} \
       {0.reloader} \
       -p 8080:8080 \
       -p 20000:20000 \
       --name "gateway_test" \
       --privileged \
-      {0.device_on_cn_tty} \
       {0.daemon} \
-      iot-lab-gateway \
-      {1}
-    '''.format(args, cmd, cfg_dir)
+      iot-lab-gateway
+    '''.format(args)
 
     print('running docker command:')
     print(running)
 
     os.system(running)
 
+
+def volume_type(input_str):
+    if input_str != '':
+        return ('-v {}:/home/iot-lab-gateway/gateway_code'
+                .format(os.path.abspath(input_str)))
+    else:
+        return ''
+
+
+def tty_type(prefix):
+    def func(input_str):
+        return '-v %s:/dev/tty%s' % (os.path.realpath(input_str), prefix)
+    return func
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         add_help=False, formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('--help', action='help')
-    parser.add_argument('-v', '--volume', dest='volume',
+    parser.add_argument('-v', '--volume', dest='volume', type=volume_type,
                         help='Host directory containing gateway_code',
-                        default=None)
+                        default='')
     parser.add_argument('-b', '--board-type', dest='board_type', default='m3',
                         help='Set node board type')
     parser.add_argument('-h', '--hostname', dest='hostname',
@@ -101,6 +102,8 @@ if __name__ == '__main__':
                         help='Daemon mode')
     parser.add_argument('-r', '--reloader', dest='reloader',
                         action='store_true', help='Reloader')
-    parser.add_argument('cmd', nargs='*',
-                        help='Command to run inside the docker container')
+    parser.add_argument('--cntty', dest='cntty', type=tty_type('CN'), default='',
+                        help='Control Node tty to pass inside the docker container')
+    parser.add_argument('ontty', type=tty_type('ON'),
+                        help='Open Node tty to pass inside the docker container')
     main(parser.parse_args(sys.argv[1:]))
