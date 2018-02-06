@@ -93,7 +93,7 @@ class CC2538(object):
 
             # Flashing
             flash_cmd = self.FLASH.format(baudrate=self.baud, hex=hex_path,
-                                          addr=address, elf=elf_path)
+                                          addr=address)
             cmd = self.CC2538BSL.format(port=self.port, cmd=flash_cmd)
             ret_value += self._call_cmd(cmd)
             LOGGER.info('Flashing ret value : %d', ret_value)
