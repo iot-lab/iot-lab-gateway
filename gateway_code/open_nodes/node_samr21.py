@@ -27,6 +27,7 @@ from gateway_code import common
 from gateway_code.common import logger_call
 
 from gateway_code.utils.openocd import OpenOCD
+from gateway_code.utils.edbg import Edbg
 from gateway_code.utils.serial_redirection import SerialRedirection
 
 LOGGER = logging.getLogger('gateway_code')
@@ -53,6 +54,7 @@ class NodeSamr21(object):
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.openocd = OpenOCD.from_node(self)
+        self.edbg = Edbg()
 
     @logger_call("Node SAMR21 : Setup of samr21 node")
     def setup(self, firmware_path):
@@ -90,7 +92,7 @@ class NodeSamr21(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on SAMR21: %s', firmware_path)
-        return self.openocd.flash(firmware_path)
+        return self.edbg.flash(firmware_path)
 
     @logger_call("Node SAMR21 : reset of samr21 node")
     def reset(self):
