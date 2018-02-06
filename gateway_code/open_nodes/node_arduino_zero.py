@@ -27,6 +27,7 @@ from gateway_code import common
 from gateway_code.common import logger_call
 
 from gateway_code.utils.openocd import OpenOCD
+from gateway_code.utils.edbg import Edbg
 from gateway_code.utils.serial_redirection import SerialRedirection
 
 LOGGER = logging.getLogger('gateway_code')
@@ -49,11 +50,11 @@ class NodeArduinoZero(object):
     ]
 
     ALIM = '5V'
-    FLASH_TIMEOUT = 60  # Got 40 seconds at max with riot gnrc_networking
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.openocd = OpenOCD.from_node(self, timeout=self.FLASH_TIMEOUT)
+        self.openocd = OpenOCD.from_node(self)
+        self.edbg = Edbg()
 
     @logger_call("Node Arduino Zero : Setup of arduino zero node")
     def setup(self, firmware_path):
@@ -91,7 +92,7 @@ class NodeArduinoZero(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Arduino Zero: %s', firmware_path)
-        return self.openocd.flash(firmware_path)
+        return self.edbg.flash(firmware_path)
 
     @logger_call("Node Arduino Zero : reset of arduino zero node")
     def reset(self):
