@@ -34,8 +34,6 @@ from gateway_code.common import logger_call
 from gateway_code.autotest import autotest
 from gateway_code.utils import elftarget
 
-import gateway_code.board_config as board_config
-
 from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER
@@ -46,16 +44,16 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     Manages experiments, open node and control node """
 
-    def __init__(self, log_folder='.', log_stdout=False):
+    def __init__(self, board_config, log_folder='.', log_stdout=False):
         gateway_logging.init_logger(log_folder, log_stdout)
 
-        self.board_cfg = board_config.BoardConfig()
+        self.board_config = board_config
         self.rlock = RLock()
 
         # Nodes instance
-        self.open_node = self.board_cfg.board_class()
-        self.control_node = self.board_cfg.cn_class(
-            self.board_cfg.node_id, self.board_cfg.default_profile)
+        self.open_node = self.board_config.board_class()
+        self.control_node = self.board_config.cn_class(
+            self.board_config.node_id, self.board_config.default_profile)
         self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
@@ -105,7 +103,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             self.exp_stop()
 
         try:
-            profile = self.board_cfg.profile_from_dict(profile_dict)
+            profile = self.board_config.profile_from_dict(profile_dict)
         except ValueError as err:
             LOGGER.error('%r', err)
             return 1
@@ -120,12 +118,12 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_id = exp_id
         self.user = user
 
-        if (self.board_cfg.robot_type == 'turtlebot2' or
-                self.board_cfg.cn_class.TYPE == 'no'):  # pragma: no cover
+        if (self.board_config.robot_type == 'turtlebot2' or
+                self.board_config.cn_class.TYPE == 'no'):  # pragma: no cover
             LOGGER.info('Create user exp folder')
             self._create_user_exp_folders(user, exp_id)
 
-        self.exp_files = self.create_user_exp_files(self.board_cfg.node_id,
+        self.exp_files = self.create_user_exp_files(self.board_config.node_id,
                                                     user, exp_id)
 
         # Create user log
@@ -220,7 +218,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info('Update experiment profile')
 
         try:
-            profile = self.board_cfg.profile_from_dict(profile_dict)
+            profile = self.board_config.profile_from_dict(profile_dict)
         except ValueError as err:
             LOGGER.error('%r', err)
             ret = 1

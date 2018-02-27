@@ -25,6 +25,8 @@ import os
 import mock
 
 # Help mocking config.read_config
+from gateway_code.board_config import BoardConfig
+
 READ_CONFIG = 'gateway_code.config.read_config'
 
 
@@ -46,6 +48,12 @@ def read_config_mock(board_type, **kwargs):
             return default
 
     return mock.Mock(side_effect=read_config)
+
+
+def get_config_mock(board_type):
+    """BoardConfig Mock
+    board_type and other keys """
+    return BoardConfig(board_type, hostname='%s-00' % board_type)
 
 
 # Help mocking config.GATEWAY_CONFIG_PATH

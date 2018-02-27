@@ -36,7 +36,6 @@ from gateway_code import common
 from gateway_code.autotest import open_a8_interface
 from gateway_code.profile import Consumption, Radio
 from gateway_code.utils.node_connection import OpenNodeConnection
-import gateway_code.board_config as board_config
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -101,7 +100,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
     def __init__(self, gateway_manager):
         self.g_m = gateway_manager
-        board_cfg = board_config.BoardConfig()
+        board_cfg = gateway_manager.board_config
         self.on_class = board_cfg.board_class
         self.cn_class = board_cfg.cn_class
 

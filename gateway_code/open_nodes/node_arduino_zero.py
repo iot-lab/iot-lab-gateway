@@ -37,7 +37,7 @@ class NodeArduinoZero(object):
 
     TYPE = 'arduino_zero'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/ttyON_ARDUINO_ZERO'
+    TTY = '/dev/ttyON'
     BAUDRATE = 115200
     OPENOCD_CFG_FILE = static_path('iot-lab-arduino-zero.cfg')
     FW_IDLE = static_path('arduino_zero_idle.elf')

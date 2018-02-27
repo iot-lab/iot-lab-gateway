@@ -37,8 +37,7 @@ class NodeFirefly(object):
     TYPE = 'firefly'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
 
-    TTY = '/dev/ttyON_FIREFLY'
-    # The tty as named in the udev rule
+    TTY = '/dev/ttyON'
     BAUDRATE = 115200
     PROGRAM_BAUDRATE = 460800
     # The baudrate used to communicate with the open-node on the serial port

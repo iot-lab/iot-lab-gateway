@@ -23,30 +23,33 @@
 """ Board Config """
 
 import functools
-import gateway_code.config as config  # allow mocking as 'gateway_code.config'
+
+import os
+
 from gateway_code import profile
 from gateway_code import open_nodes
 
-
 # Implemented as a class to be loaded dynamically and allow mocking in tests
+from gateway_code.config import (control_node_class,
+                                 DEFAULT_PROFILE, read_config)
+
+
 class BoardConfig(object):  # pylint:disable=too-few-public-methods
     """ Class BoardConfig, aggregates all the configuration.
 
     It's a class because it should be evaluated at runtime to allow mocking.
     """
 
-    def __init__(self):
-        board_type = config.read_config('board_type')
+    def __init__(self, board_type, hostname, cn_type='iotlab', robot=None):
         self.board_class = open_nodes.node_class(board_type)
-        cn_type = config.read_config('control_node_type', 'iotlab')
-        self.cn_class = config.control_node_class(cn_type)
+        self.cn_class = control_node_class(cn_type)
 
-        self.robot_type = config.read_config('robot', None)
-        self.node_id = config.read_config('hostname')
+        self.robot_type = robot
+        self.node_id = hostname
 
         self.profile_from_dict = functools.partial(profile.Profile.from_dict,
                                                    self.board_class)
-        self.default_profile = self.profile_from_dict(config.DEFAULT_PROFILE)
+        self.default_profile = self.profile_from_dict(DEFAULT_PROFILE)
 
     @property
     def board_type(self):
@@ -57,3 +60,22 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
     def cn_type(self):
         """Control node type."""
         return self.cn_class.TYPE
+
+    @staticmethod
+    def from_file(path):
+        """ factory method, get config from a /var/local/config -like tree """
+        board_type = read_config('board_type', path=path)
+        control_node_type = read_config('control_node_type',
+                                        'iotlab', path=path)
+        robot = read_config('robot', None, path=path)
+        hostname = read_config('hostname', path=path)
+        return BoardConfig(board_type, hostname, control_node_type, robot)
+
+    @staticmethod
+    def from_env():
+        """ factory method, get config from environment variables """
+        board_type = os.environ.get('BOARD_TYPE', 'm3')
+        control_node_type = os.environ.get('CONTROL_NODE_TYPE', 'no')
+        robot = os.environ.get('ROBOT', None)
+        hostname = os.environ.get('HOSTNAME')
+        return BoardConfig(board_type, hostname, control_node_type, robot)

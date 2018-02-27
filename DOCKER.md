@@ -1,12 +1,8 @@
-Docker Image of iot-lab-gateway
-===============================
+Docker Image of iot-lab-gateway REST server
+===========================================
 
 The included Dockerfile includes all the necessary dependencies listed in `INSTALL.md`, without you having
 to install them on your host machine.
-
-The only prerequisite before running the image for the first time is installing udev rules on the host
-
-    python setup.py udev_rules_install
 
 For the following commands sudo might be needed depending on whether your user is in the `docker` group:
 
@@ -14,63 +10,80 @@ To build the image :
 
     docker build -t iot-lab-gateway .
 
-To run the image:
+To run the image, assuming the open node is plugged and assigned to /dev/ttyUSB0:
 
-    ./docker-run
+    ./docker-run /dev/ttyUSB0
 
 Command line arguments for docker-run:
 
     usage: docker-run [--help] [-v VOLUME] [-b BOARD_TYPE] [-h HOSTNAME]
-                      [-c NODE_TYPE] [-d] [-r]
-                      [cmd [cmd ...]]
+                      [-c CONTROL_NODE_TYPE] [-d] [-r] [--cntty CNTTY]
+                      ontty
 
     positional arguments:
-      cmd                   Command to run inside the docker container (default:
-                            None)
+      ontty                 Open Node tty to pass inside the docker container
 
     optional arguments:
       --help
       -v VOLUME, --volume VOLUME
-                            Host directory containing the gateway code, usually gateway_code (default: None)
+                            Host directory containing gateway_code (default: )
       -b BOARD_TYPE, --board-type BOARD_TYPE
                             Set node board type (default: m3)
       -h HOSTNAME, --hostname HOSTNAME
                             Set hostname (default: custom-123)
-      -c NODE_TYPE, --node_type NODE_TYPE
-                            Set control_node_type (default: no)
-
-    options:
-      -d, --daemon          Daemon mode
-      -r, --reloader        Reloader
-
-
-You can mount a gateway_code folder into the docker container, so that you can modify your code, and have it used inside the container
-directly, usually:
-
-    ./docker-run -v gateway_code
-
-## Examples
+      -c CONTROL_NODE_TYPE, --control-node-type CONTROL_NODE_TYPE
+                            Set node as control node (default: no)
+      -d, --daemon          Daemon mode (default: False)
+      -r, --reloader        Reloader (default: False)
+      --cntty CNTTY         Control Node tty to pass inside the docker container
 
 You can use any type of open node:
 
-    ./docker-run -b samr21 -h samr21-test1
+    ./docker-run -b samr21 -h samr21-test1 /dev/ttyACM0
 
-You can mount your gateway_code and have the gateway API auto reload on code change, working in the background
+You can mount your gateway_code and have the gateway API server auto reload on code change
 
-    ./docker-run -v gateway_code --reloader
+    ./docker-run -v gateway_code --reloader /dev/ttyUSB0
 
 You can have the gateway run in the background by using a `-d` or `--daemon` argument
 
-    ./docker-run -d
-
-Instead of launching the API, you can do something inside the container, like building the control node C interface:
-
-    ./docker-run -- python setup.py build_ext
-
-
+    ./docker-run -d /dev/ttyUSB0
 
 Once the gateway runs in the background with `docker-run -d`, you can interact with its REST server on `http://localhost:8080`, and the serial port
 of the node is redirected on `localhost` TCP socket on port `20000`.
+
+
+Docker Image for testing iot-lab-gateway code
+=============================================
+
+docker-run is just a wrapper around `docker run`, in order to start unit tests or local integration tests using the
+docker container, the process is a bit more involved.
+
+There is a docker image dedicated to tests in the tests subfolder, build it with
+
+    docker build -t iot-lab-gateway-tests tests
+
+then run it with `docker run` using appropriate options.
+To run unit tests:
+
+    docker run iot-lab-gateway-tests
+
+To run integration tests with an open node plugged on the host you need to run:
+
+    docker run -v /dev/ttyACM0:/dev/ttyON -e BOARD_TYPE=arduino-zero --privileged iot-lab-gateway-tests tox -e local
+
+* `-e BOARD_TYPE=arduino-zero` passes the type of open node used
+
+* `-v /dev/ttyACM0:/dev/ttyON` mounts the usb device inside the container as an open node
+
+* `--privileged` needed, for now, to access the devices from inside the container
+
+* `tox -e local` the command that is run inside the container, see tox.ini for other environment.
+  You can run anything inside, like `python setup.py lint` or other commands
+
+As before, add `-v $PWD:/iot-lab-gateway` if you want to test the current
+version of the code you're working on, instead of testing the code
+that was when you built the docker image
 
 ## Running under macOS
 

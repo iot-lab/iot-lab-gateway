@@ -110,7 +110,7 @@ def get_module_attr(module_path, attr_name):
     return module_class
 
 
-def read_config(key, default=IOError):
+def read_config(key, default=IOError, path=GATEWAY_CONFIG_PATH):
     """ Read 'key' from config. If 'key' is not present raise an IOError
     if 'default' is not provided.
 
@@ -118,7 +118,7 @@ def read_config(key, default=IOError):
     :param default: return default if provided and 'key' absent
     :raises IOError: when 'key' can't be read and default not provided """
 
-    entry = os.path.join(GATEWAY_CONFIG_PATH, key)
+    entry = os.path.join(path, key)
 
     try:
         with open(entry) as _conf:

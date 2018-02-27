@@ -33,7 +33,6 @@ import logging
 import mock
 from testfixtures import LogCapture
 
-from gateway_code.tests import utils
 from .. import cn_interface
 
 
@@ -185,7 +184,6 @@ class TestControlNodeSerial(unittest.TestCase):
         ret = self.cn._oml_config_file(None)
         self.assertIsNone(ret)
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     def test_config_oml(self):
         oml_xml_cfg = '''<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>'''
         self.cn.start(oml_xml_cfg)

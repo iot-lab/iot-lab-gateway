@@ -63,10 +63,10 @@ This section present the module architecture.
                 +-----a8.rules
 
 
-Between two plugs, the name of the device as detected by the embedded linux running on the gateway can change: for example, an unique device can be succesively detected as ttyUSB0 and then as ttyUSB1. As it is essential to have a fixed name for your device, you have to write a udev rules specific for your device. To do such a thing, you must create a file named `your_node.rules` (with `your_node` the name of your node). Using the command `udevadm`, you have to retrieve some information to identify your node such as the serial id, the vendor id or the product id. You must set a name for the device and set the right group (dialout) and the right mode (664). The convention is to name device `ttyON_NODENAME`. Bellow the example of the udev rule for the M3 node:
+Between two plugs, the name of the device as detected by the embedded linux running on the gateway can change: for example, an unique device can be succesively detected as ttyUSB0 and then as ttyUSB1. As it is essential to have a fixed name for your device, you have to write a udev rules specific for your device. To do such a thing, you must create a file named `your_node.rules` (with `your_node` the name of your node). Using the command `udevadm`, you have to retrieve some information to identify your node such as the serial id, the vendor id or the product id. You must set a name for the device and set the right group (dialout) and the right mode (664). The convention is to name device `ttyON`. Bellow the example of the udev rule for the M3 node:
 
     SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_M3",
-    ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_M3"
+    ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON"
 
     SUBSYSTEM=="usb", ATTR{idProduct}=="6011", ATTR{idVendor}=="0403",
     MODE="0664", GROUP="dialout"
@@ -234,7 +234,7 @@ application with proper comment, free to you to use it and modify it:
 
     class NodeNodename(object):
 
-        TTY = '/dev/ttyON_NODENAME'
+        TTY = '/dev/ttyON'
         # The tty as named in the udev rule
         BAUDRATE = 9600
         # The baudrate used to communicate with the open-node on the serial port

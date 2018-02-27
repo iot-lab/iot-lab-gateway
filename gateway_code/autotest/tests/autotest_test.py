@@ -39,12 +39,9 @@ from gateway_code.tests import utils
 class TestProtocol(unittest.TestCase):
 
     def setUp(self):
-        mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
         gateway_manager = mock.Mock()
+        gateway_manager.board_config = utils.get_config_mock('m3')
         self.g_v = autotest.AutoTestManager(gateway_manager)
-
-    def tearDown(self):
-        mock.patch.stopall()
 
     def test__check(self):
         # test validate
@@ -92,12 +89,9 @@ class TestProtocol(unittest.TestCase):
 class TestProtocolGPS(unittest.TestCase):
 
     def setUp(self):
-        mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8')).start()
         gateway_manager = mock.Mock()
+        gateway_manager.board_config = utils.get_config_mock('a8')
         self.g_v = autotest.AutoTestManager(gateway_manager)
-
-    def tearDown(self):
-        mock.patch.stopall()
 
     def test_test_gps(self):
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:
@@ -183,13 +177,9 @@ class TestAutotestChecker(unittest.TestCase):
 class TestAutoTestsErrorCases(unittest.TestCase):
 
     def setUp(self):
-        mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
-
         gateway_manager = mock.Mock()
+        gateway_manager.board_config = utils.get_config_mock('m3')
         self.g_v = autotest.AutoTestManager(gateway_manager)
-
-    def tearDown(self):
-        mock.patch.stopall()
 
     def test_fail_on_setup_control_node(self):
 

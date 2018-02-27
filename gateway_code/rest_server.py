@@ -35,8 +35,9 @@ from tempfile import NamedTemporaryFile
 import bottle
 from bottle import request
 
+from gateway_code.board_config import BoardConfig
+from gateway_code.config import GATEWAY_CONFIG_PATH
 from gateway_code.gateway_manager import GatewayManager
-from gateway_code import board_config
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -52,7 +53,7 @@ class GatewayRest(bottle.Bottle):
     def __init__(self, gateway_manager):
         super(GatewayRest, self).__init__()
         self.gateway_manager = gateway_manager
-        self.board_config = board_config.BoardConfig()
+        self.board_config = gateway_manager.board_config
         self._app_routing()
 
     def _app_routing(self):
@@ -336,22 +337,23 @@ class GatewayRest(bottle.Bottle):
                 raise
         return _wrapped_f
 
+
 # Command line functions
-
-
-def _parse_arguments(args):
+def _parse_arguments(args, board_config_extra_args=False):
     """
     Parse arguments:
         [host, port]
 
     :param args: arguments, without the script name == sys.argv[1:]
+    :param board_config_extra_args: whether to add parsing for board_config
     :type args: list
     """
     import argparse
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog='iot-lab-gateway', add_help=False)
     parser.add_argument('host', type=str, help="Server address to bind to")
     parser.add_argument('port', type=int, help="Server port to bind to")
+    parser.add_argument('--help', action='help')
     parser.add_argument(
         '--log-folder', dest='log_folder', default='.',
         help="Folder where to write logs, default current folder")
@@ -360,11 +362,44 @@ def _parse_arguments(args):
         help="Whether to write logs to stdout, default False")
     parser.add_argument(
         '--reloader', dest='reloader', action='store_true',
-        help="Whether to auto-reload the bottle server on source code changes")
+        help="Whether to auto-reload the API on source code changes")
+    if board_config_extra_args:
+        parser.add_argument('--board-type', '-b', dest='board_type',
+                            help="the open node board type", required=True)
+        parser.add_argument('--control-node-type', '-c',
+                            dest='control_node_type',
+                            help="the control node board type",
+                            required=True, default='iotlab')
+        parser.add_argument('--robot', action='store_true',
+                            help="whether the node is a robot", default=False)
+        parser.add_argument('--hostname', '-h', help='the node id/hostname')
 
     arguments = parser.parse_args(args)
 
     return arguments
+
+
+def _common_main(board_cfg, args):
+    print '========================'
+    print 'board_cfg:'
+    print '  board_type: %s' % board_cfg.board_type
+    print '  control_node_type: %s' % board_cfg.cn_type
+    print '  hostname: %s' % board_cfg.node_id
+    print '  robot: %s' % board_cfg.robot_type
+
+    print 'args:'
+    print '  log_folder: %s' % args.log_folder
+    print '  log_stdout: %s' % args.log_stdout
+    print '  host: %s' % args.host
+    print '  port: %s' % args.port
+    print '========================'
+
+    g_m = GatewayManager(board_cfg, args.log_folder, args.log_stdout)
+    g_m.setup()
+
+    server = GatewayRest(g_m)
+    server.run(host=args.host, port=args.port, server='paste',
+               reloader=args.reloader)
 
 
 def _main(args):
@@ -372,10 +407,17 @@ def _main(args):
     Command line main function
     """
 
-    args = _parse_arguments(args[1:])
-    g_m = GatewayManager(args.log_folder, args.log_stdout)
-    g_m.setup()
+    parsed_args = _parse_arguments(args[1:], False)
+    board_cfg = BoardConfig.from_file(GATEWAY_CONFIG_PATH)
+    _common_main(board_cfg, parsed_args)
 
-    server = GatewayRest(g_m)
-    server.run(host=args.host, port=args.port, server='paste',
-               reloader=args.reloader)
+
+def _main2(args):
+    """
+    Command line main function
+    """
+
+    parsed_args = _parse_arguments(args[1:], True)
+    board_cfg = BoardConfig(parsed_args.board_type, parsed_args.hostname,
+                            parsed_args.control_node_type, parsed_args.robot)
+    _common_main(board_cfg, parsed_args)
