@@ -21,6 +21,7 @@
 
 """ Open Node STM32 LRWAN1 experiment implementation """
 import logging
+import serial
 
 from gateway_code.config import static_path
 from gateway_code import common
@@ -54,6 +55,17 @@ class NodeStLrwan1(object):
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.openocd = OpenOCD.from_node(self)
+
+    def clear_serial(self):
+        """Clear serial link by flushing the input buffer."""
+        try:
+            ser = serial.Serial(self.TTY, self.BAUDRATE)
+        except serial.serialutil.SerialException:
+            LOGGER.error("No serial port found")
+            return 1
+        ser.reset_input_buffer()
+        ser.close()
+        return 0
 
     @logger_call("Node ST_LRWAN1 : Setup of st_lrwan1 node")
     def setup(self, firmware_path):
@@ -91,7 +103,9 @@ class NodeStLrwan1(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on ST_LRWAN1: %s', firmware_path)
-        return self.openocd.flash(firmware_path)
+        ret = self.openocd.flash(firmware_path)
+        ret += self.clear_serial()
+        return ret
 
     @logger_call("Node ST_LRWAN1 : reset of st_lrwan1 node")
     def reset(self):
