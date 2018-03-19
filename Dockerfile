@@ -35,6 +35,7 @@ RUN apt-get update && \
         libftdi-dev \
         libhidapi-dev \
         libusb-1.0-0-dev \
+        libudev-dev \
         autoconf \
         libsqlite3-dev \
         libpopt-dev \
@@ -99,6 +100,14 @@ RUN git clone https://github.com/ntfreak/openocd openocd10 && \
     make && \
     sudo make install && \
     cd .. && rm -rf openocd10
+
+# edbg
+RUN git clone https://github.com/ataradov/edbg && \
+    cd edbg && \
+    git checkout 80c50d03aac831f87f513a5d5455df1286bcb540 && \
+    make all && \
+    install -m 755 edbg /usr/bin && \
+    cd .. && rm -rf edbg
 
 #iot-lab-ftdi-utils install
 
