@@ -37,7 +37,7 @@ class NodeMicrobit(object):
 
     TYPE = 'microbit'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/ttyON_MICROBIT'
+    TTY = '/dev/iotlab/ttyON_MICROBIT'
     BAUDRATE = 115200
     FW_IDLE = static_path('microbit_idle.elf')
     FW_AUTOTEST = static_path('microbit_autotest.elf')
