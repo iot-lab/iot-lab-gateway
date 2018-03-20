@@ -57,10 +57,6 @@ RUN apt-get update && \
         curl && \
     apt-get clean
 
-#Making a work directory to setup the gateway
-RUN mkdir /setup_dir
-WORKDIR /setup_dir
-
 #liboml2 install
 RUN mkdir /var/www && chown www-data:www-data /var/www
 
@@ -128,22 +124,14 @@ RUN git clone https://github.com/JelmerT/cc2538-bsl && \
 # pyOCD for micro:bit
 RUN pip install pyOCD
 
-#for all
-
-RUN rm -rf /setup_dir
-
-WORKDIR /home
-
-RUN mkdir iot-lab-gateway
-COPY . /home/iot-lab-gateway/
-RUN cd iot-lab-gateway && \
-    python setup.py develop
+WORKDIR /setup_dir
+COPY . /setup_dir/
+RUN python setup.py install
+RUN rm -r /setup_dir
 
 #test with M3 config
 RUN mkdir -p /var/local/config/ && \
     mkdir -p /iotlab/users/test && \
     chown www-data:www-data /iotlab/users/test
 
-WORKDIR /home/iot-lab-gateway
-
-CMD ["/home/iot-lab-gateway/docker-gateway-rest-server"]
+CMD ["gateway-rest-server", "0.0.0.0", "8080", "--log-stdout", "--reloader"]
