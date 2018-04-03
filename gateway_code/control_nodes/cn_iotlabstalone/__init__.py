@@ -65,7 +65,4 @@ class ControlNodeIotlabstalone(ControlNodeIotlab):
     @logger_call("Control Node : status")         
     def status(self):
         """ Check Control node status """
-        #return ftdi_check('control', '2232')
-        ret = ftdi_check('controlNode', '2232')
-        print("ftdi_check control node returned " + repr(ret))
-        return 1
+        return ftdi_check('controlNode', '2232')
