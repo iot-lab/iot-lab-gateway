@@ -56,7 +56,7 @@ local-test:
 	tox
 
 local-integration-test: setup-cfg-dir
-	IOTLAB_GATEWAY_CFG_DIR = /tmp/cfg_dir
+	IOTLAB_GATEWAY_CFG_DIR=/tmp/cfg_dir
 	tox -e test
 
 local-run: setup-cfg-dir
