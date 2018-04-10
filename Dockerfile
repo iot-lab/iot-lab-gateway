@@ -122,7 +122,8 @@ RUN git clone https://github.com/JelmerT/cc2538-bsl && \
     pip install intelhex
 
 # pyOCD for micro:bit
-RUN pip install pyOCD
+RUN pip install -U pip setuptools && \
+    pip install pyOCD
 
 WORKDIR /setup_dir
 COPY . /setup_dir/
