@@ -190,7 +190,7 @@ class ControlNodeIotlab(object):
         So wait 2 seconds to be safe.  """
         time.sleep(2)
 
-    @logger_call("Control Node : status")
-    def status(self):
+    @staticmethod
+    def status():
         """ Check Control node status """
         return ftdi_check('control', '4232')

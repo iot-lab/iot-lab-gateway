@@ -62,7 +62,7 @@ class ControlNodeIotlabstalone(ControlNodeIotlab):
         """ Stop open node with 'power' source """
         return 0
 
-    @logger_call("Control Node : status")         
-    def status(self):
+    @staticmethod
+    def status():
         """ Check Control node status """
         return ftdi_check('controlNode', '2232')
