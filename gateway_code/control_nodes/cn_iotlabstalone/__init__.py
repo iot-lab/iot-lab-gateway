@@ -28,18 +28,15 @@ from gateway_code.config import static_path
 
 from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
 
-
 LOGGER = logging.getLogger('gateway_code')
 
 
 class ControlNodeIotlabstalone(ControlNodeIotlab):
+    """ Implementation of a Control Node with a Standalone M3 """
     TYPE = 'iotlabstalone'
     FEATURES = ['leds',
                 'radio']
     OPENOCD_CFG_FILE = static_path('iot-lab-cn-stalone.cfg')
-
-    def __init__(self, node_id, default_profile):
-        super(ControlNodeIotlabstalone, self).__init__(node_id, default_profile)
 
     @logger_call("Control node : profile configuration")
     def configure_profile(self, profile=None):
@@ -47,11 +44,11 @@ class ControlNodeIotlabstalone(ControlNodeIotlab):
         LOGGER.info('Configure profile on Control Node')
         self.profile = profile or self.default_profile
         ret_val = 0
-        
+
         # Monitoring : Radio only, ignore other fields
         ret_val += self.protocol.config_radio(self.profile.radio)
         return ret_val
-    
+
     @logger_call("Control node : start power of open node - Ignored")
     def open_start(self, power=None):
         """ Start open node with 'power' source """
