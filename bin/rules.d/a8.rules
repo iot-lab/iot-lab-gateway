@@ -1,3 +1,3 @@
-SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_A8",            ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_A8"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_A8",            ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_A8 iotlab/ttyON_A8"
 
 SUBSYSTEM=="usb", ATTR{idProduct}=="6011", ATTR{idVendor}=="0403", MODE="0664", GROUP="dialout"
