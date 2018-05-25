@@ -46,9 +46,11 @@ run: setup-cfg-dir
 	docker run -it --rm \
 		-v $(PWD):/shared \
 		-v /dev/iotlab:/dev/iotlab \
+		-v /dev/ttyCN:/dev/ttyCN \
 		-v /tmp/cfg_dir:/var/local/config \
 		-p $(PORT):8080 \
 		-p $(SERIAL_PORT):20000 \
+		--name "gateway_test" \
 		--privileged \
 		iot-lab-gateway
 
