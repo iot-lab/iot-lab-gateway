@@ -79,8 +79,8 @@ def ftdi_lookup_description(lines, description):
     """ Lookup for the device description field inside the array of lines """
     assert len(lines) >= 4
     found = False
-    for i in range(0, len(lines)-1, 4):
-        found = (description == ftdi_parse_device_description(lines[i+2]))
+    for i in range(0, len(lines) - 1, 4):
+        found = (description == ftdi_parse_device_description(lines[i + 2]))
         if found:
             break
     return found
