@@ -84,10 +84,3 @@ def ftdi_lookup_description(lines, description):
         if found:
             break
     return found
-
-
-if __name__ == "__main__":
-    print ftdi_check('control', '2232')
-    print ftdi_check('control', '2232', 'ControlNode')
-    import doctest
-    doctest.testmod()

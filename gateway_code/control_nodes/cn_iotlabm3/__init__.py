@@ -31,12 +31,12 @@ from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
 LOGGER = logging.getLogger('gateway_code')
 
 
-class ControlNodeIotlabstalone(ControlNodeIotlab):
+class ControlNodeIotlabm3(ControlNodeIotlab):
     """ Implementation of a Control Node with a Standalone M3 """
-    TYPE = 'iotlabstalone'
+    TYPE = 'iotlabm3'
     FEATURES = ['leds',
                 'radio']
-    OPENOCD_CFG_FILE = static_path('iot-lab-cn-stalone.cfg')
+    OPENOCD_CFG_FILE = static_path('iot-lab-cn-m3.cfg')
 
     @logger_call("Control node : profile configuration")
     def configure_profile(self, profile=None):
