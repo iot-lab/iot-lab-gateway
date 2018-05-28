@@ -43,7 +43,7 @@ def ftdi_check(node, ftdi_type, description=None):
     lines = (output.splitlines())
     dev_number = ftdi_parse_device_number(lines[2])
     found = (dev_number > 0) and \
-            ((description is None) or \
+            ((description is None) or
              ftdi_lookup_description(lines[3:], description))
     LOGGER.info(("" if found else "No ") + "%r node ftdi found" % node)
     return 0 if found else 1
@@ -79,8 +79,8 @@ def ftdi_lookup_description(lines, description):
     """ Lookup for the device description field inside the array of lines """
     assert len(lines) >= 4
     found = False
-    for i in range(0, len(lines)-1, 4):
-        found = (description == ftdi_parse_device_description(lines[i+2]))
+    for i in range(0, len(lines) - 1, 4):
+        found = (description == ftdi_parse_device_description(lines[i + 2]))
         if found:
             break
     return found
