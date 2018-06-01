@@ -8,20 +8,7 @@
 profile="../gateway_code/tests/profiles/radio_sniffer_3.json"
 firmware="../gateway_code/static/m3_autotest.elf"
 
-# Mocked user workspace and experiment folders (usually mounted by nfs)
-# here, they are created in the (alreadyà running container
-user="test"
-experiment="123"
-host=$(cat /tmp/cfg_dir/hostname | tr '-' '_')
-WORKDIR="/iotlab/users/$user/.iot-lab/$experiment"
-FOLDERS="consumption radio event sniffer log"
-
-CMD="for f in $FOLDERS; "
-CMD+='do rm -rf $f; mkdir $f; done'
-docker exec -w '/' gateway_test "mkdir" "-p" "-m0666" "$WORKDIR" 
-docker exec -w "$WORKDIR" gateway_test '/bin/bash' '-c' "$CMD"
-docker exec gateway_test 'chown' '-R' 'www-data' "$WORKDIR"
-docker exec gateway_test 'chgrp' '-R' 'www-data' "$WORKDIR"
+make run
 
 
 # Auto tests
