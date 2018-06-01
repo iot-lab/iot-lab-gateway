@@ -1,0 +1,91 @@
+#!/bin/sh
+
+# This file is a part of IoT-LAB gateway_code
+# Copyright (C) 2018 INRIA (Contact: admin@iot-lab.info)
+# Contributor(s) : see AUTHORS file
+#
+# This software is governed by the CeCILL license under French law
+# and abiding by the rules of distribution of free software.  You can  use,
+# modify and/ or redistribute the software under the terms of the CeCILL
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# http://www.cecill.info.
+#
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license and that you accept its terms.
+
+
+
+# Init script for MJPG-Streamer
+# https://github.com/jacksonliam/mjpg-streamer
+
+DESC="MJPG Streamer"
+NAME=mjpg_streamer
+MJPG_STREAMER_PORT=40000
+MJPG_STREAMER_OPTS="-fps 2 -x 320 -y 240 -drc high -st -ex auto -sh 100"
+PIDDIR=/var/run/${NAME}
+PIDFILE=$PIDDIR/${NAME}.pid
+LOGDIR=/var/log/${NAME}
+LOGFILE=$LOGDIR/${NAME}.log
+DAEMONUSER=root
+CAMERA_CONF_FILE=/var/local/config/camera
+
+DAEMON=/usr/bin/${NAME}
+DAEMON_OPTS="-i 'input_raspicam.so ${MJPG_STREAMER_OPTS}' -o 'output_http.so -p ${MJPG_STREAMER_PORT}'"
+
+case "$1" in
+  start)
+    if [ -f ${CAMERA_CONF_FILE} ]; then
+        echo "Starting $DESC ... "
+        if [ ! -d $PIDDIR ]; then
+            mkdir -p $PIDDIR
+            chown $DAEMONUSER:$DAEMONUSER $PIDDIR
+        fi
+        if [ ! -d $LOGDIR ]; then
+            mkdir -p $LOGDIR
+            chown $DAEMONUSER:$DAEMONUSER $LOGDIR
+        fi
+        start-stop-daemon --start -m --pidfile $PIDFILE -b --chuid $DAEMONUSER:$DAEMONUSER --exec /bin/bash -- -c "exec $DAEMON $DAEMON_OPTS >> $LOGFILE 2>&1"
+    else
+        echo "No camera"
+    fi
+    ;;
+  stop)
+    if [ -f ${CAMERA_CONF_FILE} ]; then
+        echo "Stopping $DESC ... "
+        /sbin/start-stop-daemon --stop --pidfile $PIDFILE
+        # Many daemons don't delete their pidfiles when they exit.
+        rm -f $PIDFILE
+    fi
+    ;;
+  restart)
+    if [ -f ${CAMERA_CONF_FILE} ]; then
+        echo -n "Restarting $DESC ... "
+        $0 stop
+        sleep 5
+        $0 start
+    fi
+    ;;
+  status)
+    if [ -f ${CAMERA_CONF_FILE} ]; then
+        PID=`/bin/ps -eo 'pid,cmd'| grep $DAEMON | grep -v grep | awk '{sub("^ ", "", $0); print $0}' | cut -d " " -f 1`
+        if [[ -n "$PID" ]]; then
+            echo "$DESC (pid $PID) is running."
+        else
+            echo "$DESC is stopped."
+        fi
+    fi
+    ;;
+  *)
+    echo "Usage: /etc/init.d/mjpg-streamer {start|stop|restart|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
+

@@ -132,18 +132,19 @@ def execute(self, function, args=()):
 def post_install(self):
     """System configuration.
 
-    * install init.d script
+    * install init.d gateway server daemon script
+    * install init.d gateway camera streamer
     * install udev rules files
     * Add www-data user to dialout group
     """
-    execute(self, setup_initd_script)
+    execute(self, setup_initd_script, args=('gateway-server-daemon',))
+    execute(self, setup_initd_script, args=('mjpg-streamer-daemon',))
     execute(self, udev_rules)
     execute(self, add_www_data_to_dialout)
 
 
-def setup_initd_script():
-    """Setup init.d script."""
-    init_script = 'gateway-server-daemon'
+def setup_initd_script(init_script):
+    """Setup an init.d script."""
     update_rc_d_args = ['update-rc.d', init_script,
                         'start', '80', '2', '3', '4', '5', '.',
                         'stop', '20', '0', '1', '6', '.']
