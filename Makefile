@@ -42,15 +42,25 @@ integration-test: setup-cfg-dir
 		--privileged \
 		iot-lab-gateway-tests tox -e test
 
-run: setup-cfg-dir
+USER ?= test
+EXPERIMENT ?= 123
+FOLDERS = consumption radio event sniffer log
+WORKDIR= /iotlab/users/$(USER)/.iot-lab/$(EXPERIMENT)
+
+setup-exp-dir:
+	rm -rf /tmp/exp_dir; mkdir /tmp/exp_dir;
+	for f in $(FOLDERS); do rm -rf /tmp/exp_dir/$$f; mkdir /tmp/exp_dir/$$f; done
+
+
+run: setup-cfg-dir setup-exp-dir
 	docker run -it --rm \
 		-v $(PWD):/shared \
 		-v /dev/iotlab:/dev/iotlab \
 		-v /dev/ttyCN:/dev/ttyCN \
 		-v /tmp/cfg_dir:/var/local/config \
+		-v /tmp/exp_dir:$(WORKDIR) \
 		-p $(PORT):8080 \
 		-p $(SERIAL_PORT):20000 \
-		--name "gateway_test" \
 		--privileged \
 		iot-lab-gateway
 
