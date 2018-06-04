@@ -42,8 +42,8 @@ integration-test: setup-cfg-dir
 		--privileged \
 		iot-lab-gateway-tests tox -e test
 
-USER ?= test
-EXPERIMENT ?= 123
+USER = test
+EXPERIMENT = 123
 FOLDERS = consumption radio event sniffer log
 WORKDIR= /iotlab/users/$(USER)/.iot-lab/$(EXPERIMENT)
 
