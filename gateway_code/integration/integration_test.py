@@ -158,6 +158,11 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         time.sleep(1)  # wait firmware started
 
+        # Some node can leave their serial port dirty (st-lrwan1 for example)
+        if hasattr(board_class, "DIRTY_SERIAL") and board_class.DIRTY_SERIAL:
+            # Clear log error
+            self.log_error.clear()
+
         # No log error
         self.log_error.check()
 
