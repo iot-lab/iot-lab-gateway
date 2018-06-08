@@ -44,6 +44,7 @@ class NodeStLrwan1(object):
     OPENOCD_PATH = '/opt/openocd-0.10.0/bin/openocd'
     FW_IDLE = static_path('st_lrwan1_idle.elf')
     FW_AUTOTEST = static_path('st_lrwan1_autotest.elf')
+    DIRTY_SERIAL = True
 
     AUTOTEST_AVAILABLE = [
         'echo', 'get_time',  # mandatory
