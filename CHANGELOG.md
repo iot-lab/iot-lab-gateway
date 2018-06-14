@@ -145,3 +145,18 @@ Version 2.4.1
 
 + Increase flash timeout to 100s
 + Fix pylint 1.7 issues
+
+Version 2.5.0
+-------------
+
++ New Arduino-Zero opennode
++ New ST LRWAN1 opennode
++ New Microbit opennode
++ New Zigduino opennode
++ Support for EDBG flasher tool and use with samr21 and arduino-zero
++ Support for PyOCD flasher tool
++ Add docker image and Makefile utils for running full integration tests on a
+  local computer
++ Open nodes serial port is now in /dev/iotlab/tty_ONXXX
++ Start MJPG-Streamer daemon (for use with camera on the gateway) only when
+  available
