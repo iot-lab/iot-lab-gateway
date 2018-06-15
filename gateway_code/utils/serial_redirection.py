@@ -31,6 +31,9 @@ import threading
 import atexit
 
 import logging
+
+from gateway_code.utils.socket_server import SocketServer
+
 LOGGER = logging.getLogger('gateway_code')
 
 
@@ -43,7 +46,7 @@ class SerialRedirection(threading.Thread):
     want
     """
     SOCAT = ('socat -d'
-             ' TCP4-LISTEN:20000,reuseaddr'
+             ' TCP4-LISTEN:19999,reuseaddr'
              ' open:{tty},b{baud},echo=0,raw')
     DEVNULL = open(os.devnull, 'w')
 
@@ -90,6 +93,7 @@ class SerialRedirection(threading.Thread):
                 # errno == 3 'No such proccess', already terminated: OK
                 assert err.errno == 3, 'Unknown error num: %r' % err.errno
             time.sleep(0.1)
+        self.socket_server.stop()
         self.redirector = None
         self._started.clear()
         LOGGER.debug('SerialRedirection stoped')
@@ -129,6 +133,9 @@ class SerialRedirection(threading.Thread):
         """ Starts a while loop running a socat command """
         LOGGER.debug('SerialRedirection thread started')
 
+        self.socket_server = SocketServer(node=('localhost', 19999),
+                                       server=('0.0.0.0', 20000))
+        self.socket_server.start()
         while self._run:
             self._call_socat(self.DEVNULL)
 
@@ -136,13 +143,13 @@ class SerialRedirection(threading.Thread):
         """ Call 'socat_cmd' and wait until it finishes
         'self.proc' is updated with the current socat process
         Logs an error if it terminates with a non-null return value """
-        self.redirector = subprocess.Popen(self.socat_cmd,
+        self.socat = subprocess.Popen(self.socat_cmd,
                                            stdout=out, stderr=out)
         # 'start' can now exit
         self._started.set()
 
         # blocks until socat terminates
-        retcode = self.redirector.wait()
+        retcode = self.socat.wait()
         # On exit, socat gives status:
         #   0 if it terminated due to EOF or inactivity timeout
         #   a positive value on error
