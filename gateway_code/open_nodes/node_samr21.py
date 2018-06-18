@@ -55,10 +55,13 @@ class NodeSamr21(object):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.openocd = OpenOCD.from_node(self)
         self.edbg = Edbg()
+        self._current_fw = None
+        self._in_debug = False
 
     @logger_call("Node SAMR21 : Setup of samr21 node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
+        self._in_debug = False
         ret_val = 0
 
         common.wait_no_tty(self.TTY)
@@ -70,6 +73,7 @@ class NodeSamr21(object):
     @logger_call("Node SAMR21 : teardown of samr21 node")
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
+        self._in_debug = False
         ret_val = 0
         # ON may have been stopped at the end of the experiment.
         # And then restarted again in cn teardown.
@@ -92,6 +96,11 @@ class NodeSamr21(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on SAMR21: %s', firmware_path)
+        self._current_fw = firmware_path
+
+        if self._in_debug:
+            return self.openocd.flash(firmware_path)
+
         return self.edbg.flash(firmware_path)
 
     @logger_call("Node SAMR21 : reset of samr21 node")
@@ -103,11 +112,17 @@ class NodeSamr21(object):
     def debug_start(self):
         """ Start SAMR21 node debugger """
         LOGGER.info('SAMR21 Node debugger start')
+        self._in_debug = True
+        if self._current_fw is not None:
+            # Reflash current firmware using openocd to avoid misbehavior of
+            # previously flashed firmware (with edbg)
+            self.flash(firmware_path=self._current_fw)
         return self.openocd.debug_start()
 
     def debug_stop(self):
         """ Stop SAMR21 node debugger """
         LOGGER.info('SAMR21 Node debugger stop')
+        self._in_debug = False
         return self.openocd.debug_stop()
 
     @staticmethod
