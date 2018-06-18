@@ -55,10 +55,14 @@ class NodeArduinoZero(object):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.openocd = OpenOCD.from_node(self)
         self.edbg = Edbg()
+        self._current_fw = None
+        self._in_debug = False
 
     @logger_call("Node Arduino Zero : Setup of arduino zero node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
+        self._in_debug = False
+
         ret_val = 0
 
         common.wait_no_tty(self.TTY)
@@ -70,6 +74,8 @@ class NodeArduinoZero(object):
     @logger_call("Node Arduino Zero : teardown of arduino zero node")
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
+        self._in_debug = False
+
         ret_val = 0
         # ON may have been stopped at the end of the experiment.
         # And then restarted again in cn teardown.
@@ -92,6 +98,11 @@ class NodeArduinoZero(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Arduino Zero: %s', firmware_path)
+        self._current_fw = firmware_path
+
+        if self._in_debug:
+            return self.openocd.flash(firmware_path)
+
         return self.edbg.flash(firmware_path)
 
     @logger_call("Node Arduino Zero : reset of arduino zero node")
@@ -103,11 +114,17 @@ class NodeArduinoZero(object):
     def debug_start(self):
         """ Start Arduino Zero node debugger """
         LOGGER.info('Arduino Zero Node debugger start')
+        self._in_debug = True
+        if self._current_fw is not None:
+            # Reflash current firmware using openocd to avoid misbehavior of
+            # previously flashed firmware (with edbg)
+            self.flash(firmware_path=self._current_fw)
         return self.openocd.debug_start()
 
     def debug_stop(self):
         """ Stop Arduino Zero node debugger """
         LOGGER.info('Arduino Zero Node debugger stop')
+        self._in_debug = False
         return self.openocd.debug_stop()
 
     @staticmethod
