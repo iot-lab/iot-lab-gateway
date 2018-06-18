@@ -242,11 +242,15 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         ret = self._flash()
         self.assertNotEquals(0, ret.json['ret'])
 
-        # No flash, Autotest fw should be still be running
+        # No flash, Autotest fw should be still running
         self._check_node_echo(echo=True)
 
         # Stop debugger
         ret = self.server.put('/open/debug/stop')
+        self.assertEquals(0, ret.json['ret'])
+
+        # Make sure the node can be reflashed after debug session is done
+        ret = self._flash()
         self.assertEquals(0, ret.json['ret'])
 
     def test_m3_exp_invalid_fw_target(self):
