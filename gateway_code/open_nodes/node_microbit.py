@@ -25,7 +25,7 @@ import logging
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
-from gateway_code.utils.pyocd import PyOCD
+from gateway_code.utils.openocd import OpenOCD
 
 from gateway_code.utils.serial_redirection import SerialRedirection
 
@@ -39,6 +39,8 @@ class NodeMicrobit(object):
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/iotlab/ttyON_MICROBIT'
     BAUDRATE = 115200
+    OPENOCD_CFG_FILE = static_path('iot-lab-microbit.cfg')
+    OPENOCD_PATH = '/opt/openocd-0.10.0/bin/openocd'
     FW_IDLE = static_path('microbit_idle.elf')
     FW_AUTOTEST = static_path('microbit_autotest.elf')
 
@@ -52,7 +54,7 @@ class NodeMicrobit(object):
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.ocd = PyOCD(True, self.FLASH_TIMEOUT)
+        self.openocd = OpenOCD.from_node(self, timeout=self.FLASH_TIMEOUT)
 
     @logger_call("Node Micro:Bit : Setup of micro:bit node")
     def setup(self, firmware_path):
@@ -89,23 +91,23 @@ class NodeMicrobit(object):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Node Micro:Bit : %s', firmware_path)
-        return self.ocd.flash(firmware_path)
+        return self.openocd.flash(firmware_path)
 
     @logger_call("Node Micro:Bit : reset of micro:bit node")
     def reset(self):
         """ Reset the Micro:Bit node """
         LOGGER.info('Reset Micro:Bit node')
-        return self.ocd.reset()
+        return self.openocd.reset()
 
     def debug_start(self):
         """ Start Micro:Bit node debugger """
         LOGGER.info('Micro:Bit Node debugger start')
-        return self.ocd.debug_start()
+        return self.openocd.debug_start()
 
     def debug_stop(self):
         """ Stop Micro:Bit node debugger """
         LOGGER.info('Micro:Bit Node debugger stop')
-        return self.ocd.debug_stop()
+        return self.openocd.debug_stop()
 
     @staticmethod
     def status():
