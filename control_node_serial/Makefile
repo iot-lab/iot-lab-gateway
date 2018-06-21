@@ -20,7 +20,12 @@ ifeq (1, $(DEBUG))
 CFLAGS += -DDEBUG=1
 endif
 
-CFLAGS    += -std=c99 -g -O3 -fstrict-aliasing
+ifeq ($(findstring arm,$(shell uname -m)), arm )
+CFLAGS += -std=c99 -g -O3 -fstrict-aliasing
+else
+CFLAGS += -std=c99 -g -O1 -fstrict-aliasing
+endif
+
 CFLAGS    += $(WARNINGS) $(COV) $(PROF) $(DEP_RULES) $(LIBS) -pthread
 
 # Define Feature Macros
