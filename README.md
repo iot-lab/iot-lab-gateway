@@ -1,6 +1,10 @@
 IoT-Lab Gateway
 ===============
 
+[![Build Status](https://travis-ci.org/iot-lab/iot-lab-gateway.svg?branch=master)](https://travis-ci.org/iot-lab/iot-lab-gateway)
+[![codecov](https://codecov.io/gh/iot-lab/iot-lab-gateway/branch/master/graph/badge.svg)](https://codecov.io/gh/iot-lab/iot-lab-gateway)
+
+
 This is the Python code that runs on the gateway for the FIT IoT-lab
 platform. It serves an API for starting, stopping experiments, flashing firmwares.
 
