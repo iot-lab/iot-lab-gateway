@@ -78,3 +78,10 @@ local-integration-test: setup-cfg-dir
 local-run: setup-cfg-dir
 	IOTLAB_GATEWAY_CFG_DIR=/tmp/cfg_dir
 	bin/scripts/gateway-rest-server $(HOST) $(PORT)
+
+# Get rid of pytest ImportMismatchError for future runs (either locally
+# or via docker)
+clean-test-files:
+	@bash -c "find . -name '*.py[odc]' -type f -delete"
+	@bash -c "find . -name '__pycache__' -type d -delete"
+	@bash -c "rm -rf *.egg-info .cache .eggs build dist"
