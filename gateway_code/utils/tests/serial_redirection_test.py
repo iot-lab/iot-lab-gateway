@@ -156,7 +156,7 @@ class TestSerialRedirectionComplexStop(_SerialRedirectionTestCase):
         with mock.patch.object(SerialRedirection, 'SOCAT', only_sigkill):
             self.redirect = SerialRedirection(self.tty, self.baud)
             self.redirect.start()
-            time.sleep(1)
+            time.sleep(5)
             self.redirect.stop()
 
         log.check(('gateway_code', 'WARNING',
