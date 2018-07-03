@@ -39,7 +39,7 @@ class NodeStLrwan1(OpenNodeBase):
 
     TYPE = 'st_lrwan1'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/iotlab/ttyON_ST_LRWAN1'
+    TTY = '/dev/iotlab/ttyON_STLINK'
     BAUDRATE = 115200
     OPENOCD_CFG_FILE = static_path('iot-lab-st-lrwan1.cfg')
     OPENOCD_PATH = '/opt/openocd-0.10.0/bin/openocd'

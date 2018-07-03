@@ -1,0 +1,3 @@
+# open nodes TTY
+KERNEL=="ttyACM*",SUBSYSTEM=="tty", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_STLINK"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="374b", MODE="0664", GROUP="dialout"
