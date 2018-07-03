@@ -3,6 +3,7 @@ HOST ?= 0.0.0.0
 PORT ?= 8080
 SERIAL_PORT ?= 20000
 CONTROL_NODE_TYPE ?= no
+POSARGS ?=
 
 .PHONY: build-docker-image build-docker-image-test setup-udev-rules \
 	    test local-test \
@@ -30,7 +31,7 @@ test:
 	docker run -t --rm \
 		-v $(PWD):/shared \
 		-e LOCAL_USER_ID=`id -u $(USER)` \
-		iot-lab-gateway-tests tox
+		iot-lab-gateway-tests tox $(POSARGS)
 
 integration-test: setup-cfg-dir
 	docker run -t --rm \
@@ -40,7 +41,7 @@ integration-test: setup-cfg-dir
 		-e LOCAL_USER_ID=`id -u $(USER)` \
 		-e IOTLAB_GATEWAY_CFG_DIR=/shared/cfg_dir \
 		--privileged \
-		iot-lab-gateway-tests tox -e test
+		iot-lab-gateway-tests tox -e test $(POSARGS)
 
 GW_USER = test
 EXPERIMENT = 123
