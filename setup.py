@@ -133,12 +133,14 @@ def post_install(self):
     """System configuration.
 
     * install init.d gateway server daemon script
-    * install init.d gateway camera streamer
+    * install init.d gateway camera streamer daemon script
+    * install init.d gateway rtl sdr daemon script
     * install udev rules files
     * Add www-data user to dialout group
     """
     execute(self, setup_initd_script, args=('gateway-server-daemon',))
     execute(self, setup_initd_script, args=('mjpg-streamer-daemon',))
+    execute(self, setup_initd_script, args=('rtl-tcp-daemon',))
     execute(self, udev_rules)
     execute(self, add_www_data_to_dialout)
 
