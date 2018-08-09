@@ -19,16 +19,4 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node STM32 LRWAN1 experiment implementation """
-
-from gateway_code.config import static_path
-from gateway_code.open_nodes.common.node_st_link import NodeStLinkBase
-
-
-class NodeStLrwan1(NodeStLinkBase):
-    """ Open node STM32 LRWAN1 implemention """
-
-    TYPE = 'st_lrwan1'
-    OPENOCD_CFG_FILE = static_path('iot-lab-st-lrwan1.cfg')
-    FW_IDLE = static_path('st_lrwan1_idle.elf')
-    FW_AUTOTEST = static_path('st_lrwan1_autotest.elf')
+""" common code for open nodes """
