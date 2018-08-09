@@ -39,7 +39,7 @@ class MetaNode(abc.ABCMeta):
                 cls.__registry__[cls.TYPE] = cls
 
 
-class ControlNode(object):
+class ControlNodeBase(object):
     """ Class to inherit, for control node classes """
     __metaclass__ = MetaNode
 
@@ -89,7 +89,7 @@ class ControlNode(object):
         pass
 
 
-class OpenNode(object):
+class OpenNodeBase(object):
     """ class to inherit, for open node classes """
     __metaclass__ = MetaNode
 
@@ -152,7 +152,7 @@ def open_node_class(board_type):
     """Return the open node class implementation for `board_type`.
 
     :raises ValueError: if board class can't be found """
-    output_class = _node_class(OpenNode, board_type)
+    output_class = _node_class(OpenNodeBase, board_type)
     _verify_open_node_class(output_class)
     return output_class
 
@@ -161,14 +161,14 @@ def control_node_class(cn_type):
     """Return the control node class implementation for `cn_type`.
 
     :raises ValueError: if board class can't be found """
-    return _node_class(ControlNode, cn_type)
+    return _node_class(ControlNodeBase, cn_type)
 
 
 def all_open_nodes_types():
     """Returns all the open nodes classes"""
-    return OpenNode.__registry__.keys()
+    return OpenNodeBase.__registry__.keys()
 
 
 def all_control_nodes_types():
     """Returns all the control nodes classes"""
-    return ControlNode.__registry__.keys()
+    return ControlNodeBase.__registry__.keys()
