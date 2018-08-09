@@ -39,15 +39,13 @@ class ControlNodeNo(ControlNode):
         self.default_profile = default_profile
         self.profile = self.default_profile
 
-    @staticmethod
     @logger_call("Control node : Start")
-    def start(exp_id, exp_files=None):  # pylint:disable=unused-argument
+    def start(self, exp_id, exp_files=None):  # pylint:disable=unused-argument
         """ Start ControlNode serial interface """
         return 0
 
-    @staticmethod
     @logger_call("Control node : Stop")
-    def stop():
+    def stop(self):
         """ Start ControlNode """
         return 0
 
@@ -57,9 +55,8 @@ class ControlNodeNo(ControlNode):
         """Setup control node."""
         return 0
 
-    @staticmethod
     @logger_call("Control node: Flash")
-    def flash(firmware_path=None):  # pylint:disable=unused-argument
+    def flash(self, firmware_path=None):  # pylint:disable=unused-argument
         """Flash control node"""
         return 0
 
@@ -77,13 +74,11 @@ class ControlNodeNo(ControlNode):
         ret_val += self.configure_profile(None)
         return ret_val
 
-    @staticmethod
-    def autotest_setup(measures_handler):  # pylint:disable=unused-argument
+    def autotest_setup(self, measures_handler):
         """Setup for autotests."""
         return 0
 
-    @staticmethod
-    def autotest_teardown(stop_on):  # pylint:disable=unused-argument
+    def autotest_teardown(self, stop_on):
         """Teardown autotests."""
         return 0
 
@@ -94,7 +89,6 @@ class ControlNodeNo(ControlNode):
         self.profile = profile or self.default_profile
         return 0
 
-    @staticmethod
-    def status():
+    def status(self):
         """ Check Control node status """
         return 0

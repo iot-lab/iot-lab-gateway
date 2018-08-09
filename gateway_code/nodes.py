@@ -40,7 +40,7 @@ class MetaNode(abc.ABCMeta):
 
 
 class ControlNode(object):
-    """class to inherit, for control node classes"""
+    """ Class to inherit, for control node classes """
     __metaclass__ = MetaNode
 
     @abc.abstractmethod
@@ -49,31 +49,38 @@ class ControlNode(object):
         pass
 
     @abc.abstractmethod
-    def stop():
-        pass
-
-    @abc.abstractmethod
-    def setup():
+    def stop(self):
+        """ This method is called when stopping an experiment """
         pass
 
     @abc.abstractmethod
     def start_experiment(self, profile):
+        """ Configure experiment and monitoring on ControlNode"""
         pass
 
     @abc.abstractmethod
     def stop_experiment(self):
+        """ Cleanup Control node Monitoring and experiment """
         pass
 
     @abc.abstractmethod
-    def autotest_setup(measures_handler):
+    def autotest_setup(self, measures_handler):
+        """ Setup the control node for the open node autotest """
         pass
 
     @abc.abstractmethod
-    def autotest_teardown(stop_on):
+    def autotest_teardown(self, stop_on):
+        """ Cleanup the control node for the open node autotest """
         pass
 
     @abc.abstractmethod
     def configure_profile(self, profile=None):
+        """ Setup the profile used by the control node """
+        pass
+
+    @abc.abstractmethod
+    def flash(self, firmware_path):
+        """ Flash firmware on the control_node """
         pass
 
     @abc.abstractmethod
@@ -88,14 +95,17 @@ class OpenNode(object):
 
     @abc.abstractmethod
     def setup(self, firmware_path):
+        """ Setup the open node with a firmware"""
         pass
 
     @abc.abstractmethod
     def teardown(self):
+        """ Cleanup the open node """
         pass
 
     @abc.abstractmethod
-    def status():
+    def status(self):
+        """ Status of the node """
         pass
 
 
