@@ -25,7 +25,8 @@ from __future__ import print_function
 
 import pytest
 
-from gateway_code.nodes import open_node_class, all_open_nodes_types, OpenNode
+from gateway_code.nodes import (open_node_class,
+                                all_open_nodes_types, OpenNodeBase)
 from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.open_nodes.node_m3 import NodeM3
 
@@ -60,7 +61,7 @@ def test_missing_overrides():
     """
 
     # pylint: disable=abstract-method
-    class MyNode(OpenNode):
+    class MyNode(OpenNodeBase):
         """methods purposefully not implemented"""
         pass
 
@@ -70,7 +71,7 @@ def test_missing_overrides():
 
 def test_registry_open_node():
     """ Verify the open node registry metaclass """
-    class MyNode(OpenNode):
+    class MyNode(OpenNodeBase):
         """Basic empty OpenNode"""
         TYPE = "my_node"
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
@@ -91,7 +92,7 @@ def test_registry_open_node():
 def test_registry_inheritance():
     """ test case for open node that derive from other open nodes """
 
-    class BaseOpenNode(OpenNode):
+    class BaseOpenNode(OpenNodeBase):
         """Basic empty OpenNode"""
         TYPE = "base_open_node"
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
@@ -110,7 +111,7 @@ def test_registry_inheritance():
         """Derivation with normal class inheritance"""
         TYPE = "derived_open_node"
 
-    class MixinDerivedOpenNode(BaseOpenNode, OpenNode):
+    class MixinDerivedOpenNode(BaseOpenNode, OpenNodeBase):
         """Derivation + OpenNode mixin"""
         TYPE = "mixin_derived_open_node"
 
@@ -133,7 +134,7 @@ def test_open_node_inheritance():
     """
 
     # parent class no TYPE
-    class BaseOpenNode(OpenNode):
+    class BaseOpenNode(OpenNodeBase):
         """parent class with no TYPE attribute"""
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
@@ -153,7 +154,7 @@ def test_open_node_inheritance():
         """derived class 1"""
         TYPE = "stlink_board_1"
 
-    class NodeStLinkBoard2(BaseOpenNode, OpenNode):
+    class NodeStLinkBoard2(BaseOpenNode, OpenNodeBase):
         """derived class 2"""
         TYPE = "stlink_board_2"
 

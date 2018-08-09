@@ -25,7 +25,7 @@ import time
 import logging
 
 from gateway_code.common import logger_call
-from gateway_code.nodes import ControlNode
+from gateway_code.nodes import ControlNodeBase
 from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.config import static_path
@@ -35,7 +35,7 @@ from . import cn_interface, cn_protocol
 LOGGER = logging.getLogger('gateway_code')
 
 
-class ControlNodeIotlab(ControlNode):
+class ControlNodeIotlab(ControlNodeBase):
     """ Control Node implemenation """
     TYPE = 'iotlab'
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')

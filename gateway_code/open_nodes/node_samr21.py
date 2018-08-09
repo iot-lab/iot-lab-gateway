@@ -25,7 +25,7 @@ import logging
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
-from gateway_code.nodes import OpenNode
+from gateway_code.nodes import OpenNodeBase
 
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.utils.edbg import Edbg
@@ -34,7 +34,7 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeSamr21(OpenNode):
+class NodeSamr21(OpenNodeBase):
     """ Open node SAMR21 implemention """
 
     TYPE = 'samr21'

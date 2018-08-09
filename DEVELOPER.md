@@ -102,11 +102,11 @@ but the `node_` naming is not mandatory, it just needs to be imported at some po
 (all the files inside gateway_code/open_node are imported to look for open node classes)
 
 In order to write plugin code for an open node, you just need to subclass
-`OpenNode` located in `gateway_code.nodes` and add a TYPE attribute in it:
+`OpenNodeBase` located in `gateway_code.nodes` and add a TYPE attribute in it:
 
-    from gateway_code.nodes import OpenNode
+    from gateway_code.nodes import OpenNodeBase
 
-    class Customnode(OpenNode):
+    class Customnode(OpenNodeBase):
       TYPE = 'custom_node'
 
 and put that file in `gateway_code/open_nodes`
@@ -118,9 +118,9 @@ for an open node example.
 For example, if `stm32nucleo` is registered on the gateway,
 the class used by the gateway will be
 
-    from gateway_code.nodes import OpenNode
+    from gateway_code.nodes import OpenNodeBase
 
-    class Customnode(OpenNode):
+    class Customnode(OpenNodeBase):
       TYPE = 'stm32nucleo'
 
 ### Interfacing the python code
