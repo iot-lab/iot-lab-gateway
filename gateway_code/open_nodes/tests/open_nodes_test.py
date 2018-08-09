@@ -20,39 +20,36 @@
 # knowledge of the CeCILL license and that you accept its terms.
 """ open nodes plugins tests """
 
+# pylint: disable=missing-docstring
+
+
 from __future__ import print_function
-import unittest
+
+import pytest
 
 from gateway_code.nodes import open_node_class, all_open_nodes_types
 from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.open_nodes.node_m3 import NodeM3
 
 
-class TestsOpenNodes(unittest.TestCase):
-    """Test open_nodes package functions."""
-
-    def test_node_class(self):
-        """Test loading essential open node classes."""
-        self.assertEquals(NodeM3, open_node_class('m3'))
-        self.assertEquals(NodeA8, open_node_class('a8'))
-
-    def test_open_node_class_errors(self):
-        """Test error while loading an open node class."""
-        # No module
-        self.assertRaisesRegexp(
-            ValueError, '^Board unknown not implemented*$',
-            open_node_class, 'unknown')
+def test_node_class():
+    """Test loading essential open node classes."""
+    assert NodeM3 == open_node_class('m3')
+    assert NodeA8 == open_node_class('a8')
 
 
-class TestsOpenNodesImplementations(unittest.TestCase):
-    """Test loading implemented open nodes implementation."""
+def test_open_node_class_errors():
+    """Test error while loading an open node class."""
+    # No module
+    with pytest.raises(ValueError, match='^Board unknown not implemented*$'):
+        open_node_class('unknown')
 
-    @staticmethod
-    def test_nodes_classes():
-        """Test loading all implemented open nodes implementation."""
-        for node in all_open_nodes_types():
-            # No exception
-            print(node)
-            node_class = open_node_class(node)
-            node_class()
-            print(node_class)
+
+def test_nodes_classes():
+    """Test loading all implemented open nodes implementation."""
+    for node in all_open_nodes_types():
+        # No exception
+        print(node)
+        node_class = open_node_class(node)
+        node_class()
+        print(node_class)

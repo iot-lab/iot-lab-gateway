@@ -18,20 +18,15 @@
 # knowledge of the CeCILL license and that you accept its terms.
 """ control nodes plugins tests """
 from __future__ import print_function
-import unittest
 
 from gateway_code.nodes import all_control_nodes_types, control_node_class
 
 
-class TestsControlNodesImplementations(unittest.TestCase):
-    """Test loading implemented control nodes implementation."""
-
-    @staticmethod
-    def test_nodes_classes():
-        """Test loading all implemented control nodes implementation."""
-        for node in all_control_nodes_types():
-            # No exception
-            print(node)
-            node_class = control_node_class(node)
-            node_class(None, None)
-            print(node_class)
+def test_nodes_classes():
+    """Test loading all implemented control nodes implementation."""
+    for node in all_control_nodes_types():
+        # No exception
+        print(node)
+        node_class = control_node_class(node)
+        node_class(None, None)
+        print(node_class)
