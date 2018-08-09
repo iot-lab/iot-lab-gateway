@@ -64,8 +64,7 @@ class NodeExample(OpenNode):
         # Here you will stop the debug of your node
         return 1
 
-    @staticmethod
-    def status():
+    def status(self):
         # Here you will check the health of the node (for exemple with ftdi chip)
         # if you are unable to check it, just return 0
         return 0
