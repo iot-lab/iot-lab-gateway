@@ -66,7 +66,7 @@ class NodeStLinkBase(OpenNodeBase):
         ser.close()
         return 0
 
-    @logger_call("Node ST_LINK : Setup of st_iotnode node")
+    @logger_call("Node ST_LINK: Setup of st-link node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
         ret_val = 0
@@ -77,7 +77,7 @@ class NodeStLinkBase(OpenNodeBase):
         ret_val += self.serial_redirection.start()
         return ret_val
 
-    @logger_call("Node ST_LINK : teardown of st_iotnode node")
+    @logger_call("Node ST_LINK: teardown of st-link node")
     def teardown(self):
         """ Stop serial redirection and flash idle firmware """
         ret_val = 0
@@ -93,7 +93,7 @@ class NodeStLinkBase(OpenNodeBase):
         ret_val += self.flash(None)
         return ret_val
 
-    @logger_call("Node ST_LINK : flash of st_iotnode node")
+    @logger_call("Node ST_LINK: flash of st-link node")
     def flash(self, firmware_path=None):
         """ Flash the given firmware on ST_LINK node
 
@@ -101,25 +101,26 @@ class NodeStLinkBase(OpenNodeBase):
                               If None, flash 'idle' firmware.
         """
         firmware_path = firmware_path or self.FW_IDLE
-        LOGGER.info('Flash firmware on ST_LINK: %s', firmware_path)
+        LOGGER.info('Flash firmware on %s: %s',
+                    self.TYPE.upper(), firmware_path)
         ret = self.openocd.flash(firmware_path)
         ret += self.clear_serial()
         return ret
 
-    @logger_call("Node ST_LINK: reset of st_iotnode node")
+    @logger_call("Node ST_LINK: reset of st-link node")
     def reset(self):
         """ Reset the ST_LINK node using jtag """
-        LOGGER.info('Reset ST_IONODE node')
+        LOGGER.info('Reset %s node', self.TYPE.upper())
         return self.openocd.reset()
 
     def debug_start(self):
         """ Start ST_LINK node debugger """
-        LOGGER.info('ST_LINK Node debugger start')
+        LOGGER.info('%s Node debugger start', self.TYPE.upper())
         return self.openocd.debug_start()
 
     def debug_stop(self):
         """ Stop ST_LINK node debugger """
-        LOGGER.info('ST_LINK Node debugger stop')
+        LOGGER.info('%s Node debugger stop', self.TYPE.upper())
         return self.openocd.debug_stop()
 
     @staticmethod
