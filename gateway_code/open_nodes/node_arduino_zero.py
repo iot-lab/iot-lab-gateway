@@ -31,5 +31,5 @@ class NodeArduinoZero(NodeEdbgBase):
     TYPE = 'arduino_zero'
     TTY = '/dev/iotlab/ttyON_ARDUINO_ZERO'
     OPENOCD_CFG_FILE = static_path('iot-lab-arduino-zero.cfg')
-    FW_IDLE = static_path('arduino_zero_idle.elf')
-    FW_AUTOTEST = static_path('arduino_zero_autotest.elf')
+    FW_IDLE = static_path('arduino-zero_idle.elf')
+    FW_AUTOTEST = static_path('arduino-zero_autotest.elf')
