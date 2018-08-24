@@ -30,5 +30,5 @@ class NodeStLrwan1(NodeStLinkBase):
 
     TYPE = 'st_lrwan1'
     OPENOCD_CFG_FILE = static_path('iot-lab-st-lrwan1.cfg')
-    FW_IDLE = static_path('st_lrwan1_idle.elf')
-    FW_AUTOTEST = static_path('st_lrwan1_autotest.elf')
+    FW_IDLE = static_path('st-lrwan1_idle.elf')
+    FW_AUTOTEST = static_path('st-lrwan1_autotest.elf')
