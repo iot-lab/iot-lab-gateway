@@ -1,6 +1,26 @@
 Changelog
 =========
 
+Version 2.6.0
+-------------
+
++ Introduce base classes for open and control nodes
++ Open nodes
+  - New nRF52DK open node
+  - New nRF52840DK open node
+  - New B-L475E-IOT01A2 (st-iotnode) open node
+  - Micro:bit is now flashed with openocd
++ Control nodes
+  - New IoT-LAB M3 based control node
+  - New RPI3 control node with support for open node power control
++ Tests and CI:
+  - Tests suite is now run with pytest
+  - Fix for code coverage with codecov and Travis
+  - Tox: all requirements use local packages for integration tests (e.g WebTest
+    package is not installed via the tox environment)
+  - Make: tox posargs can be passed via an environment variable
+
+
 Version 2.5.0
 -------------
 
