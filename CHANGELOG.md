@@ -1,93 +1,49 @@
 Changelog
 =========
 
-
-Version 0.3
------------
-
- * Support M3/A8 architecture
- * Experiment start/stop
- * Serial port redirection
- * Node flash/update
- * Control Node monitoring
- * Monitoring profile update
-
-### Control Node features ###
-
- * Power management
- * Power consumption monitoring
- * Radio rssi monitoring
- * Radio sniffer with ZEP encapsulation
-
-
-Version 0.4.0b
---------------
-
- * Node debugger
- * Adapt update_profile to experiment handler new request
-
- * Cleanup setup.py and use tox for managing tests
-
-- 0.4.1b: Fix setup.py
-- 0.4.2b: Fix static files not released at install
-+ 0.4.3b: Replace log debug by log info on gateway_manager commands
-
-
-Version 1.0.0
+Version 2.5.0
 -------------
 
- + Reorganize code so `gateway_manager` depends on `nodes` which then depends
-   on `utils`
- * Clean tests for new classes.
- * Allow select tests with nose attribute
- * Move 'cli' implementations in a 'utils' submodule
++ New Arduino-Zero opennode
++ New ST LRWAN1 opennode
++ New Microbit opennode
++ New Zigduino opennode
++ Support for EDBG flasher tool and use with samr21 and arduino-zero
++ Support for PyOCD flasher tool
++ Add docker image and Makefile utils for running full integration tests on a
+  local computer
++ Open nodes serial port is now in /dev/iotlab/tty_ONXXX
++ Start MJPG-Streamer daemon (for use with camera on the gateway) only when
+  available
 
 
-Version 2.0.0
+Version 2.4.1
 -------------
 
- + Reorganize all 'nodes' implementation to makes adding new archis easier.
-   Architectures specific code is now in `open_nodes` with one module per node.
-   (Romain Jayles)
- + Use a `serial_redirection` for a8 nodes boot debug.
- + Disable Battery charge on control node. Batteries are now removed.
-
-### Add new architectures support ###
-
- + HiKoB Fox
- + Arduino Leonardo
-
-### Tests ###
-
- + Use WebTest for rest server, this tests that the correct REST method is used
- + Improve `integration_fabfile.py` to run on all hosts by default and run all in
-   one command.
- + Run c tests from 'tox'
-
-+ Version 2.0.1: Fix Pylint 1.5 messages
++ Increase flash timeout to 100s
++ Fix pylint 1.7 issues
 
 
-Version 2.1.0
+Version 2.4.0
 -------------
 
-### Bug fixing ###
++ Update control node firmware to new version:
+    - More reliable serial, allows faster monitoring measures
+    - Fix 120ppm constant drift
++ Fix samr21 flash timeout
++ Add a logger for cli scripts, helps debugging on boards
 
-* Add a timeout for flashing/reset nodes.
-* Do terminate or kill for `cn_serial_interface` as it sometimes does not stop.
+
+Version 2.3.0
+-------------
 
 ### Features ###
 
-* Upgrade to oml2.11 and rebuild oml header at each compilation.
-* Put openocd 'target/stm32f1x.cfg' as an option as it not required for all
-  nodes. Wont be needed for samr21x-pro nodes.
-
-### Tests ###
-
-* Use texstfixtures.LogCapture for testing logs instead of mock.
-* Fix integration tests with openocd-0.9
-* Don't crash autotest on no return from 'echo'
-
-+ 2.1.1: Fix: `node_leonardo` wait tty ready, add some delay.
++ Add samr21-xpro board support
++ Autotests:
+    - Verify that all open nodes features have been tested, should help detect
+      missing tests in autotests.
+    - Add a test that verifies only `leds_on` and `leds_off`.
 
 
 Version 2.2.0
@@ -120,43 +76,97 @@ Version 2.2.0
 + Add `post_install` and `udev_rules_install` setup.py and fabric commands.
 
 
-Version 2.3.0
+Version 2.1.1
 -------------
+
++ Fix: `node_leonardo` wait tty ready, add some delay.
+
+
+Version 2.1.0
+-------------
+
+### Bug fixing ###
+
+* Add a timeout for flashing/reset nodes.
+* Do terminate or kill for `cn_serial_interface` as it sometimes does not stop.
 
 ### Features ###
 
-+ Add samr21-xpro board support
-+ Autotests:
-    - Verify that all open nodes features have been tested, should help detect
-      missing tests in autotests.
-    - Add a test that verifies only `leds_on` and `leds_off`.
+* Upgrade to oml2.11 and rebuild oml header at each compilation.
+* Put openocd 'target/stm32f1x.cfg' as an option as it not required for all
+  nodes. Wont be needed for samr21x-pro nodes.
 
-Version 2.4.0
+### Tests ###
+
+* Use texstfixtures.LogCapture for testing logs instead of mock.
+* Fix integration tests with openocd-0.9
+* Don't crash autotest on no return from 'echo'
+
+
+Version 2.0.1
 -------------
 
-+ Update control node firmware to new version:
-    - More reliable serial, allows faster monitoring measures
-    - Fix 120ppm constant drift
-+ Fix samr21 flash timeout
-+ Add a logger for cli scripts, helps debugging on boards
++ Fix Pylint 1.5 messages
 
-Version 2.4.1
+
+Version 2.0.0
 -------------
 
-+ Increase flash timeout to 100s
-+ Fix pylint 1.7 issues
+ + Reorganize all 'nodes' implementation to makes adding new archis easier.
+   Architectures specific code is now in `open_nodes` with one module per node.
+   (Romain Jayles)
+ + Use a `serial_redirection` for a8 nodes boot debug.
+ + Disable Battery charge on control node. Batteries are now removed.
 
-Version 2.5.0
+### Add new architectures support ###
+
+ + HiKoB Fox
+ + Arduino Leonardo
+
+### Tests ###
+
+ + Use WebTest for rest server, this tests that the correct REST method is used
+ + Improve `integration_fabfile.py` to run on all hosts by default and run all in
+   one command.
+ + Run c tests from 'tox'
+
+
+Version 1.0.0
 -------------
 
-+ New Arduino-Zero opennode
-+ New ST LRWAN1 opennode
-+ New Microbit opennode
-+ New Zigduino opennode
-+ Support for EDBG flasher tool and use with samr21 and arduino-zero
-+ Support for PyOCD flasher tool
-+ Add docker image and Makefile utils for running full integration tests on a
-  local computer
-+ Open nodes serial port is now in /dev/iotlab/tty_ONXXX
-+ Start MJPG-Streamer daemon (for use with camera on the gateway) only when
-  available
+ + Reorganize code so `gateway_manager` depends on `nodes` which then depends
+   on `utils`
+ * Clean tests for new classes.
+ * Allow select tests with nose attribute
+ * Move 'cli' implementations in a 'utils' submodule
+
+
+Version 0.4.0b
+--------------
+
+ * Node debugger
+ * Adapt update_profile to experiment handler new request
+
+ * Cleanup setup.py and use tox for managing tests
+
+- 0.4.1b: Fix setup.py
+- 0.4.2b: Fix static files not released at install
++ 0.4.3b: Replace log debug by log info on gateway_manager commands
+
+
+Version 0.3
+-----------
+
+ * Support M3/A8 architecture
+ * Experiment start/stop
+ * Serial port redirection
+ * Node flash/update
+ * Control Node monitoring
+ * Monitoring profile update
+
+### Control Node features ###
+
+ * Power management
+ * Power consumption monitoring
+ * Radio rssi monitoring
+ * Radio sniffer with ZEP encapsulation
