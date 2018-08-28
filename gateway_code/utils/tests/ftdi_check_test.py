@@ -59,3 +59,24 @@ class TestFtdiCheck(unittest.TestCase):
             ''')
         self.assertEquals(1, ftdi_check('open', '2232'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '2232'])
+
+    def test_ftdi_list_present(self, m_check_output):
+        """ Test the 'ftdi_check' method with multiple nodes """
+
+        m_check_output.return_value = textwrap.dedent('''\
+            FTx232 devices lister by IoT-LAB
+            Listing FT4232 devices...
+            Found 1 device(s)
+            Device 0:
+                Manufacturer: IoT-LAB
+                Description: ControlNode
+                Serial:
+            Device 1:
+                Manufacturer: IoT-LAB
+                Description: M3
+                Serial:
+            All done, success!
+            ''')
+        self.assertEquals(0, ftdi_check('control', '4232'))
+        self.assertEquals(0, ftdi_check('control', '4232', description='M3'))
+        m_check_output.assert_called_with(['ftdi-devices-list', '-t', '4232'])
