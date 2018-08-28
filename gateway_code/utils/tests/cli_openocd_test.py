@@ -69,3 +69,28 @@ class TestsOpenOCDcli(unittest.TestCase):
             self.ocd.reset.return_value = 42
             ret = openocd.main()
             self.assertEquals(ret, 42)
+
+    @mock.patch("signal.pause")
+    def test_debug(self, pause):
+        """ Running command line debug """
+        # Instance of 'object' has no 'debug' member"
+        # pylint:disable=no-member
+
+        args = ['openocd.py', 'debug', 'M3']
+        with mock.patch('sys.argv', args):
+            self.ocd.debug_start.return_value = 0
+            self.ocd.debug_stop.return_value = 0
+            assert openocd.main() == self.ocd.debug_start.return_value
+            assert self.ocd.debug_start.called
+            assert self.ocd.debug_stop.called
+
+            self.ocd.debug_start.return_value = 1
+            assert openocd.main() == self.ocd.debug_start.return_value
+            assert self.ocd.debug_start.called
+            assert self.ocd.debug_stop.called
+
+            pause.side_effect = KeyboardInterrupt
+            self.ocd.debug_start.return_value = 0
+            assert openocd.main() == self.ocd.debug_start.return_value
+            assert self.ocd.debug_start.called
+            assert self.ocd.debug_stop.called
