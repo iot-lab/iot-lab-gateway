@@ -72,19 +72,11 @@ def test_missing_overrides():
 def test_registry_open_node():
     """ Verify the open node registry metaclass """
     class MyNode(OpenNodeBase):
+        # pylint:disable=abstract-method
         """Basic empty OpenNode"""
         TYPE = "my_node"
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
-
-        def setup(self, firmware_path):
-            pass
-
-        def teardown(self):
-            pass
-
-        def status(self):
-            pass
 
     assert open_node_class("my_node") == MyNode
 
@@ -93,25 +85,19 @@ def test_registry_inheritance():
     """ test case for open node that derive from other open nodes """
 
     class BaseOpenNode(OpenNodeBase):
+        # pylint:disable=abstract-method
         """Basic empty OpenNode"""
         TYPE = "base_open_node"
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
 
-        def setup(self, firmware_path):
-            pass
-
-        def teardown(self):
-            pass
-
-        def status(self):
-            pass
-
     class DerivedOpenNode(BaseOpenNode):
+        # pylint:disable=abstract-method
         """Derivation with normal class inheritance"""
         TYPE = "derived_open_node"
 
     class MixinDerivedOpenNode(BaseOpenNode, OpenNodeBase):
+        # pylint:disable=abstract-method
         """Derivation + OpenNode mixin"""
         TYPE = "mixin_derived_open_node"
 
@@ -120,6 +106,7 @@ def test_registry_inheritance():
     assert open_node_class("mixin_derived_open_node") == MixinDerivedOpenNode
 
     class TypeMissingDerivedOpenNode(BaseOpenNode):
+        # pylint:disable=abstract-method
         """trap with missing TYPE"""
         pass
 
