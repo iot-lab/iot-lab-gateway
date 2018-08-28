@@ -20,16 +20,21 @@
 # knowledge of the CeCILL license and that you accept its terms.
 """" some tests for the CC2538 wrapper"""
 
+import os
+import time
 import unittest
 
-import os
+import mock
 
 from gateway_code.config import static_path
-from gateway_code.utils.elftarget import get_elf_load_addr
+from gateway_code.open_nodes.node_firefly import NodeFirefly
+from .. import cc2538
+from ..elftarget import get_elf_load_addr
 
 
 class TestCC2538(unittest.TestCase):
     """ some tests for the CC2538 wrapper"""
+
     def test_objdump(self):
         """ test the objdump get_elf_load_addr """
         elf = os.path.abspath(static_path('firefly_autotest.elf'))
@@ -38,3 +43,71 @@ class TestCC2538(unittest.TestCase):
         elf = os.path.abspath(static_path('firefly_idle.elf'))
         elf_addr = get_elf_load_addr(elf)
         self.assertEquals(0x00202000, elf_addr)
+
+
+@mock.patch('gateway_code.utils.subprocess_timeout.call')
+class TestsCC2538Methods(unittest.TestCase):
+    """Tests edbg methods."""
+
+    def setUp(self):
+        self.cc2538 = cc2538.CC2538({'port': NodeFirefly.TTY,
+                                     'baudrate': NodeFirefly.BAUDRATE})
+
+    def test_flash(self, call_mock):
+        """Test flash."""
+        call_mock.return_value = 0
+        ret = self.cc2538.flash(NodeFirefly.FW_IDLE)
+        self.assertEquals(0, ret)
+
+        call_mock.return_value = 42
+        ret = self.cc2538.flash(NodeFirefly.FW_AUTOTEST)
+        # call is called twice and the ret codes are summed up
+        self.assertEquals(84, ret)
+
+    def test_reset(self, call_mock):
+        """ Test reset"""
+        call_mock.return_value = 0
+        ret = self.cc2538.reset()
+        self.assertEquals(0, ret)
+
+        call_mock.return_value = 42
+        ret = self.cc2538.reset()
+        self.assertEquals(42, ret)
+
+    def test_invalid_firmware_path(self, _):
+        """Test flash an invalid firmware return a non zero value."""
+        ret = self.cc2538.flash('/invalid/path')
+        assert ret > 0
+
+
+class TestsCC2538Call(unittest.TestCase):
+    # pylint:disable=protected-access
+    """ Tests cc2538-bsl call timeout """
+    def setUp(self):
+        self.timeout = 5
+        self.cc2538 = cc2538.CC2538({'port': NodeFirefly.TTY,
+                                     'baudrate': NodeFirefly.BAUDRATE},
+                                    timeout=self.timeout)
+        self.cc2538._cc2538_args = mock.Mock()
+
+    def test_timeout_call(self):
+        """Test timeout reached."""
+        self.cc2538._cc2538_args.return_value = {'args': ['sleep', '10']}
+        t_0 = time.time()
+        ret = self.cc2538._call_cmd('sleep')
+        t_end = time.time()
+
+        # Not to much more
+        self.assertLess(t_end - t_0, self.timeout + 1)
+        self.assertNotEquals(ret, 0)
+
+    def test_no_timeout(self):
+        """Test timeout not reached."""
+        self.cc2538._cc2538_args.return_value = {'args': ['sleep', '1']}
+        t_0 = time.time()
+        ret = self.cc2538._call_cmd('sleep')
+        t_end = time.time()
+
+        # Strictly lower here
+        self.assertLess(t_end - t_0, self.timeout - 1)
+        self.assertEquals(ret, 0)
