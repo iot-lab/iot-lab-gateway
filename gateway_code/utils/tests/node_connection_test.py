@@ -127,6 +127,7 @@ class TestOpenNodeConnection(unittest.TestCase):
 
 
 class TestOpenNodeConnectionErrors(unittest.TestCase):
+    """Test class for node connection errors."""
 
     def test_connection_error(self):
         self.assertRaises(IOError, OpenNodeConnection.try_connect,
@@ -134,5 +135,4 @@ class TestOpenNodeConnectionErrors(unittest.TestCase):
 
     def test_context_manager_error(self):
         with self.assertRaises(RuntimeError):
-            with OpenNodeConnection():
-                self.fail('Should not have entered context manager')
+            OpenNodeConnection().__enter__()
