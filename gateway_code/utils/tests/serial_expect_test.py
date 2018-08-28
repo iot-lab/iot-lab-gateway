@@ -131,3 +131,9 @@ class TestSerialExpect(unittest.TestCase):
         logger.debug.assert_any_call('123')
         logger.debug.assert_any_call('456789')
         logger.debug.assert_called_with('abcd')
+
+    def test_context_manager(self):
+        with serial_expect.SerialExpect('TTY', 1234) as ser:
+            self.read_ret = ['123\n456', '789\n', 'abcd']
+            ret = ser.expect('a.*d')
+            self.assertEquals(ret, 'abcd')
