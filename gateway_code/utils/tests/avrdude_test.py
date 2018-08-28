@@ -101,7 +101,7 @@ class TestTriggerBootloader(unittest.TestCase):
         self.tty_prog = '/tmp/test_trigger_tty_prog'
         self._del_tty_prog()
 
-    def teardown(self):
+    def tearDown(self):
         self._del_tty_prog()
 
     def _create_tty_prog(self, *_, **__):
