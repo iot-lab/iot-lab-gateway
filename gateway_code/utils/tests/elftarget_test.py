@@ -30,6 +30,7 @@ from cStringIO import StringIO
 import mock
 from testfixtures import LogCapture
 
+from gateway_code.open_nodes.node_m3 import NodeM3
 from .. import elftarget
 
 FIRMWARES_DIR = os.path.join(os.path.dirname(__file__), 'elftarget_firmwares')
@@ -111,3 +112,28 @@ class TestElftargetMain(unittest.TestCase):
 
         self.assertEqual(stderr.getvalue(), '')
         self.assertEqual(stdout.getvalue(), "('ELFCLASS32', 'EM_ARM')\n")
+
+
+@mock.patch("elftools.elf.elffile.ELFFile.iter_sections")
+def test_elf_without_load_addr(iter_sections):
+    # pylint:disable=unused-argument
+    """Test load addr of a firmware without section returns None."""
+    # no load addr in elf (because iter_sections function yields nothing)
+    assert elftarget.get_elf_load_addr(firmware('m3_idle.elf')) is None
+
+
+def test_elf_with_load_addr():
+    """Test load add of a valid firmware returns a valid address."""
+    # A valid firmware returns a valid load addr
+    assert elftarget.get_elf_load_addr(firmware('m3_idle.elf')) > 0
+
+
+def test_is_compatible_with_node():
+    """Test compatibility of firmware for a given node."""
+    # None is ignored
+    assert elftarget.is_compatible_with_node(None, NodeM3)
+
+    assert elftarget.is_compatible_with_node(firmware('m3_idle.elf'),
+                                             NodeM3)
+    assert not elftarget.is_compatible_with_node(
+        firmware('leonardo_idle.elf'), NodeM3)
