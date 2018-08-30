@@ -114,6 +114,8 @@ def import_all_nodes(pkg_dir):
     """Looks into the given relative path for modules and imports them"""
     pkg_dir = os.path.join(os.path.dirname(__file__), pkg_dir)
     for (module_loader, name, _) in pkgutil.iter_modules([pkg_dir]):
+        if name in ['tests', 'common']:
+            continue
         module_loader.find_module(name).load_module(name)
 
 
