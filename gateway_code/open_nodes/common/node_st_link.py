@@ -28,8 +28,6 @@ class NodeStLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
     """ Open node STM32 St-Link based board implementation """
 
-    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/iotlab/ttyON_STLINK'
     BAUDRATE = 115200
-    OPENOCD_PATH = '/opt/openocd-0.10.0/bin/openocd'
     DIRTY_SERIAL = True
