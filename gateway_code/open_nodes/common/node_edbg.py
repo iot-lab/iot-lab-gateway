@@ -38,6 +38,7 @@ class NodeEdbgBase(OpenNodeBase):
     """ Open node EDBG implementation """
 
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+    TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
     BAUDRATE = 115200
 
     AUTOTEST_AVAILABLE = [
