@@ -29,7 +29,6 @@ class NodeSamr21(NodeEdbgBase):
     """ Open node SAMR21 implemention """
 
     TYPE = 'samr21'
-    TTY = '/dev/iotlab/ttyON_SAMR21'
     OPENOCD_CFG_FILE = static_path('iot-lab-samr21.cfg')
     FW_IDLE = static_path('samr21_idle.elf')
     FW_AUTOTEST = static_path('samr21_autotest.elf')
