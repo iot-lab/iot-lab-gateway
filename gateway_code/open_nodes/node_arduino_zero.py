@@ -29,7 +29,6 @@ class NodeArduinoZero(NodeEdbgBase):
     """ Open node Arduino Zero implementation """
 
     TYPE = 'arduino_zero'
-    TTY = '/dev/iotlab/ttyON_ARDUINO_ZERO'
     OPENOCD_CFG_FILE = static_path('iot-lab-arduino-zero.cfg')
     FW_IDLE = static_path('arduino-zero_idle.elf')
     FW_AUTOTEST = static_path('arduino-zero_autotest.elf')
