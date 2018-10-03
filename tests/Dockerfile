@@ -21,11 +21,11 @@ FROM iot-lab-gateway
 
 # Update
 RUN apt-get update && \
-    apt-get install -y python-pip valgrind gdb
+    apt-get install -y sudo python-pip valgrind gdb
 
 # Install app dependencies
-RUN pip install --upgrade pip && \
-    pip install tox
+RUN sudo pip install --upgrade pip && \
+    sudo pip install tox
 
 RUN apt-get -y --no-install-recommends install \
     ca-certificates \
