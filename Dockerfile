@@ -1,4 +1,4 @@
-FROM ubuntu:14.04
+FROM ubuntu:16.04
 MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
 
 # This file is a part of IoT-LAB gateway_code
@@ -73,7 +73,7 @@ RUN git clone https://github.com/mytestbed/oml.git && \
     ./configure --disable-doc --disable-doxygen-doc --disable-doxygen-dot \ 
         --disable-android --disable-doxygen-html --disable-option-checking && \
     make && \
-    sudo make install && \
+    make install && \
     cd .. && rm -rf oml
 
 #openocd install (for M3 and SAMR21)
@@ -84,7 +84,7 @@ RUN git clone https://github.com/ntfreak/openocd && \
     ./configure  --enable-legacy-ft2232_libftdi --disable-ftdi2232 \
         --disable-ftd2xx --enable-cmsis-dap --enable-hidapi-libusb && \
     make && \
-    sudo make install && \
+    make install && \
     cd .. && rm -rf openocd
 
 #openocd 0.10
@@ -94,7 +94,7 @@ RUN git clone https://github.com/ntfreak/openocd openocd10 && \
     ./bootstrap && \
     ./configure --prefix=/opt/openocd-0.10.0 --enable-cmsis-dap --enable-hidapi-libusb && \
     make && \
-    sudo make install && \
+    make install && \
     cd .. && rm -rf openocd10
 
 # edbg
