@@ -50,7 +50,7 @@ def test_rpi3_control_node_start(call):
     cn_rpi3.start('test')
 
     call.assert_called_with(
-        args=['sudo', 'hub-ctrl', '-h', '0', '-P', '2', '-p', '1'])
+        args=['sudo', 'uhubctl', '-p', '2', '-a', '1'])
 
     assert cn_rpi3.open_node_state == 'start'
 
@@ -64,7 +64,7 @@ def test_rpi3_control_node_stop(call):
     cn_rpi3.stop()
 
     call.assert_called_with(
-        args=['sudo', 'hub-ctrl', '-h', '0', '-P', '2', '-p', '0'])
+        args=['sudo', 'uhubctl', '-p', '2', '-a', '0'])
 
     assert cn_rpi3.open_node_state == 'stop'
 

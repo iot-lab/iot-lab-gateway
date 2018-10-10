@@ -32,7 +32,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 # This command controls all 4 USB ports of the RPI3. The expected paramter is
 # either 0 (poweroff) or 1 (poweron)
-HUB_CTRL_CMD = "sudo hub-ctrl -h 0 -P 2 -p {}"
+UHUBCTL_CMD = "sudo uhubctl -p 2 -r 2 -a {}"
 
 
 def _call_cmd(command_str):
@@ -42,7 +42,7 @@ def _call_cmd(command_str):
     try:
         return subprocess_timeout.call(**kwargs)
     except subprocess_timeout.TimeoutExpired as exc:
-        LOGGER.error("HUB_CTRL '%s' timeout: %s", command_str, exc)
+        LOGGER.error("Command '%s' timeout: %s", command_str, exc)
         return 1
 
 
@@ -61,6 +61,7 @@ class ControlNodeRpi3(ControlNodeBase):
     def start(self, exp_id, exp_files=None):  # pylint:disable=unused-argument
         """ Start ControlNode serial interface """
         ret_val = 0
+        ret_val += self.open_stop('dc')
         ret_val += self.open_start('dc')
         return ret_val
 
@@ -69,6 +70,7 @@ class ControlNodeRpi3(ControlNodeBase):
         """ Start ControlNode """
         ret_val = 0
         ret_val += self.open_stop('dc')
+        ret_val += self.open_start('dc')
         return ret_val
 
     @staticmethod
@@ -80,7 +82,7 @@ class ControlNodeRpi3(ControlNodeBase):
     @logger_call("Control node: start power of open node")
     def open_start(self, power=None):  # pylint:disable=unused-argument
         """ Start open node with 'power' source """
-        ret = _call_cmd(HUB_CTRL_CMD.format(1))
+        ret = _call_cmd(UHUBCTL_CMD.format(1))
         if ret == 0:
             self.open_node_state = 'start'
         return ret
@@ -88,7 +90,7 @@ class ControlNodeRpi3(ControlNodeBase):
     @logger_call("Control node: stop power of open node")
     def open_stop(self, power=None):  # pylint:disable=unused-argument
         """ Stop open node with 'power' source """
-        ret = _call_cmd(HUB_CTRL_CMD.format(0))
+        ret = _call_cmd(UHUBCTL_CMD.format(0))
         if ret == 0:
             self.open_node_state = 'stop'
         return ret
