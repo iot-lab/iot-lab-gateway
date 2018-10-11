@@ -22,7 +22,6 @@
 """Control Node experiment implementation RPI3 ControlNode."""
 
 import os.path
-import time
 import logging
 import shlex
 
@@ -110,12 +109,12 @@ class ControlNodeRpi3(ControlNodeBase):
     def open_stop(self, power=None):  # pylint:disable=unused-argument
         """ Stop open node with 'power' source """
         ret = 0
-        if os.path.isfile(RTL_TCP_CONFIG) and self.rtl_tcp.is_alive():
-            ret += self.rtl_tcp.stop()
-            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret)
         ret += _call_cmd(UHUBCTL_CMD.format(0))
         if ret == 0:
             self.open_node_state = 'stop'
+        if os.path.isfile(RTL_TCP_CONFIG) and self.rtl_tcp.is_alive():
+            ret += self.rtl_tcp.stop()
+            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret)
         return ret
 
     @logger_call("Control node: Flash")
