@@ -30,13 +30,15 @@ from gateway_code.common import logger_call
 from gateway_code.nodes import ControlNodeBase
 from gateway_code.utils import subprocess_timeout
 from gateway_code.utils.rtl_tcp import RtlTcp
+from gateway_code.utils.mjpg_streamer import MjpgStreamer
 
 LOGGER = logging.getLogger('gateway_code')
 
 LOCAL_CONFIG_DIR = '/var/local/config'
 RTL_TCP_CONFIG = os.path.join(LOCAL_CONFIG_DIR, 'rtl_sdr')
+CAMERA_CONFIG = os.path.join(LOCAL_CONFIG_DIR, 'camera')
 
-# This command controls all 4 USB ports of the RPI3. The expected paramter is
+# This command controls all 4 USB ports of the RPI3. The expected parameter is
 # either 0 (poweroff) or 1 (poweron)
 UHUBCTL_CMD = "sudo uhubctl -p 2 -r 2 -a {}"
 
@@ -58,6 +60,7 @@ class ControlNodeRpi3(ControlNodeBase):
     FEATURES = ['open_node_power']
     RTL_TCP_PORT = 50000
     RTL_TCP_FREQ = 868000000
+    MJPG_STREAMER_PORT = 40000
 
     def __init__(self, node_id, default_profile):
         self.node_id = node_id
@@ -65,6 +68,7 @@ class ControlNodeRpi3(ControlNodeBase):
         self.profile = self.default_profile
         self.open_node_state = 'stop'
         self.rtl_tcp = RtlTcp(self.RTL_TCP_PORT, self.RTL_TCP_FREQ)
+        self.mjpg_streamer = MjpgStreamer(self.MJPG_STREAMER_PORT)
 
     @logger_call("Control node: Start")
     def start(self, exp_id, exp_files=None):  # pylint:disable=unused-argument
@@ -80,6 +84,9 @@ class ControlNodeRpi3(ControlNodeBase):
         ret_val = 0
         ret_val += self.open_stop('dc')
         ret_val += self.open_start('dc')
+        if os.path.isfile(RTL_TCP_CONFIG) and self.rtl_tcp.is_alive():
+            ret_val += self.rtl_tcp.stop()
+            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
     @staticmethod
@@ -96,7 +103,7 @@ class ControlNodeRpi3(ControlNodeBase):
             self.open_node_state = 'start'
         if os.path.isfile(RTL_TCP_CONFIG):
             ret += self.rtl_tcp.start()
-            LOGGER.debug("Process started: rtl tcp, ret: %d", ret)
+            LOGGER.debug("Process started: rtl_tcp, ret: %d", ret)
         return ret
 
     @logger_call("Control node: stop power of open node")
@@ -105,7 +112,7 @@ class ControlNodeRpi3(ControlNodeBase):
         ret = 0
         if os.path.isfile(RTL_TCP_CONFIG) and self.rtl_tcp.is_alive():
             ret += self.rtl_tcp.stop()
-            LOGGER.debug("Process stopped: rtl tcp, ret: %d", ret)
+            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret)
         ret += _call_cmd(UHUBCTL_CMD.format(0))
         if ret == 0:
             self.open_node_state = 'stop'
@@ -121,6 +128,9 @@ class ControlNodeRpi3(ControlNodeBase):
         """ Configure the experiment """
         ret_val = 0
         ret_val += self.configure_profile(profile)
+        if os.path.isfile(CAMERA_CONFIG):
+            ret_val += self.mjpg_streamer.start()
+            LOGGER.debug("Process started: mjpg_streamer, ret: %d", ret_val)
         return ret_val
 
     @logger_call("Control node: Stop the experiment")
@@ -128,6 +138,9 @@ class ControlNodeRpi3(ControlNodeBase):
         """Cleanup the control node configuration."""
         ret_val = 0
         ret_val += self.configure_profile(None)
+        if os.path.isfile(CAMERA_CONFIG):
+            ret_val += self.mjpg_streamer.stop()
+            LOGGER.debug("Process stopped: mjpg_streamer, ret: %d", ret_val)
         return ret_val
 
     def autotest_setup(self, measures_handler):
