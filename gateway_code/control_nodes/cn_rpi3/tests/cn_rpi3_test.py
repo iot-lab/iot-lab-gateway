@@ -27,6 +27,10 @@ from gateway_code.control_nodes.cn_rpi3 import ControlNodeRpi3
 from gateway_code.utils import subprocess_timeout
 
 
+@mock.patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE',
+            '/tmp/rtl_tcp_test.log')
+@mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
+            '/tmp/mjpg_streamer_test.log')
 def test_rpi3_control_node_basic():
     """Test basic empty features of RPI3 control node."""
 
@@ -41,6 +45,10 @@ def test_rpi3_control_node_basic():
     assert cn_rpi3.autotest_teardown(None) == 0
 
 
+@mock.patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE',
+            '/tmp/rtl_tcp_test.log')
+@mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
+            '/tmp/mjpg_streamer_test.log')
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
 def test_rpi3_control_node_start(call):
     """Test open node start calls the right command."""
@@ -49,12 +57,20 @@ def test_rpi3_control_node_start(call):
     cn_rpi3 = ControlNodeRpi3('test', None)
     cn_rpi3.start('test')
 
-    call.assert_called_with(
+    assert call.call_count == 2
+    stop, start = call.mock_calls
+    stop.assert_called_with(
+        args=['sudo', 'uhubctl', '-p', '2', '-a', '0'])
+    start.assert_called_with(
         args=['sudo', 'uhubctl', '-p', '2', '-a', '1'])
 
     assert cn_rpi3.open_node_state == 'start'
 
 
+@mock.patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE',
+            '/tmp/rtl_tcp_test.log')
+@mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
+            '/tmp/mjpg_streamer_test.log')
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
 def test_rpi3_control_node_stop(call):
     """Test open node start calls the right command."""
@@ -63,12 +79,20 @@ def test_rpi3_control_node_stop(call):
     cn_rpi3 = ControlNodeRpi3('test', None)
     cn_rpi3.stop()
 
-    call.assert_called_with(
+    assert call.call_count == 2
+    stop, start = call.mock_calls
+    stop.assert_called_with(
         args=['sudo', 'uhubctl', '-p', '2', '-a', '0'])
+    start.assert_called_with(
+        args=['sudo', 'uhubctl', '-p', '2', '-a', '1'])
 
-    assert cn_rpi3.open_node_state == 'stop'
+    assert cn_rpi3.open_node_state == 'start'
 
 
+@mock.patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE',
+            '/tmp/rtl_tcp_test.log')
+@mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
+            '/tmp/mjpg_streamer_test.log')
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
 def test_rpi3_control_node_timeout(call):
     """Test open node start/stop with timeout."""
@@ -79,14 +103,18 @@ def test_rpi3_control_node_timeout(call):
     ret = cn_rpi3.start('test')
 
     assert cn_rpi3.open_node_state == 'stop'
-    assert ret == 1
+    assert ret == 2  # 2 processes should fail
 
     ret = cn_rpi3.stop()
 
     assert cn_rpi3.open_node_state == 'stop'
-    assert ret == 1
+    assert ret == 2  # 2 processes should fail
 
 
+@mock.patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE',
+            '/tmp/rtl_tcp_test.log')
+@mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
+            '/tmp/mjpg_streamer_test.log')
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
 def test_rpi3_configure_profile(call):
     """Test open node profile confguration with start/stop experiment."""
