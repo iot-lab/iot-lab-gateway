@@ -26,13 +26,10 @@ import os
 import time
 import logging
 import socket
-import itertools
 from subprocess import Popen, PIPE
-import signal
 import unittest
 
 import mock
-from testfixtures import LogCapture
 
 from gateway_code.common import wait_tty
 from ..serial_redirection import SerialRedirection
@@ -124,93 +121,3 @@ class TestSerialRedirection(_SerialRedirectionTestCase):
                           socket.create_connection, ('0.0.0.0', 20000))
         conn.close()
         self.redirect.stop()
-
-
-class TestSerialRedirectionComplexStop(_SerialRedirectionTestCase):
-    """Test SerialRedirection complex stop cases."""
-
-    @mock.patch('subprocess.Popen')
-    def test_terminate_non_running_process(self, m_popen):
-        """ Test the case where 'stop' is called on a process that is currently
-        being restarted.
-        It can happen if stop is called after an error """
-
-        m_socat = m_popen.return_value
-        m_socat.send_signal.side_effect = OSError(3, "No such process")
-
-        self.redirect = SerialRedirection(self.tty, self.baud)
-        self.redirect.start()
-        time.sleep(1)
-        self.redirect.stop()
-
-        self.assertTrue(m_socat.send_signal.called)
-
-    def test_socat_needs_sigkill(self):
-        """Test cases where send_signal must be called multiple times."""
-        log = LogCapture('gateway_code', level=logging.WARNING)
-        self.addCleanup(log.uninstall)
-
-        only_sigkill = os.path.join(CURRENT_DIR, 'only_sigkill.py')
-        only_sigkill = 'python %s' % only_sigkill
-
-        with mock.patch.object(SerialRedirection, 'SOCAT', only_sigkill):
-            self.redirect = SerialRedirection(self.tty, self.baud)
-            self.redirect.start()
-            time.sleep(5)
-            self.redirect.stop()
-
-        log.check(('gateway_code', 'WARNING',
-                   'SerialRedirection signal: escalading to SIGKILL'))
-
-
-@mock.patch('subprocess.Popen')
-class TestCallSocat(_SerialRedirectionTestCase):
-    """SerialRedirection._call_socat."""
-
-    def test__call_socat_error(self, m_popen):
-        """ Test the _call_socat error case """
-        m_popen.return_value.wait.return_value = -1
-        self.redirect = SerialRedirection(self.tty, self.baud)
-        self.redirect._run = True
-
-        ret = self.redirect._call_socat(self.redirect.DEVNULL)
-        self.assertEquals(-1, ret)
-
-    def test__call_socat_error_tty_not_found(self, m_popen):
-        """ Test the _call_socat error case when path can't be found"""
-        m_popen.return_value.wait.return_value = -1
-        self.redirect = SerialRedirection('/dev/NotATty', self.baud)
-        self.redirect._run = True
-
-        ret = self.redirect._call_socat(self.redirect.DEVNULL)
-        self.assertEquals(-1, ret)
-
-
-class TestSignalsIter(unittest.TestCase):
-    """SerialRedirection.signals_iter."""
-
-    def test_signals_iter(self):
-        """Test default signals_iter configuration."""
-        signals_iter = SerialRedirection.signals_iter()
-        signals = list(itertools.islice(signals_iter, 0, 32))
-        expected = [
-            signal.SIGTERM, signal.SIGTERM, signal.SIGTERM, signal.SIGTERM,
-            signal.SIGTERM, signal.SIGTERM, signal.SIGTERM, signal.SIGTERM,
-            signal.SIGTERM, signal.SIGTERM,
-            signal.SIGINT, signal.SIGINT, signal.SIGINT, signal.SIGINT,
-            signal.SIGINT, signal.SIGINT, signal.SIGINT, signal.SIGINT,
-            signal.SIGINT, signal.SIGINT,
-            signal.SIGKILL, signal.SIGKILL, signal.SIGKILL, signal.SIGKILL,
-            signal.SIGKILL, signal.SIGKILL, signal.SIGKILL, signal.SIGKILL,
-            signal.SIGKILL, signal.SIGKILL, signal.SIGKILL, signal.SIGKILL,
-        ]
-
-        self.assertEqual(signals, expected)
-
-    def test_signals_iter_config(self):
-        """Test configuring signals_iter."""
-        signals_iter = SerialRedirection.signals_iter(sigterm=1, sigint=0)
-        signals = list(itertools.islice(signals_iter, 0, 3))
-
-        expected = [signal.SIGTERM, signal.SIGKILL, signal.SIGKILL]
-        self.assertEqual(signals, expected)
