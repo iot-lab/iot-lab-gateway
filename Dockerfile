@@ -97,6 +97,16 @@ RUN git clone https://github.com/ntfreak/openocd openocd10 && \
     make install && \
     cd .. && rm -rf openocd10
 
+#openocd dev
+RUN git clone https://github.com/ntfreak/openocd openocd-dev && \
+    cd openocd-dev && \
+    git checkout 05e0d633bad9e8b0bdfaf16fc76ab1f9d9419d8b && \
+    ./bootstrap && \
+    ./configure --prefix=/opt/openocd-dev --enable-cmsis-dap --enable-hidapi-libusb && \
+    make && \
+    make install && \
+    cd .. && rm -rf openocd-dev
+
 # edbg
 RUN git clone https://github.com/ataradov/edbg && \
     cd edbg && \
