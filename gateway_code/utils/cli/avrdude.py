@@ -28,35 +28,30 @@ Usage:
 
 """
 import argparse
-from .. import avrdude
-from . import log_to_stderr
 
-PARSER = argparse.ArgumentParser()
-_SUB = PARSER.add_subparsers()
-
-_FLASH = _SUB.add_parser('flash')
-_FLASH.set_defaults(cmd='flash')
-_FLASH.add_argument('node', type=str, choices=('LEONARDO', 'ZIGDUINO'),)
-_FLASH.add_argument('firmware', type=str, help="Firmware name")
+from gateway_code.nodes import open_node_class
+from gateway_code.utils import avrdude
+from gateway_code.utils.cli import log_to_stderr
 
 
-def _node_type(node):
-    """ Get node avrdude config for 'node' in ('LEONARDO', 'ZIGDUINO') """
-    from gateway_code.open_nodes.node_leonardo import NodeLeonardo
-    from gateway_code.open_nodes.node_zigduino import NodeZigduino
-    _config = {
-        'LEONARDO': NodeLeonardo,
-        'ZIGDUINO': NodeZigduino,
-    }
-    return _config[node]
+def _setup_parser():
+    parser = argparse.ArgumentParser()
+    sub_parser = parser.add_subparsers()
+
+    flash = sub_parser.add_parser('flash')
+    flash.set_defaults(cmd='flash')
+    flash.add_argument('node', type=str, choices=('LEONARDO', 'ZIGDUINO'))
+    flash.add_argument('firmware', type=str, help="Firmware name")
+    return parser
 
 
 @log_to_stderr
 def main():
     """ openocd main function """
 
-    opts = PARSER.parse_args()
-    node = _node_type(opts.node)
+    parser = _setup_parser()
+    opts = parser.parse_args()
+    node = open_node_class(opts.node.lower())
     ret = 0
     if opts.node == 'LEONARDO':
         ret += avrdude.AvrDude.trigger_bootloader(node.TTY, node.TTY_PROG)
