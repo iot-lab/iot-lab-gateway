@@ -116,10 +116,7 @@ def import_all_nodes(pkg_dir):
     for (module_loader, name, _) in pkgutil.iter_modules([pkg_dir]):
         if name in ['tests', 'common']:
             continue
-        try:
-            module_loader.find_module(name).load_module(name)
-        except ImportError:
-            pass
+        module_loader.find_module(name).load_module(name)
 
 
 import_all_nodes('open_nodes')
