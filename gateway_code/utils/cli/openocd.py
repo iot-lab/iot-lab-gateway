@@ -29,40 +29,51 @@ Usage:
 """
 import signal
 import argparse
-from .. import openocd
-from . import log_to_stderr
+
+from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
+from gateway_code.open_nodes.node_m3 import NodeM3
+from gateway_code.open_nodes.node_fox import NodeFox
+from gateway_code.open_nodes.node_samr21 import NodeSamr21
+from gateway_code.open_nodes.node_samr30 import NodeSamr30
+from gateway_code.open_nodes.node_st_lrwan1 import NodeStLrwan1
+from gateway_code.open_nodes.node_st_iotnode import NodeStIotnode
+from gateway_code.open_nodes.node_arduino_zero import NodeArduinoZero
+from gateway_code.open_nodes.node_microbit import NodeMicrobit
+from gateway_code.open_nodes.node_nrf52dk import NodeNrf52Dk
+from gateway_code.open_nodes.node_nrf52840dk import NodeNrf52840Dk
+
+from gateway_code.utils import openocd
+from gateway_code.utils.cli import log_to_stderr
+
+_NODES = {
+    'CN': ControlNodeIotlab,
+    'M3': NodeM3,
+    'FOX': NodeFox,
+    'SAMR21': NodeSamr21,
+    'SAMR30': NodeSamr30,
+    'ST-LRWAN1': NodeStLrwan1,
+    'ST-IOTNODE': NodeStIotnode,
+    'ARDUINO-ZERO': NodeArduinoZero,
+    'MICROBIT': NodeMicrobit,
+    'NRF52DK': NodeNrf52Dk,
+    'NRF52840': NodeNrf52840Dk
+}
 
 PARSER = argparse.ArgumentParser()
 _SUB = PARSER.add_subparsers()
 
 _FLASH = _SUB.add_parser('flash')
 _FLASH.set_defaults(cmd='flash')
-_FLASH.add_argument('node', type=str, choices=('CN', 'M3', 'FOX', 'SAMR21'),)
+_FLASH.add_argument('node', type=str, choices=_NODES.keys())
 _FLASH.add_argument('firmware', type=str, help="Firmware name")
 
 _RESET = _SUB.add_parser('reset')
 _RESET.set_defaults(cmd='reset')
-_RESET.add_argument('node', type=str, choices=('CN', 'M3', 'FOX', 'SAMR21'))
+_RESET.add_argument('node', type=str, choices=_NODES.keys())
 
 _DEBUG = _SUB.add_parser('debug')
 _DEBUG.set_defaults(cmd='debug')
-_DEBUG.add_argument('node', type=str, choices=('CN', 'M3', 'FOX'))
-
-
-def _node_class(node):
-    """ Get node openocd config for 'node' in ('CN', 'M3', 'FOX', 'SAMR21') """
-    # This is a HACK for the moment, nodes should be deduced otherwise
-    from gateway_code.open_nodes.node_m3 import NodeM3
-    from gateway_code.open_nodes.node_fox import NodeFox
-    from gateway_code.open_nodes.node_samr21 import NodeSamr21
-    from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
-    _config_files = {
-        'CN': ControlNodeIotlab,
-        'M3': NodeM3,
-        'FOX': NodeFox,
-        'SAMR21': NodeSamr21,
-    }
-    return _config_files[node]
+_DEBUG.add_argument('node', type=str, choices=_NODES.keys())
 
 
 def _debug(ocd):
@@ -84,7 +95,7 @@ def _debug(ocd):
 def main():
     """ openocd main function """
     opts = PARSER.parse_args()
-    node = _node_class(opts.node)
+    node = _NODES[opts.node]
     ocd = openocd.OpenOCD.from_node(node, verb=True)
 
     if opts.cmd == 'reset':
