@@ -30,50 +30,49 @@ Usage:
 import signal
 import argparse
 
+from gateway_code.nodes import open_node_class, all_open_nodes_types
 from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
-from gateway_code.open_nodes.node_m3 import NodeM3
-from gateway_code.open_nodes.node_fox import NodeFox
-from gateway_code.open_nodes.node_samr21 import NodeSamr21
-from gateway_code.open_nodes.node_samr30 import NodeSamr30
-from gateway_code.open_nodes.node_st_lrwan1 import NodeStLrwan1
-from gateway_code.open_nodes.node_st_iotnode import NodeStIotnode
-from gateway_code.open_nodes.node_arduino_zero import NodeArduinoZero
-from gateway_code.open_nodes.node_microbit import NodeMicrobit
-from gateway_code.open_nodes.node_nrf52dk import NodeNrf52Dk
-from gateway_code.open_nodes.node_nrf52840dk import NodeNrf52840Dk
+from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+from gateway_code.open_nodes.common.node_edbg import NodeEdbgBase
 
 from gateway_code.utils import openocd
 from gateway_code.utils.cli import log_to_stderr
 
-_NODES = {
-    'CN': ControlNodeIotlab,
-    'M3': NodeM3,
-    'FOX': NodeFox,
-    'SAMR21': NodeSamr21,
-    'SAMR30': NodeSamr30,
-    'ST-LRWAN1': NodeStLrwan1,
-    'ST-IOTNODE': NodeStIotnode,
-    'ARDUINO-ZERO': NodeArduinoZero,
-    'MICROBIT': NodeMicrobit,
-    'NRF52DK': NodeNrf52Dk,
-    'NRF52840': NodeNrf52840Dk
-}
 
-PARSER = argparse.ArgumentParser()
-_SUB = PARSER.add_subparsers()
+def _node_keys():
+    res = ['CN']
+    for node_type in sorted(all_open_nodes_types()):
+        if (issubclass(open_node_class(node_type), NodeOpenOCDBase) or
+                issubclass(open_node_class(node_type), NodeEdbgBase)):
+            res.append(node_type.upper())
+    return res
 
-_FLASH = _SUB.add_parser('flash')
-_FLASH.set_defaults(cmd='flash')
-_FLASH.add_argument('node', type=str, choices=_NODES.keys())
-_FLASH.add_argument('firmware', type=str, help="Firmware name")
 
-_RESET = _SUB.add_parser('reset')
-_RESET.set_defaults(cmd='reset')
-_RESET.add_argument('node', type=str, choices=_NODES.keys())
+def _node_class(node_type):
+    if node_type == 'CN':
+        return ControlNodeIotlab
+    return open_node_class(node_type)
 
-_DEBUG = _SUB.add_parser('debug')
-_DEBUG.set_defaults(cmd='debug')
-_DEBUG.add_argument('node', type=str, choices=_NODES.keys())
+
+def _setup_parser():
+    parser = argparse.ArgumentParser()
+    sub_parser = parser.add_subparsers()
+
+    nodes = _node_keys()
+
+    flash = sub_parser.add_parser('flash')
+    flash.set_defaults(cmd='flash')
+    flash.add_argument('node', type=str, choices=nodes)
+    flash.add_argument('firmware', type=str, help="Firmware name")
+
+    reset = sub_parser.add_parser('reset')
+    reset.set_defaults(cmd='reset')
+    reset.add_argument('node', type=str, choices=nodes)
+
+    debug = sub_parser.add_parser('debug')
+    debug.set_defaults(cmd='debug')
+    debug.add_argument('node', type=str, choices=nodes)
+    return parser
 
 
 def _debug(ocd):
@@ -94,8 +93,9 @@ def _debug(ocd):
 @log_to_stderr
 def main():
     """ openocd main function """
-    opts = PARSER.parse_args()
-    node = _NODES[opts.node]
+    parser = _setup_parser()
+    opts = parser.parse_args()
+    node = _node_class(opts.node.lower())
     ocd = openocd.OpenOCD.from_node(node, verb=True)
 
     if opts.cmd == 'reset':
