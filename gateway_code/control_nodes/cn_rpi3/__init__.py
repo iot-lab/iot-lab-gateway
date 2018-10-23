@@ -37,9 +37,9 @@ LOCAL_CONFIG_DIR = '/var/local/config'
 RTL_TCP_CONFIG = os.path.join(LOCAL_CONFIG_DIR, 'rtl_sdr')
 CAMERA_CONFIG = os.path.join(LOCAL_CONFIG_DIR, 'camera')
 
-# This command controls all 4 USB ports of the RPI3. The expected parameter is
-# either 0 (poweroff) or 1 (poweron)
-UHUBCTL_CMD = "sudo uhubctl -p 2 -r 2 -a {}"
+# This command controls the power of the open node/rtl_tcp USB stick via the
+# Yepkit module.
+YKUSHCMD = "sudo ykushcmd {model} {cmd} {port}"
 
 
 def _call_cmd(command_str):
@@ -73,7 +73,6 @@ class ControlNodeRpi3(ControlNodeBase):
     def start(self, exp_id, exp_files=None):  # pylint:disable=unused-argument
         """ Start ControlNode serial interface """
         ret_val = 0
-        ret_val += self.open_stop('dc')
         ret_val += self.open_start('dc')
         return ret_val
 
@@ -82,10 +81,6 @@ class ControlNodeRpi3(ControlNodeBase):
         """ Start ControlNode """
         ret_val = 0
         ret_val += self.open_stop('dc')
-        ret_val += self.open_start('dc')
-        if os.path.isfile(RTL_TCP_CONFIG) and self.rtl_tcp.is_alive():
-            ret_val += self.rtl_tcp.stop()
-            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
     @staticmethod
@@ -94,28 +89,33 @@ class ControlNodeRpi3(ControlNodeBase):
         """Setup control node."""
         return 0
 
+    @staticmethod
+    def _ykush_params(cmd):
+        params = {'model': 'ykushxs', 'cmd': cmd, 'port': ''}
+        if os.path.isfile(RTL_TCP_CONFIG):
+            params['model'] = ''
+            params['port'] = '1'
+        return params
+
     @logger_call("Control node: start power of open node")
     def open_start(self, power=None):  # pylint:disable=unused-argument
         """ Start open node with 'power' source """
-        ret = _call_cmd(UHUBCTL_CMD.format(1))
-        if ret == 0:
+        ykush_params = self._ykush_params('-u')
+        ret_val = 0
+        ret_val += _call_cmd(YKUSHCMD.format(**ykush_params))
+        if ret_val == 0:
             self.open_node_state = 'start'
-        if os.path.isfile(RTL_TCP_CONFIG):
-            ret += self.rtl_tcp.start()
-            LOGGER.debug("Process started: rtl_tcp, ret: %d", ret)
-        return ret
+        return ret_val
 
     @logger_call("Control node: stop power of open node")
     def open_stop(self, power=None):  # pylint:disable=unused-argument
         """ Stop open node with 'power' source """
-        ret = 0
-        ret += _call_cmd(UHUBCTL_CMD.format(0))
-        if ret == 0:
+        ykush_params = self._ykush_params('-d')
+        ret_val = 0
+        ret_val += _call_cmd(YKUSHCMD.format(**ykush_params))
+        if ret_val == 0:
             self.open_node_state = 'stop'
-        if os.path.isfile(RTL_TCP_CONFIG) and self.rtl_tcp.is_alive():
-            ret += self.rtl_tcp.stop()
-            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret)
-        return ret
+        return ret_val
 
     @logger_call("Control node: Flash")
     def flash(self, firmware_path=None):  # pylint:disable=unused-argument
@@ -130,6 +130,11 @@ class ControlNodeRpi3(ControlNodeBase):
         if os.path.isfile(CAMERA_CONFIG):
             ret_val += self.mjpg_streamer.start()
             LOGGER.debug("Process started: mjpg_streamer, ret: %d", ret_val)
+        if os.path.isfile(RTL_TCP_CONFIG):
+            ret_val += _call_cmd(YKUSHCMD.format(model="",
+                                                 cmd="-u", port="3"))
+            ret_val += self.rtl_tcp.start()
+            LOGGER.debug("Process started: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
     @logger_call("Control node: Stop the experiment")
@@ -140,6 +145,11 @@ class ControlNodeRpi3(ControlNodeBase):
         if os.path.isfile(CAMERA_CONFIG):
             ret_val += self.mjpg_streamer.stop()
             LOGGER.debug("Process stopped: mjpg_streamer, ret: %d", ret_val)
+        if os.path.isfile(RTL_TCP_CONFIG):
+            ret_val += _call_cmd(YKUSHCMD.format(model="",
+                                                 cmd="-d", port="3"))
+            ret_val += self.rtl_tcp.stop()
+            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
     def autotest_setup(self, measures_handler):
