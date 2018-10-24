@@ -3,7 +3,7 @@ pytest-pep8
 pytest-cov
 setuptools-lint
 pylint
-flake8
+flake8==3.5.0
 nosexcover
 mock
 WebTest
