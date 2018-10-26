@@ -28,5 +28,6 @@ class NodeJLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
     """ Open node JLink implemention """
 
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     TTY = '/dev/iotlab/ttyON_JLINK'
     BAUDRATE = 115200
