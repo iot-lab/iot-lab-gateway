@@ -20,6 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 """ Open Node using OpenOCD as programmer/debugger """
+
 import logging
 import serial
 
@@ -98,10 +99,12 @@ class NodeOpenOCDBase(OpenNodeBase):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on OpenOCD: %s', firmware_path)
-        ret = self.openocd.flash(firmware_path)
+        ret_val = self.openocd.flash(firmware_path)
+        if hasattr(self, 'JLINK_SERIAL') and self.JLINK_SERIAL:
+            ret_val += common.wait_tty(self.TTY, LOGGER)
         if hasattr(self, 'DIRTY_SERIAL') and self.DIRTY_SERIAL:
-            ret += self.clear_serial()
-        return ret
+            ret_val += self.clear_serial()
+        return ret_val
 
     @logger_call("Node OpenOCD: reset of openocd node")
     def reset(self):

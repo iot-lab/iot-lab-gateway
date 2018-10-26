@@ -31,3 +31,5 @@ class NodeJLinkBase(NodeOpenOCDBase):
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     TTY = '/dev/iotlab/ttyON_JLINK'
     BAUDRATE = 115200
+    JLINK_SERIAL = True
+    DIRTY_SERIAL = True

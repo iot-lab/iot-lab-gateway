@@ -38,6 +38,8 @@ class NodeOpenOCDTest(NodeOpenOCDBase):
     OPENOCD_CFG_FILE = NodeMicrobit.OPENOCD_CFG_FILE
     FW_IDLE = NodeMicrobit.FW_IDLE
     FW_AUTOTEST = NodeMicrobit.FW_AUTOTEST
+    DIRTY_SERIAL = False
+    JLINK_SERIAL = False
 
 
 class TestNodeOpenOCDBase(unittest.TestCase):
@@ -93,28 +95,44 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         assert self.node.openocd.flash.call_count == 1
         self.node.openocd.flash.assert_called_with(self.fw_path)
         assert ser.call_count == 0
+        assert tty.call_count == 1
 
         # Teardown the node
+        tty.call_count = 0
         assert self.node.teardown() == 0
         self.node.openocd.flash.assert_called_with(self.node.FW_IDLE)
+        assert tty.call_count == 1
 
         # Flash a firmware
         assert self.node.flash(self.fw_path) == 0
+        tty.call_count = 0
         self.node.openocd.flash.assert_called_with(self.fw_path)
         assert ser.call_count == 0
+        assert tty.call_count == 0
 
         assert self.node.flash() == 0
         self.node.openocd.flash.assert_called_with(self.node.FW_IDLE)
         assert ser.call_count == 0
+        assert tty.call_count == 0
 
         # Flash with DIRTY_SERIAL attribute
         # pylint:disable=invalid-name,attribute-defined-outside-init
-        self.node.DIRTY_SERIAL = True
-        assert self.node.flash(self.fw_path) == 0
-        self.node.openocd.flash.assert_called_with(self.fw_path)
-        assert ser.call_count == 1
+        with patch('gateway_code.open_nodes.common.tests.node_openocd_test.'
+                   'NodeOpenOCDTest.DIRTY_SERIAL', True):
+            assert self.node.flash(self.fw_path) == 0
+            self.node.openocd.flash.assert_called_with(self.fw_path)
+            assert ser.call_count == 1
+            assert tty.call_count == 0
 
-        # Simulate a serial issue
-        ser.side_effect = serial.serialutil.SerialException
-        assert self.node.flash() == 1
-        self.node.openocd.flash.assert_called_with(self.node.FW_IDLE)
+            # Simulate a serial issue
+            ser.side_effect = serial.serialutil.SerialException
+            assert self.node.flash() == 1
+            self.node.openocd.flash.assert_called_with(self.node.FW_IDLE)
+
+        # Flash with JLINK_SERIAL attribute
+        # pylint:disable=invalid-name,attribute-defined-outside-init
+        with patch('gateway_code.open_nodes.common.tests.node_openocd_test.'
+                   'NodeOpenOCDTest.JLINK_SERIAL', True):
+            assert self.node.flash(self.fw_path) == 0
+            self.node.openocd.flash.assert_called_with(self.fw_path)
+            assert tty.call_count == 1
