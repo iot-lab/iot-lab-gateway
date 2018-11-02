@@ -26,6 +26,7 @@ import logging
 
 import termios
 import serial
+from serial import SerialException
 
 from gateway_code.config import static_path
 from gateway_code import common
@@ -71,7 +72,7 @@ class NodeZigduino(OpenNodeBase):
         # Check if Zigduino is up before DTR reset
         try:
             ser = serial.Serial(self.TTY, self.BAUDRATE)
-        except serial.serialutil.SerialException:
+        except SerialException:
             LOGGER.error("No serial port found")
             return 1
         with open(self.TTY) as ser:
@@ -140,7 +141,7 @@ class NodeZigduino(OpenNodeBase):
         # Check if Zigduino is up before DTR reset
         try:
             ser = serial.Serial(self.TTY, self.BAUDRATE)
-        except serial.serialutil.SerialException:
+        except SerialException:
             LOGGER.error("No serial port found")
             return 1
 
@@ -155,7 +156,8 @@ class NodeZigduino(OpenNodeBase):
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         return ret_val
 
-    def status(self):
+    @staticmethod
+    def status():
         """ Check Zigduino node status """
         # It's impossible for us to check the status of the zigduino node
         return 0
