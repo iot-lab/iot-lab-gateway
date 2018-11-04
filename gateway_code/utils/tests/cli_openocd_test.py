@@ -43,32 +43,34 @@ class TestsOpenOCDcli(unittest.TestCase):
         # Instance of 'object' has no 'flash' member"
         # pylint:disable=no-member
 
-        args = ['openocd.py', 'flash', 'M3', '/dev/null']
-        with mock.patch('sys.argv', args):
-            self.ocd.flash.return_value = 0
-            ret = openocd.main()
-            self.assertEquals(ret, 0)
-            self.assertTrue(self.ocd.flash.called)
+        for node in ('M3', 'CN'):
+            args = ['openocd.py', 'flash', node, '/dev/null']
+            with mock.patch('sys.argv', args):
+                self.ocd.flash.return_value = 0
+                ret = openocd.main()
+                self.assertEquals(ret, 0)
+                self.assertTrue(self.ocd.flash.called)
 
-            self.ocd.flash.return_value = 42
-            ret = openocd.main()
-            self.assertEquals(ret, 42)
+                self.ocd.flash.return_value = 42
+                ret = openocd.main()
+                self.assertEquals(ret, 42)
 
     def test_reset(self):
         """ Running command line reset """
         # Instance of 'object' has no 'flash' member"
         # pylint:disable=no-member
 
-        args = ['openocd.py', 'reset', 'M3']
-        with mock.patch('sys.argv', args):
-            self.ocd.reset.return_value = 0
-            ret = openocd.main()
-            self.assertEquals(ret, 0)
-            self.assertTrue(self.ocd.reset.called)
+        for node in ('M3', 'CN'):
+            args = ['openocd.py', 'reset', node]
+            with mock.patch('sys.argv', args):
+                self.ocd.reset.return_value = 0
+                ret = openocd.main()
+                self.assertEquals(ret, 0)
+                self.assertTrue(self.ocd.reset.called)
 
-            self.ocd.reset.return_value = 42
-            ret = openocd.main()
-            self.assertEquals(ret, 42)
+                self.ocd.reset.return_value = 42
+                ret = openocd.main()
+                self.assertEquals(ret, 42)
 
     @mock.patch("signal.pause")
     def test_debug(self, pause):
