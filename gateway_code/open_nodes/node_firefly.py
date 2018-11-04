@@ -63,7 +63,7 @@ class NodeFirefly(OpenNodeBase):
     def __init__(self):
         # The initialization of your class
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.firefly = CC2538(self.FIREFLY_CONF)
+        self.cc2538 = CC2538(self.FIREFLY_CONF)
 
     @logger_call("Node firefly : Setup of firefly node")
     def setup(self, firmware_path):
@@ -98,23 +98,13 @@ class NodeFirefly(OpenNodeBase):
         LOGGER.info('Flash firmware on firefly: %s', firmware_path)
         LOGGER.info('Firmware path : %s -- Firmware idle path : %s',
                     firmware_path, self.FW_IDLE)
-        return self.firefly.flash(firmware_path)
+        return self.cc2538.flash(firmware_path)
 
     @logger_call("Node firefly : reset of firefly node")
     def reset(self):
         """ Reset the firefly node using jtag """
         LOGGER.info('Reset firefly node')
-        return self.firefly.reset()
-
-    def debug_start(self):
-        """ Start firefly node debugger """
-        LOGGER.info('firefly Node debugger start')
-        return self.firefly.debug_start()
-
-    def debug_stop(self):
-        """ Stop firefly node debugger """
-        LOGGER.info('firefly Node debugger stop')
-        return self.firefly.debug_stop()
+        return self.cc2538.reset()
 
     @staticmethod
     def status():
