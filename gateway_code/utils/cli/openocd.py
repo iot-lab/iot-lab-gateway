@@ -49,7 +49,7 @@ def _node_keys():
 
 
 def _node_class(node_type):
-    if node_type == 'CN':
+    if node_type == 'cn':
         return ControlNodeIotlab
     return open_node_class(node_type)
 
