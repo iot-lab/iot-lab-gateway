@@ -21,7 +21,7 @@
 
 """ Open Node M3 experiment implementation """
 
-from gateway_code.utils.ftdi_check import ftdi_check
+import gateway_code.utils.ftdi_check
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
@@ -53,4 +53,4 @@ class NodeM3(NodeOpenOCDBase):
     @staticmethod
     def status():
         """ Check M3 node status """
-        return ftdi_check('m3', '2232')
+        return gateway_code.utils.ftdi_check.ftdi_check('m3', '2232')
