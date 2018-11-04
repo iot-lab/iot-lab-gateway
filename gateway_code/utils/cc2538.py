@@ -22,9 +22,6 @@
 
 import os
 import shlex
-import subprocess
-
-import atexit
 
 import logging
 import tempfile
@@ -40,9 +37,8 @@ class CC2538(object):
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-    CC2538BSL = ('/usr/bin/cc2538-bsl.py'
-                 ' -p {port}'
-                 ' {cmd}')
+    CC2538BSL = ('/usr/bin/cc2538-bsl.py -p {port} {cmd}')
+
     RESET = ('')
 
     FLASH = ('-b {baudrate}'
@@ -52,8 +48,6 @@ class CC2538(object):
              ' -v'
              ' {hex}')
 
-    DEBUG = ('')
-
     TIMEOUT = 100
 
     def __init__(self, config, verb=False, timeout=TIMEOUT):
@@ -62,9 +56,6 @@ class CC2538(object):
         self.timeout = timeout
 
         self.out = None if verb else self.DEVNULL
-
-        self._debug = None
-        atexit.register(self.debug_stop)
 
     def reset(self):
         """ Reset """
@@ -106,35 +97,8 @@ class CC2538(object):
             LOGGER.error('%s', err)
             return 1
 
-    def debug_start(self):
-        """ Start a debugger process """
-        LOGGER.debug('Debug start')
-        self.debug_stop()  # kill previous process
-        self._debug = subprocess.Popen(**self._cc2538_args(self.DEBUG))
-        LOGGER.debug('Debug started')
-        return 0
-
-    def debug_stop(self):
-        """ Stop the debugger process """
-        try:
-            LOGGER.debug('Debug stop')
-            self._debug.terminate()
-        except AttributeError:
-            LOGGER.debug('Debug not started.')  # None
-        except OSError as err:
-            LOGGER.error('Debug stop error: %r', err)
-            return 1
-        finally:
-            self._debug = None
-            LOGGER.debug('Debug stopped')
-        return 0
-
     def _call_cmd(self, command_str):
-        """ Run the given command_str with init on openocd.
-        If "CC2538 is in 'debug' mode, return an error """
-        if self._debug:
-            LOGGER.error("CC2538 is in 'debug' mode, stop it to flash/reset")
-            return 1
+        """ Run the given command_str to cc2538-bsl."""
 
         kwargs = self._cc2538_args(command_str)
         LOGGER.info(kwargs)
