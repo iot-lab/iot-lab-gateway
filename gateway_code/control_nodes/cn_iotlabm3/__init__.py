@@ -22,8 +22,8 @@
 """ Standalone Control Node experiment implementation """
 
 import logging
+import gateway_code.utils.ftdi_check
 from gateway_code.common import logger_call
-from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.config import static_path
 
 from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
@@ -62,4 +62,4 @@ class ControlNodeIotlabm3(ControlNodeIotlab):
     @staticmethod
     def status():
         """ Check Control node status """
-        return ftdi_check('controlNode', '2232')
+        return gateway_code.utils.ftdi_check.ftdi_check('controlNode', '2232')
