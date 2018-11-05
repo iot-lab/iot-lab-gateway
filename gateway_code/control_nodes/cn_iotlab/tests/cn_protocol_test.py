@@ -130,6 +130,11 @@ class TestProtocol(unittest.TestCase):
         self.sender.assert_called_with(['set_node_id', 'a8', '256'])
         self.assertEquals(0, ret)
 
+        self.sender.call_count = 0
+        ret = self.protocol.set_node_id('leonardo-256')
+        assert self.sender.call_count == 0
+        assert ret == 0
+
     def test_led_control(self):
 
         self.sender.return_value = ['green_led_blink', 'ACK']
