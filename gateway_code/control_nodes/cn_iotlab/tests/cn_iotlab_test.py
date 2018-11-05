@@ -21,12 +21,10 @@
 
 """ gateway_code.control_node (iotlab) unit tests files """
 
-import os.path
 import unittest
 from mock import patch, Mock, call
 
 from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
-from .. import cn_protocol, cn_interface
 
 
 class TestCnIotlab(unittest.TestCase):
@@ -154,7 +152,7 @@ class TestCnIotlab(unittest.TestCase):
         """Test autotest setup of iotlab control node."""
         assert self.cn_node.autotest_teardown(False) == 0
         self.cn_node.cn_serial.stop.assert_called_once()
-        self.cn_node.protocol.start_stop.call_count == 0
+        assert self.cn_node.protocol.start_stop.call_count == 0
 
         assert self.cn_node.autotest_teardown(True) == 0
         assert self.cn_node.cn_serial.stop.call_count == 2
