@@ -24,9 +24,9 @@
 import time
 import logging
 
+import gateway_code.utils.ftdi_check
 from gateway_code.common import logger_call
 from gateway_code.nodes import ControlNodeBase
-from gateway_code.utils.ftdi_check import ftdi_check
 from gateway_code.utils.openocd import OpenOCD
 from gateway_code.config import static_path
 from . import cn_interface, cn_protocol
@@ -193,4 +193,4 @@ class ControlNodeIotlab(ControlNodeBase):
 
     def status(self):
         """ Check Control node status """
-        return ftdi_check('control', '4232')
+        return gateway_code.utils.ftdi_check.ftdi_check('control', '4232')
