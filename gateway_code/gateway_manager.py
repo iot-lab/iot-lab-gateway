@@ -76,6 +76,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         if ret != 0:
             raise StandardError("Control node flash failed: 'ret:{}'"
                                 .format(ret))
+        return ret
 
     # R0913 too many arguments 6/5
     @common.syncronous('rlock')
