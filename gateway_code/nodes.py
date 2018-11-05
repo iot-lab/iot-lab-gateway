@@ -46,47 +46,47 @@ class ControlNodeBase(object):
     @abc.abstractmethod
     def start(self, exp_id, exp_files=None):
         """ This method is called when starting an experiment """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def stop(self):
         """ This method is called when stopping an experiment """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def start_experiment(self, profile):
         """ Configure experiment and monitoring on ControlNode"""
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def stop_experiment(self):
         """ Cleanup Control node Monitoring and experiment """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def autotest_setup(self, measures_handler):
         """ Setup the control node for the open node autotest """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def autotest_teardown(self, stop_on):
         """ Cleanup the control node for the open node autotest """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def configure_profile(self, profile=None):
         """ Setup the profile used by the control node """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def flash(self, firmware_path):
         """ Flash firmware on the control_node """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def status(self):
         """ Status of the node """
-        pass
+        pass #pragma: no cover
 
 
 class OpenNodeBase(object):
@@ -96,17 +96,17 @@ class OpenNodeBase(object):
     @abc.abstractmethod
     def setup(self, firmware_path):
         """ Setup the open node with a firmware"""
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def teardown(self):
         """ Cleanup the open node """
-        pass
+        pass #pragma: no cover
 
     @abc.abstractmethod
     def status(self):
         """ Status of the node """
-        pass
+        pass #pragma: no cover
 
 
 # import all the nodes/plugins

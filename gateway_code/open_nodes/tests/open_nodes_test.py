@@ -25,8 +25,9 @@ from __future__ import print_function
 
 import pytest
 
-from gateway_code.nodes import (open_node_class,
-                                all_open_nodes_types, OpenNodeBase)
+from gateway_code.nodes import (open_node_class, control_node_class,
+                                all_open_nodes_types, all_control_nodes_types,
+                                OpenNodeBase, ControlNodeBase)
 from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.open_nodes.node_m3 import NodeM3
 
@@ -80,6 +81,25 @@ def test_registry_open_node():
 
     assert open_node_class("my_node") == MyNode
 
+    with pytest.raises(ValueError):
+        open_node_class("invalid_node")
+
+
+def test_registry_control_node():
+    """ Verify the control node registry metaclass """
+    class MyControlNode(ControlNodeBase):
+        # pylint:disable=abstract-method
+        """Basic empty ControlNode"""
+        TYPE = "my_control_node"
+        ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+
+    assert control_node_class("my_control_node") == MyControlNode
+
+    assert "my_control_node" in all_control_nodes_types()
+
+    with pytest.raises(ValueError):
+        control_node_class("invalid_node")
+
 
 def test_registry_inheritance():
     """ test case for open node that derive from other open nodes """
@@ -129,13 +149,14 @@ def test_open_node_inheritance():
         BAUDRATE = 4242
 
         def setup(self, firmware_path):
-            pass
+            print("setup base open node with {}".format(firmware_path))
+            return 42
 
         def teardown(self):
-            pass
+            return 4242
 
         def status(self):
-            pass
+            return 0
 
     class NodeStLinkBoard1(BaseOpenNode):
         """derived class 1"""
@@ -158,3 +179,7 @@ def test_open_node_inheritance():
 
     assert board_instance.TTY == '/dev/iotlab/tty_stlink'
     assert board_instance.BAUDRATE == 4242
+
+    assert board_instance.setup('path/to/firmware') == 42
+    assert board_instance.teardown() == 4242
+    assert board_instance.status() == 0
