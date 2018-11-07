@@ -24,7 +24,7 @@
 """ CLI client for avrdude_cmd
 
 Usage:
-        avrdudecmd flash <node> <firmware_path>
+        avrdude_cmd flash <node> <firmware_path>
 
 """
 import argparse
@@ -47,7 +47,7 @@ def _setup_parser():
 
 @log_to_stderr
 def main():
-    """ openocd main function """
+    """ avrdude main function """
 
     parser = _setup_parser()
     opts = parser.parse_args()
@@ -60,7 +60,7 @@ def main():
     if opts.cmd == 'flash':
         ret += avr.flash(opts.firmware)
     else:  # pragma: no cover
-        raise ValueError('Uknown Command {}'.format(opts.command))
+        raise ValueError('Uknown Command {}'.format(opts.cmd))
 
     # Same code as 'openocd'
     # pylint:disable=duplicate-code

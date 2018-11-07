@@ -23,8 +23,8 @@
 """ CLI client for openocd_cmd
 
 Usage:
-        openocdcmd flash <node> <firmware_path>
-        openocdcmd reset <node>
+        openocd_cmd flash <node> <firmware_path>
+        openocd_cmd reset <node>
 
 """
 import signal
@@ -105,7 +105,7 @@ def main():
     elif opts.cmd == 'debug':
         ret = _debug(ocd)
     else:  # pragma: no cover
-        raise ValueError('Uknown Command {}'.format(opts.command))
+        raise ValueError('Uknown Command {}'.format(opts.cmd))
 
     if ret == 0:
         print '%s OK\n' % opts.cmd
