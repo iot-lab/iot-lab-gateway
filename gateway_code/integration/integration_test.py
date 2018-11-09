@@ -509,7 +509,7 @@ class TestIntegrationOther(ExperimentRunningMock):
         ret = self.server.get('/status')
         self.assertEquals(0, ret.json['ret'])
 
-    def tests_non_regular_start_stop(self):
+    def test_non_regular_start_stop(self):
         """ Test start calls when not needed
             * start when started
             * stop when stopped
@@ -529,7 +529,7 @@ class TestIntegrationOther(ExperimentRunningMock):
             # exp already stoped no error
             self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
 
-    def tests_invalid_tty_exp_a8(self):
+    def test_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
         if self.board_cfg.board_type != 'a8':
             return
@@ -546,7 +546,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     """ Invalid calls """
 
-    def tests_invalid_profile_at_start(self):
+    def test_invalid_profile_at_start(self):
         """ Run experiments with invalid profiles """
 
         files = [file_tuple('profile', CURRENT_DIR + 'invalid_profile.json')]
@@ -557,7 +557,7 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
         ret = self.server.post(EXP_START, upload_files=files)
         self.assertLessEqual(1, ret.json['ret'])
 
-    def tests_invalid_files(self):
+    def test_invalid_files(self):
         """ Test invalid flash files """
         # Only if flash available
         if self.board_cfg.board_type == 'a8':
