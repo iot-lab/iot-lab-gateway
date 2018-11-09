@@ -236,7 +236,7 @@ class TestRestMethods(unittest.TestCase):
         ret = self.server.get('/status')
         self.assertEquals(0, ret.json['ret'])
 
-    def auto_tests(self):
+    def test_auto_test(self):
         self.g_m.auto_tests.return_value = {
             'ret': 0, 'error': [], 'success': ['test_ok'],
             'mac': {'A8': '12: 34: 56: 78: 9A: BC'}
