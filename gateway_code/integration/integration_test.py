@@ -208,10 +208,10 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             self.assertNotIn(msg, ret_list)
 
     def _check_debug(self, board_class):
-        if not hasattr(board_class, 'debug_stop'):
-            return  # no debug
-        if not hasattr(board_class, 'OPENOCD_CFG_FILE'):
-            return  # Only openocd debug tested here (arm)
+        if (not hasattr(board_class, 'debug_stop') or  # no debug
+                # Only openocd debug tested here (arm)
+                not hasattr(board_class, 'OPENOCD_CFG_FILE')):
+            return
 
         firmware = abspath(board_class.FW_AUTOTEST)
         gdb_cmd = [
@@ -540,7 +540,7 @@ class TestIntegrationOther(ExperimentRunningMock):
     def test_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
         if self.board_cfg.board_type != 'a8':
-            return
+            pytest.skip("Only for A8")
 
         c_n = self.g_m.control_node
         with patch.object(c_n, 'open_start', c_n.open_stop):
@@ -569,7 +569,7 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
         """ Test invalid flash files """
         # Only if flash available
         if self.board_cfg.board_type == 'a8':
-            return
+            pytest.skip("Not for A8")
 
         # Flash with a profile
         files = [file_tuple('profile', CURRENT_DIR + 'profile.json')]
