@@ -33,6 +33,7 @@ import logging
 from threading import Thread
 from itertools import izip
 
+import pytest
 import mock
 from mock import patch
 from testfixtures import LogCapture
@@ -43,7 +44,7 @@ from gateway_code.integration import test_integration_mock
 from gateway_code.autotest import autotest
 from gateway_code.utils.node_connection import OpenNodeConnection
 from gateway_code.common import wait_cond, abspath, wait_tty, wait_no_tty
-from gateway_code.common import class_attr_has, object_attr_has
+from gateway_code.common import object_attr_has
 
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
@@ -261,7 +262,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def test_m3_exp_invalid_fw_target(self):
         """Run an experiment with an invalid firmware."""
         if self.board_cfg.board_class.TYPE != 'm3':
-            return
+            pytest.skip("Not an M3")
 
         # Invalid firmware for m3
         node_z1 = CURRENT_DIR + 'node.z1'
@@ -282,7 +283,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def test_m3_flash_inval_fw(self):
         """Flash an invalid firmware during an experiment."""
         if self.board_cfg.board_class.TYPE != 'm3':
-            return
+            pytest.skip("Not an M3")
+
         ret = self.server.post(EXP_START)
         self.assertEquals(0, ret.json['ret'])
 
@@ -310,12 +312,16 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             self.assertEquals(0, ret.json['ret'])
         return ret
 
-    @class_attr_has(CN_FEATURES_ATTR, 'radio', 'consumption')
     def test_m3_exp_with_measures(self):  # pylint:disable=too-many-locals
         """ Run an experiment with measures and profile update """
 
+        if ('consumption' not in self.g_m.control_node.FEATURES and
+                'radio' not in self.g_m.control_node.FEATURES):
+            pytest.skip("Control node doesn't support radio and consumption")
+
         if self.board_cfg.board_class.TYPE != 'm3':
-            return
+            pytest.skip("Not an M3")
+
         t_start = time.time()
 
         files = [
@@ -381,9 +387,11 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             except IOError:
                 self.fail('File should exist %r' % exp_files[meas_type])
 
-    @class_attr_has(CN_FEATURES_ATTR, 'consumption')
     def test_exp_with_fastest_measures(self):
         """ Run an experiment with fastest measures."""
+
+        if 'consumption' not in self.g_m.control_node.FEATURES:
+            pytest.skip("Control node doesn't support consumption")
 
         # Max profile and firmware if possible
         files = []
