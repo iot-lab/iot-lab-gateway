@@ -31,7 +31,6 @@ import unittest
 from subprocess import CalledProcessError
 
 import mock
-import pytest
 
 from gateway_code.autotest import open_a8_interface
 
@@ -45,4 +44,4 @@ class TestA8Connection(unittest.TestCase):
     def test_flash_error(self, scp):
         scp.side_effect = CalledProcessError(1, 'flash', 'flash failed')
         connection = open_a8_interface.OpenA8Connection()
-        assert connection.flash('test/firmware') == 1
+        self.assertEquals(connection.flash('test/firmware'), 1)
