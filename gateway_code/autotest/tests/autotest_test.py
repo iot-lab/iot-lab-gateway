@@ -223,6 +223,14 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         leds.side_effect = autotest.FatalError("Leds Error")
         assert self.g_v.set_result_leds(0) == 1
 
+    @mock.patch('gateway_code.autotest.autotest.AutoTestManager._check')
+    def test_assert(self, check):
+        ret = 1
+        check.return_value = ret
+        with pytest.raises(autotest.FatalError) as exc:
+            assert self.g_v._assert(1, "noop", "err_log", "err_msg") == ret
+        assert "err_msg" in str(exc)
+
 
 class TestAutotestFatalError(unittest.TestCase):
 
