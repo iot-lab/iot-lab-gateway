@@ -73,7 +73,7 @@ class TestRestMethods(unittest.TestCase):
         with mock.patch.object(self.s_r, 'route') as m_route:
 
             def func():
-                pass
+                pass  # pragma: no cover
 
             ret = self.s_r.on_conditional_route('flash', '/test', 'POST', func)
             self.assertTrue(m_route.called)
