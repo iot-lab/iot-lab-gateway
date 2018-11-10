@@ -315,9 +315,9 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def test_m3_exp_with_measures(self):  # pylint:disable=too-many-locals
         """ Run an experiment with measures and profile update """
 
-        if ('consumption' not in self.g_m.control_node.FEATURES and
-                'radio' not in self.g_m.control_node.FEATURES):
-            pytest.skip("Control node doesn't support radio and consumption")
+        if self.board_cfg.cn_type != 'iotlab':
+            pytest.skip("Not an iotlab control node (requires consumption and "
+                        "radio features)")
 
         if self.board_cfg.board_class.TYPE != 'm3':
             pytest.skip("Not an M3")
@@ -390,8 +390,9 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def test_exp_with_fastest_measures(self):
         """ Run an experiment with fastest measures."""
 
-        if 'consumption' not in self.g_m.control_node.FEATURES:
-            pytest.skip("Control node doesn't support consumption")
+        # This test requires consumption feature from control_node
+        if self.board_cfg.cn_type != 'iotlab':
+            pytest.skip("Not an iotlab control node (requires consumption)")
 
         # Max profile and firmware if possible
         files = []
