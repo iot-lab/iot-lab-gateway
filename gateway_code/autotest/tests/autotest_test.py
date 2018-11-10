@@ -135,7 +135,7 @@ class TestProtocolGPS(unittest.TestCase):
 
             with pytest.raises(ValueError) as exc:
                 self.g_v._test_pps_open_node_invalid()
-                assert 'Unknown command' in str(exc)
+            assert 'Unknown command' in str(exc)
 
 
 class TestAutotestChecker(unittest.TestCase):
@@ -184,6 +184,14 @@ class TestAutotestChecker(unittest.TestCase):
         func_cmd(self)
         self.assertFalse(self.func.called)
         self.func.reset_mock()
+
+        with mock.patch('gateway_code.autotest.autotest.'
+                        'AutoTestManager._set_results_leds') as leds:
+            leds.side_effect = autotest.FatalError
+            func_cmd = autotest.autotest_checker('leds_blink')(self.function)
+            func_cmd(self)
+            self.assertFalse(self.func.called)
+            self.func.reset_mock()
 
 
 class TestAutoTestsErrorCases(unittest.TestCase):
