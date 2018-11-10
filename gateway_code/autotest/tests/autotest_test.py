@@ -24,6 +24,7 @@
 
 import unittest
 import mock
+import pytest
 
 from gateway_code.autotest import autotest
 from gateway_code.tests import utils
@@ -121,7 +122,8 @@ class TestProtocolGPS(unittest.TestCase):
                 return (0, ['ACK', 'test_pps_stop'])
             elif cmd == 'test_pps_get':
                 return pps_get_values.pop(0)
-            return self.fail('Unknown command %r' % cmd)
+
+            raise ValueError('Unknown command %r' % cmd)
 
         with mock.patch.object(self.g_v, '_on_call', _on_call):
             pps_get_values = [(0, ['ACK', 'test_pps_get', '0', 'pps']),
@@ -130,6 +132,10 @@ class TestProtocolGPS(unittest.TestCase):
 
             pps_get_values = []
             self.assertNotEquals(0, self.g_v._test_pps_open_node(0))
+
+            with pytest.raises(ValueError) as exc:
+                self.g_v._test_pps_open_node_invalid()
+                assert 'Unknown command' in str(exc)
 
 
 class TestAutotestChecker(unittest.TestCase):

@@ -524,6 +524,10 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         self._on_call(['test_pps_stop'])
         return ret_val
 
+    def _test_pps_open_node_invalid(self):
+        """Test an invalid command sent to open a8 m3 node."""
+        self._on_call(['test_pps_invalid'])
+
     @autotest_checker('test_pps_start', 'test_pps_get', 'test_pps_stop')
     def test_gps(self, gps):
         """ Test the gps """
