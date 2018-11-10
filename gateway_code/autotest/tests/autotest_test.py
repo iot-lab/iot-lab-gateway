@@ -185,14 +185,6 @@ class TestAutotestChecker(unittest.TestCase):
         self.assertFalse(self.func.called)
         self.func.reset_mock()
 
-        with mock.patch('gateway_code.autotest.autotest.'
-                        'AutoTestManager._set_results_leds') as leds:
-            leds.side_effect = autotest.FatalError
-            func_cmd = autotest.autotest_checker('leds_blink')(self.function)
-            func_cmd(self)
-            self.assertFalse(self.func.called)
-            self.func.reset_mock()
-
 
 class TestAutoTestsErrorCases(unittest.TestCase):
 
@@ -223,6 +215,13 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         self.assertTrue(ret_dict['ret'] >= 2)
         self.assertEquals([], ret_dict['success'])
         self.assertEquals(['setup', 'teardown'], ret_dict['error'])
+
+    @mock.patch('gateway_code.autotest.autotest.AutoTestManager.'
+                '_set_results_leds')
+    def test_fatal_error_leds(self, leds):
+        assert self.g_v.set_result_leds(0) == 0
+        leds.side_effect = autotest.FatalError("Leds Error")
+        assert self.g_v.set_result_leds(0) == 1
 
 
 class TestAutotestFatalError(unittest.TestCase):
