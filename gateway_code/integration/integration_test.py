@@ -26,6 +26,7 @@
 # pylint: disable=too-many-public-methods
 
 import os
+import os.path
 import time
 import math
 import subprocess
@@ -382,10 +383,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         #    * radio and conso file exist         #
         # # # # # # # # # # # # # # # # # # # # # #
         for meas_type in ('radio', 'consumption'):
-            try:
-                os.remove(exp_files[meas_type])
-            except IOError:
-                self.fail('File should exist %r' % exp_files[meas_type])
+            assert os.path.isfile(exp_files[meas_type])
+            os.remove(exp_files[meas_type])
 
     def test_exp_with_fastest_measures(self):
         """ Run an experiment with fastest measures."""
