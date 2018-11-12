@@ -115,7 +115,7 @@ def wait_no_tty(dev_tty, timeout=TTY_DETECT_TIME):
     return 0 if ret else 1
 
 
-def syncronous(tlockname):
+def synchronous(tlockname):
     """A decorator to place an instance based lock around a method """
     def _wrap(func):
         """Decorator implementation."""

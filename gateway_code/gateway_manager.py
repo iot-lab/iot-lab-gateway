@@ -79,7 +79,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         return ret
 
     # R0913 too many arguments 6/5
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Start experiment")
     def exp_start(self, user, exp_id,  # pylint: disable=R0913
                   firmware_path=None, profile_dict=None, timeout=0):
@@ -150,7 +150,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info("Start experiment succeeded")
         return ret_val
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def _timeout_exp_stop(self, exp_id, user):
         """ Run exp_stop after timeout.
 
@@ -164,12 +164,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         try:
             self.exp_stop()
         except EnvironmentError as err:
+            print("EnvironmentError", err)
             if err.errno == errno.EWOULDBLOCK:
                 LOGGER.warning('timeout_exp_stop would block hope its OK')
                 return
             raise
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Stop experiment")
     def exp_stop(self):
         """
@@ -215,7 +216,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         return ret_val
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def exp_update_profile(self, profile_dict):
         """ Update the experiment profile """
         LOGGER.info('Update experiment profile')
@@ -232,7 +233,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Update experiment profile failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Start open node power")
     def open_power_start(self, power=None):
         """ Power on the open node """
@@ -242,7 +243,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open power start failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Stop open node power")
     def open_power_stop(self, power=None):
         """ Power off the open node """
@@ -252,7 +253,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open power stop failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def open_debug_start(self):
         """ Start open node debugger """
         LOGGER.info('Open node debugger start')
@@ -262,7 +263,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open node debugger start failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def open_debug_stop(self):
         """ Stop open node debugger """
         LOGGER.info('Open node debugger stop')
@@ -272,7 +273,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open node debugger stop failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Soft reset of open node")
     def node_soft_reset(self, node):
         """
@@ -289,7 +290,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Reset failed on %s node: %d', node, ret)
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Flash of node")
     def node_flash(self, node, firmware_path):
         """
@@ -312,13 +313,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def auto_tests(self, channel, blink, flash, gps):
         """ Run Auto-tests on nodes and gateway """
         autotest_manager = autotest.AutoTestManager(self)
         return autotest_manager.auto_tests(channel, blink, flash, gps)
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def status(self):
         """ Run a node sanity status check """
         ret = 0
@@ -326,7 +327,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         ret += self.open_node.status()
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def sleep(self, seconds):  # pylint:disable=no-self-use
         """Sleep `seconds` seconds."""
         time.sleep(seconds)
