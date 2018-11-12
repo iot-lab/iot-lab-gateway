@@ -96,9 +96,9 @@ class TestWaitTTY(unittest.TestCase):
         self.assertEquals(1, common.wait_no_tty('/dev/null', 0))
 
 
-class TestSyncronousDecorator(unittest.TestCase):
+class TestSynchronousDecorator(unittest.TestCase):
 
-    def test_syncronous_decorator(self):
+    def test_synchronous_decorator(self):
 
         # using RLock as it's what I want to use at the end
         class PutAfterTime(object):  # pylint: disable=too-few-public-methods
@@ -107,7 +107,7 @@ class TestSyncronousDecorator(unittest.TestCase):
                 self.rlock = RLock()
                 self.item_list = []
 
-            @common.syncronous('rlock')
+            @common.synchronous('rlock')
             def put_after_time(self, item, delay=0):
                 time.sleep(delay)
                 self.item_list.append(item)
