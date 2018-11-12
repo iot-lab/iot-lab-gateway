@@ -25,7 +25,7 @@ RUN apt-get update && \
 
 # Install app dependencies
 RUN sudo pip install --upgrade pip && \
-    sudo pip install tox
+    sudo pip install tox codecov
 
 RUN apt-get -y --no-install-recommends install \
     ca-certificates \
