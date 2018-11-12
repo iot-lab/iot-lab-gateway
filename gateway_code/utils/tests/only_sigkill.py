@@ -21,7 +21,7 @@
 """Ignore SIGINT/SIGTERM, kill with SIGKILL."""
 import signal
 
-if __name__ == '__main__':
+if __name__ == '__main__':  # pragma: no cover
     signal.signal(signal.SIGINT, signal.SIG_IGN)
     signal.signal(signal.SIGTERM, signal.SIG_IGN)
     signal.pause()

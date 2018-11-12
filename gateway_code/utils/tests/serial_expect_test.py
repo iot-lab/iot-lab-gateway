@@ -74,6 +74,10 @@ class TestSerialExpect(unittest.TestCase):
         ret = self.expect.expect('ab.*45')
         self.assertEquals('abcde12345', ret)
 
+    def test_expect_empty(self):
+        self.read_ret = []
+        assert self.serial.read(1) == ''
+
     def test_expect_timeout(self):
         self.read_ret = ['wrong_text']
         ret = self.expect.expect('ab.*45', 0.0)

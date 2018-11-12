@@ -158,7 +158,7 @@ def object_attr_has(obj, features_attr, required_list):
     return required.issubset(available)
 
 
-def class_attr_has(features_attr, required_list, pre_func=None):
+def class_attr_has(features_attr, required_list):
     """Only run tests if required `commands` are in self.features_attr."""
 
     def _wrap(func):
@@ -168,10 +168,7 @@ def class_attr_has(features_attr, required_list, pre_func=None):
             """ Function wrapped with test """
             has_required = object_attr_has(self, features_attr, required_list)
             if has_required:
-                if pre_func is not None:
-                    pre_func(self)
                 return func(self, *args, **kwargs)
-            else:
-                return 0
+            return 0
         return _wrapped_f
     return _wrap
