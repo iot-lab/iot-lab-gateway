@@ -32,6 +32,8 @@ Complement the 'integration' tests
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
+import os
+import errno
 import unittest
 
 import webtest
@@ -91,6 +93,29 @@ class TestRestMethods(unittest.TestCase):
             self.assertFalse(m_route.called)
             self.assertIsNone(ret)
             m_route.reset_mock()
+
+    @mock.patch('webtest.TestApp._check_status')
+    @mock.patch('webtest.TestApp._check_errors')
+    def test_routes_env_error(self, errors, status):
+        # pylint:disable=unused-argument
+        def cb_env_err():
+            err = errno.EIO
+            raise EnvironmentError(err, os.strerror(err), "Test Error")
+
+        ret = self.s_r.route('/test', 'POST', callback=cb_env_err)
+        self.assertIsNotNone(ret)
+        assert "500 Internal Server Error" in self.server.post('/test')
+
+    @mock.patch('webtest.TestApp._check_status')
+    @mock.patch('webtest.TestApp._check_errors')
+    def test_routes_value_error(self, errors, status):
+        # pylint:disable=unused-argument
+        def cb_value_err():
+            raise ValueError("Test Error")
+
+        ret = self.s_r.route('/test', 'POST', callback=cb_value_err)
+        self.assertIsNotNone(ret)
+        assert "500 Internal Server Error" in self.server.post('/test')
 
     def test_exp_start_file_and_profile(self):
         self.g_m.exp_start.return_value = 0
