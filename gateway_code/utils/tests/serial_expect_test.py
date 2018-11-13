@@ -123,6 +123,11 @@ class TestSerialExpect(unittest.TestCase):
         ret = self.expect.expect('a.*d')
         self.assertEquals('', ret)
 
+    def test_close_attribute_error(self):
+        # Smoke test for close when and AttributeError exception is raised.
+        self.serial.close = mock.Mock(side_effect=AttributeError)
+        self.expect.close()
+
     def test_verbose_mode(self):
         logger = mock.Mock()
         logger.debug = mock.Mock(side_effet=ValueError(""))

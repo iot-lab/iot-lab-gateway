@@ -27,6 +27,7 @@ import unittest
 import threading
 from subprocess import Popen, PIPE
 
+import pytest
 import mock
 
 from ..node_connection import OpenNodeConnection
@@ -34,10 +35,18 @@ from ..node_connection import OpenNodeConnection
 # pylint:disable=missing-docstring
 
 
+@pytest.fixture()
+def my_capsys(request, capsys):
+    # set capsys as a class attribute on the invoking test context
+    request.cls.capsys = capsys
+
+
 class TestOpenNodeConnection(unittest.TestCase):
     """ Test the open node autotest interface
 
     Run tests with socat to be close to serial_redirection """
+
+    capsys = None
 
     def setUp(self):
         port = OpenNodeConnection.PORT
@@ -123,6 +132,17 @@ class TestOpenNodeConnection(unittest.TestCase):
     def test_timeout(self):
         self.write_delay = 0.2
         ret = OpenNodeConnection.send_one_command(['cmd'], timeout=0.1)
+        self.assertEquals(None, ret)
+
+    @pytest.mark.usefixtures("my_capsys")
+    def test_ioerror_thread_mock(self):
+        # raise ioerror when writing on stdin
+        self.redirect.stdin = mock.Mock()
+        self.redirect.stdin.write = mock.Mock(
+            side_effect=IOError("Test Error"))
+        ret = OpenNodeConnection.send_one_command(['cmd'], timeout=0.1)
+        out, _ = self.capsys.readouterr()
+        assert out == "Test Error\n"
         self.assertEquals(None, ret)
 
 

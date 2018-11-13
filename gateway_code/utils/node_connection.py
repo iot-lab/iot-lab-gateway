@@ -95,7 +95,7 @@ class OpenNodeConnection(object):
     def empty(self):
         """ Empty out buffer """
         while self._readline() is not None:
-            pass
+            pass  # pragma: no cover
 
     def _writeline(self, line):
         """ Write a line """
