@@ -25,7 +25,7 @@ from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
-class NodeNrf52Dk(NodeOpenOCDBase):
+class NodeNrf51Dk(NodeOpenOCDBase):
     """ Open node NRF51DK implemention """
 
     TYPE = 'nrf51dk'
