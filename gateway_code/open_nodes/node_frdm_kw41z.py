@@ -25,8 +25,8 @@ from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
 
 
-class NodeNrf52Dk(NodeJLinkBase):
-    """ Open node NRF52DK implemention """
+class NodeFrdmKw41z(NodeJLinkBase):
+    """ Open node FRDM-KW41Z implemention """
 
     TYPE = 'frdm_kw41z'
     OPENOCD_CFG_FILE = static_path('iot-lab-frdm-kw41z.cfg')
