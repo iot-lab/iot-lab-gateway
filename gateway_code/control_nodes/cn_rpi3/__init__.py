@@ -142,6 +142,7 @@ class ControlNodeRpi3(ControlNodeBase):
         """Cleanup the control node configuration."""
         ret_val = 0
         ret_val += self.configure_profile(None)
+        ret_val += self.open_start('dc')
         if os.path.isfile(CAMERA_CONFIG):
             ret_val += self.mjpg_streamer.stop()
             LOGGER.debug("Process stopped: mjpg_streamer, ret: %d", ret_val)
