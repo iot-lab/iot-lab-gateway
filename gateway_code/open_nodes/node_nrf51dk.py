@@ -26,7 +26,7 @@ from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
 class NodeNrf51Dk(NodeOpenOCDBase):
-    """ Open node NRF51DK implemention """
+    """ Open node NRF51DK implementation """
 
     TYPE = 'nrf51dk'
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'

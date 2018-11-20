@@ -26,7 +26,7 @@ from gateway_code.open_nodes.common.node_st_link import NodeStLinkBase
 
 
 class NodeStLrwan1(NodeStLinkBase):
-    """ Open node STM32 LRWAN1 implemention """
+    """ Open node STM32 LRWAN1 implementation """
 
     TYPE = 'st_lrwan1'
     OPENOCD_CFG_FILE = static_path('iot-lab-st-lrwan1.cfg')

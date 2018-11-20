@@ -26,7 +26,7 @@ from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
 
 
 class NodeFrdmKw41z(NodeJLinkBase):
-    """ Open node FRDM-KW41Z implemention """
+    """ Open node FRDM-KW41Z implementation """
 
     TYPE = 'frdm_kw41z'
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'

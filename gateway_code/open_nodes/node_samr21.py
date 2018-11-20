@@ -26,7 +26,7 @@ from gateway_code.open_nodes.common.node_edbg import NodeEdbgBase
 
 
 class NodeSamr21(NodeEdbgBase):
-    """ Open node SAMR21 implemention """
+    """ Open node SAMR21 implementation """
 
     TYPE = 'samr21'
     OPENOCD_CFG_FILE = static_path('iot-lab-samr21.cfg')

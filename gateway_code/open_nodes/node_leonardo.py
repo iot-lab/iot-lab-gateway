@@ -36,7 +36,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeLeonardo(OpenNodeBase):
-    """ Open node Leonardo implemention """
+    """ Open node Leonardo implementation """
 
     TYPE = 'leonardo'
     ELF_TARGET = ('ELFCLASS32', 'EM_AVR')

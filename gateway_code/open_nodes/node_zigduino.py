@@ -40,7 +40,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class NodeZigduino(OpenNodeBase):
-    """Open node Zigduino implemention."""
+    """Open node Zigduino implementation."""
 
     TYPE = "zigduino"
     ELF_TARGET = ('ELFCLASS32', 'EM_AVR')

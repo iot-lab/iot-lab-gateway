@@ -28,7 +28,7 @@ from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
 class NodeM3(NodeOpenOCDBase):
-    """ Open node M3 implemenation """
+    """ Open node M3 implementation """
 
     TYPE = 'm3'
     TTY = '/dev/iotlab/ttyON_M3'

@@ -26,7 +26,7 @@ from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
 
 
 class NodeNrf52840Dk(NodeJLinkBase):
-    """ Open node NRF52840DK implemention """
+    """ Open node NRF52840DK implementation """
 
     TYPE = 'nrf52840dk'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf52xxxdk.cfg')
