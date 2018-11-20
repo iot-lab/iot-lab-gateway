@@ -146,7 +146,8 @@ class TestCnRPI3(unittest.TestCase):
 
         assert ret == 0
         assert cn_rpi3.profile is None
-        assert call.call_count == 0
+        assert call.call_count == 1  # ykush is called once to start the on.
+        call.call_count = 0
 
         with mock.patch('gateway_code.control_nodes.cn_rpi3.RTL_TCP_CONFIG',
                         self.rtl_tcp_conf):
@@ -163,7 +164,7 @@ class TestCnRPI3(unittest.TestCase):
 
             assert ret == 0
             assert cn_rpi3.profile is None
-            assert call.call_count == 1
+            assert call.call_count == 2
             rtl_stop.assert_called_once()
             call.assert_called_with(args=['sudo', 'ykushcmd', '-d', '3'])
 
@@ -180,4 +181,4 @@ class TestCnRPI3(unittest.TestCase):
             assert ret == 0
             assert cn_rpi3.profile is None
             cam_stop.assert_called_once()
-            assert call.call_count == 0
+            assert call.call_count == 1
