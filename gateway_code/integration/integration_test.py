@@ -257,6 +257,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEquals(0, ret.json['ret'])
 
         # Make sure the node can be reflashed after debug session is done
+        time.sleep(1)
         ret = self._flash()
         self.assertEquals(0, ret.json['ret'])
 
