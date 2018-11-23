@@ -131,9 +131,11 @@ class ControlNodeRpi3(ControlNodeBase):
             ret_val += self.mjpg_streamer.start()
             LOGGER.debug("Process started: mjpg_streamer, ret: %d", ret_val)
         if os.path.isfile(RTL_TCP_CONFIG):
+            ret_val += self.open_stop()
             ret_val += _call_cmd(YKUSHCMD.format(model="",
                                                  cmd="-u", port="3"))
             ret_val += self.rtl_tcp.start()
+            ret_val += self.open_start()
             LOGGER.debug("Process started: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
@@ -147,9 +149,9 @@ class ControlNodeRpi3(ControlNodeBase):
             ret_val += self.mjpg_streamer.stop()
             LOGGER.debug("Process stopped: mjpg_streamer, ret: %d", ret_val)
         if os.path.isfile(RTL_TCP_CONFIG):
+            ret_val += self.rtl_tcp.stop()
             ret_val += _call_cmd(YKUSHCMD.format(model="",
                                                  cmd="-d", port="3"))
-            ret_val += self.rtl_tcp.stop()
             LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
