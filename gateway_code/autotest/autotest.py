@@ -445,7 +445,7 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
             # UID: split every 4 char
             uid_split = [''.join(x) for x in zip(*[iter(uid_str)] * 4)]
             uid = ':'.join(uid_split)
-            self.ret_dict['open_node_m3_uid'] = uid
+            self.ret_dict['open_node_uid'] = uid
         else:  # pragma: no cover
             pass
 
