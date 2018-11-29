@@ -64,13 +64,13 @@ class TestsCall(unittest.TestCase):
     def setUp(self):
         self.timeout = 5
         self.edbg = edbg.Edbg(timeout=self.timeout)
-        self.edbg._edbg_args = mock.Mock()
+        self.edbg.args = mock.Mock()
 
     def test_timeout_call(self):
         """Test timeout reached."""
-        self.edbg._edbg_args.return_value = {'args': ['sleep', '10']}
+        self.edbg.args.return_value = {'args': ['sleep', '10']}
         t_0 = time.time()
-        ret = self.edbg._call_cmd('sleep')
+        ret = self.edbg.call_cmd('sleep')
         t_end = time.time()
 
         # Not to much more
@@ -79,9 +79,9 @@ class TestsCall(unittest.TestCase):
 
     def test_no_timeout(self):
         """Test timeout not reached."""
-        self.edbg._edbg_args.return_value = {'args': ['sleep', '1']}
+        self.edbg.args.return_value = {'args': ['sleep', '1']}
         t_0 = time.time()
-        ret = self.edbg._call_cmd('sleep')
+        ret = self.edbg.call_cmd('sleep')
         t_end = time.time()
 
         # Strictly lower here

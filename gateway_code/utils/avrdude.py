@@ -23,61 +23,39 @@
 
 """ AvrDude commands """
 
-import os
-import shlex
-
 import logging
 import serial
 
 from gateway_code import common
 from gateway_code.common import logger_call
-from . import subprocess_timeout
+from gateway_code.utils.tools import FlashTool
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-class AvrDude(object):
+class AvrDude(FlashTool):
     """ Debugger class, implemented as a global variable storage """
     _ARVDUDE_CONF_KEYS = {'tty', 'baudrate', 'model', 'programmer'}
-    DEVNULL = open(os.devnull, 'w')
 
     AVRDUDE = 'avrdude -p {model} -P {tty} -c {programmer} -b {baudrate} {cmd}'
     FLASH = ' -D -U {0}'
 
-    TIMEOUT = 100
-
-    def __init__(self, avrdude_conf, verb=False, timeout=TIMEOUT):
+    def __init__(self, avrdude_conf, *args, **kwargs):
+        super(AvrDude, self).__init__(*args, **kwargs)
         assert set(avrdude_conf.keys()) == self._ARVDUDE_CONF_KEYS
-        self.timeout = timeout
         self.conf = avrdude_conf
-        self.out = None if verb else self.DEVNULL
 
     @logger_call("AvrDude : flash")
     def flash(self, hex_file):
         """ Flash firmware """
         try:
             hex_path = common.abspath(hex_file)
-            return self._call_cmd(self.FLASH.format(hex_path))
+            cmd_flash = self.FLASH.format(hex_path)
+            cmd_flash = self.AVRDUDE.format(cmd=cmd_flash, **self.conf)
+            return self.call_cmd(cmd_flash)
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
-
-    def _call_cmd(self, command_str):
-        """ Create the subprocess """
-        kwargs = self._avrdude_args(command_str)
-        try:
-            return subprocess_timeout.call(timeout=self.timeout,
-                                           **kwargs)
-        except subprocess_timeout.TimeoutExpired as exc:
-            LOGGER.error("Openocd '%s' timeout: %s", command_str, exc)
-            return 1
-
-    def _avrdude_args(self, command_str):
-        """ Get subprocess arguments for command_str """
-        # Generate full command arguments
-        cmd = self.AVRDUDE.format(cmd=command_str, **self.conf)
-        args = shlex.split(cmd)
-        return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
     @staticmethod
     def trigger_bootloader(tty, tty_prog, timeout=10, baudrate=1200):

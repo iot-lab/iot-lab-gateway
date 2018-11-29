@@ -20,23 +20,19 @@
 # knowledge of the CeCILL license and that you accept its terms.
 """ cc2538 commands """
 
-import os
-import shlex
 
 import logging
 import tempfile
 
 from gateway_code import common
 from gateway_code.utils.elftarget import get_elf_load_addr
-from . import subprocess_timeout
+from gateway_code.utils.tools import FlashTool
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-class CC2538(object):
-    """ Debugger class, implemented as a global variable storage """
-    DEVNULL = open(os.devnull, 'w')
-
+class CC2538(FlashTool):
+    """ class to call cc2538-bsl """
     CC2538BSL = ('/usr/bin/cc2538-bsl.py -p {port} {cmd}')
 
     RESET = ('')
@@ -48,19 +44,15 @@ class CC2538(object):
              ' -v'
              ' {hex}')
 
-    TIMEOUT = 100
-
-    def __init__(self, config, verb=False, timeout=TIMEOUT):
+    def __init__(self, config, *args, **kwargs):
+        super(CC2538, self).__init__(*args, **kwargs)
         self.port = config['port']
         self.baud = config['baudrate']
-        self.timeout = timeout
-
-        self.out = None if verb else self.DEVNULL
 
     def reset(self):
         """ Reset """
         cmd = self.CC2538BSL.format(port=self.port, cmd=self.RESET)
-        return self._call_cmd(cmd)
+        return self.call_cmd(cmd)
 
     def flash(self, elf_file):
         """ Flash firmware """
@@ -76,7 +68,7 @@ class CC2538(object):
             # creating hex file
             to_hex_command = 'objcopy -I elf32-big -O ihex {elf} {hex}'
             cmd = to_hex_command.format(elf=elf_path, hex=hex_path)
-            ret_value = self._call_cmd(cmd)
+            ret_value = self.call_cmd(cmd)
             LOGGER.info('To hex conversion ret value : %d', ret_value)
 
             # getting flash addr
@@ -86,7 +78,7 @@ class CC2538(object):
             flash_cmd = self.FLASH.format(baudrate=self.baud, hex=hex_path,
                                           addr=address)
             cmd = self.CC2538BSL.format(port=self.port, cmd=flash_cmd)
-            ret_value += self._call_cmd(cmd)
+            ret_value += self.call_cmd(cmd)
             LOGGER.info('Flashing ret value : %d', ret_value)
 
             # removing temporary hex file
@@ -96,21 +88,3 @@ class CC2538(object):
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
-
-    def _call_cmd(self, command_str):
-        """ Run the given command_str to cc2538-bsl."""
-
-        kwargs = self._cc2538_args(command_str)
-        LOGGER.info(kwargs)
-
-        try:
-            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
-        except subprocess_timeout.TimeoutExpired as exc:
-            LOGGER.error("CC2538 '%s' timeout: %s", command_str, exc)
-            return 1
-
-    def _cc2538_args(self, command_str):
-        """ Get subprocess arguments for command_str """
-        # Generate full command arguments
-        args = shlex.split(command_str)
-        return {'args': args, 'stdout': self.out, 'stderr': self.out}

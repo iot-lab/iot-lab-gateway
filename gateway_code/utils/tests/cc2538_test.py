@@ -88,13 +88,13 @@ class TestsCC2538Call(unittest.TestCase):
         self.cc2538 = cc2538.CC2538({'port': NodeFirefly.TTY,
                                      'baudrate': NodeFirefly.BAUDRATE},
                                     timeout=self.timeout)
-        self.cc2538._cc2538_args = mock.Mock()
+        self.cc2538.args = mock.Mock()
 
     def test_timeout_call(self):
         """Test timeout reached."""
-        self.cc2538._cc2538_args.return_value = {'args': ['sleep', '10']}
+        self.cc2538.args.return_value = {'args': ['sleep', '10']}
         t_0 = time.time()
-        ret = self.cc2538._call_cmd('sleep')
+        ret = self.cc2538.call_cmd('sleep')
         t_end = time.time()
 
         # Not to much more
@@ -103,9 +103,9 @@ class TestsCC2538Call(unittest.TestCase):
 
     def test_no_timeout(self):
         """Test timeout not reached."""
-        self.cc2538._cc2538_args.return_value = {'args': ['sleep', '1']}
+        self.cc2538.args.return_value = {'args': ['sleep', '1']}
         t_0 = time.time()
-        ret = self.cc2538._call_cmd('sleep')
+        ret = self.cc2538.call_cmd('sleep')
         t_end = time.time()
 
         # Strictly lower here

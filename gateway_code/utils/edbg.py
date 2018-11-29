@@ -22,21 +22,17 @@
 
 # pylint: disable=too-few-public-methods
 
-import os
-import shlex
-
 import logging
 import tempfile
 
 from gateway_code import common
-from . import subprocess_timeout
+from gateway_code.utils.tools import FlashTool
 
 LOGGER = logging.getLogger('gateway_code')
 
 
-class Edbg(object):
+class Edbg(FlashTool):
     """ Debugger class, implemented as a global variable storage """
-    DEVNULL = open(os.devnull, 'w')
 
     EDBG = ('/usr/bin/edbg {cmd}')
 
@@ -47,18 +43,12 @@ class Edbg(object):
              ' -p'
              ' -f {bin}')
 
-    TIMEOUT = 100
-
-    def __init__(self, verb=False, timeout=TIMEOUT):
-        self.timeout = timeout
-
-        self.out = None if verb else self.DEVNULL
+    def __init__(self, *args, **kwargs):
+        super(Edbg, self).__init__(*args, **kwargs)
 
     def flash(self, elf_file):
         """ Flash firmware """
         try:
-            ret_value = 0
-
             elf_path = common.abspath(elf_file)
             LOGGER.info('Creating bin path from %s', elf_path)
             bin_file = tempfile.NamedTemporaryFile(suffix='.bin')
@@ -68,37 +58,18 @@ class Edbg(object):
             # creating hex file
             to_bin_command = 'objcopy -I elf32-big -O binary {elf} {bin}'
             cmd = to_bin_command.format(elf=elf_path, bin=bin_path)
-            ret_value = self._call_cmd(cmd)
+            ret_value = self.call_cmd(cmd)
             LOGGER.info('To bin conversion ret value : %d', ret_value)
 
             # Flashing
             flash_cmd = self.FLASH.format(bin=bin_path)
             cmd = self.EDBG.format(cmd=flash_cmd)
-            ret_value += self._call_cmd(cmd)
+            ret_value += self.call_cmd(cmd)
             LOGGER.info('Flashing ret value : %d', ret_value)
 
             # removing temporary bin file
             bin_file.close()
 
             return ret_value
-        except IOError as err:
-            LOGGER.error('%s', err)
+        except IOError:
             return 1
-
-    def _call_cmd(self, command_str):
-        """ Run the given command_str."""
-
-        kwargs = self._edbg_args(command_str)
-        LOGGER.info(kwargs)
-
-        try:
-            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
-        except subprocess_timeout.TimeoutExpired as exc:
-            LOGGER.error("Edbg '%s' timeout: %s", command_str, exc)
-            return 1
-
-    def _edbg_args(self, command_str):
-        """ Get subprocess arguments for command_str """
-        # Generate full command arguments
-        args = shlex.split(command_str)
-        return dict(args=args, stdout=self.out, stderr=self.out)

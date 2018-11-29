@@ -67,13 +67,13 @@ class TestsCall(unittest.TestCase):
         self.timeout = 5
         self.avr = avrdude.AvrDude(NodeLeonardo.AVRDUDE_CONF,
                                    timeout=self.timeout)
-        self.avr._avrdude_args = mock.Mock()
+        self.avr.args = mock.Mock()
 
     def test_timeout_call(self):
         """Test timeout reached."""
-        self.avr._avrdude_args.return_value = {'args': ['sleep', '10']}
+        self.avr.args.return_value = {'args': ['sleep', '10']}
         t_0 = time.time()
-        ret = self.avr._call_cmd('sleep')
+        ret = self.avr.call_cmd('sleep')
         t_end = time.time()
 
         # Not to much more
@@ -82,9 +82,9 @@ class TestsCall(unittest.TestCase):
 
     def test_no_timeout(self):
         """Test timeout not reached."""
-        self.avr._avrdude_args.return_value = {'args': ['sleep', '1']}
+        self.avr.args.return_value = {'args': ['sleep', '1']}
         t_0 = time.time()
-        ret = self.avr._call_cmd('sleep')
+        ret = self.avr.call_cmd('sleep')
         t_end = time.time()
 
         # Strictly lower here
