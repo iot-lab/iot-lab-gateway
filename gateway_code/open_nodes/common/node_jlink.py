@@ -28,6 +28,12 @@ class NodeJLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
     """ Open node JLink implemention """
 
+    AUTOTEST_AVAILABLE = [
+        'echo', 'get_time',  # mandatory
+        'get_uid',
+        'leds_on', 'leds_off', 'leds_blink'
+    ]
+
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     TTY = '/dev/iotlab/ttyON_JLINK'
     BAUDRATE = 115200
