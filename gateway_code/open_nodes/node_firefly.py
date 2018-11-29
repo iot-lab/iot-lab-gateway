@@ -53,7 +53,7 @@ class NodeFirefly(OpenNodeBase):
 
     FIREFLY_CONF = {'port': TTY,
                     'baudrate': PROGRAM_BAUDRATE}
-    AUTOTEST_AVAILABLE = ['echo', 'get_time',
+    AUTOTEST_AVAILABLE = ['echo', 'get_time', 'get_uid',
                           'leds_on', 'leds_off', 'leds_blink']
 
     # The list of autotest available for your node.

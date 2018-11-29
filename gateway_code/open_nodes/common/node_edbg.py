@@ -43,7 +43,8 @@ class NodeEdbgBase(OpenNodeBase):
 
     AUTOTEST_AVAILABLE = [
         'echo', 'get_time',  # mandatory
-        'leds_on', 'leds_off'
+        'get_uid',
+        'leds_on', 'leds_off', 'leds_blink'
     ]
 
     ALIM = '5V'
