@@ -20,12 +20,15 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 """ tests for utils/tools FlashTool """
+# pylint: disable=redefined-outer-name
 
 import time
 import unittest
 
+import pytest
 from mock import mock
 
+from gateway_code.utils import subprocess_timeout
 from gateway_code.utils.tools import FlashTool
 
 
@@ -45,7 +48,7 @@ class TestsCall(unittest.TestCase):
 
         # Not to much more
         self.assertLess(t_end - t_0, self.timeout + 1)
-        self.assertNotEquals(ret, 0)
+        self.assertNotEqual(ret, 0)
 
     def test_no_timeout(self):
         """Test timeout not reached."""
@@ -56,4 +59,62 @@ class TestsCall(unittest.TestCase):
 
         # Strictly lower here
         self.assertLess(t_end - t_0, self.timeout - 1)
-        self.assertEquals(ret, 0)
+        self.assertEqual(ret, 0)
+
+
+@pytest.fixture()
+def logger_mock():
+    """mocking LOGGER"""
+    with mock.patch('gateway_code.utils.tools.LOGGER') as mocked:
+        yield mocked
+
+
+@pytest.fixture()
+def call_mock():
+    """mocking subprocess_timeout.call"""
+    with mock.patch('gateway_code.utils.subprocess_timeout.call') as mocked:
+        yield mocked
+
+
+# verb True/False
+# returncode 0/1
+# timeout/notimeout
+@pytest.mark.parametrize(['verb', 'returncode', 'timeout'], [
+    ('verbose', 'call success', 'timeout'),
+    ('verbose', 'call success', '!timeout'),
+    ('verbose', 'call fail', ' timeout'),
+    ('verbose', 'call fail', '!timeout'),
+    ('!verbose', 'call success', 'timeout'),
+    ('!verbose', 'call success', '!timeout'),
+    ('!verbose', 'call fail', 'timeout'),
+    ('!verbose', 'call fail', '!timeout'),
+])
+def test_stdout_verb(call_mock, logger_mock, verb, returncode, timeout):
+    """ Tests FlashTool output """
+    test_output = '**test_output**'
+    verb = verb == 'verbose'
+    returncode = 0 if returncode == 'success' else 1
+    timeout = timeout == 'timeout'
+
+    def mocked_call(*popenargs, **kwargs):  # pylint: disable= unused-argument
+        """mocking stdout write, timeout and returncode"""
+        stdout = kwargs['stdout']
+        stdout.write(test_output)
+        if timeout:
+            raise subprocess_timeout.TimeoutExpired('', 1)
+        return returncode
+
+    call_mock.side_effect = mocked_call
+
+    tool = FlashTool(verb=verb)
+    tool.call_cmd('unused command')
+
+    if verb and not timeout:
+        # we should see the output in the LOGGER.info
+        output_info = str(logger_mock.info.call_args)
+        assert test_output in output_info
+
+    if timeout or returncode != 0:
+        # we should see the output in the LOGGER.error
+        output_error = str(logger_mock.error.call_args)
+        assert test_output in output_error
