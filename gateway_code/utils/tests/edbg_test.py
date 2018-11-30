@@ -27,7 +27,6 @@
 # pylint: disable=maybe-no-member
 # pylint: disable=unused-argument
 
-import time
 import unittest
 
 import mock
@@ -57,33 +56,3 @@ class TestsMethods(unittest.TestCase):
     def test_invalid_firmware_path(self):
         ret = self.edbg.flash('/invalid/path')
         self.assertNotEqual(0, ret)
-
-
-class TestsCall(unittest.TestCase):
-    """ Tests edbg call timeout """
-    def setUp(self):
-        self.timeout = 5
-        self.edbg = edbg.Edbg(timeout=self.timeout)
-        self.edbg.args = mock.Mock()
-
-    def test_timeout_call(self):
-        """Test timeout reached."""
-        self.edbg.args.return_value = {'args': ['sleep', '10']}
-        t_0 = time.time()
-        ret = self.edbg.call_cmd('sleep')
-        t_end = time.time()
-
-        # Not to much more
-        self.assertLess(t_end - t_0, self.timeout + 1)
-        self.assertNotEqual(ret, 0)
-
-    def test_no_timeout(self):
-        """Test timeout not reached."""
-        self.edbg.args.return_value = {'args': ['sleep', '1']}
-        t_0 = time.time()
-        ret = self.edbg.call_cmd('sleep')
-        t_end = time.time()
-
-        # Strictly lower here
-        self.assertLess(t_end - t_0, self.timeout - 1)
-        self.assertEqual(ret, 0)
