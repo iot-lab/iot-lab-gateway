@@ -24,6 +24,7 @@
 import logging
 import os
 import shlex
+import tempfile
 
 from gateway_code.utils import subprocess_timeout
 
@@ -34,27 +35,50 @@ class FlashTool(object):
     """ common class for flash/debug tools """
     TIMEOUT = 100
 
-    DEVNULL = open(os.devnull, 'w')
-
     def __init__(self, verb=False, timeout=TIMEOUT):
-        self.out = None if verb else self.DEVNULL
+        self.verb = verb
         self.timeout = timeout
         self.name = self.__class__.__name__
 
-    def args(self, command_str):
+    def args(self, command_str):  # pylint:disable=no-self-use
         """splits a command into arguments for Popen"""
 
         args = shlex.split(command_str)
-        return {'args': args, 'stdout': self.out, 'stderr': self.out}
+        return {'args': args}
 
     def call_cmd(self, command_str):
         """ Run the given command_str."""
 
         kwargs = self.args(command_str)
+
+        file_descriptor, temp_path = tempfile.mkstemp()
+
         LOGGER.info(kwargs)
 
+        temp = open(temp_path, mode='w+')
+        kwargs['stdout'] = temp
+        kwargs['stderr'] = temp
+
         try:
-            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
+            returncode = subprocess_timeout.call(
+                timeout=self.timeout, **kwargs)
+
+            temp.seek(0)
+            output = temp.read()
+            if returncode != 0:
+                LOGGER.error(output)
+            if self.verb:
+                LOGGER.info(output)
+            return returncode
         except subprocess_timeout.TimeoutExpired as exc:
             LOGGER.error("%s '%s' timeout: %s", self.name, command_str, exc)
+            temp.seek(0)
+            output = temp.read()
+            LOGGER.error('stdout & stderr')
+            LOGGER.error(output)
             return 1
+        finally:
+            # cleanup
+            temp.close()
+            os.close(file_descriptor)
+            os.remove(temp_path)
