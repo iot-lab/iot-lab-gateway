@@ -72,7 +72,7 @@ class NodeFirefly(OpenNodeBase):
 
         common.wait_no_tty(self.TTY)
         ret_val += common.wait_tty(self.TTY, LOGGER)
-        ret_val += self.flash(firmware_path)
+        ret_val += self.flash(firmware_path, toggle_redirect=False)
         ret_val += self.serial_redirection.start()
         return ret_val
 
@@ -84,11 +84,11 @@ class NodeFirefly(OpenNodeBase):
         common.wait_no_tty(self.TTY)
         ret_val += common.wait_tty(self.TTY, LOGGER)
         ret_val += self.serial_redirection.stop()
-        ret_val += self.flash(None)
+        ret_val += self.flash(None, toggle_redirect=False)
         return ret_val
 
     @logger_call("Node firefly : flash of firefly node")
-    def flash(self, firmware_path=None):
+    def flash(self, firmware_path=None, toggle_redirect=True):
         """ Flash the given firmware on firefly node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
@@ -98,7 +98,13 @@ class NodeFirefly(OpenNodeBase):
         LOGGER.info('Flash firmware on firefly: %s', firmware_path)
         LOGGER.info('Firmware path : %s -- Firmware idle path : %s',
                     firmware_path, self.FW_IDLE)
-        return self.cc2538.flash(firmware_path)
+        ret_val = 0
+        if toggle_redirect:
+            ret_val += self.serial_redirection.stop()
+        ret_val += self.cc2538.flash(firmware_path)
+        if toggle_redirect:
+            ret_val += self.serial_redirection.start()
+        return ret_val
 
     @logger_call("Node firefly : reset of firefly node")
     def reset(self):
