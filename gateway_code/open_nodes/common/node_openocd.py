@@ -39,6 +39,7 @@ class NodeOpenOCDBase(OpenNodeBase):
     """ Open node OpenOCD implemention """
 
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+    OPENOCD_CLASS = OpenOCD
     OPENOCD_PATH = '/opt/openocd-0.10.0/bin/openocd'
 
     AUTOTEST_AVAILABLE = [
@@ -51,7 +52,7 @@ class NodeOpenOCDBase(OpenNodeBase):
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
-        self.openocd = OpenOCD.from_node(self)
+        self.openocd = self.OPENOCD_CLASS.from_node(self)
 
     def clear_serial(self):
         """Clear serial link by flushing the input buffer."""
