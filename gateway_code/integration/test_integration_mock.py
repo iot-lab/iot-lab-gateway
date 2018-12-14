@@ -25,7 +25,8 @@ import os
 import unittest
 import mock
 import webtest
-from nose.plugins.attrib import attr
+
+import pytest
 
 import gateway_code.rest_server
 import gateway_code.board_config
@@ -48,7 +49,6 @@ def run_integration():
 
 
 # pylint: disable=too-many-public-methods
-@attr('integration')
 class GatewayCodeMock(unittest.TestCase):
     """ gateway_code mock for integration tests  """
 
@@ -56,7 +56,7 @@ class GatewayCodeMock(unittest.TestCase):
     def setUpClass(cls):
 
         if not run_integration():
-            raise unittest.SkipTest("Skip board embedded tests")
+            pytest.skip("Skip integration tests")
 
         cls.gateway_manager = gateway_code.rest_server.GatewayManager('.')
         cls.gateway_manager.setup()
