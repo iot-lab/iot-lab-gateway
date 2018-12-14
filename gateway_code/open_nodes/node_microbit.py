@@ -22,7 +22,16 @@
 """ Open Node Micro:Bit experiment implementation """
 
 from gateway_code.config import static_path
+from gateway_code.utils.openocd import OpenOCD
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+
+
+class OpenOCDCustomReset(OpenOCD):
+    """Custom OpenOCD class with a Microbit specific reset sequence."""
+
+    RESET = ('-c "reset halt" '
+             '-c "reset run" '
+             '-c "shutdown"')
 
 
 class NodeMicrobit(NodeOpenOCDBase):
@@ -31,6 +40,7 @@ class NodeMicrobit(NodeOpenOCDBase):
     TYPE = 'microbit'
     TTY = '/dev/iotlab/ttyON_CMSIS-DAP'
     BAUDRATE = 115200
+    OPENOCD_CLASS = OpenOCDCustomReset
     OPENOCD_CFG_FILE = static_path('iot-lab-microbit.cfg')
     FW_IDLE = static_path('microbit_idle.elf')
     FW_AUTOTEST = static_path('microbit_autotest.elf')
