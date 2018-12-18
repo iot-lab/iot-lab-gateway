@@ -79,6 +79,22 @@ def test_registry_open_node():
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
 
+        def setup(self, firmware_path):
+            """ Setup the open node with a firmware"""
+            return 0
+
+        def teardown(self):
+            """ Cleanup the open node """
+            return 0
+
+        def status(self):
+            """ Status of the node """
+            return 0
+
+        def verify(self):
+            """ Verify the open node """
+            return 0
+
     assert open_node_class("my_node") == MyNode
 
     with pytest.raises(ValueError):
@@ -110,6 +126,22 @@ def test_registry_inheritance():
         TYPE = "base_open_node"
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
+
+        def setup(self, firmware_path):
+            """ Setup the open node with a firmware"""
+            return 0
+
+        def teardown(self):
+            """ Cleanup the open node """
+            return 0
+
+        def status(self):
+            """ Status of the node """
+            return 0
+
+        def verify(self):
+            """ Verify the open node """
+            return 0
 
     class DerivedOpenNode(BaseOpenNode):
         # pylint:disable=abstract-method
