@@ -30,6 +30,7 @@ from gateway_code.nodes import (open_node_class, control_node_class,
                                 OpenNodeBase, ControlNodeBase)
 from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.open_nodes.node_m3 import NodeM3
+from gateway_code.config import static_path
 
 
 def test_node_class():
@@ -215,3 +216,35 @@ def test_open_node_inheritance():
     assert board_instance.setup('path/to/firmware') == 42
     assert board_instance.teardown() == 4242
     assert board_instance.status() == 0
+
+
+def test_open_node_verify():
+    """
+        test case for verify open node method
+    """
+
+    class BaseOpenNode(OpenNodeBase):
+        # pylint:disable=abstract-method
+        """Basic empty OpenNode"""
+        TYPE = "base_open_node"
+        ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+        AUTOTEST_AVAILABLE = ['echo', 'get_time']
+        FW_IDLE = static_path('m3_idle.elf')
+        FW_AUTOTEST = static_path('m3_autotest.elf')
+
+        def setup(self, firmware_path):
+            """ Setup the open node with a firmware"""
+            return 0
+
+        def teardown(self):
+            """ Cleanup the open node """
+            return 0
+
+        def status(self):
+            """ Status of the node """
+            return 0
+
+    board = open_node_class("base_open_node")
+    assert board == BaseOpenNode
+    board_instance = board()
+    assert board_instance.verify() == 0
