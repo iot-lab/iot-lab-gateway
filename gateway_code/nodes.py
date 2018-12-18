@@ -108,6 +108,23 @@ class OpenNodeBase(object):
         """ Status of the node """
         pass  # pragma: no cover
 
+    def verify(self):
+        """ Verifiy the open node """
+        ret_val = 0
+        # Tuple with (class, machine) run 'elftarget.py' on a node firmware
+        if len(self.ELF_TARGET) != 2:
+            ret_val += 1
+
+        for firmware_attr in ('FW_IDLE', 'FW_AUTOTEST'):
+            firmware = getattr(self, firmware_attr, None)
+            if not elftarget.is_compatible_with_node(firmware, self):
+                ret_val += 1
+
+        required_autotest = {'echo', 'get_time'}  # mandatory
+        if not required_autotest.issubset(self.AUTOTEST_AVAILABLE):
+            ret_val += 1
+        return ret_val
+
 
 # import all the nodes/plugins
 def import_all_nodes(pkg_dir):
@@ -137,25 +154,12 @@ def _node_class(cld, board_type):
         return output_class
 
 
-def _verify_open_node_class(output_class):
-    # Tuple with (class, machine) run 'elftarget.py' on a node firmware
-    assert len(output_class.ELF_TARGET) == 2
-
-    for firmware_attr in ('FW_IDLE', 'FW_AUTOTEST'):
-        firmware = getattr(output_class, firmware_attr, None)
-        assert elftarget.is_compatible_with_node(firmware, output_class), \
-            firmware
-
-    required_autotest = {'echo', 'get_time'}  # mandatory
-    assert required_autotest.issubset(output_class.AUTOTEST_AVAILABLE)
-
-
 def open_node_class(board_type):
     """Return the open node class implementation for `board_type`.
 
     :raises ValueError: if board class can't be found """
     output_class = _node_class(OpenNodeBase, board_type)
-    _verify_open_node_class(output_class)
+    assert output_class().verify() == 0
     return output_class
 
 
