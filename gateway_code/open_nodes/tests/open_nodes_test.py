@@ -80,22 +80,6 @@ def test_registry_open_node():
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
 
-        def setup(self, firmware_path):
-            """ Setup the open node with a firmware"""
-            return 0
-
-        def teardown(self):
-            """ Cleanup the open node """
-            return 0
-
-        def status(self):
-            """ Status of the node """
-            return 0
-
-        def verify(self):
-            """ Verify the open node """
-            return 0
-
     assert open_node_class("my_node") == MyNode
 
     with pytest.raises(ValueError):
@@ -127,22 +111,6 @@ def test_registry_inheritance():
         TYPE = "base_open_node"
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
-
-        def setup(self, firmware_path):
-            """ Setup the open node with a firmware"""
-            return 0
-
-        def teardown(self):
-            """ Cleanup the open node """
-            return 0
-
-        def status(self):
-            """ Status of the node """
-            return 0
-
-        def verify(self):
-            """ Verify the open node """
-            return 0
 
     class DerivedOpenNode(BaseOpenNode):
         # pylint:disable=abstract-method
@@ -218,7 +186,7 @@ def test_open_node_inheritance():
     assert board_instance.status() == 0
 
 
-def test_open_node_verify():
+def test_node_verify():
     """
         test case for verify open node method
     """
@@ -232,19 +200,23 @@ def test_open_node_verify():
         FW_IDLE = static_path('m3_idle.elf')
         FW_AUTOTEST = static_path('m3_autotest.elf')
 
-        def setup(self, firmware_path):
-            """ Setup the open node with a firmware"""
-            return 0
+    board = open_node_class("base_open_node")
+    assert board == BaseOpenNode
 
-        def teardown(self):
-            """ Cleanup the open node """
-            return 0
 
-        def status(self):
-            """ Status of the node """
+def test_node_verify_inheritance():
+    """
+        test case for verify open node method with inheritance
+    """
+
+    class BaseOpenNode(OpenNodeBase):
+        # pylint:disable=abstract-method
+        """Basic empty OpenNode"""
+        TYPE = "base_open_node"
+
+        @classmethod
+        def verify(cls):
             return 0
 
     board = open_node_class("base_open_node")
     assert board == BaseOpenNode
-    board_instance = board()
-    assert board_instance.verify() == 0
