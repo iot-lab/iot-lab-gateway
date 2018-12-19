@@ -33,7 +33,7 @@ from subprocess import check_output, STDOUT
 from collections import defaultdict
 
 from gateway_code import common
-from gateway_code.autotest import open_a8_interface
+from gateway_code.autotest import open_linux_interface
 from gateway_code.profile import Consumption, Radio
 from gateway_code.utils.node_connection import OpenNodeConnection
 import gateway_code.board_config as board_config
@@ -56,8 +56,10 @@ def autotest_checker(*required):
         @functools.wraps(func)
         def _wrapped_f(self, *args, **kwargs):
             """ Function wrapped with test """
-            available = set(self.on_class.AUTOTEST_AVAILABLE)
-
+            if self.linux_on_class is not None:
+                available = set(self.linux_on_class.AUTOTEST_AVAILABLE)
+            else:
+                available = set(self.on_class.AUTOTEST_AVAILABLE)
             if not required.issubset(available):
                 return 0
 
@@ -93,7 +95,8 @@ def tst_ok(bool_value):
     return 0 if bool_value else 1
 
 
-class AutoTestManager(object):  # pylint:disable=too-many-public-methods
+# pylint:disable=too-many-public-methods,too-many-instance-attributes
+class AutoTestManager(object):
     """ Gateway and open node auto tests """
 
     # Global used in tests to store checked open node features
@@ -104,9 +107,10 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         board_cfg = board_config.BoardConfig()
         self.on_class = board_cfg.board_class
         self.cn_class = board_cfg.cn_class
+        self.linux_on_class = board_cfg.linux_on_class
 
         self.on_serial = None
-        self.a8_connection = None
+        self.linux_connection = None
 
         self.ret_dict = {'ret': None, 'success': [], 'error': [], 'mac': {}}
         self.cn_measures = []
@@ -152,8 +156,8 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         ret_val += self._check(ret, 'open_node_connection', ret)
         return ret_val
 
-    def _setup_open_node_a8(self):
-        """ Setup open node a8-m3 connection
+    def _setup_linux_open_node(self):
+        """ Setup Linux open node connection
 
         * Boot open node
         * Connect through serial and get ip address
@@ -167,35 +171,38 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
 
         ret_val = 0
         ret = self.g_m.open_node.setup(None, debug=False)
-        self._assert(ret, 'open_a8_setup', ret, 'Open Node Setup failed')
+        self._assert(ret, 'linux_node_setup', ret, 'Linux Node Setup failed')
 
         match = self.g_m.open_node.wait_booted(timeout=300)
-        self._assert(tst_ok(match != ''), 'open_a8_boot_timeout', 300,
-                     'Open Node Boot failed')
+        self._assert(tst_ok(match != ''), 'linux_node_boot_timeout', 300,
+                     'Linux Node Boot failed')
 
         # get ip address using serial
-        # run socats commands to access a8-m3 open node on gateway
-        self.a8_connection = open_a8_interface.OpenA8Connection()
-        LOGGER.debug("Wait that open a8 node starts")
+        # run socats commands to access Linux node on gateway
+        self.linux_connection = open_linux_interface.OpenLinuxConnection()
+        LOGGER.debug("Wait that Linux node starts")
         try:
-            self.a8_connection.start()
-        except open_a8_interface.A8ConnectionError as err:  # pragma: no cover
-            self._assert(1, 'open_a8_init_error: %s' % err.err_msg, str(err),
+            self.linux_connection.start()
+        except open_linux_interface.LinuxConnectionError as err:
+            self._assert(1,
+                         'linux_node_init_error: %s' % err.err_msg, str(err),
                          'Setup Connection failed')
 
         # save mac address
-        a8_mac_addr = self.a8_connection.get_mac_addr()
-        self.ret_dict['mac']['a8'] = a8_mac_addr
-        test_ok = (MAC_RE.match(a8_mac_addr) is not None)
-        ret_val += self._check(tst_ok(test_ok), 'a8_mac_addr', a8_mac_addr)
+        linux_mac_addr = self.linux_connection.get_mac_addr()
+        self.ret_dict['mac']['ON'] = linux_mac_addr
+        test_ok = (MAC_RE.match(linux_mac_addr) is not None)
+        ret_val += self._check(tst_ok(test_ok), 'linux_mac_addr',
+                               linux_mac_addr)
 
-        ret = self.a8_connection.flash(self.g_m.open_node.A8_M3_FW_AUTOTEST)
-        self._assert(ret, 'flash a8_autotest.elf', ret, 'OpenNodeFlash Failed')
+        ret = self.linux_connection.flash(self.linux_on_class.FW_AUTOTEST)
+        self._assert(ret, 'linux_node_flash_autotest', ret,
+                     'Linux Open Node Flash Failed')
 
-        # Create open node a8-m3 connection through node-a8 serial redirection
-        self.on_serial = OpenNodeConnection(self.a8_connection.ip_addr)
+        # Create Linux open node connection through serial redirection
+        self.on_serial = OpenNodeConnection(self.linux_connection.ip_addr)
         ret = self.on_serial.start()
-        ret_val += self._check(ret, 'open_a8_serial', ret)
+        ret_val += self._check(ret, 'linux_open_node_serial', ret)
 
         return ret_val
 
@@ -206,10 +213,8 @@ class AutoTestManager(object):  # pylint:disable=too-many-public-methods
         ret_val = 0
         ret_val += self._open_node_start()
 
-        # setup
-        # A8 node is very different from the generic way
-        if self.on_class.TYPE == 'a8':
-            ret_val += self._setup_open_node_a8()
+        if self.linux_on_class is not None:
+            ret_val += self._setup_linux_open_node()
         else:
             ret_val += self._setup_open_node()
 

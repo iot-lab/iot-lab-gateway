@@ -1,0 +1,6 @@
+# Accessing Linux node
+Host *
+    User root
+    ConnectTimeout 5
+    StrictHostKeyChecking no
+

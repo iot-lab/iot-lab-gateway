@@ -21,7 +21,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Open A8 interface """
+""" Linux node interface """
 
 import os
 import shlex
@@ -33,7 +33,7 @@ from gateway_code.utils.serial_expect import SerialExpectForSocket
 
 LOGGER = logging.getLogger('gateway_code')
 
-_SSH_OPTS = '-F {ssh_cfg}'.format(ssh_cfg=static_path('ssh_a8_config'))
+_SSH_OPTS = '-F {ssh_cfg}'.format(ssh_cfg=static_path('ssh_linux_config'))
 SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "source /etc/profile; {cmd}"'
 SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 
@@ -42,10 +42,10 @@ IP_CMD = ("ip addr show dev eth0 " +
           r" | sed -n '/inet/ s/.*inet \([^ ]*\)\/.*/\1/p'")
 
 
-class A8ConnectionError(Exception):
+class LinuxConnectionError(Exception):
     """ FatalError during tests """
     def __init__(self, value, err_msg):
-        super(A8ConnectionError, self).__init__()
+        super(LinuxConnectionError, self).__init__()
         self.value = value
         self.err_msg = err_msg
 
@@ -53,27 +53,27 @@ class A8ConnectionError(Exception):
         return repr(self.value) + ' : ' + repr(self.err_msg)
 
 
-class OpenA8Connection(object):
-    """ Connection to the Open A8, redirect A8-M3 node serial link """
+class OpenLinuxConnection(object):
+    """ Connection to the Linux node, redirect open node serial link """
     def __init__(self):
         self.ip_addr = None
         self.local_tty = None
 
     @staticmethod
     def _get_ip_addr():
-        """ Wait until open node is booted and get its ip address"""
-        with SerialExpectForSocket(logger=LOGGER) as a8_expect:
-            a8_expect.send('root')
-            a8_expect.expect('# ')
-            a8_expect.send(IP_CMD)
-            ip_addr = a8_expect.expect(r'\d+\.\d+\.\d+.\d+', timeout=10)
-            a8_expect.send('exit')
+        """ Wait until Linux node is booted and get its ip address"""
+        with SerialExpectForSocket(logger=LOGGER) as serial_expect:
+            serial_expect.send('root')
+            serial_expect.expect('# ')
+            serial_expect.send(IP_CMD)
+            ip_addr = serial_expect.expect(r'\d+\.\d+\.\d+.\d+', timeout=10)
+            serial_expect.send('exit')
             if not ip_addr:  # pragma: no cover
-                raise A8ConnectionError("Invalid Ip address", ip_addr)
+                raise LinuxConnectionError("Invalid Ip address", ip_addr)
         return ip_addr
 
     def start(self):
-        """ Start a redirection of open_A8 M3 node serial """
+        """ Start a redirection of open node serial """
 
         self.ip_addr = self._get_ip_addr()
 
@@ -81,19 +81,8 @@ class OpenA8Connection(object):
             # Run dummy command to hide warning "adding to list of known host"
             self.ssh_run('echo "ssh ok"')
         except CalledProcessError as err:  # pragma: no cover
-            raise A8ConnectionError("OpenA8 ssh failed %s" % str(err),
-                                    "open_a8_ssh_connection_failed")
-
-        output = self.ssh_run('touch /tmp/boot_errors; cat /tmp/boot_errors')
-        if output:  # pragma: no cover
-            raise A8ConnectionError("Open A8 FTDI config failed", output)
-
-        # test if config OK for OPEN A8 m3
-        output = self.ssh_run('ftdi-devices-list')
-        if 'A8-M3' not in output:  # pragma: no cover
-            raise A8ConnectionError("Open A8 doesn't have M3 configured",
-                                    "Open_A8_m3_ftdi_not_configured")
-
+            raise LinuxConnectionError("Linux node ssh failed %s" % str(err),
+                                       "linux_node_ssh_connection_failed")
         self.ssh_run('/etc/init.d/serial_redirection restart')
 
     def get_mac_addr(self):
@@ -103,7 +92,7 @@ class OpenA8Connection(object):
         return mac_addr
 
     def flash(self, fw_path, dest='/tmp'):
-        """ Flash firmware on open node A8 """
+        """ Flash firmware on open node """
         try:
             fw_remote = os.path.join(dest, os.path.basename(fw_path))
             self.scp(fw_path, fw_remote)
@@ -113,7 +102,7 @@ class OpenA8Connection(object):
             return 1
 
     def ssh_run(self, command):
-        """ Run SSH command on A8 node """
+        """ Run SSH command on Linux node """
         cmd = SSH_CMD.format(ip_addr=self.ip_addr, cmd=command)
         LOGGER.debug(cmd)
 
@@ -121,7 +110,7 @@ class OpenA8Connection(object):
         return output
 
     def scp(self, src, dest):
-        """ SCP scr to A8 node at dest """
+        """ SCP scr to Linux node at dest """
         cmd = SCP_CMD.format(ip_addr=self.ip_addr, path=src, remote_path=dest)
         LOGGER.debug(cmd)
         check_call(shlex.split(cmd))

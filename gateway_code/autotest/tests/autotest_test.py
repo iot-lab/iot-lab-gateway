@@ -93,7 +93,8 @@ class TestProtocol(unittest.TestCase):
 class TestProtocolGPS(unittest.TestCase):
 
     def setUp(self):
-        mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8')).start()
+        config = utils.read_config_mock('a8', linux_open_node_type='a8-m3')
+        mock.patch(utils.READ_CONFIG, config).start()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
@@ -146,6 +147,7 @@ class TestAutotestChecker(unittest.TestCase):
         self.func = mock.Mock()
         self.on_class = mock.Mock()
         self.cn_class = mock.Mock()
+        self.linux_on_class = mock.Mock()
         self.TESTED_FEATURES.clear()
 
     def function(self, *args, **kwargs):
@@ -156,6 +158,7 @@ class TestAutotestChecker(unittest.TestCase):
 
         self.on_class.AUTOTEST_AVAILABLE = ['echo', 'get_time']
         self.cn_class.FEATURES = []
+        self.linux_on_class = None
 
         # Should call the function
         # func_cmd == decorated function
