@@ -34,7 +34,7 @@ class NodeNoBase(OpenNodeBase):
     """Open node No implementation."""
 
     @logger_call("Node No: Setup of no node")
-    def setup(self, firmware_path):
+    def setup(self, firmware_path=None):
         """.Does nothing."""
         return 0
 
