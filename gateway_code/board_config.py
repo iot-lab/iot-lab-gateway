@@ -40,6 +40,9 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
         self.board_class = nodes.open_node_class(board_type)
         cn_type = config.read_config('control_node_type', 'iotlab')
         self.cn_class = nodes.control_node_class(cn_type)
+        linux_on_type = config.read_config('linux_open_node_type', None)
+        self.linux_on_class = (nodes.open_node_class(linux_on_type)
+                               if linux_on_type else None)
 
         self.robot_type = config.read_config('robot', None)
         self.node_id = config.read_config('hostname')
