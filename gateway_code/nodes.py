@@ -115,20 +115,21 @@ class OpenNodeBase(object):
         """ Verifiy the open node """
         ret_val = 0
         # Tuple with (class, machine) run 'elftarget.py' on a node firmware
-        if getattr(cls, 'ELF_TARGET', None) is None or \
-           len(cls.ELF_TARGET) != 2:
+        if (getattr(cls, 'ELF_TARGET', None) is None or
+                len(cls.ELF_TARGET) != 2):
             ret_val += 1
 
         for firmware_attr in ('FW_IDLE', 'FW_AUTOTEST'):
             firmware = getattr(cls, firmware_attr, None)
-            if firmware and \
-               not elftarget.is_compatible_with_node(firmware, cls):
+            if (firmware is not None and not
+                    elftarget.is_compatible_with_node(firmware, cls)):
                 ret_val += 1
 
         required_autotest = {'echo', 'get_time'}  # mandatory
-        if getattr(cls, 'AUTOTEST_AVAILABLE', None) is None or \
-           not required_autotest.issubset(cls.AUTOTEST_AVAILABLE):
+        if (getattr(cls, 'AUTOTEST_AVAILABLE', None) is None or
+                not required_autotest.issubset(cls.AUTOTEST_AVAILABLE)):
             ret_val += 1
+
         return ret_val
 
 
@@ -165,7 +166,9 @@ def open_node_class(board_type):
 
     :raises ValueError: if board class can't be found """
     output_class = _node_class(OpenNodeBase, board_type)
-    assert output_class.verify() == 0
+    if output_class.verify() != 0:
+        raise ValueError('Invalid open node class {}'.format(
+            output_class.__name__))
     return output_class
 
 

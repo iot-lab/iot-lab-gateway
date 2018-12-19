@@ -25,12 +25,13 @@ from __future__ import print_function
 
 import pytest
 
+from mock import patch
+
 from gateway_code.nodes import (open_node_class, control_node_class,
                                 all_open_nodes_types, all_control_nodes_types,
                                 OpenNodeBase, ControlNodeBase)
 from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.open_nodes.node_m3 import NodeM3
-from gateway_code.config import static_path
 
 
 def test_node_class():
@@ -102,15 +103,28 @@ def test_registry_control_node():
         control_node_class("invalid_node")
 
 
+# parent class no TYPE
+class BaseOpenNode(OpenNodeBase):
+    """parent class with no TYPE attribute"""
+    TYPE = "base_open_node"
+    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+    AUTOTEST_AVAILABLE = ['echo', 'get_time']
+    TTY = '/dev/iotlab/tty_stlink'
+    BAUDRATE = 4242
+
+    def setup(self, firmware_path):
+        print("setup base open node with {}".format(firmware_path))
+        return 42
+
+    def teardown(self):
+        return 4242
+
+    def status(self):
+        return 0
+
+
 def test_registry_inheritance():
     """ test case for open node that derive from other open nodes """
-
-    class BaseOpenNode(OpenNodeBase):
-        # pylint:disable=abstract-method
-        """Basic empty OpenNode"""
-        TYPE = "base_open_node"
-        ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-        AUTOTEST_AVAILABLE = ['echo', 'get_time']
 
     class DerivedOpenNode(BaseOpenNode):
         # pylint:disable=abstract-method
@@ -141,24 +155,6 @@ def test_open_node_inheritance():
         in the case the superclass does not have the TYPE attribute
     """
 
-    # parent class no TYPE
-    class BaseOpenNode(OpenNodeBase):
-        """parent class with no TYPE attribute"""
-        ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-        AUTOTEST_AVAILABLE = ['echo', 'get_time']
-        TTY = '/dev/iotlab/tty_stlink'
-        BAUDRATE = 4242
-
-        def setup(self, firmware_path):
-            print("setup base open node with {}".format(firmware_path))
-            return 42
-
-        def teardown(self):
-            return 4242
-
-        def status(self):
-            return 0
-
     class NodeStLinkBoard1(BaseOpenNode):
         """derived class 1"""
         TYPE = "stlink_board_1"
@@ -186,37 +182,57 @@ def test_open_node_inheritance():
     assert board_instance.status() == 0
 
 
-def test_node_verify():
-    """
-        test case for verify open node method
-    """
+def test_node_verify_errors():
+    """test case for verify open node method."""
 
-    class BaseOpenNode(OpenNodeBase):
-        # pylint:disable=abstract-method
-        """Basic empty OpenNode"""
-        TYPE = "base_open_node"
-        ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-        AUTOTEST_AVAILABLE = ['echo', 'get_time']
-        FW_IDLE = static_path('m3_idle.elf')
-        FW_AUTOTEST = static_path('m3_autotest.elf')
+    class OpenNodeElfTargetInvalid(BaseOpenNode):
+        # pylint:disable=abstract-method,unused-variable
+        """OpenNode with invalid elf target attribute."""
+        TYPE = "open_node_elf_target_invalid"
+        ELF_TARGET = ('INVALID')
 
-    board = open_node_class("base_open_node")
-    assert board == BaseOpenNode
+    with pytest.raises(ValueError):
+        open_node_class("open_node_elf_target_invalid")
 
+    # Remove test node from registry
+    del OpenNodeBase.__registry__["open_node_elf_target_invalid"]
 
-def test_node_verify_inheritance():
-    """
-        test case for verify open node method with inheritance
-    """
+    class OpenNodeNoElfTargetNone(BaseOpenNode):
+        # pylint:disable=abstract-method,unused-variable
+        """OpenNode with None elf target attribute."""
+        TYPE = "open_node_elf_target_none"
+        ELF_TARGET = None
 
-    class BaseOpenNode(OpenNodeBase):
-        # pylint:disable=abstract-method
-        """Basic empty OpenNode"""
-        TYPE = "base_open_node"
+    with pytest.raises(ValueError):
+        open_node_class("open_node_elf_target_none")
 
-        @classmethod
-        def verify(cls):
-            return 0
+    # Remove test node from registry
+    del OpenNodeBase.__registry__["open_node_elf_target_none"]
 
-    board = open_node_class("base_open_node")
-    assert board == BaseOpenNode
+    class OpenNodeInvalidAutotest(BaseOpenNode):
+        # pylint:disable=abstract-method,unused-variable
+        """OpenNode with invalid autotest attribute."""
+        TYPE = "open_node_invalid_autotest"
+        AUTOTEST_AVAILABLE = ['echo', 'invalid']
+
+    with pytest.raises(ValueError):
+        open_node_class("open_node_invalid_autotest")
+
+    # Remove test node from registry
+    del OpenNodeBase.__registry__["open_node_invalid_autotest"]
+
+    class OpenNodeIncompatibleElf(BaseOpenNode):
+            # pylint:disable=abstract-method,unused-variable
+        """OpenNode with incompatible firmwares."""
+        TYPE = "open_node_incompatible_elf"
+        FW_IDLE = "idle"
+        FW_AUTOTEST = "autotest"
+
+    with patch('gateway_code.utils.'
+               'elftarget.is_compatible_with_node') as is_compatible:
+        is_compatible.return_value = False
+        with pytest.raises(ValueError):
+            open_node_class("open_node_incompatible_elf")
+
+    # Remove test node from registry
+    del OpenNodeBase.__registry__["open_node_incompatible_elf"]
