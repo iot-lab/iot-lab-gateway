@@ -97,8 +97,6 @@ class TestComplexExternalProcessStop(unittest.TestCase):
 
         self.assertTrue(m_process.send_signal.called)
 
-    @mock.patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE',
-                '/tmp/rtl_tcp_test.log')
     @mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
                 '/tmp/mjpg_streamer_test.log')
     def test_process_needs_sigkill(self):
@@ -176,8 +174,6 @@ class TestProcessSocat(unittest.TestCase):
 class TestProcessRtlTcp(unittest.TestCase):
     """RtlTcp._call_process."""
 
-    @mock.patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE',
-                '/tmp/rtl_tcp_test.log')
     def test__call_rtl_tcp_error(self, m_popen):
         """ Test the _call_process error case """
         m_popen.return_value.wait.return_value = -1

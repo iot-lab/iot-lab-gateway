@@ -22,7 +22,6 @@
 
 """ Module managing the open node RTL SDR TCP server """
 
-import os
 import shlex
 
 import logging
@@ -30,9 +29,6 @@ import logging
 from .external_process import ExternalProcess
 
 LOGGER = logging.getLogger('gateway_code')
-
-LOG_DIR = '/var/log/gateway-server'
-RTL_TCP_LOG_FILE = os.path.join(LOG_DIR, 'rtl_tcp.log')
 
 
 class RtlTcp(ExternalProcess):
@@ -49,7 +45,6 @@ class RtlTcp(ExternalProcess):
     def __init__(self, port, frequency):
         self.process_cmd = shlex.split(self.RTL_TCP.format(
             port=port, frequency=frequency))
-        self.stdout = open(RTL_TCP_LOG_FILE, 'w')
         super(RtlTcp, self).__init__()
 
     def check_error(self, retcode):

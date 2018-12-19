@@ -24,7 +24,6 @@ from mock import patch
 from gateway_code.nodes import all_control_nodes_types, control_node_class
 
 
-@patch('gateway_code.utils.rtl_tcp.RTL_TCP_LOG_FILE', '/tmp/rtl_tcp_test.log')
 @patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
        '/tmp/mjpg_streamer_test.log')
 def test_nodes_classes():

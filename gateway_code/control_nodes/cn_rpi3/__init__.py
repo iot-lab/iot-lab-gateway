@@ -28,13 +28,11 @@ import shlex
 from gateway_code.common import logger_call
 from gateway_code.nodes import ControlNodeBase
 from gateway_code.utils import subprocess_timeout
-from gateway_code.utils.rtl_tcp import RtlTcp
 from gateway_code.utils.mjpg_streamer import MjpgStreamer
 
 LOGGER = logging.getLogger('gateway_code')
 
 LOCAL_CONFIG_DIR = '/var/local/config'
-RTL_TCP_CONFIG = os.path.join(LOCAL_CONFIG_DIR, 'rtl_sdr')
 CAMERA_CONFIG = os.path.join(LOCAL_CONFIG_DIR, 'camera')
 
 # This command controls the power of the open node/rtl_tcp USB stick via the
@@ -57,8 +55,6 @@ class ControlNodeRpi3(ControlNodeBase):
     """ No Control Node """
     TYPE = 'rpi3'
     FEATURES = ['open_node_power']
-    RTL_TCP_PORT = 50000
-    RTL_TCP_FREQ = 868000000
     MJPG_STREAMER_PORT = 40000
 
     def __init__(self, node_id, default_profile):
@@ -66,7 +62,6 @@ class ControlNodeRpi3(ControlNodeBase):
         self.default_profile = default_profile
         self.profile = self.default_profile
         self.open_node_state = 'stop'
-        self.rtl_tcp = RtlTcp(self.RTL_TCP_PORT, self.RTL_TCP_FREQ)
         self.mjpg_streamer = MjpgStreamer(self.MJPG_STREAMER_PORT)
 
     @logger_call("Control node: Start")
@@ -92,9 +87,6 @@ class ControlNodeRpi3(ControlNodeBase):
     @staticmethod
     def _ykush_params(cmd):
         params = {'model': 'ykushxs', 'cmd': cmd, 'port': ''}
-        if os.path.isfile(RTL_TCP_CONFIG):
-            params['model'] = ''
-            params['port'] = '1'
         return params
 
     @logger_call("Control node: start power of open node")
@@ -130,13 +122,6 @@ class ControlNodeRpi3(ControlNodeBase):
         if os.path.isfile(CAMERA_CONFIG):
             ret_val += self.mjpg_streamer.start()
             LOGGER.debug("Process started: mjpg_streamer, ret: %d", ret_val)
-        if os.path.isfile(RTL_TCP_CONFIG):
-            ret_val += self.open_stop()
-            ret_val += _call_cmd(YKUSHCMD.format(model="",
-                                                 cmd="-u", port="3"))
-            ret_val += self.rtl_tcp.start()
-            ret_val += self.open_start()
-            LOGGER.debug("Process started: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
     @logger_call("Control node: Stop the experiment")
@@ -148,11 +133,6 @@ class ControlNodeRpi3(ControlNodeBase):
         if os.path.isfile(CAMERA_CONFIG):
             ret_val += self.mjpg_streamer.stop()
             LOGGER.debug("Process stopped: mjpg_streamer, ret: %d", ret_val)
-        if os.path.isfile(RTL_TCP_CONFIG):
-            ret_val += self.rtl_tcp.stop()
-            ret_val += _call_cmd(YKUSHCMD.format(model="",
-                                                 cmd="-d", port="3"))
-            LOGGER.debug("Process stopped: rtl_tcp, ret: %d", ret_val)
         return ret_val
 
     def autotest_setup(self, measures_handler):
