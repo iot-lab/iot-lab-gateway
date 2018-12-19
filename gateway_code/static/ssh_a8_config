@@ -1,6 +1,0 @@
-# Accessing a8 node
-Host *
-    User root
-    ConnectTimeout 5
-    StrictHostKeyChecking no
-
