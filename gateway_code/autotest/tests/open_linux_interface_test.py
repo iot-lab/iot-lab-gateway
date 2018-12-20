@@ -28,6 +28,8 @@
 # pylint: disable=no-member
 
 import unittest
+from subprocess import CalledProcessError
+import mock
 from gateway_code.autotest import open_linux_interface
 
 
@@ -35,3 +37,10 @@ class TestLinuxConnectionError(unittest.TestCase):
     def test_connection_error(self):
         error = open_linux_interface.LinuxConnectionError("value", "err_msg")
         self.assertEquals("'value' : 'err_msg'", str(error))
+
+    @mock.patch(('gateway_code.autotest.open_linux_interface'
+                 '.OpenLinuxConnection.scp'))
+    def test_flash_error(self, scp):
+        scp.side_effect = CalledProcessError(1, 'flash', 'flash failed')
+        connection = open_linux_interface.OpenLinuxConnection()
+        self.assertEquals(connection.flash('test/firmware'), 1)
