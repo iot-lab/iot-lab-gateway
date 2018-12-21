@@ -26,8 +26,8 @@ from gateway_code.open_nodes.common.node_no import NodeNoBase
 
 
 def test_node_no():
+    """Basic unittesting for node_no."""
     node = NodeNoBase()
-
     assert node.setup() == 0
     assert node.teardown() == 0
     assert node.flash() == 0

@@ -22,7 +22,6 @@
 """ Experiment implementation of an open node that has no node."""
 import logging
 
-from gateway_code import common
 from gateway_code.common import logger_call
 from gateway_code.nodes import OpenNodeBase
 
@@ -35,26 +34,28 @@ class NodeNoBase(OpenNodeBase):
 
     @logger_call("Node No: Setup of no node")
     def setup(self, firmware_path=None):
+        # pylint:disable=unused-argument,no-self-use
         """.Does nothing."""
         return 0
 
     @logger_call("Node No: teardown of no node")
-    def teardown(self):
+    def teardown(self):  # pylint:disable=no-self-use
         """.Does nothing."""
         return 0
 
     @logger_call("Node No: flash of no node")
     def flash(self, firmware_path=None):
+        # pylint:disable=unused-argument,no-self-use
         """Does nothing."""
         return 0
 
     @logger_call("Node No: reset of no node")
-    def reset(self):
+    def reset(self):  # pylint:disable=no-self-use
         """Does nothing."""
         return 0
 
     @staticmethod
-    def status():
+    def status():  # pylint:disable=no-self-use
         """Does nothing."""
         return 0
 
