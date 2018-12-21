@@ -25,8 +25,6 @@ import logging
 import shlex
 import subprocess
 
-import gateway_code.utils.ftdi_check
-
 from gateway_code.common import logger_call
 from gateway_code.utils.rtl_tcp import RtlTcp
 from gateway_code.open_nodes.common.node_no import NodeNoBase
