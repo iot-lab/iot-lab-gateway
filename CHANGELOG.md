@@ -1,6 +1,44 @@
 Changelog
 =========
 
+Version 2.7.0
+-------------
+
++ Open nodes
+  - New nRF51DK open node
+  - New nRF52840MDK open node
+  - New FRDM_KW41Z open node
+  - New Atmel SAMR30-XPro (samr30) open node
+  - Rework inheritance of open nodes: add new NodeOpenOCDBase, NodeJLinkBase,
+    NodeEdbgBase, etc. This factorize a lot of code between open nodes
+  - node_microbit: fix issue in OpenOCD reset sequence
+
++ Control nodes
+  - Use YepKit modules to control power of open nodes with cn_rpi3
+
++ Utils
+  - Rework openocd_cmd and avrdude_cmd to automatically the right open node
+    class
+  - Introcuce ExternalProcess to manage background services such as
+    serial_redirection
+  - mjpg_streamer and rtl_sdr are now based on ExternalProcess
+  - add mjpg_streamer_cmd, rtl_sdr_cmd and cc2538_cmd help cli tools
+
++ Tests and CI
+  - add unittests for Zigduino, Firefly, Leonardo, NodeOpenOCDBase and
+    NodeEdbgBase nodes
+  - add unittests for cn_iotlab and cn_iotlabm3
+  - add missing unittests as much as possible (too many to list)
+  - test coverage now reaches 90% without integration and 98% with integration
+  - all autotest firmwares now include the get_uid commands
+  - pytest coverage options are moved from setup.cfg to tox.ini (bug with
+    pycharm debugger)
+  - codecov is no longer a dependency in tox for integration tests: it is
+    installed by default on the gateways
+
+* Misc
+  - Remove robot_tests and roomba gateway code
+
 Version 2.6.0
 -------------
 
