@@ -24,6 +24,7 @@
 """ Gateway manager """
 
 import os
+import re
 import time
 import errno
 from threading import RLock, Timer
@@ -77,6 +78,21 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             raise StandardError("Control node flash failed: 'ret:{}'"
                                 .format(ret))
         return ret
+
+    @staticmethod
+    def _board_require_power_cycle(board):
+        """nrf52dk and nrf52840dk requires a power cycle after exp_start.
+
+        >>> GatewayManager._board_require_power_cycle("nrf52dk")
+        True
+        >>> GatewayManager._board_require_power_cycle("nrf52840dk")
+        True
+        >>> GatewayManager._board_require_power_cycle("nrf52840mdk")
+        False
+        >>> GatewayManager._board_require_power_cycle("m3")
+        False
+        """
+        return re.match('^nrf52[0-9]{0,3}dk$', board) is not None
 
     # R0913 too many arguments 6/5
     @common.synchronous('rlock')
@@ -141,6 +157,14 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
         ret_val += self.control_node.start_experiment(profile)
+
+        # nrf52dk and nrf52840dk needs a power cycle before their serial
+        # becomes fully usable.
+        if self._board_require_power_cycle(self.open_node.TYPE):
+            LOGGER.info("Power cycle node %s",
+                        self.control_node.node_id.replace('_', '-'))
+            ret_val += self.control_node.open_stop()
+            ret_val += self.control_node.open_start()
 
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
