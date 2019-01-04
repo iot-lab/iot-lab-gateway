@@ -117,12 +117,12 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def _run_simple_experiment_a8(self):  # pylint:disable=unused-argument
         """ Run an experiment for a8 nodes """
 
-        self.assertEquals(0, self.server.post(EXP_START).json['ret'])
+        self.assertEqual(0, self.server.post(EXP_START).json['ret'])
 
         # waiting One minute to try to have complete boot log on debug output
         time.sleep(60)  # maybe do something here later
 
-        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+        self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
     def _run_simple_experiment_node(self, board_class):
         """
@@ -132,7 +132,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # start exp with idle firmware
         files = [file_tuple('firmware', board_class.FW_IDLE)]
         ret = self.server.post(EXP_START, upload_files=files)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # wait firmware started
         time.sleep(1)
@@ -142,16 +142,16 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # flash echo firmware
         ret = self._flash(board_class.FW_AUTOTEST)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # Should echo <message>
         self._check_node_echo(echo=True)
 
         # open node reset and start stop
-        self.assertEquals(0, self.server.put('/open/reset').json['ret'])
+        self.assertEqual(0, self.server.put('/open/reset').json['ret'])
         if self.control_node_has('open_node_power'):
-            self.assertEquals(0, self.server.put('/open/stop').json['ret'])
-            self.assertEquals(0, self.server.put('/open/start').json['ret'])
+            self.assertEqual(0, self.server.put('/open/stop').json['ret'])
+            self.assertEqual(0, self.server.put('/open/start').json['ret'])
 
         # It is normal to fail if you flash just after starting a node
         # In these tests, I want the node to be "ready" so I ensure that
@@ -174,9 +174,9 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         if self.control_node_has('open_node_power'):
             # Stop should work with stopped node
-            self.assertEquals(0, self.server.put('/open/stop').json['ret'])
+            self.assertEqual(0, self.server.put('/open/stop').json['ret'])
         # stop exp
-        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+        self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
         # Got no error during tests (use call_args_list for printing on error)
         self.log_error.check()
@@ -228,18 +228,18 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # Flash idle firmware
         ret = self._flash()
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # idle firmware, there should be no reply
         self._check_node_echo(echo=False)
 
         # Start debugger
         ret = self.server.put('/open/debug/start')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # Flash autotest firmware
         ret = subprocess.call(gdb_cmd, stderr=subprocess.STDOUT)
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
         time.sleep(1)
 
         # Autotest fw should be running
@@ -247,19 +247,19 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # Flash idle firmware should fail
         ret = self._flash()
-        self.assertNotEquals(0, ret.json['ret'])
+        self.assertNotEqual(0, ret.json['ret'])
 
         # No flash, Autotest fw should be still running
         self._check_node_echo(echo=True)
 
         # Stop debugger
         ret = self.server.put('/open/debug/stop')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # Make sure the node can be reflashed after debug session is done
         time.sleep(1)
         ret = self._flash()
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def test_m3_exp_invalid_fw_target(self):
         """Run an experiment with an invalid firmware."""
@@ -276,11 +276,11 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             ret = self.server.post(EXP_START, upload_files=files)
 
             # Error and flash not called
-            self.assertNotEquals(0, ret.json['ret'])
+            self.assertNotEqual(0, ret.json['ret'])
             self.assertFalse(flash_mock.called)
 
         ret = self.server.delete('/exp/stop')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def test_m3_flash_inval_fw(self):
         """Flash an invalid firmware during an experiment."""
@@ -288,7 +288,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             pytest.skip("Not an M3")
 
         ret = self.server.post(EXP_START)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # Invalid firmware for m3
         node_z1 = CURRENT_DIR + 'node.z1'
@@ -296,11 +296,11 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             flash_mock.return_value = 0
             ret = self._flash(node_z1)
             # Error and flash not called
-            self.assertNotEquals(0, ret.json['ret'])
+            self.assertNotEqual(0, ret.json['ret'])
             self.assertFalse(flash_mock.called)
 
         ret = self.server.delete('/exp/stop')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def _update_profile(self, profilefilename=None, assert_ret=True):
         """Update profile with given 'profilename' file."""
@@ -311,7 +311,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         ret = self.server.post('/exp/update', profile, content_type=APP_JSON)
         if assert_ret:
-            self.assertEquals(0, ret.json['ret'])
+            self.assertEqual(0, ret.json['ret'])
         return ret
 
     def test_m3_exp_with_measures(self):  # pylint:disable=too-many-locals
@@ -330,7 +330,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             file_tuple('firmware', self.board_cfg.board_class.FW_AUTOTEST),
         ]
         ret = self.server.post(EXP_START, upload_files=files)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # Copy files for further checking
         exp_files = self.g_m.exp_files.copy()
@@ -349,15 +349,15 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # # # # # # # # # #
 
         # Got consumption and radio
-        self.assertNotEquals([], measures['consumption']['values'])
-        self.assertNotEquals([], measures['radio']['values'])
+        self.assertNotEqual([], measures['consumption']['values'])
+        self.assertNotEqual([], measures['radio']['values'])
 
         # Validate values
         for values in measures['consumption']['values']:
             # no power, voltage in 3.3V, current not null
             self.assertTrue(math.isnan(values[0]))
             self.assertTrue(2.8 <= values[1] <= 3.5)
-            self.assertNotEquals(0.0, values[2])
+            self.assertNotEqual(0.0, values[2])
         for values in measures['radio']['values']:
             self.assertIn(values[0], [15, 26])
             self.assertLessEqual(-91, values[1])
@@ -372,10 +372,10 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # wait 5 more seconds that no measures arrive
         # wait_cond is used as 'check still false'
         wait_cond(5, False, lambda: [] == self.cn_measures)
-        self.assertEquals([], self.cn_measures)
+        self.assertEqual([], self.cn_measures)
 
         # Stop experiment
-        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+        self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
         # Got no error during tests (use assertEquals for printing result)
         self.log_error.check()
 
@@ -405,7 +405,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # Start
         ret = self.server.post(EXP_START, upload_files=files)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
         # Copy files for further checking
         exp_files = self.g_m.exp_files.copy()
 
@@ -427,7 +427,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         time.sleep(2)  # wait maybe remaining values
 
         # Stop experiment
-        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+        self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
         # Got no error during tests (use assertEquals for printing result)
         if self.board_cfg.board_class.TYPE != 'a8':
@@ -478,7 +478,7 @@ class TestExperimentTimeout(ExperimentRunningMock):
         """ Start an experiment with a timeout. """
         extra = query_string('timeout=5')
         ret = self.server.post(EXP_START, extra_environ=extra)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # Wait max 10 seconds for experiment to have been stopped
         self.assertTrue(wait_cond(10, False, self._safe_exp_is_running))
@@ -488,9 +488,9 @@ class TestExperimentTimeout(ExperimentRunningMock):
         """ Test exp_stop removes timeout stop """
         extra = query_string('timeout=5')
         ret = self.server.post(EXP_START, extra_environ=extra)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
         # Stop to remove timeout
-        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+        self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
         time.sleep(10)  # Ensure that timeout could have occured
         # Timeout never called
@@ -499,7 +499,7 @@ class TestExperimentTimeout(ExperimentRunningMock):
     def test__timeout_on_wrong_exp(self):
         """ Test _timeout_exp_stop only stops it's experiment """
 
-        self.assertEquals(0, self.server.post(EXP_START).json['ret'])
+        self.assertEqual(0, self.server.post(EXP_START).json['ret'])
 
         # simulate a previous experiment stop occuring too late
         self.g_m._timeout_exp_stop(exp_id=(EXP_ID - 1), user=USER)
@@ -507,7 +507,7 @@ class TestExperimentTimeout(ExperimentRunningMock):
         self.assertTrue(self._safe_exp_is_running)
 
         # cleanup
-        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+        self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
 
 class TestIntegrationOther(ExperimentRunningMock):
@@ -516,7 +516,7 @@ class TestIntegrationOther(ExperimentRunningMock):
     def test_status(self):
         """ Call the status command """
         ret = self.server.get('/status')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def test_non_regular_start_stop(self):
         """ Test start calls when not needed
@@ -527,16 +527,16 @@ class TestIntegrationOther(ExperimentRunningMock):
         with patch.object(self.g_m, 'exp_stop', stop_mock):
 
             # create experiment
-            self.assertEquals(0, self.server.post(EXP_START).json['ret'])
-            self.assertEquals(stop_mock.call_count, 0)
+            self.assertEqual(0, self.server.post(EXP_START).json['ret'])
+            self.assertEqual(stop_mock.call_count, 0)
             # replace current experiment
-            self.assertEquals(0, self.server.post(EXP_START).json['ret'])
-            self.assertEquals(stop_mock.call_count, 1)
+            self.assertEqual(0, self.server.post(EXP_START).json['ret'])
+            self.assertEqual(stop_mock.call_count, 1)
 
             # stop exp
-            self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+            self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
             # exp already stoped no error
-            self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+            self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
     def test_invalid_tty_exp_a8(self):
         """ Test start where tty is not visible """
@@ -549,7 +549,7 @@ class TestIntegrationOther(ExperimentRunningMock):
             self.assertLessEqual(1, self.server.post(EXP_START).json['ret'])
 
         # stop and cleanup
-        self.assertEquals(0, self.server.delete('/exp/stop').json['ret'])
+        self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
 
 class TestInvalidCases(test_integration_mock.GatewayCodeMock):

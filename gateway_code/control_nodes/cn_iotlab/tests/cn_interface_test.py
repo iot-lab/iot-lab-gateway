@@ -65,7 +65,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def test_normal_start_stop(self):
         ret_start = self.cn.start()
-        self.assertEquals(0, ret_start)
+        self.assertEqual(0, ret_start)
         self.assertTrue(self.popen.stderr.readline.called)
 
         self.cn.stop()
@@ -78,7 +78,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.poll.return_value = 2
 
         ret_start = self.cn.start()
-        self.assertNotEquals(0, ret_start)
+        self.assertNotEqual(0, ret_start)
         self.log_error.check(
             ('gateway_code', 'ERROR',
              'Control node serial reader thread ended prematurely'))
@@ -98,7 +98,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
         # try sending command
         ret = self.cn.send_command(['test', 'cmd'])
-        self.assertEquals(None, ret)
+        self.assertEqual(None, ret)
         self.log_error.check(
             ('gateway_code', 'ERROR',
              'control_node_serial process is terminated'))
@@ -133,7 +133,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
         self.cn.start()
         ret = self.cn.send_command(['start', 'DC'])
-        self.assertEquals(['start', 'ACK'], ret)
+        self.assertEqual(['start', 'ACK'], ret)
         self.cn.stop()
 
     def test_send_command_no_answer(self):

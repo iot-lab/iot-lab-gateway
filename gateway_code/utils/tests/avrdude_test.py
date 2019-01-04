@@ -50,11 +50,11 @@ class TestsMethods(unittest.TestCase):
         """Test flash."""
         call_mock.return_value = 0
         ret = self.avr.flash(NodeLeonardo.FW_IDLE)
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         call_mock.return_value = 42
         ret = self.avr.flash(NodeLeonardo.FW_IDLE)
-        self.assertEquals(42, ret)
+        self.assertEqual(42, ret)
 
     def test_invalid_firmware_path(self):
         ret = self.avr.flash('/invalid/path')
@@ -78,7 +78,7 @@ class TestsCall(unittest.TestCase):
 
         # Not to much more
         self.assertLess(t_end - t_0, self.timeout + 1)
-        self.assertNotEquals(ret, 0)
+        self.assertNotEqual(ret, 0)
 
     def test_no_timeout(self):
         """Test timeout not reached."""
@@ -89,7 +89,7 @@ class TestsCall(unittest.TestCase):
 
         # Strictly lower here
         self.assertLess(t_end - t_0, self.timeout - 1)
-        self.assertEquals(ret, 0)
+        self.assertEqual(ret, 0)
 
 
 @mock.patch('serial.Serial')
@@ -122,7 +122,7 @@ class TestTriggerBootloader(unittest.TestCase):
 
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog,
                                                  timeout=2)
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
         self.assertTrue(os.path.exists(self.tty_prog))
 
     def test_trigger_fail(self, serial_mock):
@@ -131,7 +131,7 @@ class TestTriggerBootloader(unittest.TestCase):
 
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog,
                                                  timeout=1)
-        self.assertNotEquals(0, ret)
+        self.assertNotEqual(0, ret)
         self.assertFalse(os.path.exists(self.tty_prog))
 
     def test_serial_error_opening_tty(self, serial_mock):

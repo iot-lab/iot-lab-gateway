@@ -44,7 +44,7 @@ class TestNodeA8(unittest.TestCase):
 
         serial_expect.expect.return_value = ''
         ret = a8_node.wait_booted(0)
-        self.assertEquals(ret, '')
+        self.assertEqual(ret, '')
 
         serial_expect.expect.return_value = ' login: '
         ret = a8_node.wait_booted(0)

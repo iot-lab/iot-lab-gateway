@@ -43,7 +43,7 @@ class TestGatewayLogging(unittest.TestCase):
         gateway_logging.init_logger('.')
         handlers_two = logger.handlers
 
-        self.assertEquals(handlers_one, handlers_two)
+        self.assertEqual(handlers_one, handlers_two)
 
     def test_user_logger(self):
         logger = logging.getLogger(__name__)
@@ -59,7 +59,7 @@ class TestGatewayLogging(unittest.TestCase):
 
             # file has data
             log_content = log_file.read()
-            self.assertNotEquals(0, len(log_content))
+            self.assertNotEqual(0, len(log_content))
             self.assertIn(test_log, log_content)
 
     @mock.patch('sys.stdout', new_callable=StringIO)
@@ -75,5 +75,5 @@ class TestGatewayLogging(unittest.TestCase):
 
         # sys.stdout received some data
         log_content = fake_stdout.getvalue()
-        self.assertNotEquals(0, len(log_content))
+        self.assertNotEqual(0, len(log_content))
         self.assertIn(test_log, log_content)

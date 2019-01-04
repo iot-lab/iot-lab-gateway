@@ -85,14 +85,14 @@ class TestSerialRedirection(_SerialRedirectionTestCase):
             sock_txt = 'HelloFromSock: %u\n' % i
             conn.send(sock_txt)
             ret = self.serial.stdout.read(len(sock_txt))
-            self.assertEquals(ret, sock_txt)
+            self.assertEqual(ret, sock_txt)
             logging.debug(ret)
 
             # Serial send
             serial_txt = 'HelloFromSerial %u\n' % i
             self.serial.stdin.write(serial_txt)
             ret = conn.recv(len(serial_txt))
-            self.assertEquals(ret, serial_txt)
+            self.assertEqual(ret, serial_txt)
             logging.debug(ret)
 
             conn.close()
@@ -102,12 +102,12 @@ class TestSerialRedirection(_SerialRedirectionTestCase):
     def test_serialredirection_multiple_uses(self):
         """ Test calling multiple times start-stop """
         self.redirect = SerialRedirection(self.tty, self.baud)
-        self.assertEquals(0, self.redirect.start())
-        self.assertEquals(0, self.redirect.stop())
-        self.assertEquals(0, self.redirect.start())
-        self.assertEquals(0, self.redirect.stop())
-        self.assertEquals(0, self.redirect.start())
-        self.assertEquals(0, self.redirect.stop())
+        self.assertEqual(0, self.redirect.start())
+        self.assertEqual(0, self.redirect.stop())
+        self.assertEqual(0, self.redirect.start())
+        self.assertEqual(0, self.redirect.stop())
+        self.assertEqual(0, self.redirect.start())
+        self.assertEqual(0, self.redirect.stop())
 
     def test_serialredirection_exclusion(self):
         """ Check the exclusion of multiple connection on SerialRedirection """

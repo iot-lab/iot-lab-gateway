@@ -39,10 +39,10 @@ class TestCC2538(unittest.TestCase):
         """ test the objdump get_elf_load_addr """
         elf = os.path.abspath(static_path('firefly_autotest.elf'))
         elf_addr = get_elf_load_addr(elf)
-        self.assertEquals(0x00200000, elf_addr)
+        self.assertEqual(0x00200000, elf_addr)
         elf = os.path.abspath(static_path('firefly_idle.elf'))
         elf_addr = get_elf_load_addr(elf)
-        self.assertEquals(0x00202000, elf_addr)
+        self.assertEqual(0x00202000, elf_addr)
 
 
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
@@ -57,22 +57,22 @@ class TestsCC2538Methods(unittest.TestCase):
         """Test flash."""
         call_mock.return_value = 0
         ret = self.cc2538.flash(NodeFirefly.FW_IDLE)
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         call_mock.return_value = 42
         ret = self.cc2538.flash(NodeFirefly.FW_AUTOTEST)
         # call is called twice and the ret codes are summed up
-        self.assertEquals(84, ret)
+        self.assertEqual(84, ret)
 
     def test_reset(self, call_mock):
         """ Test reset"""
         call_mock.return_value = 0
         ret = self.cc2538.reset()
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         call_mock.return_value = 42
         ret = self.cc2538.reset()
-        self.assertEquals(42, ret)
+        self.assertEqual(42, ret)
 
     def test_invalid_firmware_path(self, _):
         """Test flash an invalid firmware return a non zero value."""
@@ -99,7 +99,7 @@ class TestsCC2538Call(unittest.TestCase):
 
         # Not to much more
         self.assertLess(t_end - t_0, self.timeout + 1)
-        self.assertNotEquals(ret, 0)
+        self.assertNotEqual(ret, 0)
 
     def test_no_timeout(self):
         """Test timeout not reached."""
@@ -110,4 +110,4 @@ class TestsCC2538Call(unittest.TestCase):
 
         # Strictly lower here
         self.assertLess(t_end - t_0, self.timeout - 1)
-        self.assertEquals(ret, 0)
+        self.assertEqual(ret, 0)

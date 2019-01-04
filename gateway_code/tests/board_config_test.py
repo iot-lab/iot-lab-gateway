@@ -43,17 +43,17 @@ class TestBoardConfig(unittest.TestCase):
     def test_board_type(self):
         board_cfg = board_config.BoardConfig()
 
-        self.assertEquals('m3', board_cfg.board_type)
-        self.assertEquals('m3', board_cfg.board_class.TYPE)
-        self.assertEquals('turtlebot2', board_cfg.robot_type)
-        self.assertNotEquals('', board_config.BoardConfig().node_id)
+        self.assertEqual('m3', board_cfg.board_type)
+        self.assertEqual('m3', board_cfg.board_class.TYPE)
+        self.assertEqual('turtlebot2', board_cfg.robot_type)
+        self.assertNotEqual('', board_config.BoardConfig().node_id)
 
     @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot'))
     def test_board_type_no_robot(self):
         board_cfg = board_config.BoardConfig()
 
-        self.assertEquals('m3', board_cfg.board_type)
-        self.assertEquals(None, board_cfg.robot_type)
+        self.assertEqual('m3', board_cfg.board_type)
+        self.assertEqual(None, board_cfg.robot_type)
 
     @mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('invalid_board_type'))
     def test_board_type_not_found(self):

@@ -62,7 +62,7 @@ class TestGatewayManager(unittest.TestCase):
         """ Update profile with an invalid profile """
 
         g_m = gateway_manager.GatewayManager()
-        self.assertEquals(1, g_m.exp_update_profile(profile_dict={}))
+        self.assertEqual(1, g_m.exp_update_profile(profile_dict={}))
 
 # # # # # # # # # # # # # # # # # # # # #
 # Measures folder and files management  #

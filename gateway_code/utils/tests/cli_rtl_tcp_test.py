@@ -63,5 +63,5 @@ class TestRtlTcpParsing(unittest.TestCase):
     def test_parser(self):
         """ Test cli.rtl_tcp PARSER """
         opts = rtl_tcp.PARSER.parse_args(['50000', '868000000'])
-        self.assertEquals(50000, opts.port)
-        self.assertEquals(868000000, opts.frequency)
+        self.assertEqual(50000, opts.port)
+        self.assertEqual(868000000, opts.frequency)

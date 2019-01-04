@@ -47,10 +47,10 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         ret_dict = ret.json
         print >> sys.stderr, ret_dict
 
-        self.assertEquals([], ret_dict['error'])
+        self.assertEqual([], ret_dict['error'])
         self.assertIn('on_serial_echo', ret_dict['success'])
         self.assertTrue('GWT' in ret_dict['mac'])
-        self.assertEquals(0, ret_dict['ret'])
+        self.assertEqual(0, ret_dict['ret'])
 
         # test that ON still on
         if self.board_cfg.board_type == 'a8':
@@ -64,15 +64,15 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
 
         not_tested = (set(self.g_m.open_node.AUTOTEST_AVAILABLE) -
                       set(AutoTestManager.TESTED_FEATURES))
-        self.assertEquals(not_tested, set())
+        self.assertEqual(not_tested, set())
 
     def test_mode_no_blink_no_radio(self):
         """ Try running autotest without blinking leds and without radio """
         ret = self.server.put('/autotest')
         ret_dict = ret.json
 
-        self.assertEquals([], ret_dict['error'])
-        self.assertEquals(0, ret_dict['ret'])
+        self.assertEqual([], ret_dict['error'])
+        self.assertEqual(0, ret_dict['ret'])
         # Radio functions not in results
         self.assertNotIn('test_radio_ping_pong', ret_dict['success'])
         self.assertNotIn('rssi_measures', ret_dict['success'])

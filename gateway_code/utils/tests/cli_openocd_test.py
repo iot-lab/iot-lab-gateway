@@ -48,12 +48,12 @@ class TestsOpenOCDcli(unittest.TestCase):
             with mock.patch('sys.argv', args):
                 self.ocd.flash.return_value = 0
                 ret = openocd.main()
-                self.assertEquals(ret, 0)
+                self.assertEqual(ret, 0)
                 self.assertTrue(self.ocd.flash.called)
 
                 self.ocd.flash.return_value = 42
                 ret = openocd.main()
-                self.assertEquals(ret, 42)
+                self.assertEqual(ret, 42)
 
     def test_reset(self):
         """ Running command line reset """
@@ -65,12 +65,12 @@ class TestsOpenOCDcli(unittest.TestCase):
             with mock.patch('sys.argv', args):
                 self.ocd.reset.return_value = 0
                 ret = openocd.main()
-                self.assertEquals(ret, 0)
+                self.assertEqual(ret, 0)
                 self.assertTrue(self.ocd.reset.called)
 
                 self.ocd.reset.return_value = 42
                 ret = openocd.main()
-                self.assertEquals(ret, 42)
+                self.assertEqual(ret, 42)
 
     @mock.patch("signal.pause")
     def test_debug(self, pause):

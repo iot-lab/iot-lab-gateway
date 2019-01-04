@@ -48,12 +48,12 @@ class TestsCC2538cli(unittest.TestCase):
         with mock.patch('sys.argv', args):
             self.cc2538.flash.return_value = 0
             ret = cc2538.main()
-            self.assertEquals(ret, 0)
+            self.assertEqual(ret, 0)
             self.assertTrue(self.cc2538.flash.called)
 
             self.cc2538.flash.return_value = 42
             ret = cc2538.main()
-            self.assertEquals(ret, 42)
+            self.assertEqual(ret, 42)
 
     def test_reset(self):
         """ Running command line reset """
@@ -64,9 +64,9 @@ class TestsCC2538cli(unittest.TestCase):
         with mock.patch('sys.argv', args):
             self.cc2538.reset.return_value = 0
             ret = cc2538.main()
-            self.assertEquals(ret, 0)
+            self.assertEqual(ret, 0)
             self.assertTrue(self.cc2538.reset.called)
 
             self.cc2538.reset.return_value = 42
             ret = cc2538.main()
-            self.assertEquals(ret, 42)
+            self.assertEqual(ret, 42)

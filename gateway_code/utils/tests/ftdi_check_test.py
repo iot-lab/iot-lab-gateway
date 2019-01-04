@@ -46,7 +46,7 @@ class TestFtdiCheck(unittest.TestCase):
                 Serial:
             All done, success!
             ''')
-        self.assertEquals(0, ftdi_check('control', '4232'))
+        self.assertEqual(0, ftdi_check('control', '4232'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '4232'])
 
     def test__ftdi_is_absent(self, m_check_output):
@@ -57,7 +57,7 @@ class TestFtdiCheck(unittest.TestCase):
             No FTDI device found
             All done, success!
             ''')
-        self.assertEquals(1, ftdi_check('open', '2232'))
+        self.assertEqual(1, ftdi_check('open', '2232'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '2232'])
 
     def test_ftdi_list_present(self, m_check_output):
@@ -77,6 +77,6 @@ class TestFtdiCheck(unittest.TestCase):
                 Serial:
             All done, success!
             ''')
-        self.assertEquals(0, ftdi_check('control', '4232'))
-        self.assertEquals(0, ftdi_check('control', '4232', description='M3'))
+        self.assertEqual(0, ftdi_check('control', '4232'))
+        self.assertEqual(0, ftdi_check('control', '4232', description='M3'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '4232'])
