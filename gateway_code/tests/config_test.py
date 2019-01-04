@@ -40,22 +40,22 @@ class TestConfig(unittest.TestCase):
 
     def test_read_config(self):
         with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot')):
-            self.assertEquals('m3', config.read_config('board_type'))
-            self.assertEquals('m3', config.read_config('board_type', 'def'))
+            self.assertEqual('m3', config.read_config('board_type'))
+            self.assertEqual('m3', config.read_config('board_type', 'def'))
 
             self.assertRaises(IOError, config.read_config, 'robot')
-            self.assertEquals(None, config.read_config('robot', None))
+            self.assertEqual(None, config.read_config('robot', None))
 
         with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_robot')):
-            self.assertEquals('m3', config.read_config('board_type'))
-            self.assertEquals('turtlebot2', config.read_config('robot'))
+            self.assertEqual('m3', config.read_config('board_type'))
+            self.assertEqual('turtlebot2', config.read_config('robot'))
 
     def test_default_profile(self):
         default_profile_dict = {
             u'power': u'dc',
             u'profilename': u'_default_profile',
         }
-        self.assertEquals(default_profile_dict, config.DEFAULT_PROFILE)
+        self.assertEqual(default_profile_dict, config.DEFAULT_PROFILE)
 
     @staticmethod
     def _rmfile(file_path):

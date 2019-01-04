@@ -80,59 +80,59 @@ class TestOpenNodeConnection(unittest.TestCase):
 
             cmd = ['cmd']
             ret = conn.send_command(cmd)
-            self.assertEquals(['READ_LINE'] + cmd, ret)
+            self.assertEqual(['READ_LINE'] + cmd, ret)
 
             cmd = ['command', 'arg1', 'arg2']
             ret = conn.send_command(cmd)
-            self.assertEquals(['READ_LINE'] + cmd, ret)
+            self.assertEqual(['READ_LINE'] + cmd, ret)
 
             cmd = ['command3', 'arg1', 'arg2', 'arg3', 'arg4']
             ret = conn.send_command(cmd)
-            self.assertEquals(['READ_LINE'] + cmd, ret)
+            self.assertEqual(['READ_LINE'] + cmd, ret)
 
     def test_sending_with_delay(self):
         with OpenNodeConnection() as conn:
 
             self.write_delay = 1
             ret = conn.send_command(['cmd'])
-            self.assertEquals(['READ_LINE', 'cmd'], ret)
+            self.assertEqual(['READ_LINE', 'cmd'], ret)
 
             self.write_delay = 2
             ret = conn.send_command(['cmd'])
-            self.assertEquals(['READ_LINE', 'cmd'], ret)
+            self.assertEqual(['READ_LINE', 'cmd'], ret)
 
             self.write_delay = 3
             ret = conn.send_command(['cmd'])
-            self.assertEquals(['READ_LINE', 'cmd'], ret)
+            self.assertEqual(['READ_LINE', 'cmd'], ret)
 
             self.write_delay = 4
             ret = conn.send_command(['cmd'])
-            self.assertEquals(['READ_LINE', 'cmd'], ret)
+            self.assertEqual(['READ_LINE', 'cmd'], ret)
 
     def test_sending_one_command(self):
         cmd = ['cmd']
         ret = OpenNodeConnection.send_one_command(cmd)
-        self.assertEquals(['READ_LINE'] + cmd, ret)
+        self.assertEqual(['READ_LINE'] + cmd, ret)
 
         cmd = ['command', 'arg1', 'arg2']
         ret = OpenNodeConnection.send_one_command(cmd)
-        self.assertEquals(['READ_LINE'] + cmd, ret)
+        self.assertEqual(['READ_LINE'] + cmd, ret)
 
         cmd = ['command3', 'arg1', 'arg2', 'arg3', 'arg4']
         ret = OpenNodeConnection.send_one_command(cmd)
-        self.assertEquals(['READ_LINE'] + cmd, ret)
+        self.assertEqual(['READ_LINE'] + cmd, ret)
 
     def test_no_answer(self):
         # Disable node answers
         self.redirect.stdin = mock.Mock()
 
         ret = OpenNodeConnection.send_one_command(['cmd'], timeout=0.1)
-        self.assertEquals(None, ret)
+        self.assertEqual(None, ret)
 
     def test_timeout(self):
         self.write_delay = 0.2
         ret = OpenNodeConnection.send_one_command(['cmd'], timeout=0.1)
-        self.assertEquals(None, ret)
+        self.assertEqual(None, ret)
 
     @pytest.mark.usefixtures("my_capsys")
     def test_ioerror_thread_mock(self):
@@ -143,7 +143,7 @@ class TestOpenNodeConnection(unittest.TestCase):
         ret = OpenNodeConnection.send_one_command(['cmd'], timeout=0.1)
         out, _ = self.capsys.readouterr()
         assert out == "Test Error\n"
-        self.assertEquals(None, ret)
+        self.assertEqual(None, ret)
 
 
 class TestOpenNodeConnectionErrors(unittest.TestCase):

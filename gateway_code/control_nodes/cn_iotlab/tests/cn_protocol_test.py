@@ -54,7 +54,7 @@ class TestProtocol(unittest.TestCase):
                                           voltage=True,
                                           current=True)
         ret = self.protocol.config_consumption(consumption)
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
         self.sender.assert_called_with(['config_consumption_measure', 'start',
                                         '3.3V', 'p', '1', 'v', '1', 'c', '1',
                                         '-p', '140', '-a', '1'])
@@ -66,7 +66,7 @@ class TestProtocol(unittest.TestCase):
                                           average=1024,
                                           power=True)
         ret = self.protocol.config_consumption(consumption)
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
         self.sender.assert_called_with(['config_consumption_measure', 'start',
                                         'BATT', 'p', '1', 'v', '0', 'c', '0',
                                         '-p', '8244', '-a', '1024'])
@@ -77,7 +77,7 @@ class TestProtocol(unittest.TestCase):
         # no consumption object
         ret = self.protocol.config_consumption()
         self.sender.assert_called_with(['config_consumption_measure', 'stop'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
         # power, voltage, current == False
         consumption = profile.Consumption(alim='3.3V',
                                           source='dc',
@@ -85,7 +85,7 @@ class TestProtocol(unittest.TestCase):
                                           average=1)
         ret = self.protocol.config_consumption(consumption)
         self.sender.assert_called_with(['config_consumption_measure', 'stop'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
     def test_start_stop(self):
 
@@ -93,42 +93,42 @@ class TestProtocol(unittest.TestCase):
 
         ret = self.protocol.start_stop('start', 'dc')
         self.sender.assert_called_with(['start', 'dc'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         # return NACK
         self.sender.return_value = ['start', 'ACK']
         ret = self.protocol.start_stop('stop', 'dc')
         self.sender.assert_called_with(['stop', 'dc'])
-        self.assertEquals(1, ret)
+        self.assertEqual(1, ret)
 
         # return command different type
         self.sender.return_value = ['stop', 'NACK']
         ret = self.protocol.start_stop('stop', 'battery')
         self.sender.assert_called_with(['stop', 'battery'])
-        self.assertEquals(1, ret)
+        self.assertEqual(1, ret)
 
     def test_set_time(self):
 
         self.sender.return_value = ['set_time', 'ACK']
         ret = self.protocol.set_time()
         self.sender.assert_called_with(['set_time'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         self.sender.return_value = ['set_time', 'NACK']
         ret = self.protocol.set_time()
         self.sender.assert_called_with(['set_time'])
-        self.assertEquals(1, ret)
+        self.assertEqual(1, ret)
 
     def test_set_node_id(self):
         self.sender.return_value = ['set_node_id', 'ACK']
         ret = self.protocol.set_node_id('m3-1')
         self.sender.assert_called_with(['set_node_id', 'm3', '1'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         self.sender.return_value = ['set_node_id', 'ACK']
         ret = self.protocol.set_node_id('a8-256')
         self.sender.assert_called_with(['set_node_id', 'a8', '256'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         self.sender.call_count = 0
         ret = self.protocol.set_node_id('leonardo-256')
@@ -140,12 +140,12 @@ class TestProtocol(unittest.TestCase):
         self.sender.return_value = ['green_led_blink', 'ACK']
         ret = self.protocol.green_led_blink()
         self.sender.assert_called_with(['green_led_blink'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         self.sender.return_value = ['green_led_on', 'ACK']
         ret = self.protocol.green_led_on()
         self.sender.assert_called_with(['green_led_on'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
 
 class TestProtocolRadio(unittest.TestCase):
@@ -167,9 +167,9 @@ class TestProtocolRadio(unittest.TestCase):
         self.protocol._stop_radio.return_value = 0
 
         ret = self.protocol.config_radio(radio)
-        self.assertEquals(0, ret)
-        self.assertEquals(0, self.protocol._stop_radio.call_count)
-        self.assertEquals(1, self.protocol._config_radio_measure.call_count)
+        self.assertEqual(0, ret)
+        self.assertEqual(0, self.protocol._stop_radio.call_count)
+        self.assertEqual(1, self.protocol._config_radio_measure.call_count)
 
     def test_config_radio_with_sniffer(self):
         """ Configure Radio with 'measure' mode """
@@ -181,9 +181,9 @@ class TestProtocolRadio(unittest.TestCase):
         self.protocol._stop_radio.return_value = 0
 
         ret = self.protocol.config_radio(radio)
-        self.assertEquals(0, ret)
-        self.assertEquals(0, self.protocol._stop_radio.call_count)
-        self.assertEquals(1, self.protocol._config_radio_sniffer.call_count)
+        self.assertEqual(0, ret)
+        self.assertEqual(0, self.protocol._stop_radio.call_count)
+        self.assertEqual(1, self.protocol._config_radio_sniffer.call_count)
 
     def test_config_radio_with_none(self):
         """ Configure radio with None Radio profile """
@@ -194,8 +194,8 @@ class TestProtocolRadio(unittest.TestCase):
         self.protocol._stop_radio.return_value = 0
 
         self.protocol.config_radio(None)
-        self.assertEquals(0, self.protocol._config_radio_measure.call_count)
-        self.assertEquals(1, self.protocol._stop_radio.call_count)
+        self.assertEqual(0, self.protocol._config_radio_measure.call_count)
+        self.assertEqual(1, self.protocol._stop_radio.call_count)
 
     def test_config_radio_with_invalid_mode(self):
         """ Configure radio with an non supported radio mode """
@@ -216,9 +216,9 @@ class TestProtocolRadio(unittest.TestCase):
 
         ret = self.protocol.config_radio(radio)
 
-        self.assertEquals(0xFF, ret)
-        self.assertEquals(0, self.protocol._stop_radio.call_count)
-        self.assertEquals(1, self.protocol._config_radio_measure.call_count)
+        self.assertEqual(0xFF, ret)
+        self.assertEqual(0, self.protocol._stop_radio.call_count)
+        self.assertEqual(1, self.protocol._config_radio_measure.call_count)
 
     def test_config_radio_measure(self):
 
@@ -228,7 +228,7 @@ class TestProtocolRadio(unittest.TestCase):
         ret = self.protocol._config_radio_measure(radio)
         self.sender.assert_called_with(['config_radio_measure', '11,15,17',
                                         '100', '10'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
     def test_config_radio_sniffer(self):
         radio = profile.Radio("sniffer", [17, 15, 11], 100)
@@ -237,7 +237,7 @@ class TestProtocolRadio(unittest.TestCase):
         ret = self.protocol._config_radio_sniffer(radio)
         self.sender.assert_called_with(['config_radio_sniffer', '11,15,17',
                                         '100'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
     def test__stop_radio(self):
 
@@ -246,4 +246,4 @@ class TestProtocolRadio(unittest.TestCase):
         ret = self.protocol._stop_radio()
 
         self.sender.assert_called_with(['config_radio_stop'])
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)

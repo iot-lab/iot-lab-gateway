@@ -52,8 +52,8 @@ class TestProtocol(unittest.TestCase):
         ret_1 = self.g_v._check(0, 'message_1', ['1', '2'])
         ret_2 = self.g_v._check(1, 'message_2', ['3', '4'])
 
-        self.assertEquals(0, ret_1)
-        self.assertEquals(1, ret_2)
+        self.assertEqual(0, ret_1)
+        self.assertEqual(1, ret_2)
 
         self.assertTrue('message_1' in self.g_v.ret_dict['success'])
         self.assertTrue('message_2' in self.g_v.ret_dict['error'])
@@ -71,7 +71,7 @@ class TestProtocol(unittest.TestCase):
 
         values = self.g_v._run_test(3, ['test_command'], lambda x: float(x[2]))
 
-        self.assertEquals([3.14], values)
+        self.assertEqual([3.14], values)
         mock_error.assert_called_with('Autotest: %r: %r',
                                       "On Command: ['test_command']",
                                       ['NACK', 'test_command', '1.414'])
@@ -81,13 +81,13 @@ class TestProtocol(unittest.TestCase):
         """ Test get_uid autotest function """
 
         run_test_mock.return_value = ['05D8FF323632483343037109']
-        self.assertEquals(0, self.g_v.get_uid())
-        self.assertEquals('05D8:FF32:3632:4833:4303:7109',
-                          self.g_v.ret_dict['open_node_uid'])
+        self.assertEqual(0, self.g_v.get_uid())
+        self.assertEqual('05D8:FF32:3632:4833:4303:7109',
+                         self.g_v.ret_dict['open_node_uid'])
 
         # error on get_uid
         run_test_mock.return_value = []
-        self.assertNotEquals(0, self.g_v.get_uid())
+        self.assertNotEqual(0, self.g_v.get_uid())
 
 
 class TestProtocolGPS(unittest.TestCase):
@@ -103,12 +103,12 @@ class TestProtocolGPS(unittest.TestCase):
     def test_test_gps(self):
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:
             # test with gps disabled
-            self.assertEquals(0, self.g_v.test_gps(False))
+            self.assertEqual(0, self.g_v.test_gps(False))
             self.assertFalse(test_pps.called)
 
             # Test with gps enabled
             test_pps.return_value = 0
-            self.assertEquals(0, self.g_v.test_gps(True))
+            self.assertEqual(0, self.g_v.test_gps(True))
             self.assertTrue(test_pps.called)
 
     def test__test_pps_open_node(self):
@@ -128,10 +128,10 @@ class TestProtocolGPS(unittest.TestCase):
         with mock.patch.object(self.g_v, '_on_call', _on_call):
             pps_get_values = [(0, ['ACK', 'test_pps_get', '0', 'pps']),
                               (0, ['ACK', 'test_pps_get', '3', 'pps'])]
-            self.assertEquals(0, self.g_v._test_pps_open_node(10))
+            self.assertEqual(0, self.g_v._test_pps_open_node(10))
 
             pps_get_values = []
-            self.assertNotEquals(0, self.g_v._test_pps_open_node(0))
+            self.assertNotEqual(0, self.g_v._test_pps_open_node(0))
 
             with pytest.raises(ValueError) as exc:
                 self.g_v._test_pps_open_node_invalid()
@@ -213,8 +213,8 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         ret_dict = self.g_v.auto_tests()
 
         self.assertTrue(ret_dict['ret'] >= 2)
-        self.assertEquals([], ret_dict['success'])
-        self.assertEquals(['setup', 'teardown'], ret_dict['error'])
+        self.assertEqual([], ret_dict['success'])
+        self.assertEqual(['setup', 'teardown'], ret_dict['error'])
 
     @mock.patch('gateway_code.autotest.autotest.AutoTestManager.'
                 '_set_results_leds')
@@ -236,4 +236,4 @@ class TestAutotestFatalError(unittest.TestCase):
 
     def test_fatal_error(self):
         error = autotest.FatalError("error_value")
-        self.assertEquals("'error_value'", str(error))
+        self.assertEqual("'error_value'", str(error))

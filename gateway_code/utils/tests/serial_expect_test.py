@@ -72,7 +72,7 @@ class TestSerialExpect(unittest.TestCase):
     def test_expect(self):
         self.read_ret = ['abcde12345']
         ret = self.expect.expect('ab.*45')
-        self.assertEquals('abcde12345', ret)
+        self.assertEqual('abcde12345', ret)
 
     def test_expect_empty(self):
         self.read_ret = []
@@ -81,28 +81,28 @@ class TestSerialExpect(unittest.TestCase):
     def test_expect_timeout(self):
         self.read_ret = ['wrong_text']
         ret = self.expect.expect('ab.*45', 0.0)
-        self.assertEquals('', ret)  # timeout
+        self.assertEqual('', ret)  # timeout
 
     def test_expect_on_multiple_reads(self):
         self.read_ret = ['a234567890123456', '', 'b234567890123456', '123456c']
         expected_ret = ''.join(self.read_ret)
 
         ret = self.expect.expect('a.*c')
-        self.assertEquals(expected_ret, ret)
+        self.assertEqual(expected_ret, ret)
 
     def test_expect_list(self):
         self.read_ret = ['aaaa']
         ret = self.expect.expect_list(['a', 'b'])
-        self.assertEquals('a', ret)
+        self.assertEqual('a', ret)
 
         self.read_ret = ['b']
         ret = self.expect.expect_list(['a', 'b'])
-        self.assertEquals('b', ret)
+        self.assertEqual('b', ret)
 
     def test_expect_read_new_line(self):
         self.read_ret = ['ab\ncd', 'a00d']
         ret = self.expect.expect('a.*d')
-        self.assertEquals('a00d', ret)
+        self.assertEqual('a00d', ret)
 
     def test_expect_newline_pattern(self):
         self.assertRaises(ValueError, self.expect.expect, 'abc\rdef\nghi')
@@ -121,7 +121,7 @@ class TestSerialExpect(unittest.TestCase):
         self.serial.read = mock.Mock(side_effect=serial.SerialException(
             "FD already closed"))
         ret = self.expect.expect('a.*d')
-        self.assertEquals('', ret)
+        self.assertEqual('', ret)
 
     def test_close_attribute_error(self):
         # Smoke test for close when and AttributeError exception is raised.
@@ -135,7 +135,7 @@ class TestSerialExpect(unittest.TestCase):
 
         self.read_ret = ['123\n456', '789\n', 'abcd']
         ret = self.expect.expect('a.*d')
-        self.assertEquals(ret, 'abcd')
+        self.assertEqual(ret, 'abcd')
 
         logger.debug.assert_any_call('123')
         logger.debug.assert_any_call('456789')
@@ -145,4 +145,4 @@ class TestSerialExpect(unittest.TestCase):
         with serial_expect.SerialExpect('TTY', 1234) as ser:
             self.read_ret = ['123\n456', '789\n', 'abcd']
             ret = ser.expect('a.*d')
-            self.assertEquals(ret, 'abcd')
+            self.assertEqual(ret, 'abcd')

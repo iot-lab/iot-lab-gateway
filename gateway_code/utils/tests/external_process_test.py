@@ -158,7 +158,7 @@ class TestProcessSocat(unittest.TestCase):
         m_redirect._run = True
 
         ret = m_redirect._call_process(m_redirect.stdout)
-        self.assertEquals(-1, ret)
+        self.assertEqual(-1, ret)
 
     def test__call_socat_error_tty_not_found(self, m_popen):
         """ Test the _call_process error case when path can't be found"""
@@ -167,7 +167,7 @@ class TestProcessSocat(unittest.TestCase):
         m_redirect._run = True
 
         ret = m_redirect._call_process(m_redirect.stdout)
-        self.assertEquals(-1, ret)
+        self.assertEqual(-1, ret)
 
 
 @mock.patch('subprocess.Popen')
@@ -181,7 +181,7 @@ class TestProcessRtlTcp(unittest.TestCase):
         m_rtl_tcp._run = True
 
         ret = m_rtl_tcp._call_process(m_rtl_tcp.stdout)
-        self.assertEquals(-1, ret)
+        self.assertEqual(-1, ret)
 
 
 @mock.patch('subprocess.Popen')
@@ -197,4 +197,4 @@ class TestProcessMjpgStreamer(unittest.TestCase):
         m_mjpg_streamer._run = True
 
         ret = m_mjpg_streamer._call_process(m_mjpg_streamer.stdout)
-        self.assertEquals(-1, ret)
+        self.assertEqual(-1, ret)

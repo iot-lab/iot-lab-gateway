@@ -63,5 +63,5 @@ class TestArgumentsParsing(unittest.TestCase):
     def test_parser(self):
         """ Test cli.serial_redirection PARSER """
         opts = serial_redirection.PARSER.parse_args(['tty', '500000'])
-        self.assertEquals('tty', opts.tty)
-        self.assertEquals(500000, opts.baudrate)
+        self.assertEqual('tty', opts.tty)
+        self.assertEqual(500000, opts.baudrate)

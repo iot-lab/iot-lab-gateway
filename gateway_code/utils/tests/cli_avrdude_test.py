@@ -52,9 +52,9 @@ class TestsAvrDudecli(unittest.TestCase):
         with mock.patch('sys.argv', args):
             self.avrdude.flash.return_value = 0
             ret = avrdude.main()
-            self.assertEquals(ret, 0)
+            self.assertEqual(ret, 0)
             self.assertTrue(self.avrdude.flash.called)
 
             self.avrdude.flash.return_value = 42
             ret = avrdude.main()
-            self.assertEquals(ret, 42)
+            self.assertEqual(ret, 42)

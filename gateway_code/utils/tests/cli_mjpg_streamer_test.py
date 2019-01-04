@@ -63,4 +63,4 @@ class TestMjpgStreamerParsing(unittest.TestCase):
     def test_parser(self):
         """ Test cli.mjpg_streamer PARSER """
         opts = mjpg_streamer.PARSER.parse_args(['40000'])
-        self.assertEquals(40000, opts.port)
+        self.assertEqual(40000, opts.port)
