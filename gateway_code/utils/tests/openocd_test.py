@@ -27,7 +27,6 @@
 # serial mock note correctly detected
 # pylint: disable=maybe-no-member
 
-import time
 import unittest
 import mock
 
@@ -101,36 +100,6 @@ class TestsMethods(unittest.TestCase):
         self.ocd.debug_start()
         ret = self.ocd.debug_stop()
         self.assertEqual(ret, 1)
-
-
-class TestsCall(unittest.TestCase):
-    """ Tests openocd call timeout """
-    def setUp(self):
-        self.timeout = 5
-        self.ocd = openocd.OpenOCD.from_node(NodeM3, timeout=self.timeout)
-        self.ocd._openocd_args = mock.Mock()
-
-    def test_timeout_call(self):
-        """Test timeout reached."""
-        self.ocd._openocd_args.return_value = {'args': ['sleep', '10']}
-        t_0 = time.time()
-        ret = self.ocd._call_cmd('sleep')
-        t_end = time.time()
-
-        # Not to much more
-        self.assertLess(t_end - t_0, self.timeout + 1)
-        self.assertNotEqual(ret, 0)
-
-    def test_no_timeout(self):
-        """Test timeout not reached."""
-        self.ocd._openocd_args.return_value = {'args': ['sleep', '1']}
-        t_0 = time.time()
-        ret = self.ocd._call_cmd('sleep')
-        t_end = time.time()
-
-        # Strictly lower here
-        self.assertLess(t_end - t_0, self.timeout - 1)
-        self.assertEqual(ret, 0)
 
 
 class TestsFlashInvalidPaths(unittest.TestCase):

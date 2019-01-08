@@ -33,7 +33,7 @@ import logging
 from collections import namedtuple
 
 from gateway_code import common
-from . import subprocess_timeout
+from gateway_code.utils import helpers
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -94,15 +94,28 @@ class OpenOCD(object):
         opts = ('-f "%s"' % opt for opt in opts)
         return ' '.join(opts)
 
+    def _openocd_cmd(self, cmd):
+        return self.OPENOCD.format(openocd_path=self.openocd_path,
+                                   config=self.config, cmd=cmd)
+
+    def _call_cmd(self, command_str):
+        """If openocd is in 'debug' mode, return an error."""
+        if self._debug:
+            LOGGER.error("OpenOCD is in 'debug' mode, stop it to flash/reset")
+            return 1
+        return helpers.call_cmd(command_str,
+                                out=self.out, timeout=self.timeout)
+
     def reset(self):
         """ Reset """
-        return self._call_cmd(self.RESET)
+        return self._call_cmd(self._openocd_cmd(self.RESET))
 
     def flash(self, elf_file):
         """ Flash firmware """
         try:
             elf_path = common.abspath(elf_file)
-            return self._call_cmd(self.FLASH.format(elf_path))
+            return self._call_cmd(
+                self._openocd_cmd(self.FLASH.format(elf_path)))
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
@@ -111,7 +124,9 @@ class OpenOCD(object):
         """ Start a debugger process """
         LOGGER.debug('Debug start')
         self.debug_stop()  # kill previous process
-        self._debug = subprocess.Popen(**self._openocd_args(self.DEBUG))
+        kwargs = {'args': shlex.split(self._openocd_cmd(self.DEBUG)),
+                  'stdout': self.out, 'stderr': self.out}
+        self._debug = subprocess.Popen(**kwargs)
         LOGGER.debug('Debug started')
         return 0
 
@@ -129,28 +144,6 @@ class OpenOCD(object):
             self._debug = None
             LOGGER.debug('Debug stopped')
         return 0
-
-    def _call_cmd(self, command_str):
-        """ Run the given command_str with init on openocd.
-        If openocd is in 'debug' mode, return an error """
-        if self._debug:
-            LOGGER.error("OpenOCD is in 'debug' mode, stop it to flash/reset")
-            return 1
-
-        kwargs = self._openocd_args(command_str)
-        try:
-            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
-        except subprocess_timeout.TimeoutExpired as exc:
-            LOGGER.error("Openocd '%s' timeout: %s", command_str, exc)
-            return 1
-
-    def _openocd_args(self, command_str):
-        """ Get subprocess arguments for command_str """
-        # Generate full command arguments
-        cmd = self.OPENOCD.format(openocd_path=self.openocd_path,
-                                  config=self.config, cmd=command_str)
-        args = shlex.split(cmd)
-        return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
     @classmethod
     def from_node(cls, nodeclass, *args, **kwargs):
