@@ -30,7 +30,7 @@ from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 class NodeA8M3(NodeOpenOCDBase):
     """ Open node A8-M3 implemenation """
 
-    TYPE = 'a8-m3'
+    TYPE = 'a8_m3'
     TTY = '/dev/ttyA8_M3'
     BAUDRATE = 500000
     OPENOCD_PATH = 'openocd'  # Use old openocd
