@@ -62,8 +62,14 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
             self.g_m.open_node.serial_redirection.stop()
             self.assertIsNotNone(ret)
 
-        not_tested = (set(self.g_m.open_node.AUTOTEST_AVAILABLE) -
-                      set(AutoTestManager.TESTED_FEATURES))
+        if self.board_cfg.linux_on_class is not None:
+            autotest = self.board_cfg.linux_on_class.AUTOTEST_AVAILABLE
+            not_tested = (set(autotest) -
+                          set(AutoTestManager.TESTED_FEATURES))
+        else:
+            not_tested = (set(self.g_m.open_node.AUTOTEST_AVAILABLE) -
+                          set(AutoTestManager.TESTED_FEATURES))
+
         self.assertEqual(not_tested, set())
 
     def test_mode_no_blink_no_radio(self):
