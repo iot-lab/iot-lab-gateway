@@ -93,7 +93,7 @@ class TestProtocol(unittest.TestCase):
 class TestProtocolGPS(unittest.TestCase):
 
     def setUp(self):
-        config = utils.read_config_mock('a8', linux_open_node_type='a8-m3')
+        config = utils.read_config_mock('a8', linux_open_node_type='a8_m3')
         mock.patch(utils.READ_CONFIG, config).start()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
