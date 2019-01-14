@@ -27,15 +27,12 @@
 import os
 import sys
 
-from nose.plugins.attrib import attr
-
 from gateway_code.autotest.autotest import AutoTestManager
 from gateway_code.integration import test_integration_mock
 from gateway_code.utils.node_connection import OpenNodeConnection
 from gateway_code.tests.rest_server_test import query_string
 
 
-@attr('autotest', 'integration')
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
     """ Try running autotests on node """
 
