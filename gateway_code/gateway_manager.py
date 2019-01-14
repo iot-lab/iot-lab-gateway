@@ -160,7 +160,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # nrf52dk and nrf52840dk needs a power cycle before their serial
         # becomes fully usable.
-        if self._board_require_power_cycle(self.open_node.TYPE):
+        if (firmware_path is not None and
+                self._board_require_power_cycle(self.open_node.TYPE)):
             LOGGER.info("Power cycle node %s",
                         self.control_node.node_id.replace('_', '-'))
             ret_val += self.control_node.open_stop()
