@@ -666,7 +666,7 @@ class AutoTestManager(object):
         # one measure every ~0.1 seconds
 
         conso = Consumption(self.g_m.open_node.ALIM, 'dc',
-                            '1100', '64', True, True, True)
+                            '588', '64', True, True, True)
         ret_val += self._open_node_start()
 
         self.cn_measures = []
