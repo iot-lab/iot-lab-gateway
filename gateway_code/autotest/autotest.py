@@ -165,7 +165,7 @@ class AutoTestManager(object):
           * get
 
         """
-        assert self.on_class.TYPE == 'a8'
+        assert self.on_class.TYPE == 'a8' or self.on_class.TYPE == 'rpi3'
         # Should be adapted if already booted, so not enabled for cn_no
         assert self.cn_class.TYPE == 'iotlab'
 
