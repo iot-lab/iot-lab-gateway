@@ -23,7 +23,6 @@
 
 """ Linux node interface """
 
-import os
 import shlex
 import logging
 from subprocess import check_output, check_call, STDOUT, CalledProcessError
@@ -91,12 +90,11 @@ class OpenLinuxConnection(object):
         mac_addr = mac_addr_s.strip()
         return mac_addr
 
-    def flash(self, fw_path, dest='/tmp'):
+    def flash(self):
         """ Flash firmware on open node """
         try:
-            fw_remote = os.path.join(dest, os.path.basename(fw_path))
-            self.scp(fw_path, fw_remote)
-            self.ssh_run('flash_a8_m3 %s' % fw_remote)
+            # generic programmer script on the Linux node
+            self.ssh_run('iotlab_flash -autotest')
             return 0
         except CalledProcessError:
             return 1

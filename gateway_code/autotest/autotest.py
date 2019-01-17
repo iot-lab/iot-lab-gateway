@@ -195,7 +195,7 @@ class AutoTestManager(object):
         ret_val += self._check(tst_ok(test_ok), 'linux_mac_addr',
                                linux_mac_addr)
 
-        ret = self.linux_connection.flash(self.linux_on_class.FW_AUTOTEST)
+        ret = self.linux_connection.flash()
         self._assert(ret, 'linux_node_flash_autotest', ret,
                      'Linux Open Node Flash Failed')
 
