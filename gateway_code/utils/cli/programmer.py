@@ -39,11 +39,11 @@ def _get_node(control_node=False):
     return board_cfg.board_class()
 
 
-def _setup_parser(action):
+def _setup_parser(cmd):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-cn', '--controle-node', dest="cn",
-                        action="store_true", help='%s control node' % action)
-    if action == 'flash':
+    parser.add_argument('-cn', '--control-node', dest="cn",
+                        action="store_true", help='%s control node' % cmd)
+    if cmd == 'flash':
         parser.add_argument('firmware', help="Firmware path")
     return parser
 
