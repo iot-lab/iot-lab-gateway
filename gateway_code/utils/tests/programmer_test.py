@@ -25,7 +25,6 @@
 
 import unittest
 import mock
-import pytest
 
 from gateway_code.tests import utils
 from gateway_code.utils.cli.programmer import flash, reset, debug
@@ -115,24 +114,24 @@ class TestsProgrammer(unittest.TestCase):
         """ Test avrdude no method """
         args = ['programmer.py']
         with mock.patch('sys.argv', args):
-            with pytest.raises(ValueError):
-                debug()
+            ret = debug()
+            self.assertEqual(ret, -1)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
     def test_linux_node_no_flash_method(self):
         """ Test Linux node no flash method """
         args = ['programmer.py', '/path/to/firmware']
         with mock.patch('sys.argv', args):
-            with pytest.raises(ValueError):
-                flash()
+            ret = flash()
+            self.assertEqual(ret, -1)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
     def test_linux_node_no_reset_method(self):
         """ Test Linux node no reset method """
         args = ['programmer.py']
         with mock.patch('sys.argv', args):
-            with pytest.raises(ValueError):
-                reset()
+            ret = reset()
+            self.assertEqual(ret, -1)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('firefly'))
     @mock.patch('gateway_code.utils.cc2538.CC2538.flash')

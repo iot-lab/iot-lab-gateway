@@ -48,14 +48,13 @@ def _setup_parser(cmd):
     return parser
 
 
-def _print_result(ret, cmd):
+def _print_result(ret, cmd, node):
     if ret == 0:
-        print '%s OK\n' % cmd
+        print '{} OK\n'.format(cmd)
+    elif ret == -1:
+        print '{} not supported for board {}\n'.format(cmd, node)
     else:
-        print '%s KO: %d\n' % (cmd, ret)
-
-
-CMD_ERROR = '{} command is not available on {} node'
+        print '{} KO: {}\n'.format(cmd, ret)
 
 
 @log_to_stderr
@@ -64,11 +63,9 @@ def flash():
     parser = _setup_parser(flash.__name__)
     opts = parser.parse_args()
     node = _get_node(opts.cn)
-    if hasattr(node, flash.__name__):
-        ret = node.flash(opts.firmware)
-        _print_result(ret, flash.__name__)
-        return ret
-    raise ValueError(CMD_ERROR.format(flash.__name__, node.TYPE))
+    ret = node.flash(opts.firmware) if hasattr(node, flash.__name__) else -1
+    _print_result(ret, flash.__name__, node.TYPE)
+    return ret
 
 
 @log_to_stderr
@@ -77,11 +74,9 @@ def reset():
     parser = _setup_parser(reset.__name__)
     opts = parser.parse_args()
     node = _get_node(opts.cn)
-    if hasattr(node, reset.__name__):
-        ret = node.reset()
-        _print_result(ret, reset.__name__)
-        return ret
-    raise ValueError(CMD_ERROR.format(reset.__name__, node.TYPE))
+    ret = node.reset() if hasattr(node, reset.__name__) else -1
+    _print_result(ret, reset.__name__, node.TYPE)
+    return ret
 
 
 def _debug(node):
@@ -105,9 +100,8 @@ def debug():
     parser = _setup_parser(debug.__name__)
     opts = parser.parse_args()
     node = _get_node(opts.cn)
-    if (hasattr(node, '{}_start'.format(debug.__name__)) and
-            hasattr(node, '{}_stop'.format(debug.__name__))):
-        ret = _debug(node)
-        _print_result(ret, debug.__name__)
-        return ret
-    raise ValueError(CMD_ERROR.format(debug.__name__, node.TYPE))
+    start_debug = hasattr(node, '{}_start'.format(debug.__name__))
+    stop_debug = hasattr(node, '{}_stop'.format(debug.__name__))
+    ret = _debug(node) if (start_debug and stop_debug) else -1
+    _print_result(ret, debug.__name__, node.TYPE)
+    return ret
