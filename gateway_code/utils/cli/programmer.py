@@ -44,7 +44,13 @@ def _setup_parser(cmd):
     parser.add_argument('-cn', '--control-node', dest="cn",
                         action="store_true", help='%s control node' % cmd)
     if cmd == 'flash':
-        parser.add_argument('firmware', help="Firmware path")
+        group = parser.add_mutually_exclusive_group(required=True)
+        group.add_argument('-idle', '--idle-firmware',
+                           action='store_true', help="Flash idle firmware")
+        group.add_argument('-autotest', '--autotest-firmware',
+                           action='store_true', help="Flash autotest firmware")
+        group.add_argument('-firmware', '--firmware-path', dest='firmware',
+                           help="Firmware path")
     return parser
 
 
@@ -63,7 +69,20 @@ def flash():
     parser = _setup_parser(flash.__name__)
     opts = parser.parse_args()
     node = _get_node(opts.cn)
-    ret = node.flash(opts.firmware) if hasattr(node, flash.__name__) else -1
+    if ((opts.cn and opts.idle_firmware) or
+            (opts.cn and opts.autotest_firmware)):
+        ret = -1
+        _print_result(ret, flash.__name__, node.TYPE)
+        return ret
+    if hasattr(node, flash.__name__):
+        if opts.idle_firmware:
+            ret = node.flash(node.FW_IDLE)
+        elif opts.autotest_firmware:
+            ret = node.flash(node.FW_AUTOTEST)
+        else:
+            ret = node.flash(opts.firmware)
+    else:
+        ret = -1
     _print_result(ret, flash.__name__, node.TYPE)
     return ret
 

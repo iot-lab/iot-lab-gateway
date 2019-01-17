@@ -37,7 +37,7 @@ class TestsProgrammer(unittest.TestCase):
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
     def test_openocd_flash(self, call_mock):
         """ Test openocd flash """
-        args = ['programmer.py', '/dev/null']
+        args = ['programmer.py', '-firmware', '/dev/null']
         call_mock.return_value = 0
         with mock.patch('sys.argv', args):
             ret = flash()
@@ -92,7 +92,7 @@ class TestsProgrammer(unittest.TestCase):
         bootloader_mock.return_value = 0
         call_mock.return_value = 0
         wait_mock.return_value = 0
-        args = ['programmer.py', '/dev/null']
+        args = ['programmer.py', '-firmware', '/dev/null']
         with mock.patch('sys.argv', args):
             ret = flash()
             self.assertEqual(0, ret)
@@ -120,7 +120,7 @@ class TestsProgrammer(unittest.TestCase):
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
     def test_linux_node_no_flash_method(self):
         """ Test Linux node no flash method """
-        args = ['programmer.py', '/path/to/firmware']
+        args = ['programmer.py', '-firmware', '/path/to/firmware']
         with mock.patch('sys.argv', args):
             ret = flash()
             self.assertEqual(ret, -1)
@@ -150,7 +150,7 @@ class TestsProgrammer(unittest.TestCase):
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
     def test_linux_open_node_flash(self, call_mock):
         """ Test Linux open node flash """
-        args = ['programmer.py', '/dev/null']
+        args = ['programmer.py', '-firmware', '/dev/null']
         call_mock.return_value = 0
         with mock.patch('sys.argv', args):
             ret = flash()
@@ -161,7 +161,36 @@ class TestsProgrammer(unittest.TestCase):
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
     def test_control_node_openocd_flash(self, call_mock):
         """ Test control node openocd flash """
-        args = ['programmer.py', '-cn', '/dev/null']
+        args = ['programmer.py', '-cn', '-firmware', '/dev/null']
+        call_mock.return_value = 0
+        with mock.patch('sys.argv', args):
+            ret = flash()
+            self.assertEqual(0, ret)
+
+    @mock.patch(utils.READ_CONFIG,
+                utils.read_config_mock('m3', control_node_type='iotlab'))
+    def test_control_node_autotest(self):
+        """ Test control node autotest flash """
+        args = ['programmer.py', '-cn', '-autotest']
+        with mock.patch('sys.argv', args):
+            ret = flash()
+            self.assertEqual(ret, -1)
+
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    def test_autotest_flash(self, call_mock):
+        """ Test autotest flash """
+        args = ['programmer.py', '-autotest']
+        call_mock.return_value = 0
+        with mock.patch('sys.argv', args):
+            ret = flash()
+            self.assertEqual(0, ret)
+
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    def test_idle_flash(self, call_mock):
+        """ Test idle flash """
+        args = ['programmer.py', '-idle']
         call_mock.return_value = 0
         with mock.patch('sys.argv', args):
             ret = flash()
