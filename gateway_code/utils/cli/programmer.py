@@ -29,24 +29,30 @@ import gateway_code.board_config as board_config
 from gateway_code.utils.cli import log_to_stderr
 
 
-def _node_class(control_node=False):
+def _get_node(control_node=False):
     board_cfg = board_config.BoardConfig()
     if control_node:
-        return board_cfg.cn_class
+        return board_cfg.cn_class(board_cfg.node_id, None)
     elif board_cfg.linux_on_class is not None:
         # Linux open node
-        return board_cfg.linux_on_class
-    return board_cfg.board_class
+        return board_cfg.linux_on_class()
+    return board_cfg.board_class()
 
 
 def _setup_parser(action):
     parser = argparse.ArgumentParser()
-    parser.add_argument('-cn', '--controle-node', action="store_true",
-                        help='%s control node' % action)
+    parser.add_argument('-cn', '--controle-node', dest="cn",
+                        action="store_true", help='%s control node' % action)
     if action == 'flash':
-        parser.add_argument('firmware', dest='firmware_path', type=str,
-                            help="Firmware path")
+        parser.add_argument('firmware', help="Firmware path")
     return parser
+
+
+def _print_result(ret, cmd):
+    if ret == 0:
+        print '%s OK\n' % cmd
+    else:
+        print '%s KO: %d\n' % (cmd, ret)
 
 
 CMD_ERROR = '{} command is not available on {} node'
@@ -57,15 +63,12 @@ def flash():
     """ flash node function """
     parser = _setup_parser(flash.__name__)
     opts = parser.parse_args()
-    node = _node_class(opts.cn)
-    if getattr(node, flash.__name__):
-        ret = node.flash(opts.firmware_path)
-        if ret == 0:
-            print '%s OK\n' % flash.__name__
-        else:
-            print '%s KO: %d\n' % (flash.__name__, ret)
-    else:
-        raise ValueError(CMD_ERROR.format(flash.__name__, node.TYPE))
+    node = _get_node(opts.cn)
+    if hasattr(node, flash.__name__):
+        ret = node.flash(opts.firmware)
+        _print_result(ret, flash.__name__)
+        return ret
+    raise ValueError(CMD_ERROR.format(flash.__name__, node.TYPE))
 
 
 @log_to_stderr
@@ -73,15 +76,12 @@ def reset():
     """ reset node function """
     parser = _setup_parser(reset.__name__)
     opts = parser.parse_args()
-    node = _node_class(opts.cn)
-    if getattr(node, reset.__name__):
+    node = _get_node(opts.cn)
+    if hasattr(node, reset.__name__):
         ret = node.reset()
-        if ret == 0:
-            print '%s OK\n' % reset.__name__
-        else:
-            print '%s KO: %d\n' % (reset.__name__, ret)
-    else:
-        raise ValueError(CMD_ERROR.format(reset.__name__, node.TYPE))
+        _print_result(ret, reset.__name__)
+        return ret
+    raise ValueError(CMD_ERROR.format(reset.__name__, node.TYPE))
 
 
 def _debug(node):
@@ -104,13 +104,10 @@ def debug():
     """ debug node function """
     parser = _setup_parser(debug.__name__)
     opts = parser.parse_args()
-    node = _node_class(opts.cn)
-    if (getattr(node, '{}_start'.format(debug.__name__)) and
-            getattr(node, '{}_stop'.format(debug.__name__))):
+    node = _get_node(opts.cn)
+    if (hasattr(node, '{}_start'.format(debug.__name__)) and
+            hasattr(node, '{}_stop'.format(debug.__name__))):
         ret = _debug(node)
-        if ret == 0:
-            print '%s OK\n' % debug.__name__
-        else:
-            print '%s KO: %d\n' % (debug.__name__, ret)
-    else:
-        raise ValueError(CMD_ERROR.format(debug.__name__, node.TYPE))
+        _print_result(ret, debug.__name__)
+        return ret
+    raise ValueError(CMD_ERROR.format(debug.__name__, node.TYPE))
