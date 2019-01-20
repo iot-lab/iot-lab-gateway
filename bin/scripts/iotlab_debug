@@ -20,6 +20,6 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-from gateway_code.utils import programmer
+from gateway_code.utils.cli import programmer
 
 exit(programmer.debug())
