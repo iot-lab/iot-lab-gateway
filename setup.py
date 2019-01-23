@@ -149,7 +149,7 @@ def setup_initd_script(init_script):
                         'start', '80', '2', '3', '4', '5', '.',
                         'stop', '20', '0', '1', '6', '.']
     shutil.copy('bin/init_script/' + init_script, '/etc/init.d/')
-    os.chmod('/etc/init.d/' + init_script, 0755)
+    os.chmod('/etc/init.d/' + init_script, 0o755)
     subprocess.check_call(update_rc_d_args)
 
 
