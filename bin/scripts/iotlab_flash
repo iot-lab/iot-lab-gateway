@@ -20,6 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
+import os
 from gateway_code.utils.cli import programmer
 
-exit(programmer.flash())
+exit(programmer.flash(os.getenv('FW')))

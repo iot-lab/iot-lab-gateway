@@ -94,7 +94,7 @@ class OpenLinuxConnection(object):
         """ Flash firmware on open node """
         try:
             # generic programmer script on the Linux node
-            self.ssh_run('iotlab_flash -autotest')
+            self.ssh_run('FW=autotest iotlab_flash')
             return 0
         except CalledProcessError:
             return 1

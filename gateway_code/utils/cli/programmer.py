@@ -44,13 +44,7 @@ def _setup_parser(cmd):
     parser.add_argument('-cn', '--control-node', dest="cn",
                         action="store_true", help='%s control node' % cmd)
     if cmd == 'flash':
-        group = parser.add_mutually_exclusive_group(required=True)
-        group.add_argument('-idle', '--idle-firmware',
-                           action='store_true', help="Flash idle firmware")
-        group.add_argument('-autotest', '--autotest-firmware',
-                           action='store_true', help="Flash autotest firmware")
-        group.add_argument('-firmware', '--firmware-path', dest='firmware',
-                           help="Firmware path")
+        parser.add_argument('firmware', nargs='?', help='Firmware path')
     return parser
 
 
@@ -58,26 +52,32 @@ def _print_result(ret, cmd, node):
     if ret == 0:
         print '{} OK\n'.format(cmd)
     elif ret == -1:
-        print '{} not supported for board {}\n'.format(cmd, node)
+        print 'error: {} not supported for board {}\n'.format(cmd, node)
+    elif ret == -2:
+        print 'error: too few arguments\n'
     else:
         print '{} KO: {}\n'.format(cmd, ret)
 
 
 @log_to_stderr
-def flash():
+def flash(firmware):
     """ flash node function """
     parser = _setup_parser(flash.__name__)
     opts = parser.parse_args()
     node = _get_node(opts.cn)
-    if ((opts.cn and opts.idle_firmware) or
-            (opts.cn and opts.autotest_firmware)):
+    if (not firmware and not opts.firmware):
+        ret = -2
+        _print_result(ret, flash.__name__, node.TYPE)
+        return ret
+    if ((opts.cn and firmware) or
+            (firmware and (firmware != 'idle' and firmware != 'autotest'))):
         ret = -1
         _print_result(ret, flash.__name__, node.TYPE)
         return ret
     if hasattr(node, flash.__name__):
-        if opts.idle_firmware:
+        if firmware == 'idle':
             ret = node.flash(node.FW_IDLE)
-        elif opts.autotest_firmware:
+        elif firmware == 'autotest':
             ret = node.flash(node.FW_AUTOTEST)
         else:
             ret = node.flash(opts.firmware)
