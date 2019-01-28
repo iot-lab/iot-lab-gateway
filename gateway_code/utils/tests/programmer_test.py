@@ -23,6 +23,7 @@
 
 """ Test programmer module """
 
+import os
 import unittest
 import mock
 
@@ -35,44 +36,75 @@ class TestsProgrammer(unittest.TestCase):
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_openocd_flash(self, call_mock):
-        """ Test openocd flash """
-        args = ['programmer.py', '/dev/null']
+    def test_openocd_method(self, call_mock):
+        """ Test openocd method """
         call_mock.return_value = 0
+        args = ['programmer.py', '/dev/null']
         with mock.patch('sys.argv', args):
-            ret = flash(None)
-            self.assertEqual(0, ret)
+            ret = flash()
+            self.assertEqual(ret, 0)
+
+        args2 = ['programmer.py']
+        with mock.patch('sys.argv', args2):
+            ret = reset()
+            self.assertEqual(ret, 0)
+
+        args3 = ['programmer.py', '/path/to/firmware']
+        with mock.patch('sys.argv', args3):
+            ret = flash()
+            self.assertEqual(ret, 1)
+
+        call_mock.return_value = 42
+        with mock.patch('sys.argv', args2):
+            ret = reset()
+            self.assertEqual(ret, 42)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_openocd_reset(self, call_mock):
-        """ Test openocd reset """
+    @mock.patch.dict(os.environ, {'FW': 'xxx'})
+    def test_env_flash_failed(self, call_mock):
+        """ Test env flash failed"""
         args = ['programmer.py']
         call_mock.return_value = 0
         with mock.patch('sys.argv', args):
-            ret = reset()
-            self.assertEqual(0, ret)
+            ret = flash()
+            self.assertEqual(ret, 1)
 
-    @mock.patch(utils.READ_CONFIG,
-                utils.read_config_mock('m3', control_node_type='iotlab'))
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    def test_flash_failed(self):
+        """ Test flash failed"""
+        args = ['programmer.py']
+        with mock.patch('sys.argv', args):
+            ret = flash()
+            self.assertEqual(ret, -2)
+
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_control_node_reset(self, call_mock):
-        """ Test control node reset """
-        args = ['programmer.py', '-cn']
+    @mock.patch.dict(os.environ, {'FW': 'autotest'})
+    def test_autotest_flash(self, call_mock):
+        """ Test autotest flash """
+        args = ['programmer.py']
         call_mock.return_value = 0
         with mock.patch('sys.argv', args):
-            ret = reset()
+            ret = flash()
             self.assertEqual(ret, 0)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_openocd_reset_failed(self, call_mock):
-        """ Test openocd reset """
+    @mock.patch.dict(os.environ, {'FW': 'idle'})
+    def test_idle_flash(self, call_mock):
+        """ Test idle flash """
+        call_mock.return_value = 0
         args = ['programmer.py']
-        call_mock.return_value = 42
         with mock.patch('sys.argv', args):
-            ret = reset()
-            self.assertEqual(42, ret)
+            ret = flash()
+            self.assertEqual(ret, 0)
+
+        args2 = ['programmer.py', '/dev/null']
+        call_mock.return_value = 0
+        with mock.patch('sys.argv', args2):
+            ret = flash()
+            self.assertEqual(ret, 0)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch("signal.pause")
@@ -82,17 +114,52 @@ class TestsProgrammer(unittest.TestCase):
         pause_mock.side_effect = KeyboardInterrupt
         with mock.patch('sys.argv', args):
             ret = debug()
-            self.assertEqual(0, ret)
+            self.assertEqual(ret, 0)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.utils.openocd.OpenOCD.debug_start')
     def test_openocd_debug_failed(self, debug_mock):
         """ Test openocd debug failed """
-        args = ['programmer.py']
         debug_mock.return_value = 1
+        args = ['programmer.py']
         with mock.patch('sys.argv', args):
             ret = debug()
-            self.assertEqual(1, ret)
+            self.assertEqual(ret, 1)
+
+    @mock.patch(utils.READ_CONFIG,
+                utils.read_config_mock('m3', control_node_type='iotlab'))
+    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    def test_control_node_method(self, call_mock):
+        """ Test control node method """
+        call_mock.return_value = 0
+        args = ['programmer.py', '-cn']
+        with mock.patch('sys.argv', args):
+            ret = reset()
+            self.assertEqual(ret, 0)
+
+        args2 = ['programmer.py', '-cn', '/dev/null']
+        with mock.patch('sys.argv', args2):
+            ret = flash()
+            self.assertEqual(ret, 0)
+
+    @mock.patch(utils.READ_CONFIG,
+                utils.read_config_mock('m3', control_node_type='iotlab'))
+    @mock.patch.dict(os.environ, {'FW': 'autotest'})
+    def test_control_node_autotest(self):
+        """ Test control node autotest flash """
+        args = ['programmer.py', '-cn']
+        with mock.patch('sys.argv', args):
+            ret = flash()
+            self.assertEqual(ret, -2)
+
+    @mock.patch(utils.READ_CONFIG,
+                utils.read_config_mock('m3', control_node_type='no'))
+    def test_control_node_detection(self):
+        """ Test control node detection """
+        args = ['programmer.py', '-cn']
+        with mock.patch('sys.argv', args):
+            with self.assertRaises(SystemExit):
+                flash()
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('leonardo'))
     @mock.patch('gateway_code.utils.avrdude.AvrDude.trigger_bootloader')
@@ -105,8 +172,8 @@ class TestsProgrammer(unittest.TestCase):
         wait_mock.return_value = 0
         args = ['programmer.py', '/dev/null']
         with mock.patch('sys.argv', args):
-            ret = flash(None)
-            self.assertEqual(0, ret)
+            ret = flash()
+            self.assertEqual(ret, 0)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('leonardo'))
     @mock.patch('gateway_code.utils.avrdude.AvrDude.trigger_bootloader')
@@ -118,7 +185,7 @@ class TestsProgrammer(unittest.TestCase):
         args = ['programmer.py']
         with mock.patch('sys.argv', args):
             ret = reset()
-            self.assertEqual(0, ret)
+            self.assertEqual(ret, 0)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('leonardo'))
     def test_avrdude_no_method(self):
@@ -129,18 +196,15 @@ class TestsProgrammer(unittest.TestCase):
             self.assertEqual(ret, -1)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
-    def test_linux_node_no_flash_method(self):
+    def test_linux_node_no_method(self):
         """ Test Linux node no flash method """
         args = ['programmer.py', '/path/to/firmware']
         with mock.patch('sys.argv', args):
-            ret = flash(None)
+            ret = flash()
             self.assertEqual(ret, -1)
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
-    def test_linux_node_no_reset_method(self):
-        """ Test Linux node no reset method """
-        args = ['programmer.py']
-        with mock.patch('sys.argv', args):
+        args2 = ['programmer.py']
+        with mock.patch('sys.argv', args2):
             ret = reset()
             self.assertEqual(ret, -1)
 
@@ -164,73 +228,14 @@ class TestsProgrammer(unittest.TestCase):
         args = ['programmer.py', '/dev/null']
         call_mock.return_value = 0
         with mock.patch('sys.argv', args):
-            ret = flash(None)
-            self.assertEqual(0, ret)
+            ret = flash()
+            self.assertEqual(ret, 0)
 
     @mock.patch(utils.READ_CONFIG,
-                utils.read_config_mock('m3', control_node_type='iotlab'))
-    @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_control_node_openocd_flash(self, call_mock):
-        """ Test control node openocd flash """
-        args = ['programmer.py', '-cn', '/dev/null']
-        call_mock.return_value = 0
-        with mock.patch('sys.argv', args):
-            ret = flash(None)
-            self.assertEqual(0, ret)
-
-    @mock.patch(utils.READ_CONFIG,
-                utils.read_config_mock('m3', control_node_type='iotlab'))
-    def test_control_node_autotest(self):
-        """ Test control node autotest flash """
+                utils.read_config_mock('a8', linux_open_node_type='a8_m3'))
+    def test_linux_open_node_no_cn(self):
+        """ Test Linux open node without control node"""
         args = ['programmer.py', '-cn']
         with mock.patch('sys.argv', args):
-            ret = flash('autotest')
-            self.assertEqual(ret, -1)
-
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_env_flash_failed(self, call_mock):
-        """ Test env flash failed"""
-        args = ['programmer.py']
-        call_mock.return_value = 0
-        with mock.patch('sys.argv', args):
-            ret = flash('xxx')
-            self.assertEqual(-1, ret)
-
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    def test_flash_failed(self):
-        """ Test flash failed"""
-        args = ['programmer.py']
-        with mock.patch('sys.argv', args):
-            ret = flash(None)
-            self.assertEqual(-2, ret)
-
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_autotest_flash(self, call_mock):
-        """ Test autotest flash """
-        args = ['programmer.py']
-        call_mock.return_value = 0
-        with mock.patch('sys.argv', args):
-            ret = flash('autotest')
-            self.assertEqual(0, ret)
-
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_idle_flash(self, call_mock):
-        """ Test idle flash """
-        args = ['programmer.py']
-        call_mock.return_value = 0
-        with mock.patch('sys.argv', args):
-            ret = flash('idle')
-            self.assertEqual(0, ret)
-
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    @mock.patch('gateway_code.utils.subprocess_timeout.call')
-    def test_args_env_flash(self, call_mock):
-        """ Test args flash failed """
-        args = ['programmer.py', '/dev/null']
-        call_mock.return_value = 0
-        with mock.patch('sys.argv', args):
-            ret = flash('idle')
-            self.assertEqual(0, ret)
+            with self.assertRaises(SystemExit):
+                reset()
