@@ -43,4 +43,4 @@ class TestLinuxConnectionError(unittest.TestCase):
     def test_flash_error(self, scp):
         scp.side_effect = CalledProcessError(1, 'flash', 'flash failed')
         connection = open_linux_interface.OpenLinuxConnection()
-        self.assertEqual(connection.flash('test/firmware'), 1)
+        self.assertEqual(connection.flash(), 1)
