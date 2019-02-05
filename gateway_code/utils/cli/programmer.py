@@ -36,9 +36,9 @@ _RESET = 'reset'
 _DEBUG = 'debug'
 
 
-def _setup_parser(cmd, cn_type, linux_on_class):
+def _setup_parser(cmd, board_cfg):
     parser = argparse.ArgumentParser()
-    if cn_type != 'no' and cn_type != 'rpi3' and not linux_on_class:
+    if board_cfg.cn_type == 'iotlab' and not board_cfg.linux_on_class:
         parser.add_argument('-cn', '--control-node', dest="cn",
                             action="store_true",
                             help='%s control node' % cmd)
@@ -71,7 +71,7 @@ def _print_result(ret, cmd, node=None):
 def reset():
     """ reset node function """
     board_cfg = board_config.BoardConfig()
-    opts = _setup_parser(_RESET, board_cfg.cn_type, board_cfg.linux_on_class)
+    opts = _setup_parser(_RESET, board_cfg)
     control_node = opts.cn if hasattr(opts, 'cn') else False
     node = _get_node(board_cfg, control_node)
     ret = node.reset() if hasattr(node, _RESET) else -1
@@ -83,28 +83,31 @@ def reset():
 def flash():
     """ flash node function """
     board_cfg = board_config.BoardConfig()
-    fw_env = os.getenv('FW')
-    opts = _setup_parser(_FLASH, board_cfg.cn_type, board_cfg.linux_on_class)
+    firmware = os.getenv('FW')
+    opts = _setup_parser(_FLASH, board_cfg)
     control_node = opts.cn if hasattr(opts, 'cn') else False
-    firmware = (fw_env if (fw_env is not None and not control_node)
-                else opts.firmware)
-    if not firmware:
+    node = _get_node(board_cfg, control_node)
+    if firmware is not None and not control_node:
+        if firmware == 'idle':
+            firmware = node.FW_IDLE
+        if firmware == 'autotest':
+            firmware = node.FW_AUTOTEST
+    else:
+        firmware = opts.firmware
+
+    if firmware is None:
         ret = -2
         _print_result(ret, _FLASH)
         return ret
-    node = _get_node(board_cfg, control_node)
+
+    try:
+        firmware_path = common.abspath(firmware)
+    except IOError as err:
+        print err
+        return 1
+
     if hasattr(node, _FLASH):
-        if firmware == 'idle':
-            ret = node.flash(node.FW_IDLE)
-        elif firmware == 'autotest':
-            ret = node.flash(node.FW_AUTOTEST)
-        else:
-            try:
-                firmware_path = common.abspath(firmware)
-                ret = node.flash(firmware_path)
-            except IOError as err:
-                print err
-                return 1
+        ret = node.flash(firmware_path)
     else:
         ret = -1
     _print_result(ret, _FLASH, node.TYPE)
@@ -130,7 +133,7 @@ def _debug(node):
 def debug():
     """ debug node function """
     board_cfg = board_config.BoardConfig()
-    opts = _setup_parser(_DEBUG, board_cfg.cn_type, board_cfg.linux_on_class)
+    opts = _setup_parser(_DEBUG, board_cfg)
     control_node = opts.cn if hasattr(opts, 'cn') else False
     node = _get_node(board_cfg, control_node)
     start_debug = hasattr(node, '{}_start'.format(_DEBUG))
