@@ -42,7 +42,7 @@ class NodeRpi3(OpenNodeBase):
     """ Open node RPi3 implementation """
 
     TYPE = 'rpi3'
-    TTY = '/dev/ttyON_RPI3'
+    TTY = '/dev/iotlab/ttyON_RPI3'
     BAUDRATE = 115200
     ALIM = '5V'
 
