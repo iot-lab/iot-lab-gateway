@@ -20,28 +20,27 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" CLI client for serial_redirection
+""" CLI client for serial_redirection """
 
-Usage: serial_redirection <tty> <baudrate>
-
-"""
-
-import argparse
 import signal
+import gateway_code.board_config as board_config
 from .. import serial_redirection
 from . import log_to_stderr
 
-PARSER = argparse.ArgumentParser()
-PARSER.add_argument('tty', type=str, help="Serial device")
-PARSER.add_argument('baudrate', type=int, help="Serial baudrate")
+
+def _get_node(board_cfg):
+    if board_cfg.linux_on_class is not None:
+        # Linux open node
+        return board_cfg.linux_on_class()
+    return board_cfg.board_class()
 
 
 @log_to_stderr
 def main():
     """ serial_redirection cli main function """
-
-    opts = PARSER.parse_args()
-    redirect = serial_redirection.SerialRedirection(opts.tty, opts.baudrate)
+    board_cfg = board_config.BoardConfig()
+    node = _get_node(board_cfg)
+    redirect = serial_redirection.SerialRedirection(node.TTY, node.BAUDRATE)
     try:
         redirect.start()
         print 'Press Ctrl+C to stop'
