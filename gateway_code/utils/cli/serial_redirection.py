@@ -24,7 +24,6 @@
 
 import signal
 import gateway_code.board_config as board_config
-from .. import serial_redirection
 from . import log_to_stderr
 
 
@@ -40,13 +39,12 @@ def main():
     """ serial_redirection cli main function """
     board_cfg = board_config.BoardConfig()
     node = _get_node(board_cfg)
-    redirect = serial_redirection.SerialRedirection(node.TTY, node.BAUDRATE)
     try:
-        redirect.start()
+        node.serial_redirection.start()
         print 'Press Ctrl+C to stop'
         signal.pause()
     except KeyboardInterrupt:
         pass
     finally:
-        redirect.stop()
+        node.serial_redirection.stop()
         print 'Stopped'
