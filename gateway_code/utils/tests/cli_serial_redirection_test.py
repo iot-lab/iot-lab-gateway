@@ -38,21 +38,30 @@ class TestMain(unittest.TestCase):
     """ Main function tests """
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    @mock.patch('gateway_code.utils.serial_redirection.SerialRedirection')
     @mock.patch('signal.pause')
-    def test_main_function(self, m_pause, m_serial_redirect_class):
+    def test_main_function(self, m_pause):
         """ Test cli.serial_redirection main function
 
         Run and simulate 'stop' with a Ctrl+C
         """
-        redirect = m_serial_redirect_class.return_value
         m_pause.side_effect = KeyboardInterrupt()
 
         args = ['serial_redirection.py']
         with mock.patch('sys.argv', args):
             serial_redirection.main()
             self.assertTrue(m_pause.called)
-            m_serial_redirect_class.assert_called_with('/dev/iotlab/ttyON_M3',
-                                                       500000)
-            self.assertTrue(redirect.start.called)
-            self.assertTrue(redirect.stop.called)
+
+    @mock.patch(utils.READ_CONFIG,
+                utils.read_config_mock('a8', linux_open_node_type='a8_m3'))
+    @mock.patch('signal.pause')
+    def test_open_linux_node(self, m_pause):
+        """ Test open Linux node cli.serial_redirection
+
+        Run and simulate 'stop' with a Ctrl+C
+        """
+        m_pause.side_effect = KeyboardInterrupt()
+
+        args = ['serial_redirection.py']
+        with mock.patch('sys.argv', args):
+            serial_redirection.main()
+            self.assertTrue(m_pause.called)
