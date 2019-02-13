@@ -34,9 +34,17 @@ def _get_node(board_cfg):
     return board_cfg.board_class()
 
 
+def _handle_signal(signum, frame):
+    # pylint:disable=unused-argument
+    raise KeyboardInterrupt()
+
+
 @log_to_stderr
 def main():
     """ serial_redirection cli main function """
+    # Catch SIGTERM signal sending by start-stop-daemon
+    # init script
+    signal.signal(signal.SIGTERM, _handle_signal)
     board_cfg = board_config.BoardConfig()
     node = _get_node(board_cfg)
     try:

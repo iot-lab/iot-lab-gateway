@@ -22,6 +22,10 @@
 
 """ test serial_redirection module """
 
+import os
+import time
+import threading
+import signal
 import unittest
 import mock
 
@@ -65,3 +69,21 @@ class TestMain(unittest.TestCase):
         with mock.patch('sys.argv', args):
             serial_redirection.main()
             self.assertTrue(m_pause.called)
+
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    def test_signal_handling(self):
+        # pylint: disable=no-self-use
+        """ Test signal handling """
+        pid = os.getpid()
+
+        def trigger_signal():
+            """ trigger sigterm signal """
+            time.sleep(2)
+            os.kill(pid, signal.SIGTERM)
+
+        thread = threading.Thread(target=trigger_signal)
+        thread.daemon = True
+        thread.start()
+        args = ['serial_redirection.py']
+        with mock.patch('sys.argv', args):
+            serial_redirection.main()
