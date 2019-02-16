@@ -42,13 +42,14 @@ class SerialRedirection(ExternalProcess):
     """
     SOCAT = ('socat -d'
              ' TCP4-LISTEN:20000,reuseaddr'
-             ' open:{tty},b{baud},echo=0,raw')
+             ' open:{tty},b{baud},{serial_opts}')
     NAME = "serial redirection"
 
-    def __init__(self, tty, baudrate):
+    def __init__(self, tty, baudrate, serial_opts=('echo=0', 'raw')):
         self.tty = tty
-        self.process_cmd = shlex.split(self.SOCAT.format(tty=tty,
-                                                         baud=baudrate))
+        self.process_cmd = shlex.split(
+            self.SOCAT.format(tty=tty, baud=baudrate,
+                              serial_opts=','.join(serial_opts)))
 
         super(SerialRedirection, self).__init__()
 
