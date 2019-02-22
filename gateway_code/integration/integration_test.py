@@ -20,7 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Common integration tests m3/a8 """
+""" Common integration tests """
 
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
@@ -108,14 +108,14 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         """ Test simple experiment"""
         board_class = self.board_cfg.board_class
 
-        # The A8 node is really different from the others
-        if board_class.TYPE == 'a8':
-            self._run_simple_experiment_a8()
+        # The Linux node is really different from the others
+        if board_class.TYPE == 'a8' or board_class.TYPE == 'rpi3':
+            self._run_simple_experiment_linux_node()
         else:
             self._run_simple_experiment_node(board_class)
 
-    def _run_simple_experiment_a8(self):  # pylint:disable=unused-argument
-        """ Run an experiment for a8 nodes """
+    def _run_simple_experiment_linux_node(self):
+        """ Run an experiment for Linux nodes """
 
         self.assertEqual(0, self.server.post(EXP_START).json['ret'])
 
@@ -396,7 +396,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # Max profile and firmware if possible
         files = []
-        if self.board_cfg.board_class.TYPE != 'a8':
+        if (self.board_cfg.board_class.TYPE != 'a8' and
+                self.board_cfg.board_class.TYPE != 'rpi3'):
             files.append(file_tuple('firmware',
                                     self.board_cfg.board_class.FW_AUTOTEST))
 
@@ -430,8 +431,9 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
         # Got no error during tests (use assertEquals for printing result)
-        if self.board_cfg.board_class.TYPE != 'a8':
-            # On A8 nodes, ignore error 'Boot A8 failed in time:'
+        if (self.board_cfg.board_class.TYPE != 'a8' and
+                self.board_cfg.board_class.TYPE != 'rpi3'):
+            # On Linux nodes, ignore error 'Boot failed in time:'
             self.log_error.check()
 
         # Observed number of measures
@@ -538,14 +540,15 @@ class TestIntegrationOther(ExperimentRunningMock):
             # exp already stoped no error
             self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
-    def test_invalid_tty_exp_a8(self):
+    def test_invalid_tty_exp_linux_node(self):
         """ Test start where tty is not visible """
-        if self.board_cfg.board_type != 'a8':
-            pytest.skip("Only for A8")
+        if (self.board_cfg.board_type != 'a8' and
+                self.board_cfg.board_type != 'rpi3'):
+            pytest.skip("Only for Linux nodes")
 
         c_n = self.g_m.control_node
         with patch.object(c_n, 'open_start', c_n.open_stop):
-            # detect error when a8 does not start
+            # detect error when Linux node does not start
             self.assertLessEqual(1, self.server.post(EXP_START).json['ret'])
 
         # stop and cleanup
@@ -569,8 +572,9 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     def test_invalid_files(self):
         """ Test invalid flash files """
         # Only if flash available
-        if self.board_cfg.board_type == 'a8':
-            pytest.skip("Not for A8")
+        if (self.board_cfg.board_type == 'a8' or
+                self.board_cfg.board_type == 'rpi3'):
+            pytest.skip("Not for Linux nodes")
 
         # Flash with a profile
         files = [file_tuple('profile', CURRENT_DIR + 'profile.json')]
