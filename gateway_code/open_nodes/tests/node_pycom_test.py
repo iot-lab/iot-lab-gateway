@@ -27,58 +27,73 @@ from mock import patch
 from gateway_code.open_nodes.node_pycom import NodePycom
 
 
+@patch('gateway_code.common.wait_tty')
+@patch('serial.Serial')
 @patch('gateway_code.utils.external_process.ExternalProcess.start')
-def test_setup(serial_start):
+def test_setup(serial_start, ser, wait):
     """Test pycom node setup."""
     serial_start.return_value = 0
+    wait.return_value = 0
     node = NodePycom()
 
     assert node.setup() == 0
     assert serial_start.call_count == 1
+    assert ser.call_count == 2
 
     serial_start.call_count = 0
+    ser.call_count = 0
     serial_start.return_value = 1
     assert node.setup() == 1
     assert serial_start.call_count == 1
+    assert ser.call_count == 2
+
+    serial_start.call_count = 0
+    ser.call_count = 0
+    serial_start.return_value = 0
+    ser.side_effect = serial.serialutil.SerialException
+
+    assert node.setup() == 2
+    assert ser.call_count == 2
 
 
+@patch('serial.Serial')
 @patch('gateway_code.utils.external_process.ExternalProcess.stop')
-def test_teardown(serial_stop):
+def test_teardown(serial_stop, ser):
     """Test pycom node teardown."""
     serial_stop.return_value = 0
 
     node = NodePycom()
     assert node.teardown() == 0
     assert serial_stop.call_count == 1
+    assert ser.call_count == 1
 
     serial_stop.call_count = 0
+    ser.call_count = 0
 
     serial_stop.return_value = 1
     assert node.teardown() == 1
     assert serial_stop.call_count == 1
+    assert ser.call_count == 1
+
+    serial_stop.call_count = 0
+    ser.call_count = 0
+    serial_stop.return_value = 0
+    ser.side_effect = serial.serialutil.SerialException
+
+    assert node.teardown() == 1
+    assert ser.call_count == 1
 
 
 @patch('serial.Serial')
-@patch('gateway_code.utils.external_process.ExternalProcess.start')
-@patch('gateway_code.utils.external_process.ExternalProcess.stop')
-def test_reset(serial_stop, serial_start, ser):
+def test_reset(ser):
     """Test pycom node reset."""
-    serial_start.return_value = 0
-    serial_stop.return_value = 0
-
     node = NodePycom()
     assert node.reset() == 0
-    assert serial_start.call_count == 1
-    assert serial_stop.call_count == 1
     assert ser.call_count == 1
     ser.assert_called_with(node.TTY, node.BAUDRATE)
 
-    serial_start.call_count = 0
-    serial_stop.call_count = 0
     ser.call_count = 0
     ser.side_effect = serial.serialutil.SerialException
 
     assert node.reset() == 1
-    assert serial_start.call_count == 1
-    assert serial_stop.call_count == 1
     assert ser.call_count == 1
