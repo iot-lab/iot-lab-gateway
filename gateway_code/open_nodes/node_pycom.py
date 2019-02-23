@@ -30,6 +30,12 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.open_nodes.common.node_no import NodeNoBase
 
 LOGGER = logging.getLogger('gateway_code')
+PYCOM_ERASE_SEQUENCE = (
+    b"\r\n",
+    b"import os\r\n",
+    b"print(os.listdir('/flash'))\r\n",
+    b"os.mkfs('/flash')\r\n",
+)
 
 
 class NodePycom(NodeNoBase):
@@ -43,6 +49,24 @@ class NodePycom(NodeNoBase):
         self.serial_redirection = SerialRedirection(
             self.TTY, self.BAUDRATE, serial_opts=('echo=0', 'raw', 'crnl'))
 
+    @logger_call("Node Pycom: Clear flash")
+    def _clear_flash(self):
+        try:
+            ser = serial.Serial(self.TTY, self.BAUDRATE)
+        except serial.serialutil.SerialException:
+            LOGGER.error("No serial port found")
+            return 1
+        else:
+            # Erase content on the flash
+            for line in PYCOM_ERASE_SEQUENCE:
+                ser.write(line)
+            time.sleep(2)
+            LOGGER.info(ser.read_all())
+            ser.write('\x04\r\n')
+            time.sleep(1)
+            ser.close()
+        return 0
+
     @logger_call("Node Pycom: Setup node")
     def setup(self, firmware_path=None):
         """Start the custom serial redirection.
@@ -53,14 +77,14 @@ class NodePycom(NodeNoBase):
             socat PTY,link=/tmp/ttyS0,echo=0,crnl TCP:localhost:20000
         """
         ret_val = wait_tty(self.TTY, LOGGER, timeout=10)
-        ret_val += self.reset()
+        ret_val += self._clear_flash()
         ret_val += self.serial_redirection.start()
         return ret_val
 
     @logger_call("Node Pycom: teardown node")
     def teardown(self):
         """Stop the serial redirection."""
-        ret_val = self.reset()
+        ret_val = self._clear_flash()
         ret_val += self.serial_redirection.stop()
         return ret_val
 
@@ -73,13 +97,7 @@ class NodePycom(NodeNoBase):
             LOGGER.error("No serial port found")
             return 1
         else:
-            # Erase content on the flash
-            ser.write('\n')
-            LOGGER.info("PYCOM prompt: %s", ser.read_all())
-            ser.write(b'import os\r\n')
-            ser.write(b'print(os.listdir("/flash"))\r\n')
-            LOGGER.info("PYCOM files: %s", ser.read_all())
-            ser.write(b'os.mkfs("/flash")\r\n')
-            time.sleep(2)
+            # Reset the Micropython firmware (send EOT)
+            ser.write('\x04\r\n')
             ser.close()
         return 0
