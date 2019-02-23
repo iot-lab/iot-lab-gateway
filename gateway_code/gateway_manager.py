@@ -153,6 +153,15 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # Init ControlNode
         ret_val += self.control_node.start(self.exp_id, self.exp_files)
+
+        # Trigger several power-cycle with Pycom boards to ensure REPL
+        # starts correctly
+        if self.open_node.TYPE == 'pycom':
+            LOGGER.debug("Power cycle %s board", self.open_node.TYPE)
+            for _ in range(3):
+                ret_val += self.control_node.open_stop()
+                time.sleep(2)
+                ret_val += self.control_node.open_start()
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
