@@ -21,11 +21,12 @@
 
 """ Open Node Pycom experiment implementation """
 
+import time
 import logging
 import serial
-import time
 
-from gateway_code.common import logger_call, wait_tty
+import gateway_code.common
+from gateway_code.common import logger_call
 from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.open_nodes.common.node_no import NodeNoBase
 
@@ -39,7 +40,7 @@ PYCOM_ERASE_SEQUENCE = (
 
 
 class NodePycom(NodeNoBase):
-    """ Open node MicroPython implementation """
+    """ Open node Pycom implementation """
 
     TYPE = 'pycom'
     TTY = '/dev/iotlab/ttyON_PYCOM'
@@ -62,7 +63,6 @@ class NodePycom(NodeNoBase):
                 ser.write(line)
             time.sleep(2)
             LOGGER.info(ser.read_all())
-            ser.write('\x04\r\n')
             time.sleep(1)
             ser.close()
         return 0
@@ -76,8 +76,9 @@ class NodePycom(NodeNoBase):
             ssh -L 20000:<pycom node>:20000 <login>@<site>.iot-lab.info
             socat PTY,link=/tmp/ttyS0,echo=0,crnl TCP:localhost:20000
         """
-        ret_val = wait_tty(self.TTY, LOGGER, timeout=10)
+        ret_val = gateway_code.common.wait_tty(self.TTY, LOGGER, timeout=10)
         ret_val += self._clear_flash()
+        ret_val += self.reset()
         ret_val += self.serial_redirection.start()
         return ret_val
 
