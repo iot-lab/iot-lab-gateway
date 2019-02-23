@@ -23,8 +23,9 @@
 
 import logging
 import serial
+import time
 
-from gateway_code.common import logger_call
+from gateway_code.common import logger_call, wait_tty
 from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.open_nodes.common.node_no import NodeNoBase
 
@@ -45,27 +46,40 @@ class NodePycom(NodeNoBase):
     @logger_call("Node Pycom: Setup node")
     def setup(self, firmware_path=None):
         """Start the custom serial redirection.
-        Access from the frontend: socat -,echo=0 tcp:<node>:20000
+        Access from the frontend:
+            socat -,echo=0 tcp:<node>:20000
+        Access from pymakr:
+            ssh -L 20000:<pycom node>:20000 <login>@<site>.iot-lab.info
+            socat PTY,link=/tmp/ttyS0,echo=0,crnl TCP:localhost:20000
         """
-        return self.serial_redirection.start()
+        ret_val = wait_tty(self.TTY, LOGGER, timeout=10)
+        ret_val += self.reset()
+        ret_val += self.serial_redirection.start()
+        return ret_val
 
     @logger_call("Node Pycom: teardown node")
     def teardown(self):
         """Stop the serial redirection."""
-        return self.serial_redirection.stop()
+        ret_val = self.reset()
+        ret_val += self.serial_redirection.stop()
+        return ret_val
 
     @logger_call("Node Pycom: reset node")
     def reset(self):  # pylint:disable=no-self-use
         """Restart micropython interpreter."""
-        ret_val = self.serial_redirection.stop()
         try:
             ser = serial.Serial(self.TTY, self.BAUDRATE)
         except serial.serialutil.SerialException:
             LOGGER.error("No serial port found")
-            ret_val += 1
+            return 1
         else:
-            ser.write(b'\x04')
+            # Erase content on the flash
+            ser.write('\n')
+            LOGGER.info("PYCOM prompt: %s", ser.read_all())
+            ser.write(b'import os\r\n')
+            ser.write(b'print(os.listdir("/flash"))\r\n')
+            LOGGER.info("PYCOM files: %s", ser.read_all())
+            ser.write(b'os.mkfs("/flash")\r\n')
+            time.sleep(2)
             ser.close()
-        finally:
-            ret_val += self.serial_redirection.start()
-        return ret_val
+        return 0
