@@ -31,7 +31,7 @@ from threading import RLock, Timer
 
 import gateway_code.config as config
 from gateway_code import common
-from gateway_code.common import logger_call
+from gateway_code.common import logger_call, wait_tty, wait_no_tty
 from gateway_code.autotest import autotest
 from gateway_code.utils import elftarget
 
@@ -154,14 +154,14 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Init ControlNode
         ret_val += self.control_node.start(self.exp_id, self.exp_files)
 
-        # Trigger several power-cycle with Pycom boards to ensure REPL
-        # starts correctly
+        # Trigger power-cycle with Pycom boards to ensure REPL is correctly
+        # started
         if self.open_node.TYPE == 'pycom':
             LOGGER.debug("Power cycle %s board", self.open_node.TYPE)
-            for _ in range(3):
-                ret_val += self.control_node.open_stop()
-                time.sleep(2)
-                ret_val += self.control_node.open_start()
+            ret_val += self.control_node.open_stop()
+            ret_val += wait_no_tty(self.open_node.TTY, timeout=10)
+            ret_val += self.control_node.open_start()
+            ret_val += wait_tty(self.open_node.TTY, LOGGER, timeout=10)
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
@@ -230,6 +230,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # Cleanup Control node Monitoring and experiment #
         ret_val += self.control_node.stop_experiment()
+        # Pycom TTY must be available before it's teared down.
+        if self.open_node.TYPE == 'pycom':
+            wait_tty(self.open_node.TTY, LOGGER, timeout=10)
         # Cleanup open node
         ret_val += self.open_node.teardown()
         # Stop control node interaction
