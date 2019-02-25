@@ -21,79 +21,83 @@
 
 """ gateway_code.open_nodes.node_pycom unit tests files """
 
+import unittest
 import serial
 from mock import patch
 
 from gateway_code.open_nodes.node_pycom import NodePycom
 
 
-@patch('gateway_code.common.wait_tty')
 @patch('serial.Serial')
-@patch('gateway_code.utils.external_process.ExternalProcess.start')
-def test_setup(serial_start, ser, wait):
-    """Test pycom node setup."""
-    serial_start.return_value = 0
-    wait.return_value = 0
-    node = NodePycom()
+class TestNodePycom(unittest.TestCase):
+    """Unittest class for pycom nodes."""
 
-    assert node.setup() == 0
-    assert serial_start.call_count == 1
-    assert ser.call_count == 2
+    def setUp(self):
+        self.node = NodePycom()
+        patch('time.sleep').start()
 
-    serial_start.call_count = 0
-    ser.call_count = 0
-    serial_start.return_value = 1
-    assert node.setup() == 1
-    assert serial_start.call_count == 1
-    assert ser.call_count == 2
+    def tearDown(self):
+        patch.stopall()
 
-    serial_start.call_count = 0
-    ser.call_count = 0
-    serial_start.return_value = 0
-    ser.side_effect = serial.serialutil.SerialException
+    @patch('gateway_code.common.wait_tty')
+    @patch('gateway_code.utils.external_process.ExternalProcess.start')
+    def test_setup(self, serial_start, wait, ser):
+        """Test pycom node setup."""
+        serial_start.return_value = 0
+        wait.return_value = 0
 
-    assert node.setup() == 2
-    assert ser.call_count == 2
+        assert self.node.setup() == 0
+        assert serial_start.call_count == 1
+        assert ser.call_count == 2
 
+        serial_start.call_count = 0
+        ser.call_count = 0
+        serial_start.return_value = 1
+        assert self.node.setup() == 1
+        assert serial_start.call_count == 1
+        assert ser.call_count == 2
 
-@patch('serial.Serial')
-@patch('gateway_code.utils.external_process.ExternalProcess.stop')
-def test_teardown(serial_stop, ser):
-    """Test pycom node teardown."""
-    serial_stop.return_value = 0
+        serial_start.call_count = 0
+        ser.call_count = 0
+        serial_start.return_value = 0
+        ser.side_effect = serial.serialutil.SerialException
 
-    node = NodePycom()
-    assert node.teardown() == 0
-    assert serial_stop.call_count == 1
-    assert ser.call_count == 1
+        assert self.node.setup() == 2
+        assert ser.call_count == 2
 
-    serial_stop.call_count = 0
-    ser.call_count = 0
+    @patch('gateway_code.utils.external_process.ExternalProcess.stop')
+    def test_teardown(self, serial_stop, ser):
+        """Test pycom node teardown."""
+        serial_stop.return_value = 0
 
-    serial_stop.return_value = 1
-    assert node.teardown() == 1
-    assert serial_stop.call_count == 1
-    assert ser.call_count == 1
+        assert self.node.teardown() == 0
+        assert serial_stop.call_count == 1
+        assert ser.call_count == 1
 
-    serial_stop.call_count = 0
-    ser.call_count = 0
-    serial_stop.return_value = 0
-    ser.side_effect = serial.serialutil.SerialException
+        serial_stop.call_count = 0
+        ser.call_count = 0
 
-    assert node.teardown() == 1
-    assert ser.call_count == 1
+        serial_stop.return_value = 1
+        assert self.node.teardown() == 1
+        assert serial_stop.call_count == 1
+        assert ser.call_count == 1
 
+        serial_stop.call_count = 0
+        ser.call_count = 0
+        serial_stop.return_value = 0
+        ser.side_effect = serial.serialutil.SerialException
 
-@patch('serial.Serial')
-def test_reset(ser):
-    """Test pycom node reset."""
-    node = NodePycom()
-    assert node.reset() == 0
-    assert ser.call_count == 1
-    ser.assert_called_with(node.TTY, node.BAUDRATE)
+        assert self.node.teardown() == 1
+        assert ser.call_count == 1
 
-    ser.call_count = 0
-    ser.side_effect = serial.serialutil.SerialException
+    def test_reset(self, ser):
+        """Test pycom node reset."""
+        assert self.node.reset() == 0
+        assert ser.call_count == 1
+        ser.assert_called_with(self.node.TTY, self.node.BAUDRATE)
 
-    assert node.reset() == 1
-    assert ser.call_count == 1
+        ser.call_count = 0
+        ser.side_effect = serial.serialutil.SerialException
+
+        assert self.node.reset() == 1
+        assert ser.call_count == 1
