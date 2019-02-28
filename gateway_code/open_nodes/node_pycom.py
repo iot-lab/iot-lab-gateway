@@ -33,9 +33,11 @@ from gateway_code.open_nodes.common.node_no import NodeNoBase
 LOGGER = logging.getLogger('gateway_code')
 PYCOM_ERASE_SEQUENCE = (
     b"\r\n",
+    b"\x03\r\n",  # Interrupt any running code
+    b"\x06\r\n",  # Perform safe boot with Ctrl + F
     b"import os\r\n",
     b"print(os.listdir('/flash'))\r\n",
-    b"os.mkfs('/flash')\r\n",
+    b"os.mkfs('/flash')\r\n",  # Erase the flash
 )
 
 
