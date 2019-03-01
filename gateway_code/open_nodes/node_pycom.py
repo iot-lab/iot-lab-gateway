@@ -31,13 +31,16 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.open_nodes.common.node_no import NodeNoBase
 
 LOGGER = logging.getLogger('gateway_code')
-PYCOM_ERASE_SEQUENCE = (
-    b"\r\n",
+PYCOM_SAFE_REBOOT_SEQUENCE = {
     b"\x03\r\n",  # Interrupt any running code
     b"\x06\r\n",  # Perform safe boot with Ctrl + F
+}
+PYCOM_FLASH_ERASE_SEQUENCE = (
     b"import os\r\n",
-    b"print(os.listdir('/flash'))\r\n",
     b"os.mkfs('/flash')\r\n",  # Erase the flash
+)
+PYCOM_SOFT_RESET_SEQUENCE = (
+    b"\x04\r\n",
 )
 
 
@@ -52,20 +55,18 @@ class NodePycom(NodeNoBase):
         self.serial_redirection = SerialRedirection(
             self.TTY, self.BAUDRATE, serial_opts=('echo=0', 'raw', 'crnl'))
 
-    @logger_call("Node Pycom: Clear flash")
-    def _clear_flash(self):
+    def _send_sequence(self, sequence, delay=None):
         try:
             ser = serial.Serial(self.TTY, self.BAUDRATE)
         except serial.serialutil.SerialException:
             LOGGER.error("No serial port found")
             return 1
         else:
-            # Erase content on the flash
-            for line in PYCOM_ERASE_SEQUENCE:
-                ser.write(line)
-            time.sleep(2)
-            LOGGER.info(ser.read_all())
-            time.sleep(1)
+            for command in sequence:
+                ser.write(command)
+                if delay is not None:
+                    time.sleep(delay)
+                LOGGER.info("%s: %s", command, ser.read_all())
             ser.close()
         return 0
 
@@ -79,7 +80,8 @@ class NodePycom(NodeNoBase):
             socat PTY,link=/tmp/ttyS0,echo=0,crnl TCP:localhost:20000
         """
         ret_val = gateway_code.common.wait_tty(self.TTY, LOGGER, timeout=10)
-        ret_val += self._clear_flash()
+        ret_val += self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
+        ret_val += self._send_sequence(PYCOM_FLASH_ERASE_SEQUENCE)
         ret_val += self.reset()
         ret_val += self.serial_redirection.start()
         return ret_val
@@ -87,20 +89,12 @@ class NodePycom(NodeNoBase):
     @logger_call("Node Pycom: teardown node")
     def teardown(self):
         """Stop the serial redirection."""
-        ret_val = self._clear_flash()
+        ret_val = self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
+        ret_val += self._send_sequence(PYCOM_FLASH_ERASE_SEQUENCE)
         ret_val += self.serial_redirection.stop()
         return ret_val
 
     @logger_call("Node Pycom: reset node")
     def reset(self):  # pylint:disable=no-self-use
-        """Restart micropython interpreter."""
-        try:
-            ser = serial.Serial(self.TTY, self.BAUDRATE)
-        except serial.serialutil.SerialException:
-            LOGGER.error("No serial port found")
-            return 1
-        else:
-            # Reset the Micropython firmware (send EOT)
-            ser.write('\x04\r\n')
-            ser.close()
-        return 0
+        """Software reset of the micropython interpreter."""
+        return self._send_sequence(PYCOM_SOFT_RESET_SEQUENCE)
