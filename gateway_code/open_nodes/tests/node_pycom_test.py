@@ -48,22 +48,22 @@ class TestNodePycom(unittest.TestCase):
 
         assert self.node.setup() == 0
         assert serial_start.call_count == 1
-        assert ser.call_count == 2
+        assert ser.call_count == 3
 
         serial_start.call_count = 0
         ser.call_count = 0
         serial_start.return_value = 1
         assert self.node.setup() == 1
         assert serial_start.call_count == 1
-        assert ser.call_count == 2
+        assert ser.call_count == 3
 
         serial_start.call_count = 0
         ser.call_count = 0
         serial_start.return_value = 0
         ser.side_effect = serial.serialutil.SerialException
 
-        assert self.node.setup() == 2
-        assert ser.call_count == 2
+        assert self.node.setup() == 3
+        assert ser.call_count == 3
 
     @patch('gateway_code.utils.external_process.ExternalProcess.stop')
     def test_teardown(self, serial_stop, ser):
@@ -72,7 +72,7 @@ class TestNodePycom(unittest.TestCase):
 
         assert self.node.teardown() == 0
         assert serial_stop.call_count == 1
-        assert ser.call_count == 1
+        assert ser.call_count == 2
 
         serial_stop.call_count = 0
         ser.call_count = 0
@@ -80,15 +80,15 @@ class TestNodePycom(unittest.TestCase):
         serial_stop.return_value = 1
         assert self.node.teardown() == 1
         assert serial_stop.call_count == 1
-        assert ser.call_count == 1
+        assert ser.call_count == 2
 
         serial_stop.call_count = 0
         ser.call_count = 0
         serial_stop.return_value = 0
         ser.side_effect = serial.serialutil.SerialException
 
-        assert self.node.teardown() == 1
-        assert ser.call_count == 1
+        assert self.node.teardown() == 2
+        assert ser.call_count == 2
 
     def test_reset(self, ser):
         """Test pycom node reset."""
