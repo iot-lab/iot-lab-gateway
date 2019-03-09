@@ -39,8 +39,9 @@ PYCOM_FLASH_ERASE_SEQUENCE = (
     b"import os\r\n",
     b"os.mkfs('/flash')\r\n",  # Erase the flash
 )
-PYCOM_SOFT_RESET_SEQUENCE = (
-    b"\x04\r\n",
+PYCOM_RESET_SEQUENCE = (
+    b"import machine\r\n",
+    b"machine.reset()\r\n",
 )
 
 
@@ -96,5 +97,5 @@ class NodePycom(NodeNoBase):
 
     @logger_call("Node Pycom: reset node")
     def reset(self):  # pylint:disable=no-self-use
-        """Software reset of the micropython interpreter."""
-        return self._send_sequence(PYCOM_SOFT_RESET_SEQUENCE)
+        """Machine reset of the pycom node."""
+        return self._send_sequence(PYCOM_RESET_SEQUENCE)
