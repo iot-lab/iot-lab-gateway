@@ -46,7 +46,7 @@ class NodeRtlSdr(NodeNoBase):
     def __init__(self):
         self.rtl_tcp = RtlTcp(self.RTL_TCP_PORT, self.RTL_TCP_FREQ)
 
-    @logger_call("Node No: Setup of no node")
+    @logger_call("Node RTL-SDR: Setup node")
     def setup(self, firmware_path=None):
         """Power up the SDR dongle and start rtl_tcp server."""
         ykushcmd_str = YKUSHCMD.format(model="", cmd="-u", port="3")
@@ -54,7 +54,7 @@ class NodeRtlSdr(NodeNoBase):
         ret_val += self.rtl_tcp.start()
         return ret_val
 
-    @logger_call("Node No: teardown of no node")
+    @logger_call("Node RTL-SDR: teardown node")
     def teardown(self):
         """Stop rtl_tcp server and poweroff the SDR dongle."""
         ret_val = self.rtl_tcp.stop()
