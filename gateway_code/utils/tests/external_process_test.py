@@ -37,6 +37,9 @@ from ..external_process import ExternalProcess
 from ..serial_redirection import SerialRedirection
 from ..rtl_tcp import RtlTcp
 from ..mjpg_streamer import MjpgStreamer
+from ..mosquitto import Mosquitto
+from ..lora_gateway_bridge import (LoraGatewayBridge, LORA_GATEWAY_BRIDGE_CMD,
+                                   LORA_GATEWAY_BRIDGE)
 
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
@@ -53,6 +56,7 @@ BAUDRATE_TEST = '500000'
 RTL_PORT_TEST = '50000'
 RTL_FREQ_TEST = '86800000'
 CAMERA_PORT_TEST = '40000'
+MOSQUITTO_PORT_TEST = '1883'
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -198,3 +202,44 @@ class TestProcessMjpgStreamer(unittest.TestCase):
 
         ret = m_mjpg_streamer._call_process(m_mjpg_streamer.stdout)
         self.assertEqual(-1, ret)
+
+
+@mock.patch('subprocess.Popen')
+class TestProcessMosquitto(unittest.TestCase):
+    """Mosquitto._call_process."""
+
+    def test__call_mosquitto_error(self, m_popen):
+        """ Test the _call_process error case """
+        m_popen.return_value.wait.return_value = -1
+        m_mosquitto = Mosquitto(MOSQUITTO_PORT_TEST)
+        m_mosquitto._run = True
+
+        ret = m_mosquitto._call_process(m_mosquitto.stdout)
+        self.assertEqual(-1, ret)
+
+
+@mock.patch('subprocess.Popen')
+class TestProcessLoraGatewayBridge(unittest.TestCase):
+    """LoraGatewayBridge._call_process."""
+
+    def test__call_lora_gateway_bridge_error(self, m_popen):
+        """ Test the _call_process error case """
+        m_popen.return_value.wait.return_value = -1
+        m_lora_gateway_bridge = LoraGatewayBridge()
+        m_lora_gateway_bridge._run = True
+
+        ret = m_lora_gateway_bridge._call_process(m_lora_gateway_bridge.stdout)
+        self.assertEqual(-1, ret)
+
+
+@mock.patch('gateway_code.utils.lora_gateway_bridge.CFG_DIR', '/tmp')
+def test_custom_config_directory():
+    """Test when using a custom config directory."""
+    _bridge_cfg = os.path.join('/tmp', 'lora-gateway-bridge.toml')
+    with open(_bridge_cfg, 'w') as f:
+        f.write('test')
+    assert os.path.isfile(_bridge_cfg)
+    m_lora_gateway_bridge = LoraGatewayBridge()
+    expected_cmd = shlex.split(LORA_GATEWAY_BRIDGE_CMD.format(
+        bridge=LORA_GATEWAY_BRIDGE, cfg_file=_bridge_cfg))
+    assert m_lora_gateway_bridge.process_cmd == expected_cmd
