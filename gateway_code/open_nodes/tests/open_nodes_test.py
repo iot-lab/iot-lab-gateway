@@ -47,8 +47,12 @@ def test_open_node_class_errors():
         open_node_class('unknown')
 
 
-def test_nodes_classes():
+@patch('subprocess.check_output')
+def test_nodes_classes(check_output):
     """Test loading all implemented open nodes implementation."""
+    # node_lora_gateway starts the lora_pkt_forwarder during initialization
+    # so we need to mock the process pid check.
+    check_output.return_value = 42
     for node in all_open_nodes_types():
         # No exception
         print(node)
