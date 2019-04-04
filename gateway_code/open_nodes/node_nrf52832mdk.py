@@ -19,19 +19,19 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node NRF52840-MDK experiment implementation """
+""" Open Node NRF52832-MDK experiment implementation """
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
-class NodeNrf52840Mdk(NodeOpenOCDBase):
-    """ Open node NRF52840-MDK implementation """
+class NodeNrf52832Mdk(NodeOpenOCDBase):
+    """ Open node NRF52832-MDK implementation """
 
-    TYPE = 'nrf52840mdk'
+    TYPE = 'nrf52832mdk'
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf528xxmdk.cfg')
-    FW_IDLE = static_path('nrf52840mdk_idle.elf')
-    FW_AUTOTEST = static_path('nrf52840mdk_autotest.elf')
+    FW_IDLE = static_path('nrf52832mdk_idle.elf')
+    FW_AUTOTEST = static_path('nrf52832mdk_autotest.elf')
     TTY = '/dev/iotlab/ttyON_CMSIS-DAP'
     BAUDRATE = 115200
