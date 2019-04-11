@@ -1,6 +1,19 @@
 Changelog
 =========
 
+Version 2.8.0
+-------------
+
++ Open nodes
+  - Generalize Linux open node support
+  - New nrf52832-mdk open node
+  - New Pycom open node, only MicroPython supported
+  - New LoRaWAN gateway open node
+  - Allow flashing of st-ionode while sleeping
+
++ Utils
+  - Refactor programmer tools into a single and generic Programmer
+
 Version 2.7.0
 -------------
 
