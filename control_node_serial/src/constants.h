@@ -53,6 +53,7 @@ enum frame_type {
      */
     CONFIG_CONSUMPTION   = 0xCC,
 
+    CONFIG_GPIO          = 0xCD,
 
     /*
      * Asyncronous frames
@@ -65,9 +66,9 @@ enum frame_type {
     RADIO_MEAS_FRAME     = 0xF1,
     RADIO_SNIFFER_FRAME  = 0xF3,
     CONSUMPTION_FRAME    = 0xFC,
-
+    EVENT_FRAME          = 0xFE,
+    CLOCK_FRAME          = 0xFD,
     LOGGER_FRAME         = 0xEE,  // log messages
-
 
     /*
      * Test commands
@@ -78,7 +79,6 @@ enum frame_type {
 
     TEST_PPS             = 0x74,
     TEST_GOT_PPS         = 0x76,
-
 };
 
 enum ack_nack {

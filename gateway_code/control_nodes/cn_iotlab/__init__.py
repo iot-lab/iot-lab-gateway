@@ -28,6 +28,7 @@ import gateway_code.utils.ftdi_check
 from gateway_code.common import logger_call
 from gateway_code.nodes import ControlNodeBase
 from gateway_code.utils.openocd import OpenOCD
+from gateway_code.utils.periodic_timer import PeriodicTimer
 from gateway_code.config import static_path
 from . import cn_interface, cn_protocol
 
@@ -58,6 +59,8 @@ class ControlNodeIotlab(ControlNodeBase):
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
         self.open_node_state = 'stop'
         self.profile = self.default_profile
+
+        self._set_time_timer = PeriodicTimer(60, self.protocol.set_time)
 
     @logger_call("Control node : Starting of control node serial interface")
     def start(self, exp_id, exp_files=None):
@@ -96,6 +99,7 @@ class ControlNodeIotlab(ControlNodeBase):
         ret_val += self.protocol.set_time()
         ret_val += self.protocol.set_node_id(self.node_id)
         ret_val += self.configure_profile(profile)
+        self._set_time_timer.start()
         return ret_val
 
     @logger_call("Control node : stop of the experiment")
@@ -103,6 +107,7 @@ class ControlNodeIotlab(ControlNodeBase):
         """ Cleanup the control node configuration
         Also start open node for cleanup """
         ret_val = 0
+        self._set_time_timer.cancel()
         ret_val += self.configure_profile(None)
         ret_val += self.open_start('dc')
         ret_val += self.protocol.green_led_on()
@@ -141,6 +146,8 @@ class ControlNodeIotlab(ControlNodeBase):
         # Monitoring
         ret_val += self.protocol.config_consumption(self.profile.consumption)
         ret_val += self.protocol.config_radio(self.profile.radio)
+        ret_val += self.protocol.config_gpio()
+
         return ret_val
 
     @logger_call("Control node : start power of open node")

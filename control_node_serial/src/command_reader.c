@@ -139,7 +139,7 @@ struct dict_entry commands_d[] = {
     //{"config_fake_sensor", CONFIG_SENSOR},
 
     {"config_consumption_measure", CONFIG_CONSUMPTION},
-
+    {"config_gpio_event", CONFIG_GPIO},
 
     {"test_radio_ping_pong", TEST_RADIO_PING_PONG},
     {"test_gpio",    TEST_GPIO},
@@ -371,7 +371,7 @@ static int cmd_radio_pp(char *cmd_str, struct command_buffer *cmd_buff,
 {
     /* cmd_str ==
      * "test_radio_ping_pong stop"
-     * "test_radio_ping_pong start <channel> <tx_power>
+     * "test_radio_ping_pong start <channel> <tx_power>"
      */
 
     int ret = 0;
@@ -400,6 +400,37 @@ static int cmd_radio_pp(char *cmd_str, struct command_buffer *cmd_buff,
     return ret;
 }
 
+static int cmd_gpio_event(char *cmd_str, struct command_buffer *cmd_buff,
+        struct command_description *command)
+{
+    /* cmd str ==
+     * "config_gpio_event stop"
+     * "config_gpio_event start <flag>"
+     */
+
+    int ret = 0;
+    uint8_t state = 0;
+    char start_stop[8] = {0};
+    uint8_t flag = 0;
+
+    sscanf(cmd_str, command->fmt, start_stop, &flag);
+
+    /* Add state byte */
+    ret |= get_val(start_stop, state_d, &state);
+    append_data(cmd_buff, &state, sizeof(uint8_t));
+
+    /* Add flag byte */
+    if (state == START) {
+        ret |= !(flag == 1 || flag == 2 || flag == 4);  // TODO flag in [1, 7]
+    } else { // state == STOP
+        flag = 0;
+    }
+    append_data(cmd_buff, &flag, sizeof(uint8_t));
+
+    return ret;
+}
+
+
 struct command_description commands[] = {
     {"start %8s",                        1, (cmd_fct_t)cmd_alim},
     {"stop %8s",                         1, (cmd_fct_t)cmd_alim},
@@ -425,7 +456,8 @@ struct command_description commands[] = {
 
     {"test_radio_ping_pong %8s %i %8s",  3, (cmd_fct_t)cmd_radio_pp},
     {"test_radio_ping_pong %8s",         1, (cmd_fct_t)cmd_radio_pp},
-
+    {"config_gpio_event %8s %i",         2, (cmd_fct_t)cmd_gpio_event},
+    {"config_gpio_event %8s",            1, (cmd_fct_t)cmd_gpio_event},
     {NULL, 0, NULL}
 };
 

@@ -19,6 +19,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 *******************************************************************************/
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <oml2/omlc.h>
 #define OML_FROM_MAIN
@@ -129,4 +130,17 @@ void oml_measures_event(uint32_t timestamp_s, uint32_t timestamp_us,
         PRINT_MEASURE("event %u.%06u %u %s\n",
                 timestamp_s, timestamp_us,
                 value, name);
+}
+
+void oml_measures_clock(uint32_t timestamp_s, uint32_t timestamp_us,
+        uint64_t time0, uint32_t tref_sec, uint32_t tref_usec, uint32_t kfrequency, uint64_t last_set_time)
+{
+    if (oml_measure_started)
+        oml_inject_clock(g_oml_mps_control_node_measures->clock,
+                timestamp_s, timestamp_us,
+                time0, tref_sec, tref_usec, kfrequency, last_set_time);
+    if (oml_print)
+        PRINT_MEASURE("clock_config %u.%06u %"PRIu64" %u %u %u %"PRIu64"\n",
+                timestamp_s, timestamp_us,
+                time0, tref_sec, tref_usec, kfrequency, last_set_time);
 }

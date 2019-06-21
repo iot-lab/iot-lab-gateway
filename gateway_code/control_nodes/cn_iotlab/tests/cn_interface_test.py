@@ -200,6 +200,7 @@ class TestControlNodeSerial(unittest.TestCase):
             'event': '/tmp/event',
             'sniffer': '/tmp/sniffer',
             'log': '/tmp/log',
+            'clock': '/tmp/clock',
         }
 
         oml_xml_cfg = self.cn.oml_xml_config('m3-1', '1234', exp_files)

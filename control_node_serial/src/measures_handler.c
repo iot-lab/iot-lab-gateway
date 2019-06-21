@@ -45,6 +45,19 @@ struct radio_measure {
     int8_t rssi;
 };
 
+struct event_measure {
+    uint32_t value;
+    uint32_t source;
+};
+
+struct clock_measure {
+    uint64_t time0;
+    uint32_t tref_sec;
+    uint32_t tref_usec;
+    uint32_t kfrequency;
+    uint64_t last_set_time;
+};
+
 static struct _measure_handler_state {
     struct {
         int p;
@@ -216,6 +229,43 @@ static void consumption_handler(uint8_t *buf, struct timeval *time)
     oml_measures_consumption(time->tv_sec, time->tv_usec, p, v, c);
 }
 
+/* Returns either Named value for known sources or hexa value */
+static char *event_source_str(uint32_t source)
+{
+    static char source_str[16];
+
+    switch (source) {
+    case 0:
+        return "pps";
+    default:
+        snprintf(source_str, sizeof(source_str), "0x%x", source);
+        return source_str;
+    }
+}
+
+static void clock_handler(uint8_t *buf, struct timeval *time)
+{
+    struct clock_measure clock_meas;
+    memcpy(&(clock_meas.time0), buf, 8);
+    memcpy(&(clock_meas.tref_sec), buf + 8 , 4);
+    memcpy(&(clock_meas.tref_usec), buf + 12 , 4);
+    memcpy(&(clock_meas.kfrequency), buf + 16, 4);
+    memcpy(&(clock_meas.last_set_time), buf + 20, 8);
+    
+    oml_measures_clock(time->tv_sec, time->tv_usec, clock_meas.time0, clock_meas.tref_sec, clock_meas.tref_usec, clock_meas.kfrequency, clock_meas.last_set_time);
+}
+
+
+static void event_handler(uint8_t *buf, struct timeval *time)
+{
+    struct event_measure event_meas;
+    memcpy(&event_meas, buf, sizeof(event_meas));
+
+    char* source = event_source_str(event_meas.source);
+
+    oml_measures_event(time->tv_sec, time->tv_usec, event_meas.value, source);
+}
+
 static void config_consumption(int power_source, int p, int v, int c)
 {
     // cleanup for new configuration
@@ -308,7 +358,18 @@ int handle_measure_pkt(uint8_t *data, size_t len)
             meas_str  = "radio";
             meas_size = sizeof(struct radio_measure);
             break;
-
+        case EVENT_FRAME:
+            handler = event_handler;
+            meas_str = "event";
+            meas_size = sizeof(struct event_measure);
+            break;
+    
+        case CLOCK_FRAME:
+            handler = clock_handler;
+            meas_str = "clock";
+            meas_size = 28;
+            break;
+            
         default:
             return -1;
     }

@@ -1,0 +1,22 @@
+set_time
+config_gpio_event stop
+start dc
+
+config_gpio_event start 7 
+config_gpio_event start 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+config_gpio_event stop
+

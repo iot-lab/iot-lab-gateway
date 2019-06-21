@@ -1,6 +1,24 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
+# This file is a part of IoT-LAB gateway_code
+# Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
+# Contributor(s) : see AUTHORS file
+#
+# This software is governed by the CeCILL license under French law
+# and abiding by the rules of distribution of free software.  You can  use,
+# modify and/ or redistribute the software under the terms of the CeCILL
+# license as circulated by CEA, CNRS and INRIA at the following URL
+# http://www.cecill.info.
+#
+# As a counterpart to the access to the source code and  rights to copy,
+# modify and redistribute granted by the license, users are provided only
+# with a limited warranty  and the software's author,  the holder of the
+# economic rights,  and the successive licensors  have only  limited
+# liability.
+#
+# The fact that you are presently reading this means that you have had
+# knowledge of the CeCILL license and that you accept its terms.
 
 """ Allow running integration tests easily """
 
@@ -22,7 +40,8 @@ EXCLUDE += ['control_node_serial/tests/results/']
 EXCLUDE += ['control_node_serial/tests/obj/']
 EXCLUDE += ['control_node_serial/tests/bin/']
 
-SCRIPT_DIR = os.path.dirname((__file__))
+FILE = __file__.rstrip('c')  # Use real file not .pyc
+SCRIPT_DIR = os.path.dirname(os.path.realpath(FILE))
 LOCAL = os.path.dirname(SCRIPT_DIR)
 REMOTE = "/tmp/iot-lab-gateway"
 
@@ -31,6 +50,12 @@ SSH_CFG = os.path.join(SCRIPT_DIR, 'ssh_config')
 env.ssh_config_path = SSH_CFG
 env.use_ssh_config = True
 
+
+env.roledefs = {
+    'all-a8': ['a8-%d' % i for i in range(50, 65)],
+    'all-ci': ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci'],
+}
+
 # Required to re-add SSH_OPTS on the integration server
 SSH_OPTS = '-F {0}'.format(SSH_CFG)
 
@@ -38,6 +63,17 @@ SSH_OPTS = '-F {0}'.format(SSH_CFG)
 if not env.hosts:
     env.hosts = ['leonardo-00-ci', 'm3-00-ci', 'a8-00-ci', 'fox-00-ci']
     env.hosts += ['samr21-00-ci', 'zigduino-00-ci']
+
+def set_targets():
+    """Set default roles, or use command line args."""
+    if env.hosts or env.roles:
+        return
+
+    env.roles = ['all-ci']
+    env.roles = ['all-a8']  # overwrite for moctar
+
+
+set_targets()
 
 
 def chown_www_data():
@@ -100,9 +136,26 @@ def release():
     """Release python package."""
     upload()
     kill()
+    # Use pip with options to re-install it every times even without changes
     with cd(REMOTE):
-        run('source /etc/profile; python setup.py release')
-    server_restart()
+        run('source /etc/profile;'
+            ' pip install . --force-reinstall --no-deps --ignore-installed')
+    post_install()
+
+
+@task
+@runs_once
+def deploy():
+    """Deploy newer server on test a8 nodes."""
+    with settings(roles=[], hosts=['a8-50']):
+        release()
+    execute(server_restart)
+
+
+@task
+def status():
+    """Run gateway status command."""
+    run('curl -s http://localhost:8080/status')
 
 
 @task
@@ -158,6 +211,12 @@ def tox_call(cmd, user, *attrs):
     with cd(REMOTE):
         ret = safe_su(cmd, user=user)
     return ret.return_code
+
+
+@task
+def uptime():
+    """Simply run 'uptime' command."""
+    run('uptime')
 
 
 @task

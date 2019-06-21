@@ -56,8 +56,8 @@ TEST(test_parse_cmd, simple_commands)
         struct command_buffer cmd_buff;
         char cmd[256];
         struct timeval time_now;
-        gettimeofday(&time_now, NULL);
 
+        gettimeofday(&time_now, NULL);
         strcpy(cmd, "set_time");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_EQ(0, ret);
@@ -65,8 +65,8 @@ TEST(test_parse_cmd, simple_commands)
         ASSERT_EQ(SET_TIME, cmd_buff.u.s.payload[0]);
         // check time stored in the packet is correct
         memcpy(&time_s, &cmd_buff.u.s.payload[1], sizeof(uint32_t));
-        ASSERT_TRUE(time_s <= time_now.tv_sec);
-        ASSERT_TRUE(time_s + 2 >= time_now.tv_sec);
+        ASSERT_TRUE(time_now.tv_sec <= time_s);
+        ASSERT_TRUE(time_s < time_now.tv_sec + 2);
 
         uint16_t node_id;
         strcpy(cmd, "set_node_id m3 1");
@@ -171,6 +171,36 @@ TEST(test_parse_cmd, consumption)
         ASSERT_NE(0, ret);
 
         strcpy(cmd, "config_consumption_measure inval 3.3V p 1 v 1 c 1 -p 8244 -a 1024");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_NE(0, ret);
+}
+
+TEST(test_parse_cmd, gpio_event)
+{
+        int ret;
+        char cmd[256];
+        struct command_buffer cmd_buff;
+
+        strcpy(cmd, "config_gpio_event stop");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(3, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_GPIO, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(STOP, cmd_buff.u.s.payload[1]);
+
+        strcpy(cmd, "config_gpio_event start 1");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(0, ret);
+        ASSERT_EQ(3, cmd_buff.u.s.len);
+        ASSERT_EQ(CONFIG_GPIO, cmd_buff.u.s.payload[0]);
+        ASSERT_EQ(START, cmd_buff.u.s.payload[1]);
+        ASSERT_EQ(1, cmd_buff.u.s.payload[2]);
+
+        strcpy(cmd, "config_gpio_event start 2");
+        ret = parse_cmd(cmd, &cmd_buff);
+        ASSERT_EQ(2, cmd_buff.u.s.payload[2]);
+
+        strcpy(cmd, "config_gpio_event start 0");
         ret = parse_cmd(cmd, &cmd_buff);
         ASSERT_NE(0, ret);
 }
@@ -441,7 +471,13 @@ TEST(test_write_answer, valid_answers)
         ASSERT_EQ(0, ret);
         ASSERT_STREQ("config_radio_measure ACK\n", print_buff);
 
-        /* leds */
+        data[0] = CONFIG_GPIO;
+        data[1] = ACK;
+        ret = write_answer(data, 2);
+        ASSERT_EQ(0, ret);
+        ASSERT_STREQ("config_gpio_event ACK\n", print_buff);
+
+       /* leds */
         data[0] = GREEN_LED_ON;
         data[1] = ACK;
         ret = write_answer(data, 2);
