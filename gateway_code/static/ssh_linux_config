@@ -1,0 +1,8 @@
+# Accessing Linux node
+Host *
+    User root
+    ConnectTimeout 5
+    UserKnownHostsFile=/dev/null
+    LogLevel ERROR
+    StrictHostKeyChecking no
+

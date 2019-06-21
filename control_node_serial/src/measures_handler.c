@@ -19,10 +19,6 @@
 # knowledge of the CeCILL license and that you accept its terms.
 *******************************************************************************/
 
-// timerclear
-#ifndef _BSD_SOURCE
-#define _BSD_SOURCE
-#endif//_BSD_SOURCE
 #include <stdint.h>
 #include <string.h>
 #include <stdio.h>

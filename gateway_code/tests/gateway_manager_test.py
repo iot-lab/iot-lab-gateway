@@ -29,6 +29,7 @@ import os
 
 import unittest
 import mock
+import pytest
 
 from gateway_code import gateway_manager
 from . import utils
@@ -44,26 +45,24 @@ from . import utils
 @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
 class TestGatewayManager(unittest.TestCase):
 
-    def test_setup(self):
+    def test_setup(self):  # pylint:disable=no-self-use
         """ Test running gateway_manager with setup without error """
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=0)
-        try:
-            g_m.setup()
-        except StandardError:
-            self.fail("Should not raise an exception during setup")
+        assert g_m.setup() == 0
 
-    def test_setup_fail_flash(self):
+    def test_setup_fail_flash(self):  # pylint:disable=no-self-use
         """ Run setup with a flash fail error """
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=1)
-        self.assertRaises(StandardError, g_m.setup)
+        with pytest.raises(StandardError):
+            g_m.setup()
 
     def test_exp_update_profile_error(self):
         """ Update profile with an invalid profile """
 
         g_m = gateway_manager.GatewayManager()
-        self.assertEquals(1, g_m.exp_update_profile(profile_dict={}))
+        self.assertEqual(1, g_m.exp_update_profile(profile_dict={}))
 
 # # # # # # # # # # # # # # # # # # # # #
 # Measures folder and files management  #

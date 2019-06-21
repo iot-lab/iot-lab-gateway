@@ -28,9 +28,9 @@ import logging
 
 import serial
 
-from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.nodes import OpenNodeBase
 
 from gateway_code.utils.serial_expect import SerialExpectForSocket
 from gateway_code.utils.serial_redirection import SerialRedirection
@@ -38,38 +38,23 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeA8(object):
+class NodeA8(OpenNodeBase):
     """ Open node A8 implementation """
 
     TYPE = 'a8'
-    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/ttyON_A8'
     BAUDRATE = 115200
-    LOCAL_A8_M3_TTY = '/tmp/local_ttyA8_M3'
-    A8_M3_TTY = '/dev/ttyA8_M3'
-    A8_M3_BAUDRATE = 500000
-    A8_M3_FW_AUTOTEST = static_path('a8_autotest.elf')
     ALIM = '5V'
 
     # 15 secs was not always enough
     A8_TTY_DETECT_TIME = 20
-
-    AUTOTEST_AVAILABLE = [
-        'echo', 'get_time',  # mandatory
-        'get_uid',
-        'get_accelero', 'get_gyro', 'get_magneto',
-        'test_gpio', 'test_i2c',
-        'radio_pkt', 'radio_ping_pong',
-        'test_pps_start', 'test_pps_get', 'test_pps_stop',
-        'leds_on', 'leds_off', 'leds_blink',
-    ]
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self._a8_expect = None
 
     @logger_call("Node A8 : setup of a8 node")
-    def setup(self, _firmware, debug=True):  # pylint: disable=unused-argument
+    def setup(self, _firmware, debug=True):  # pylint: disable=arguments-differ
         """ Wait that open nodes tty appears and start A8 boot log """
         ret_val = 0
         common.wait_no_tty(self.TTY)
@@ -88,6 +73,11 @@ class NodeA8(object):
         ret_val += self.serial_redirection.stop()
         ret_val += self._debug_boot_stop()
         return ret_val
+
+    @classmethod
+    def verify(cls):
+        # Linux open node = no autotest and firmware target verification
+        return 0
 
     def _debug_boot_start(self, timeout):
         """ A8 boot debug thread start """

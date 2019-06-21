@@ -21,17 +21,66 @@
 
 """ Ftdi device presence check. """
 
+import re
 import subprocess
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
+DEV_LIST = {
+    'number': r"Found (?P<dev_number>\d+) device\(s\)",
+    'id': r"Device (?P<id>\d+):",
+    'manufacturer': r"Manufacturer: (?P<manufacturer>.*)}",
+    'description': r"Description: (?P<description>.*)",
+    'serial': r"Serial: (?P<serial>.*)"
+}
 
-def ftdi_check(node, ftdi_type):
+
+def ftdi_check(node, ftdi_type, description=None):
     """ Detect if a node ftdi is present 0 on success """
     LOGGER.info("Check %r node ftdi", node)
 
     output = subprocess.check_output(['ftdi-devices-list', '-t', ftdi_type])
-
-    found = 'Found 1 device(s)' in output.splitlines()
+    lines = (output.splitlines())
+    dev_number = ftdi_parse_device_number(lines[2])
+    found = (dev_number > 0) and \
+            ((description is None) or
+             ftdi_lookup_description(lines[3:], description))
     LOGGER.info(("" if found else "No ") + "%r node ftdi found" % node)
     return 0 if found else 1
+
+
+def ftdi_parse_device_number(line):
+    """ Parses device number
+
+    >>> ftdi_parse_device_number('Found 0 device(s) \\n')
+    0
+    >>> ftdi_parse_device_number('Found 1 device(s) \\n')
+    1
+    >>> ftdi_parse_device_number('Found 2 device(s) \\n')
+    2
+    """
+    match = re.match(DEV_LIST['number'], line.strip())
+    return 0 if match is None else int(match.group(1))
+
+
+def ftdi_parse_device_description(line):
+    """ Parses device description
+
+    >>> ftdi_parse_device_description('\tDescription: M3 \\n')
+    'M3'
+    >>> ftdi_parse_device_description('\tDescription: ControlNode \\n')
+    'ControlNode'
+    """
+    match = re.match(DEV_LIST['description'], line.strip())
+    return None if match is None else match.group(1)
+
+
+def ftdi_lookup_description(lines, description):
+    """ Lookup for the device description field inside the array of lines """
+    assert len(lines) >= 4
+    found = False
+    for i in range(0, len(lines) - 1, 4):
+        found = (description == ftdi_parse_device_description(lines[i + 2]))
+        if found:
+            break
+    return found

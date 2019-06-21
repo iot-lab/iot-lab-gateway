@@ -20,32 +20,39 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" CLI client for serial_redirection
+""" CLI client for serial_redirection """
 
-Usage: serial_redirection <tty> <baudrate>
-
-"""
-
-import argparse
 import signal
-from .. import serial_redirection
-
-PARSER = argparse.ArgumentParser()
-PARSER.add_argument('tty', type=str, help="Serial device")
-PARSER.add_argument('baudrate', type=int, help="Serial baudrate")
+import gateway_code.board_config as board_config
+from . import log_to_stderr
 
 
+def _get_node(board_cfg):
+    if board_cfg.linux_on_class is not None:
+        # Linux open node
+        return board_cfg.linux_on_class()
+    return board_cfg.board_class()
+
+
+def _handle_signal(signum, frame):
+    # pylint:disable=unused-argument
+    raise KeyboardInterrupt()
+
+
+@log_to_stderr
 def main():
     """ serial_redirection cli main function """
-
-    opts = PARSER.parse_args()
-    redirect = serial_redirection.SerialRedirection(opts.tty, opts.baudrate)
+    # Catch SIGTERM signal sending by start-stop-daemon
+    # init script
+    signal.signal(signal.SIGTERM, _handle_signal)
+    board_cfg = board_config.BoardConfig()
+    node = _get_node(board_cfg)
     try:
-        redirect.start()
+        node.serial_redirection.start()
         print 'Press Ctrl+C to stop'
         signal.pause()
     except KeyboardInterrupt:
         pass
     finally:
-        redirect.stop()
+        node.serial_redirection.stop()
         print 'Stopped'

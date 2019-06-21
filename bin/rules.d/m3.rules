@@ -1,4 +1,4 @@
 # open nodes TTY
-SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_M3",            ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_M3"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_M3", ENV{ID_USB_INTERFACE_NUM}=="01", SYMLINK+="iotlab/ttyON_M3"
 
 SUBSYSTEM=="usb", ATTR{idProduct}=="6011", ATTR{idVendor}=="0403", MODE="0664", GROUP="dialout"

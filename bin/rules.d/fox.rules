@@ -1,4 +1,4 @@
 # Fox Nodes
-SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="HiKoB_HiKoB_FOX_JTAG",         ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_FOX"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="HiKoB_HiKoB_FOX_JTAG",         ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="iotlab/ttyON_FOX"
 
 SUBSYSTEM=="usb", ATTR{idProduct}=="6010", ATTR{idVendor}=="0403", MODE="0664", GROUP="dialout"

@@ -100,6 +100,7 @@ class BuildExt(build_ext):
 
 def simple_command(function):
     """Return a simple command without options."""
+
     class SimpleCommand(Command):
         """Command without options."""
 
@@ -131,23 +132,24 @@ def execute(self, function, args=()):
 def post_install(self):
     """System configuration.
 
-    * install init.d script
+    * install init.d gateway server daemon script
+    * install init.d gateway camera streamer daemon script
+    * install init.d gateway rtl sdr daemon script
     * install udev rules files
     * Add www-data user to dialout group
     """
-    execute(self, setup_initd_script)
+    execute(self, setup_initd_script, args=('gateway-server-daemon',))
     execute(self, udev_rules)
     execute(self, add_www_data_to_dialout)
 
 
-def setup_initd_script():
-    """Setup init.d script."""
-    init_script = 'gateway-server-daemon'
+def setup_initd_script(init_script):
+    """Setup an init.d script."""
     update_rc_d_args = ['update-rc.d', init_script,
                         'start', '80', '2', '3', '4', '5', '.',
                         'stop', '20', '0', '1', '6', '.']
     shutil.copy('bin/init_script/' + init_script, '/etc/init.d/')
-    os.chmod('/etc/init.d/' + init_script, 0755)
+    os.chmod('/etc/init.d/' + init_script, 0o755)
     subprocess.check_call(update_rc_d_args)
 
 
@@ -175,6 +177,8 @@ class Release(install):
         execute(self, post_install, [self])
 
 
+PACKAGE_DATA = {'static': ['static/*']}
+
 setup(name=PACKAGE,
       version=get_version(PACKAGE),
       description='Linux Gateway code',
@@ -186,7 +190,7 @@ setup(name=PACKAGE,
 
       scripts=SCRIPTS,
       include_package_data=True,
-      package_data={'static': ['static/*']},
+      package_data=PACKAGE_DATA,
       ext_modules=[Extension('control_node_serial_interface', [])],
 
       cmdclass={

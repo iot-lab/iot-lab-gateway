@@ -38,9 +38,12 @@ def static_path(static_file):
     return os.path.join(STATIC_DIR, static_file)
 
 
-GATEWAY_CONFIG_PATH = '/var/local/config/'
+GATEWAY_CONFIG_PATH = os.environ.get('IOTLAB_GATEWAY_CFG_DIR',
+                                     '/var/local/config/')
+GATEWAY_CONFIG_PATH = os.path.abspath(GATEWAY_CONFIG_PATH)
 
-EXP_FILES_DIR = '/iotlab/users/{user}/.iot-lab/{exp_id}/'
+IOTLAB_USERS = os.environ.get('IOTLAB_USERS_DIR', '/iotlab/users')
+EXP_FILES_DIR = os.path.join(IOTLAB_USERS, '{user}/.iot-lab/{exp_id}/')
 EXP_FILES = {
     'consumption': 'consumption/{node_id}.oml',
     'radio': 'radio/{node_id}.oml',
@@ -82,7 +85,7 @@ def read_config(key, default=IOError):
 
     try:
         with open(entry) as _conf:
-            return _conf.read().strip().lower()
+            return _conf.read().strip().lower().replace('-', '_')
     except IOError:
         if default is IOError:  # not provided
             raise

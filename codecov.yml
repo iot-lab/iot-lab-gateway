@@ -1,0 +1,3 @@
+ignore:
+  - "control_node_serial/tests/utils"
+comment: false

@@ -19,11 +19,6 @@
 # knowledge of the CeCILL license and that you accept its terms.
 *******************************************************************************/
 
-// cfmakeraw needs
-#ifndef _BSD_SOURCE
-#define _BSD_SOURCE
-#endif
-
 #include <stdio.h>
 #include <string.h>
 

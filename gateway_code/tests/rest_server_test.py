@@ -32,6 +32,8 @@ Complement the 'integration' tests
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
+import os
+import errno
 import unittest
 
 import webtest
@@ -72,25 +74,48 @@ class TestRestMethods(unittest.TestCase):
     def test_routes(self):
         with mock.patch.object(self.s_r, 'route') as m_route:
 
-            def _func():
-                pass
+            def func():
+                pass  # pragma: no cover
 
-            ret = self.s_r.conditional_route('flash', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('flash', '/test', 'POST', func)
             self.assertTrue(m_route.called)
             self.assertIsNotNone(ret)
             m_route.reset_mock()
 
             # Not a function
-            ret = self.s_r.conditional_route('TTY', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('TTY', '/test', 'POST', func)
             self.assertFalse(m_route.called)
             self.assertIsNone(ret)
             m_route.reset_mock()
 
             # Non existant
-            ret = self.s_r.conditional_route('UNKNOWN', '/test', 'POST', _func)
+            ret = self.s_r.on_conditional_route('UNK', '/test', 'POST', func)
             self.assertFalse(m_route.called)
             self.assertIsNone(ret)
             m_route.reset_mock()
+
+    @mock.patch('webtest.TestApp._check_status')
+    @mock.patch('webtest.TestApp._check_errors')
+    def test_routes_env_error(self, errors, status):
+        # pylint:disable=unused-argument
+        def cb_env_err():
+            err = errno.EIO
+            raise EnvironmentError(err, os.strerror(err), "Test Error")
+
+        ret = self.s_r.route('/test', 'POST', callback=cb_env_err)
+        self.assertIsNotNone(ret)
+        assert "500 Internal Server Error" in self.server.post('/test')
+
+    @mock.patch('webtest.TestApp._check_status')
+    @mock.patch('webtest.TestApp._check_errors')
+    def test_routes_value_error(self, errors, status):
+        # pylint:disable=unused-argument
+        def cb_value_err():
+            raise ValueError("Test Error")
+
+        ret = self.s_r.route('/test', 'POST', callback=cb_value_err)
+        self.assertIsNotNone(ret)
+        assert "500 Internal Server Error" in self.server.post('/test')
 
     def test_exp_start_file_and_profile(self):
         self.g_m.exp_start.return_value = 0
@@ -100,30 +125,30 @@ class TestRestMethods(unittest.TestCase):
         files += [('profile', 'profile.json', self.PROFILE_STR)]
 
         ret = self.server.post(self.EXP_START, upload_files=files)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # validate arguments
         call_args = self.g_m.exp_start.call_args[0]
-        self.assertEquals(('user', 123), call_args[0: 2])
+        self.assertEqual(('user', 123), call_args[0: 2])
         self.assertTrue('idle.elf' in call_args[2])
-        self.assertEquals(self.PROFILE_DICT, call_args[3])
+        self.assertEqual(self.PROFILE_DICT, call_args[3])
 
     def test_exp_start_invalid_profile(self):
 
         files = [('profile', 'inval_profile.json', 'invalid json profile}')]
         ret = self.server.post(self.EXP_START, upload_files=files)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
 
     def test_exp_start_no_files(self):
         self.g_m.exp_start.return_value = 0
 
         # nothing in files
         ret = self.server.post(self.EXP_START, upload_files=[])
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # validate
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def test_exp_start_valid_duration(self):
         self.g_m.exp_start.return_value = 0
@@ -147,22 +172,22 @@ class TestRestMethods(unittest.TestCase):
         ret = self.server.post(self.EXP_START,
                                content_type='multipart/form-data')
 
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
         self.g_m.exp_start.assert_called_with('user', 123, None, None, 0)
 
     def test_exp_stop(self):
         self.g_m.exp_stop.return_value = 0
         ret = self.server.delete('/exp/stop')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         self.g_m.exp_stop.return_value = 1
         ret = self.server.delete('/exp/stop')
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
 
     def test_exp_stop_wrong_request_type(self):
         ret = self.server.post('/exp/stop', status='*')
-        self.assertEquals(405, ret.status_int)
-        self.assertEquals('405 Method Not Allowed', ret.status)
+        self.assertEqual(405, ret.status_int)
+        self.assertEqual('405 Method Not Allowed', ret.status)
 
 # Simple functions
 
@@ -173,23 +198,23 @@ class TestRestMethods(unittest.TestCase):
 
         # No profile
         ret = self.server.post('/exp/update', content_type=app_json)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
         self.assertTrue(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
 
         # default profile
         ret = self.server.post('/exp/update', self.PROFILE_STR,
                                content_type=app_json)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
         self.assertTrue(self.g_m.exp_update_profile.called)
 
         call_args = self.g_m.exp_update_profile.call_args[0]
-        self.assertEquals(self.PROFILE_DICT, call_args[0])
+        self.assertEqual(self.PROFILE_DICT, call_args[0])
         self.g_m.exp_update_profile.reset_mock()
 
         # profile that cannot be decoded, invalid JSON
         ret = self.server.post('/exp/update', 'inval }', content_type=app_json)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
         self.assertFalse(self.g_m.exp_update_profile.called)
         self.g_m.exp_update_profile.reset_mock()
 
@@ -199,70 +224,77 @@ class TestRestMethods(unittest.TestCase):
 
         # valid command
         ret = self.server.post('/open/flash', upload_files=files)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
         # Error no firmware
         ret = self.server.post('/open/flash', upload_files=[])
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
+
+    def test_flash_idle(self):
+        self.g_m.node_flash.return_value = 0
+
+        ret = self.server.put('/open/flash/idle')
+        self.assertEqual(0, ret.json['ret'])
+        self.g_m.node_flash.assert_called_with('open', None)
 
     def test_reset_wrappers(self):
         self.g_m.node_soft_reset.return_value = 0
 
         ret = self.server.put('/open/reset')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def test_open_start(self):
         self.g_m.open_power_start.return_value = 0
 
         ret = self.server.put('/open/start')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def test_open_stop(self):
         self.g_m.open_power_stop.return_value = 0
 
         ret = self.server.put('/open/stop')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
     def test_status(self):
         self.g_m.status.return_value = 0
 
         ret = self.server.get('/status')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
 
-    def auto_tests(self):
+    def test_auto_test(self):
         self.g_m.auto_tests.return_value = {
             'ret': 0, 'error': [], 'success': ['test_ok'],
             'mac': {'A8': '12: 34: 56: 78: 9A: BC'}
         }
 
         ret = self.server.put('/autotest')
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
         self.g_m.auto_tests.assert_called_with(None, False, False, False)
 
         extra = query_string('channel=22&flash=1&gps=')
         ret = self.server.put('/autotest/blink', extra_environ=extra)
-        self.assertEquals(0, ret.json['ret'])
+        self.assertEqual(0, ret.json['ret'])
         self.g_m.auto_tests.assert_called_with(22, True, True, False)
 
         # invalid calls
         ret = self.server.put('/autotest/invalid_mode')
-        self.assertNotEquals(0, ret.json['ret'])
+        self.assertNotEqual(0, ret.json['ret'])
 
         extra = query_string('channel=abc')
         ret = self.server.put('/autotest', extra_environ=extra)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
 
         extra = query_string('channel=42')
         ret = self.server.put('/autotest', extra_environ=extra)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
 
         extra = query_string('channel=11&gps=true')
         ret = self.server.put('/autotest', extra_environ=extra)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
 
         extra = query_string('channel=11&flash=false')
         ret = self.server.put('/autotest', extra_environ=extra)
-        self.assertEquals(1, ret.json['ret'])
+        self.assertEqual(1, ret.json['ret'])
 
 
 class TestServerRestMain(unittest.TestCase):

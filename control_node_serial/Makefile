@@ -20,8 +20,18 @@ ifeq (1, $(DEBUG))
 CFLAGS += -DDEBUG=1
 endif
 
-CFLAGS    += -std=c99 -g -O3 -fstrict-aliasing
+ifeq ($(findstring arm,$(shell uname -m)), arm )
+CFLAGS += -std=c99 -g -O3 -fstrict-aliasing
+else
+CFLAGS += -std=c99 -g -O1 -fstrict-aliasing
+endif
+
 CFLAGS    += $(WARNINGS) $(COV) $(PROF) $(DEP_RULES) $(LIBS) -pthread
+
+# Define Feature Macros
+CFLAGS    += -D_POSIX_C_SOURCE=200809L
+CFLAGS    += -D_DEFAULT_SOURCE
+CFLAGS    += -D_BSD_SOURCE  # Keep _BSD_SOURCE for wheezy CI server libc6-2.13
 
 OMLFLAGS  = -Wl,-rpath,/usr/local/lib -loml2 -locomm
 LDFLAGS   += $(CFLAGS) -lpthread $(OMLFLAGS)

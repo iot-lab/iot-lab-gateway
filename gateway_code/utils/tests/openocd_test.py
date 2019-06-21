@@ -31,8 +31,9 @@ import time
 import unittest
 import mock
 
-from .. import openocd
 from gateway_code.open_nodes.node_m3 import NodeM3  # config file
+from gateway_code.utils.openocd import OpenOCDArgs
+from .. import openocd
 
 
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
@@ -45,31 +46,31 @@ class TestsMethods(unittest.TestCase):
         """ Test flash """
         call_mock.return_value = 0
         ret = self.ocd.flash(NodeM3.FW_IDLE)
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         call_mock.return_value = 42
         ret = self.ocd.flash(NodeM3.FW_IDLE)
-        self.assertEquals(42, ret)
+        self.assertEqual(42, ret)
 
     def test_reset(self, call_mock):
         """ Test reset"""
         call_mock.return_value = 0
         ret = self.ocd.reset()
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         call_mock.return_value = 42
         ret = self.ocd.reset()
-        self.assertEquals(42, ret)
+        self.assertEqual(42, ret)
 
     @mock.patch('subprocess.Popen')
     def test_debug(self, popen_mock, call_mock):
         """Test debug."""
         # Stop without debugging
         ret = self.ocd.debug_stop()
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
         ret = self.ocd.debug_start()
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
         self.assertTrue(popen_mock.called)
 
         # Verify command
@@ -85,12 +86,12 @@ class TestsMethods(unittest.TestCase):
         ret = self.ocd.reset()
         self.assertEqual(ret, 1)
         ret = self.ocd.flash(NodeM3.FW_IDLE)
-        self.assertEquals(1, ret)
+        self.assertEqual(1, ret)
         # not executed
         self.assertFalse(call_mock.called)
 
         ret = self.ocd.debug_stop()
-        self.assertEquals(0, ret)
+        self.assertEqual(0, ret)
 
     @mock.patch('subprocess.Popen')
     def test_debug_error_stop(self, popen_mock, _):
@@ -118,7 +119,7 @@ class TestsCall(unittest.TestCase):
 
         # Not to much more
         self.assertLess(t_end - t_0, self.timeout + 1)
-        self.assertNotEquals(ret, 0)
+        self.assertNotEqual(ret, 0)
 
     def test_no_timeout(self):
         """Test timeout not reached."""
@@ -129,13 +130,20 @@ class TestsCall(unittest.TestCase):
 
         # Strictly lower here
         self.assertLess(t_end - t_0, self.timeout - 1)
-        self.assertEquals(ret, 0)
+        self.assertEqual(ret, 0)
 
 
 class TestsFlashInvalidPaths(unittest.TestCase):
     def test_invalid_config_file_path(self):
-        self.assertRaises(IOError, openocd.OpenOCD, '/invalid/path')
+        self.assertRaises(IOError, openocd.OpenOCD,
+                          OpenOCDArgs('openocd', '/invalid/path', ()))
+
+    def test_invalid_openocd_path(self):
+        self.assertRaises(IOError, openocd.OpenOCD,
+                          OpenOCDArgs('/wrong/openocd', '/invalid/path', ()))
 
     def test_invalid_firmware_path(self):
-        ret = openocd.OpenOCD(NodeM3.OPENOCD_CFG_FILE).flash('/invalid/path')
+        ret = openocd.OpenOCD(
+            OpenOCDArgs('openocd', NodeM3.OPENOCD_CFG_FILE, ())
+        ).flash('/invalid/path')
         self.assertNotEqual(0, ret)

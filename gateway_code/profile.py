@@ -54,20 +54,19 @@ class Profile(object):
                 self.radio = Radio(**radio)
 
         except TypeError as err:
-            assert False, "Error in %s arguments %r" % (_current, err)
+            raise ValueError("Error in %s arguments %r" % (_current, err))
 
     @classmethod
     def from_dict(cls, open_node_type, profile_dict):
         """ Create Profile object from `profile_dict` and `open_node_type`
         If profile_dict is None, None is returned
         :raises: ValueError on invalid profile_dict """
+        if profile_dict is None:
+            return None
         try:
-            if profile_dict is None:
-                return None
-            else:
-                return Profile(open_node_type, **profile_dict)
+            return Profile(open_node_type, **profile_dict)
         except (ValueError, TypeError, AssertionError) as err:
-            raise ValueError('Invalid profile: %r', err)
+            raise ValueError('Invalid profile: %r' % err)
 
 
 class Consumption(object):
@@ -87,9 +86,9 @@ class Consumption(object):
         period = int(period)
         average = int(average)
 
-        assert period in self.choices['consumption']['period']
-        assert average in self.choices['consumption']['average']
-        assert alim in self.choices['alim']
+        assert period in self.choices['consumption']['period'], 'Period'
+        assert average in self.choices['consumption']['average'], 'Average'
+        assert alim in self.choices['alim'], 'Alim'
 
         self.source = alim if source == 'dc' else 'BATT'
         self.period = period
@@ -113,9 +112,9 @@ class Radio(object):
 
     def __init__(self, mode, channels, period=None, num_per_channel=None):
         # power=None, pkt_size=None
-        assert len(channels)
+        assert channels, 'No channels'
         for channel in channels:
-            assert channel in self.choices['radio']['channels']
+            assert channel in self.choices['radio']['channels'], 'Channel'
 
         self.mode = mode
         self.channels = channels
@@ -148,9 +147,9 @@ class Radio(object):
             # num_per_channels is required when multiple channels are given
             _err = "Required 'num_per_channels' as multiple channels provided"
             assert len(self.channels) == 1 or self.num_per_channel != 0, _err
-            assert self.period in self.choices['rssi']['period']
+            assert self.period in self.choices['rssi']['period'], 'Period'
             assert self.num_per_channel in \
-                self.choices['rssi']['num_per_channel']
+                self.choices['rssi']['num_per_channel'], 'Num per channel'
 
         # Sniffer
         elif self.mode == "sniffer":
@@ -159,9 +158,9 @@ class Radio(object):
             # num_per_channels is required when multiple channels are given
             _err = "Required 'period' as multiple channels provided"
 
-            assert self.period in self.choices['sniffer']['period']
+            assert self.period in self.choices['sniffer']['period'], 'Period'
             # period only if there are more than 1 channel
-            assert bool(self.period) == (len(self.channels) != 1)
-            assert self.num_per_channel is None
+            assert bool(self.period) == (len(self.channels) != 1), 'Period'
+            assert self.num_per_channel is None, 'Num per channel'
 
-        assert self.mode in ('rssi', 'sniffer')
+        assert self.mode in ('rssi', 'sniffer'), 'Mode'

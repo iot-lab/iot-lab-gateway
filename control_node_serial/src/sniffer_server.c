@@ -19,9 +19,6 @@
 # knowledge of the CeCILL license and that you accept its terms.
 *******************************************************************************/
 
-#ifndef _GNU_SOURCE
-#define _GNU_SOURCE
-#endif // _GNU_SOURCE
 #include <unistd.h>
 #include <signal.h>
 #include <sys/socket.h>

@@ -20,4 +20,34 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Common node utilities command line interface"""
+"""Common node utilities command line interface."""
+
+import logging
+import functools
+
+LOGGER = logging.getLogger('gateway_code')
+STREAM_STDERR = logging.StreamHandler()
+STREAM_STDERR.setLevel(logging.DEBUG)
+
+
+def _register_stderr_logger():
+    """ADD stderr logger."""
+    LOGGER.addHandler(STREAM_STDERR)
+
+
+def _unregister_stderr_logger():
+    """Remove stderr logger."""
+    LOGGER.removeHandler(STREAM_STDERR)
+
+
+def log_to_stderr(func):
+    """Decorator to add a stderr streamhandler."""
+    @functools.wraps(func)
+    def _wrapped(*args, **kwargs):
+        """Wrapped with redirected logs."""
+        try:
+            _register_stderr_logger()
+            return func(*args, **kwargs)
+        finally:
+            _unregister_stderr_logger()
+    return _wrapped

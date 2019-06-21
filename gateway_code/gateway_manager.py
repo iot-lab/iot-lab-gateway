@@ -24,19 +24,19 @@
 """ Gateway manager """
 
 import os
+import re
 import time
 import errno
 from threading import RLock, Timer
 
 import gateway_code.config as config
 from gateway_code import common
-from gateway_code.common import logger_call
+from gateway_code.common import logger_call, wait_tty, wait_no_tty
 from gateway_code.autotest import autotest
 from gateway_code.utils import elftarget
 
 import gateway_code.board_config as board_config
 
-from gateway_code.control_node import cn
 from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER
@@ -47,16 +47,16 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     Manages experiments, open node and control node """
 
-    def __init__(self, log_folder='.'):
-        gateway_logging.init_logger(log_folder)
+    def __init__(self, log_folder='.', log_stdout=False):
+        gateway_logging.init_logger(log_folder, log_stdout)
 
         self.board_cfg = board_config.BoardConfig()
         self.rlock = RLock()
 
         # Nodes instance
         self.open_node = self.board_cfg.board_class()
-        self.control_node = cn.ControlNode(self.board_cfg.node_id,
-                                           self.board_cfg.default_profile)
+        self.control_node = self.board_cfg.cn_class(
+            self.board_cfg.node_id, self.board_cfg.default_profile)
         self._nodes = {'control': self.control_node, 'open': self.open_node}
 
         # current experiment infos
@@ -75,10 +75,27 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         # Setup control node
         ret = self.node_flash('control', None)  # Flash default
         if ret != 0:
-            raise StandardError("Control node flash failed: {ret:%d}", ret)
+            raise StandardError("Control node flash failed: 'ret:{}'"
+                                .format(ret))
+        return ret
+
+    @staticmethod
+    def _board_require_power_cycle(board):
+        """nrf52dk and nrf52840dk requires a power cycle after exp_start.
+
+        >>> GatewayManager._board_require_power_cycle("nrf52dk")
+        True
+        >>> GatewayManager._board_require_power_cycle("nrf52840dk")
+        True
+        >>> GatewayManager._board_require_power_cycle("nrf52840mdk")
+        False
+        >>> GatewayManager._board_require_power_cycle("m3")
+        False
+        """
+        return re.match('^nrf52[0-9]{0,3}dk$', board) is not None
 
     # R0913 too many arguments 6/5
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Start experiment")
     def exp_start(self, user, exp_id,  # pylint: disable=R0913
                   firmware_path=None, profile_dict=None, timeout=0):
@@ -120,8 +137,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.exp_id = exp_id
         self.user = user
 
-        if self.board_cfg.robot_type == 'turtlebot2':  # pragma: no cover
-            LOGGER.info("I'm a Turtlebot2")
+        if (self.board_cfg.robot_type == 'turtlebot2' or
+                self.board_cfg.cn_class.TYPE == 'no'):  # pragma: no cover
+            LOGGER.info('Create user exp folder')
             self._create_user_exp_folders(user, exp_id)
 
         self.exp_files = self.create_user_exp_files(self.board_cfg.node_id,
@@ -135,10 +153,29 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # Init ControlNode
         ret_val += self.control_node.start(self.exp_id, self.exp_files)
+
+        # with Pycom boards, trigger 2 power-cycle to ensure REPL is correctly
+        # started
+        if self.open_node.TYPE == 'pycom':
+            for _ in range(2):
+                LOGGER.debug("Power cycle %s board", self.open_node.TYPE)
+                ret_val += self.control_node.open_stop()
+                ret_val += wait_no_tty(self.open_node.TTY, timeout=10)
+                ret_val += self.control_node.open_start()
+                ret_val += wait_tty(self.open_node.TTY, LOGGER, timeout=10)
         # Configure Open Node
         ret_val += self.open_node.setup(firmware_path)
         # Configure experiment and monitoring on ControlNode
         ret_val += self.control_node.start_experiment(profile)
+
+        # nrf52dk and nrf52840dk needs a power cycle before their serial
+        # becomes fully usable.
+        if (firmware_path is not None and
+                self._board_require_power_cycle(self.open_node.TYPE)):
+            LOGGER.info("Power cycle node %s",
+                        self.control_node.node_id.replace('_', '-'))
+            ret_val += self.control_node.open_stop()
+            ret_val += self.control_node.open_start()
 
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
@@ -148,7 +185,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         LOGGER.info("Start experiment succeeded")
         return ret_val
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def _timeout_exp_stop(self, exp_id, user):
         """ Run exp_stop after timeout.
 
@@ -162,12 +199,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         try:
             self.exp_stop()
         except EnvironmentError as err:
+            print("EnvironmentError", err)
             if err.errno == errno.EWOULDBLOCK:
                 LOGGER.warning('timeout_exp_stop would block hope its OK')
                 return
             raise
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Stop experiment")
     def exp_stop(self):
         """
@@ -193,6 +231,9 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         # Cleanup Control node Monitoring and experiment #
         ret_val += self.control_node.stop_experiment()
+        # Pycom TTY must be available before it's teared down.
+        if self.open_node.TYPE == 'pycom':
+            wait_tty(self.open_node.TTY, LOGGER, timeout=10)
         # Cleanup open node
         ret_val += self.open_node.teardown()
         # Stop control node interaction
@@ -213,7 +254,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         return ret_val
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def exp_update_profile(self, profile_dict):
         """ Update the experiment profile """
         LOGGER.info('Update experiment profile')
@@ -230,7 +271,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Update experiment profile failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Start open node power")
     def open_power_start(self, power=None):
         """ Power on the open node """
@@ -240,7 +281,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open power start failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Stop open node power")
     def open_power_stop(self, power=None):
         """ Power off the open node """
@@ -250,7 +291,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open power stop failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def open_debug_start(self):
         """ Start open node debugger """
         LOGGER.info('Open node debugger start')
@@ -260,7 +301,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open node debugger start failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def open_debug_stop(self):
         """ Stop open node debugger """
         LOGGER.info('Open node debugger stop')
@@ -270,7 +311,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Open node debugger stop failed')
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     @logger_call("Gateway Manager : Soft reset of open node")
     def node_soft_reset(self, node):
         """
@@ -287,8 +328,8 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Reset failed on %s node: %d', node, ret)
         return ret
 
-    @common.syncronous('rlock')
-    @logger_call("Gateway Manager : Flash of open node")
+    @common.synchronous('rlock')
+    @logger_call("Gateway Manager : Flash of node")
     def node_flash(self, node, firmware_path):
         """
         Flash the given firmware on the given node
@@ -310,13 +351,13 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def auto_tests(self, channel, blink, flash, gps):
         """ Run Auto-tests on nodes and gateway """
         autotest_manager = autotest.AutoTestManager(self)
         return autotest_manager.auto_tests(channel, blink, flash, gps)
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def status(self):
         """ Run a node sanity status check """
         ret = 0
@@ -324,7 +365,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         ret += self.open_node.status()
         return ret
 
-    @common.syncronous('rlock')
+    @common.synchronous('rlock')
     def sleep(self, seconds):  # pylint:disable=no-self-use
         """Sleep `seconds` seconds."""
         time.sleep(seconds)

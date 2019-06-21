@@ -1,67 +1,28 @@
-Gateway code Python README
-==========================
+IoT-Lab Gateway
+===============
+
+[![Build Status](https://travis-ci.org/iot-lab/iot-lab-gateway.svg?branch=master)](https://travis-ci.org/iot-lab/iot-lab-gateway)
+[![codecov](https://codecov.io/gh/iot-lab/iot-lab-gateway/branch/master/graph/badge.svg)](https://codecov.io/gh/iot-lab/iot-lab-gateway)
 
 
-Code development
-----------------
+This is the Python code that runs on the gateway for the FIT IoT-lab
+platform. It serves an API for starting, stopping experiments, flashing firmwares.
 
-### File hierarchy ###
+For a description of the hardware, see a [General overview](https://www.iot-lab.info/hardware/#iot-lab-node) and [Gateway Hardware](https://github.com/iot-lab/iot-lab/wiki/Hardware_Iotlab-gateway)
 
-    |
-    +---gateway_code: implementation of gateway_code
-    |       |
-    |       +---tests: unit tests
-    |       +---integration: integration tests that require a real gateway
-    |       +---static: default profiles, firmwares, openocd conf
-    |
-    +---roomba: roomba low level communication implementation
-    |           (not included in the tests suites at the moment)
-    |
-    +---control_node_serial: C program talking to control node over serial
-    |
-    |
-    +---bin: CLI scripts and init.d script
-    |
-    |
-    +---tests_utils: stuff useful for tests
-            |
-            +---curl_scripts: curl test examples
+If you want to run this code on your own, you have two choices:
+
+* (Recommended) Using the provided Docker image
+
+    make BOARD={node_name} run
+
+    (e.g. BOARD=arduino_zero)
+
+* Installing manualy all the dependencies, you should read [INSTALL.md](INSTALL.md)
 
 
-### Deploying manually ###
-
-Install all the `gateway code` on a gateway
-
-    python setup.py release
-
-It runs the `install` command and the `post_install` procedure.
+If you want to create support for a new custom open node, you should read [DEVELOPER.md](DEVELOPER.md)
 
 
-Testing
--------
-
-Tests can be run with the following commands:
-
-    python setup.py nosetests
-    python setup.py lint
-    python setup.py pep8
-
-They require having installed 'tests-utils/test-requirements.txt' to run
-
-> Note: unit tests require oml.mytestbed.net v2.11 installed.
-
-### Automated testing ###
-
-    # runs all tests at once
-    tox
-
-    # To run on gateways a 'www-data' user
-    tox -e integration
-
-
-Server REST (testing)
----------------------
-
-* launch server REST: `./server_rest.py localhost 8080`
-* start experiment:   `curl -X POST -H "Content-Type: multipart/form-data" http://localhost:8080/exp/start/123/clochette -F "firmware=@idle.elf" -F "profile=@tata.json"; echo`
-* flash open node:    `curl -X POST -H "Content-Type: multipart/form-data" http://localhost:8080/open/flash -F "firmware=@idle.elf"; echo`
+This code is integrated into a Yocto image (see https://github.com/iot-lab/iot-lab-yocto)
+on which each gateway boots

@@ -27,6 +27,7 @@ import logging
 from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.nodes import OpenNodeBase
 
 from gateway_code.utils.avrdude import AvrDude
 from gateway_code.utils.serial_redirection import SerialRedirection
@@ -34,12 +35,12 @@ from gateway_code.utils.serial_redirection import SerialRedirection
 LOGGER = logging.getLogger('gateway_code')
 
 
-class NodeLeonardo(object):
-    """ Open node Leonardo implemention """
+class NodeLeonardo(OpenNodeBase):
+    """ Open node Leonardo implementation """
 
     TYPE = 'leonardo'
     ELF_TARGET = ('ELFCLASS32', 'EM_AVR')
-    TTY = '/dev/ttyON_LEONARDO'
+    TTY = '/dev/iotlab/ttyON_LEONARDO'
     # The Leonardo node need a special open/close and then appear on a new TTY
     TTY_PROG = '/dev/ttyON_LEONARDO_PROG'
     # Regular TTY will be restored after 8 seconds
@@ -47,7 +48,7 @@ class NodeLeonardo(object):
     TTY_READY_DELAY = 1
 
     BAUDRATE = 9600
-    FW_IDLE = static_path('idle_leonardo.elf')
+    FW_IDLE = static_path('leonardo_idle.elf')
     FW_AUTOTEST = static_path('leonardo_autotest.elf')
     AVRDUDE_CONF = {
         'tty': TTY_PROG,

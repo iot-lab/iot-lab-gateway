@@ -1,0 +1,9 @@
+# open nodes TTY
+
+# pytrack
+KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="f014", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_PYCOM"
+SUBSYSTEM=="usb", ATTR{idProduct}=="04d8", ATTR{idVendor}=="f014", MODE="0664", GROUP="dialout"
+
+# pysense
+KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="f012", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_PYCOM"
+SUBSYSTEM=="usb", ATTR{idProduct}=="04d8", ATTR{idVendor}=="f012", MODE="0664", GROUP="dialout"

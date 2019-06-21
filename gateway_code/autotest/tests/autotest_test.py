@@ -24,6 +24,7 @@
 
 import unittest
 import mock
+import pytest
 
 from gateway_code.autotest import autotest
 from gateway_code.tests import utils
@@ -51,8 +52,8 @@ class TestProtocol(unittest.TestCase):
         ret_1 = self.g_v._check(0, 'message_1', ['1', '2'])
         ret_2 = self.g_v._check(1, 'message_2', ['3', '4'])
 
-        self.assertEquals(0, ret_1)
-        self.assertEquals(1, ret_2)
+        self.assertEqual(0, ret_1)
+        self.assertEqual(1, ret_2)
 
         self.assertTrue('message_1' in self.g_v.ret_dict['success'])
         self.assertTrue('message_2' in self.g_v.ret_dict['error'])
@@ -70,7 +71,7 @@ class TestProtocol(unittest.TestCase):
 
         values = self.g_v._run_test(3, ['test_command'], lambda x: float(x[2]))
 
-        self.assertEquals([3.14], values)
+        self.assertEqual([3.14], values)
         mock_error.assert_called_with('Autotest: %r: %r',
                                       "On Command: ['test_command']",
                                       ['NACK', 'test_command', '1.414'])
@@ -80,19 +81,20 @@ class TestProtocol(unittest.TestCase):
         """ Test get_uid autotest function """
 
         run_test_mock.return_value = ['05D8FF323632483343037109']
-        self.assertEquals(0, self.g_v.get_uid())
-        self.assertEquals('05D8:FF32:3632:4833:4303:7109',
-                          self.g_v.ret_dict['open_node_m3_uid'])
+        self.assertEqual(0, self.g_v.get_uid())
+        self.assertEqual('05D8:FF32:3632:4833:4303:7109',
+                         self.g_v.ret_dict['open_node_uid'])
 
         # error on get_uid
         run_test_mock.return_value = []
-        self.assertNotEquals(0, self.g_v.get_uid())
+        self.assertNotEqual(0, self.g_v.get_uid())
 
 
 class TestProtocolGPS(unittest.TestCase):
 
     def setUp(self):
-        mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8')).start()
+        config = utils.read_config_mock('a8', linux_open_node_type='a8_m3')
+        mock.patch(utils.READ_CONFIG, config).start()
         gateway_manager = mock.Mock()
         self.g_v = autotest.AutoTestManager(gateway_manager)
 
@@ -102,12 +104,12 @@ class TestProtocolGPS(unittest.TestCase):
     def test_test_gps(self):
         with mock.patch.object(self.g_v, '_test_pps_open_node') as test_pps:
             # test with gps disabled
-            self.assertEquals(0, self.g_v.test_gps(False))
+            self.assertEqual(0, self.g_v.test_gps(False))
             self.assertFalse(test_pps.called)
 
             # Test with gps enabled
             test_pps.return_value = 0
-            self.assertEquals(0, self.g_v.test_gps(True))
+            self.assertEqual(0, self.g_v.test_gps(True))
             self.assertTrue(test_pps.called)
 
     def test__test_pps_open_node(self):
@@ -121,23 +123,32 @@ class TestProtocolGPS(unittest.TestCase):
                 return (0, ['ACK', 'test_pps_stop'])
             elif cmd == 'test_pps_get':
                 return pps_get_values.pop(0)
-            else:
-                self.fail('Unknown command %r' % cmd)
+
+            raise ValueError('Unknown command %r' % cmd)
 
         with mock.patch.object(self.g_v, '_on_call', _on_call):
             pps_get_values = [(0, ['ACK', 'test_pps_get', '0', 'pps']),
                               (0, ['ACK', 'test_pps_get', '3', 'pps'])]
-            self.assertEquals(0, self.g_v._test_pps_open_node(10))
+            self.assertEqual(0, self.g_v._test_pps_open_node(10))
 
             pps_get_values = []
-            self.assertNotEquals(0, self.g_v._test_pps_open_node(0))
+            self.assertNotEqual(0, self.g_v._test_pps_open_node(0))
+
+            with pytest.raises(ValueError) as exc:
+                self.g_v._test_pps_open_node_invalid()
+            assert 'Unknown command' in str(exc)
 
 
 class TestAutotestChecker(unittest.TestCase):
 
+    TESTED_FEATURES = set()
+
     def setUp(self):
         self.func = mock.Mock()
-        self.open_node = mock.Mock()
+        self.on_class = mock.Mock()
+        self.cn_class = mock.Mock()
+        self.linux_on_class = mock.Mock()
+        self.TESTED_FEATURES.clear()
 
     def function(self, *args, **kwargs):
         """ Should mock a real function to let 'wraps' work """
@@ -145,7 +156,9 @@ class TestAutotestChecker(unittest.TestCase):
 
     def test_autotest_checker(self):
 
-        self.open_node.AUTOTEST_AVAILABLE = ['echo', 'get_time']
+        self.on_class.AUTOTEST_AVAILABLE = ['echo', 'get_time']
+        self.cn_class.FEATURES = []
+        self.linux_on_class = None
 
         # Should call the function
         # func_cmd == decorated function
@@ -203,12 +216,27 @@ class TestAutoTestsErrorCases(unittest.TestCase):
         ret_dict = self.g_v.auto_tests()
 
         self.assertTrue(ret_dict['ret'] >= 2)
-        self.assertEquals([], ret_dict['success'])
-        self.assertEquals(['setup', 'teardown'], ret_dict['error'])
+        self.assertEqual([], ret_dict['success'])
+        self.assertEqual(['setup', 'teardown'], ret_dict['error'])
+
+    @mock.patch('gateway_code.autotest.autotest.AutoTestManager.'
+                '_set_results_leds')
+    def test_fatal_error_leds(self, leds):
+        assert self.g_v.set_result_leds(0) == 0
+        leds.side_effect = autotest.FatalError("Leds Error")
+        assert self.g_v.set_result_leds(0) == 1
+
+    @mock.patch('gateway_code.autotest.autotest.AutoTestManager._check')
+    def test_assert(self, check):
+        ret = 1
+        check.return_value = ret
+        with pytest.raises(autotest.FatalError) as exc:
+            assert self.g_v._assert(1, "noop", "err_log", "err_msg") == ret
+        assert "err_msg" in str(exc)
 
 
 class TestAutotestFatalError(unittest.TestCase):
 
     def test_fatal_error(self):
         error = autotest.FatalError("error_value")
-        self.assertEquals("'error_value'", str(error))
+        self.assertEqual("'error_value'", str(error))

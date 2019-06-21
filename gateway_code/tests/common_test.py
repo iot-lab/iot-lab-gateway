@@ -85,20 +85,20 @@ class TestWaitTTY(unittest.TestCase):
     def test_wait_tty(self):
         """ Test running wait_tty fct """
         logger = mock.Mock()
-        self.assertEquals(0, common.wait_tty('/dev/null', logger, 0))
-        self.assertEquals(0, logger.error.call_count)
-        self.assertEquals(1, common.wait_tty('no_tty_file', logger, 0))
-        self.assertEquals(1, logger.error.call_count)
+        self.assertEqual(0, common.wait_tty('/dev/null', logger, 0))
+        self.assertEqual(0, logger.error.call_count)
+        self.assertEqual(1, common.wait_tty('no_tty_file', logger, 0))
+        self.assertEqual(1, logger.error.call_count)
 
     def test_wait_no_tty(self):
         """ Test running wait_no_tty fct """
-        self.assertEquals(0, common.wait_no_tty('no_tty_file', 0))
-        self.assertEquals(1, common.wait_no_tty('/dev/null', 0))
+        self.assertEqual(0, common.wait_no_tty('no_tty_file', 0))
+        self.assertEqual(1, common.wait_no_tty('/dev/null', 0))
 
 
-class TestSyncronousDecorator(unittest.TestCase):
+class TestSynchronousDecorator(unittest.TestCase):
 
-    def test_syncronous_decorator(self):
+    def test_synchronous_decorator(self):
 
         # using RLock as it's what I want to use at the end
         class PutAfterTime(object):  # pylint: disable=too-few-public-methods
@@ -107,7 +107,7 @@ class TestSyncronousDecorator(unittest.TestCase):
                 self.rlock = RLock()
                 self.item_list = []
 
-            @common.syncronous('rlock')
+            @common.synchronous('rlock')
             def put_after_time(self, item, delay=0):
                 time.sleep(delay)
                 self.item_list.append(item)
@@ -122,4 +122,4 @@ class TestSyncronousDecorator(unittest.TestCase):
         time.sleep(2)
         class_put.put_after_time('c')
 
-        self.assertEquals(['a', 'c'], class_put.item_list)
+        self.assertEqual(['a', 'c'], class_put.item_list)
