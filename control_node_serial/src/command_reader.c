@@ -126,6 +126,7 @@ struct dict_entry commands_d[] = {
     {"stop",            OPEN_NODE_STOP},
     {"set_time",        SET_TIME},
     {"set_node_id",     SET_NODE_ID},
+    {"time_sync",       TIME_SYNC},
 
     {"green_led_on",    GREEN_LED_ON},
     {"green_led_blink", GREEN_LED_BLINK},

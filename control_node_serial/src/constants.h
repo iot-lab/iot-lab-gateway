@@ -35,6 +35,7 @@ enum frame_type {
 
     SET_TIME             = 0x20,
     SET_NODE_ID          = 0x21,
+    TIME_SYNC            = 0x22,
 
     /* LED management */
     GREEN_LED_ON         = 0x35,
