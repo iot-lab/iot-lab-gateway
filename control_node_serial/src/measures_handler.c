@@ -289,12 +289,12 @@ static void handle_ack_pkt(uint8_t *data, size_t len)
             timeval_substract(&delay2, &t3, &t2);
             timeval_substract(&delay, &delay1, &delay2);
 
-            PRINT_MSG("         T1 %lu.%lu\n", time_sync_ref.tv_sec, time_sync_ref.tv_usec);
-            PRINT_MSG("received T2 %lu.%lu\n", t2.tv_sec, t2.tv_usec);
-            PRINT_MSG("received T3 %lu.%lu\n", t3.tv_sec, t3.tv_usec);
-            PRINT_MSG("         T4 %lu.%lu\n", time_ack.tv_sec, time_ack.tv_usec);
+            PRINT_MSG("         T1 %lu.06%lu\n", time_sync_ref.tv_sec, time_sync_ref.tv_usec);
+            PRINT_MSG("received T2 %lu.06%lu\n", t2.tv_sec, t2.tv_usec);
+            PRINT_MSG("received T3 %lu.06%lu\n", t3.tv_sec, t3.tv_usec);
+            PRINT_MSG("         T4 %lu.06%lu\n", time_ack.tv_sec, time_ack.tv_usec);
 
-            PRINT_MSG("config_ack time_sync %lu.%lu %lu.%lu\n",
+            PRINT_MSG("config_ack time_sync %lu.%lu %lu.06%lu\n",
                         offset.tv_sec, offset.tv_usec,
                         delay.tv_sec, delay.tv_usec);
             timerclear(&time_sync_ref);
