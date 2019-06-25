@@ -183,6 +183,11 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
             if answer[1] == 'set_time':
                 LOGGER.info('Control Node set time delay: %d us',
                             int(1000000 * float(answer[2])))
+            if answer[1] == 'time_sync':
+                offset = float(answer[2])
+                delay = float(answer[3])
+                LOGGER.info('Control Node time sync: offset: %d us', int(1000000 * float(offset)))
+                LOGGER.info('Control Node time sync: delay: %d us', int(1000000 * float(delay)))
         elif answer[0] == 'error':  # control node error
             LOGGER.error('Control node error: %r', answer[1])
 

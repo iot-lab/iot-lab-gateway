@@ -52,6 +52,12 @@ class Protocol(object):
         cmd = ['set_time']
         return self.send_cmd(cmd)
 
+    def time_sync(self):
+        """ Tries to get timing delay serial link control node """
+        # set_time
+        cmd = ['time_sync']
+        return self.send_cmd(cmd)
+
     @staticmethod
     def _set_node_id_args(node_id):
         """

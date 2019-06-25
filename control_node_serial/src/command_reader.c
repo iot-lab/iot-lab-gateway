@@ -203,6 +203,18 @@ static int cmd_set_time(char *cmd_str, struct command_buffer *cmd_buff,
     return 0;
 }
 
+static int cmd_time_sync(char *cmd_str, struct command_buffer *cmd_buff,
+        struct command_description *command)
+{
+    /* cmd_str == "%s" */
+    (void)cmd_str;
+    (void)command;
+    (void)cmd_buff;
+
+    gettimeofday(&time_sync_ref, NULL);
+    return 0;
+}
+
 static int cmd_set_node_id(char *cmd_str, struct command_buffer *cmd_buff,
         struct command_description *command)
 {
@@ -414,6 +426,7 @@ struct command_description commands[] = {
     {"config_radio_stop",                0, (cmd_fct_t)cmd_no_args},
 
     {"set_time",                         0, (cmd_fct_t)cmd_set_time},
+    {"time_sync",                        0, (cmd_fct_t)cmd_time_sync},
     {"set_node_id %8s %i",               2, (cmd_fct_t)cmd_set_node_id},
     {"green_led_on",                     0, (cmd_fct_t)cmd_no_args},
     {"green_led_blink",                  0, (cmd_fct_t)cmd_no_args},

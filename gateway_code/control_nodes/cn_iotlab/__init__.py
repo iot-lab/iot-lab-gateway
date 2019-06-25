@@ -94,6 +94,7 @@ class ControlNodeIotlab(ControlNodeBase):
         ret_val = 0
         ret_val += self.protocol.green_led_blink()
         ret_val += self.protocol.set_time()
+        ret_val += self.protocol.time_sync()
         ret_val += self.protocol.set_node_id(self.node_id)
         ret_val += self.configure_profile(profile)
         return ret_val

@@ -24,6 +24,7 @@
 
 #include <sys/time.h>
 extern struct timeval set_time_ref;
+extern struct timeval time_sync_ref;
 
 
 /* Subtract the `struct timeval' values X and Y,
@@ -32,5 +33,7 @@ extern struct timeval set_time_ref;
  */
 int timeval_substract(struct timeval *result, struct timeval *x,
         struct timeval *y);
+
+int timeval_add(struct timeval *result, struct timeval *a, struct timeval *b);
 
 #endif // TIME_REF_H

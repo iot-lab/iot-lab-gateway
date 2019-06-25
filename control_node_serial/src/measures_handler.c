@@ -69,6 +69,8 @@ static void calculate_time_extended(struct timeval *total_time,
 
 static void extract_data(uint8_t *dst, uint8_t **src, size_t len);
 
+uint32_t Uint8ArrtoUint32 (uint8_t* var, uint32_t lowest_pos);
+
 void measures_handler_start(int print_measures, char *oml_config_file_path)
 {
     oml_measures_start(oml_config_file_path, print_measures);
@@ -238,12 +240,21 @@ static void config_consumption(int power_source, int p, int v, int c)
     }
 }
 
+uint32_t Uint8ArrtoUint32 (uint8_t* var, uint32_t lowest_pos)
+{
+    return  (((uint64_t)var[lowest_pos+3]) << 24) |
+            (((uint64_t)var[lowest_pos+2]) << 16) |
+            (((uint64_t)var[lowest_pos+1]) << 8)  |
+            (((uint64_t)var[lowest_pos])   << 0);
+}
+
 static void handle_ack_pkt(uint8_t *data, size_t len)
 {
     // ACK_FRAME | config_type | [config]
     (void)len;
     uint8_t ack_type = data[1];
     uint8_t config   = data[2];
+
     struct timeval time_ack, time_diff;
 
 
@@ -254,6 +265,42 @@ static void handle_ack_pkt(uint8_t *data, size_t len)
             PRINT_MSG("config_ack set_time %lu.%06lu\n",
                     time_diff.tv_sec, time_diff.tv_usec);
             timerclear(&set_time_ref);
+            break;
+        case TIME_SYNC:
+            gettimeofday(&time_ack, NULL);
+
+            struct timeval t2,t3;
+            // t1 = time_sync_ref
+            t2.tv_sec = Uint8ArrtoUint32(data, 2);
+            t2.tv_usec = Uint8ArrtoUint32(data, 6);
+            t3.tv_sec = Uint8ArrtoUint32(data, 10);
+            t3.tv_usec = Uint8ArrtoUint32(data, 14);
+            // t4 = time_ack
+
+            // twice clock offset = (t2-t1)+(t3-t4)
+            struct timeval tlow, thigh, offset;
+            timeval_substract(&tlow, &t2, &time_sync_ref);
+            timeval_substract(&thigh, &t3, &time_ack);
+            timeval_add(&offset, &tlow, &thigh);
+
+            // link delay = (t4-t1)-(t3-t2)
+            struct timeval delay1, delay2, delay;
+            timeval_substract(&delay1, &time_ack, &time_sync_ref);
+            timeval_substract(&delay2, &t3, &t2);
+            timeval_substract(&delay, &delay1, &delay2);
+
+            PRINT_MSG("         T1 %lu.%lu\n", time_sync_ref.tv_sec, time_sync_ref.tv_usec);
+            PRINT_MSG("received T2 %lu.%lu\n", t2.tv_sec, t2.tv_usec);
+            PRINT_MSG("received T3 %lu.%lu\n", t3.tv_sec, t3.tv_usec);
+            PRINT_MSG("         T4 %lu.%lu\n", time_ack.tv_sec, time_ack.tv_usec);
+
+            PRINT_MSG("config_ack time_sync %lu.%lu %lu.%lu\n",
+                        offset.tv_sec, offset.tv_usec,
+                        delay.tv_sec, delay.tv_usec);
+            timerclear(&time_sync_ref);
+            timerclear(&t2);
+            timerclear(&t3);
+            timerclear(&time_ack);
             break;
         case CONFIG_CONSUMPTION:
             PRINT_MSG("config_ack config_consumption_measure\n");

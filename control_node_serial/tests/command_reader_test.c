@@ -35,6 +35,7 @@ void mock_exit(int status);
 #include "command_reader.c"
 #include "command_parser.c"  // MAYBE REMOVE LATER
 struct timeval set_time_ref;
+struct timeval time_sync_ref;
 
 uint16_t sniffer_zep_node_id;  // needed by sniffer_zep
 
