@@ -44,6 +44,15 @@ def _setup_parser(cmd, board_cfg):
                             help='%s control node' % cmd)
     if cmd == 'flash':
         parser.add_argument('firmware', nargs='?', help='Firmware path')
+        parser.add_argument(
+            '--bin',
+            action='store_true',
+            help='use if firmware is a binary file '
+        )
+        parser.add_argument(
+            '--offset',
+            help='offset at which to flash the binary file'
+        )
     return parser.parse_args()
 
 
@@ -107,7 +116,7 @@ def flash():
         return 1
 
     if hasattr(node, _FLASH):
-        ret = node.flash(firmware_path)
+        ret = node.flash(firmware_path, opts.bin, opts.offset)
     else:
         ret = -1
     _print_result(ret, _FLASH, node.TYPE)

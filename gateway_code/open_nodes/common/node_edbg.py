@@ -86,12 +86,15 @@ class NodeEdbgBase(OpenNodeBase):
         return ret_val
 
     @logger_call("Node EDBG: flash of edbg node")
-    def flash(self, firmware_path=None):
+    def flash(self, firmware_path=None, binary=False, offset=None):
         """ Flash the given firmware on EDBG node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
                               If None, flash 'idle' firmware.
         """
+        if binary:
+            raise NotImplementedError(
+                'Binary flashing at %s not implemented' % offset)
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on %s: %s',
                     self.TYPE.upper(), firmware_path)

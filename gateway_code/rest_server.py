@@ -37,6 +37,7 @@ from bottle import request
 
 from gateway_code.gateway_manager import GatewayManager
 from gateway_code import board_config
+from gateway_code.common import booleanize
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -187,11 +188,16 @@ class GatewayRest(bottle.Bottle):
         Requires: request.files contains 'firmware' file argument """
         LOGGER.debug('REST: Flash OpenNode')
 
+        query = request.get('query', {})
+        binary = booleanize(query.get('binary', False))
+        offset = query.get('offset')
         firmware_file = self._extract_firmware()
         if firmware_file is None:
             return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
 
-        ret = self.gateway_manager.node_flash('open', firmware_file.name)
+        ret = self.gateway_manager.node_flash(
+            'open', firmware_file.name, binary, offset
+        )
 
         firmware_file.close()
         return {'ret': ret}

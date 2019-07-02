@@ -330,23 +330,26 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     @common.synchronous('rlock')
     @logger_call("Gateway Manager : Flash of node")
-    def node_flash(self, node, firmware_path):
+    def node_flash(self, node, firmware_path, binary=False, offset=None):
         """
         Flash the given firmware on the given node
 
         :param node: Node name in {'control', 'open'}
         :param firmware_path: Path to the firmware to be flashed on `node`.
+        :param binary: The given file is a binary file
+        :param offset: The offset at which to flash the binary file
         """
         assert node in ['control', 'open'], "Invalid node name"
         LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
 
         target_node = self._nodes[node]
 
-        if not elftarget.is_compatible_with_node(firmware_path, target_node):
+        if not bin and not \
+                elftarget.is_compatible_with_node(firmware_path, target_node):
             LOGGER.error('Invalid firmware target, not flashing.')
             return 1
 
-        ret = target_node.flash(firmware_path)
+        ret = target_node.flash(firmware_path, binary, offset)
         if ret != 0:  # pragma: no cover
             LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
         return ret

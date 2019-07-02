@@ -44,7 +44,7 @@ class NodeNoBase(OpenNodeBase):
         return 0
 
     @logger_call("Node No: flash of no node")
-    def flash(self, firmware_path=None):
+    def flash(self, firmware_path=None, binary=False, offset=None):
         # pylint:disable=unused-argument,no-self-use
         """Does nothing."""
         return 0

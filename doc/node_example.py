@@ -47,7 +47,7 @@ class NodeExample(OpenNodeBase):
         return 1
 
     @logger_call("Node Example : flash of example node")
-    def flash(self, firmware_path=None):
+    def flash(self, firmware_path=None, binary=False, offset=None):
         # Here
         return 1
 
