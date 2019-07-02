@@ -89,14 +89,20 @@ class NodeLeonardo(OpenNodeBase):
         return ret_val
 
     @logger_call("Node Leonardo : Flash of leonardo node")
-    def flash(self, firmware_path=None):
+    def flash(self, firmware_path, binary=False, offset=None):
         """ Flash the given firmware on Leonardo node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
-                              If None, flash 'idle' firmware """
+                              If None, flash 'idle' firmware
+        :param binary: whether to flash a binary file
+        :param offset: at which offset to flash the binary file """
+
         if AvrDude.trigger_bootloader(self.TTY, self.TTY_PROG, timeout=15):
             LOGGER.error("FLASH : Leonardo's jtag port not available")
             return 1
+        if binary:
+            raise NotImplementedError(
+                'Binary flashing at %s not implemented' % offset)
         ret_val = 0
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Leonardo: %s', firmware_path)

@@ -172,3 +172,25 @@ def class_attr_has(features_attr, required_list):
             return 0
         return _wrapped_f
     return _wrap
+
+
+def booleanize(value):
+    # insp. https://stackoverflow.com/q/11641689
+    """Convert a representation of truth to a boolean value
+    If already a boolean, return it
+    True values are 'y', 'yes', 't', 'true', 'on', '1' and 1;
+    False values are 'n', 'no', 'f', 'false', 'off', '0', 0 and None.
+    Raises ValueError if 'value' is anything else.
+    """
+
+    if isinstance(value, bool):
+        return value
+
+    value = value.lower()
+
+    if value in ('y', 'yes', 't', 'true', 'on', '1', 1):
+        return True
+    elif value in ('n', 'no', 'f', 'false', 'off', '0', 0, None):
+        return False
+    else:
+        raise ValueError("invalid truth value %r" % (value,))

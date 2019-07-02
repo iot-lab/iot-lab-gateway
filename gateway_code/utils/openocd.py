@@ -60,6 +60,11 @@ class OpenOCD(object):
              ' -c "reset run"'
              ' -c "shutdown"')
 
+    FLASH_BIN = (' -c "reset halt"'
+                 ' -c "reset init"'
+                 ' -c "program {0} verify {1}"'
+                 ' -c "shutdown"')
+
     DEBUG = ' -c "reset halt"'
     TIMEOUT = 100
 
@@ -98,11 +103,13 @@ class OpenOCD(object):
         """ Reset """
         return self._call_cmd(self.RESET)
 
-    def flash(self, elf_file):
+    def flash(self, fw_file, binary=False, offset=None):
         """ Flash firmware """
         try:
-            elf_path = common.abspath(elf_file)
-            return self._call_cmd(self.FLASH.format(elf_path))
+            path = common.abspath(fw_file)
+            if binary:
+                return self._call_cmd(self.FLASH_BIN.format(path, offset))
+            return self._call_cmd(self.FLASH.format(path))
         except IOError as err:
             LOGGER.error('%s', err)
             return 1

@@ -110,7 +110,8 @@ class ControlNodeRpi3(ControlNodeBase):
         return ret_val
 
     @logger_call("Control node: Flash")
-    def flash(self, firmware_path=None):  # pylint:disable=unused-argument
+    def flash(self, firmware_path=None,
+              binary=False, offset=None):  # pylint:disable=unused-argument
         """Flash control node"""
         return 0
 

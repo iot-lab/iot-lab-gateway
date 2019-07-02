@@ -126,6 +126,9 @@ class BaseOpenNode(OpenNodeBase):
     def status(self):
         return 0
 
+    def flash(self, firmware_path, binary=False, offset=None):
+        return 0
+
 
 def test_registry_inheritance():
     """ test case for open node that derive from other open nodes """

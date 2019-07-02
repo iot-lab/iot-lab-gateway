@@ -93,15 +93,17 @@ class NodeOpenOCDBase(OpenNodeBase):
         return ret_val
 
     @logger_call("Node OpenOCD: flash of openocd node")
-    def flash(self, firmware_path=None):
+    def flash(self, firmware_path=None, binary=False, offset=None):
         """ Flash the given firmware on openocd node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
                               If None, flash 'idle' firmware.
+        :param binary: if True, flashes a binary file
+        :param offset: the offset at which to flash the binary file
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on OpenOCD: %s', firmware_path)
-        ret_val = self.openocd.flash(firmware_path)
+        ret_val = self.openocd.flash(firmware_path, binary, offset)
         if hasattr(self, 'JLINK_SERIAL') and self.JLINK_SERIAL:
             ret_val += common.wait_tty(self.TTY, LOGGER)
         if hasattr(self, 'DIRTY_SERIAL') and self.DIRTY_SERIAL:

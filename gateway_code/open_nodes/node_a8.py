@@ -121,3 +121,7 @@ class NodeA8(OpenNodeBase):
         """ Check A8 node status """
         # No check done for the moment
         return 0
+
+    @staticmethod
+    def flash(firmware_path, binary=False, offset=None):
+        return 0

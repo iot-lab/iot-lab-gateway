@@ -72,7 +72,7 @@ class NodeFirefly(OpenNodeBase):
 
         common.wait_no_tty(self.TTY)
         ret_val += common.wait_tty(self.TTY, LOGGER)
-        ret_val += self.flash(firmware_path, toggle_redirect=False)
+        ret_val += self.do_flash(firmware_path, toggle_redirect=False)
         ret_val += self.serial_redirection.start()
         return ret_val
 
@@ -84,11 +84,18 @@ class NodeFirefly(OpenNodeBase):
         common.wait_no_tty(self.TTY)
         ret_val += common.wait_tty(self.TTY, LOGGER)
         ret_val += self.serial_redirection.stop()
-        ret_val += self.flash(None, toggle_redirect=False)
+        ret_val += self.do_flash(None, toggle_redirect=False)
         return ret_val
 
+    def flash(self, firmware_path=None,
+              binary=False, offset=None):
+        if binary:
+            raise NotImplementedError(
+                'Binary flashing at %s not implemented' % offset)
+        return self.do_flash(firmware_path, True)
+
     @logger_call("Node firefly : flash of firefly node")
-    def flash(self, firmware_path=None, toggle_redirect=True):
+    def do_flash(self, firmware_path=None, toggle_redirect=True):
         """ Flash the given firmware on firefly node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.

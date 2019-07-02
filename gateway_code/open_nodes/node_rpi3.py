@@ -116,6 +116,9 @@ class NodeRpi3(OpenNodeBase):
             pass
         return 0
 
+    def flash(self, firmware_path=None, binary=False, offset=None):
+        return 0
+
     @staticmethod
     def status():
         """ Check RPi3 node status """

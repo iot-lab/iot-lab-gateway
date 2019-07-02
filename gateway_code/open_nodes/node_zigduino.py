@@ -89,7 +89,7 @@ class NodeZigduino(OpenNodeBase):
         common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
         ret_val += common.wait_tty(self.TTY, LOGGER,
                                    timeout=common.TTY_DETECT_TIME)
-        ret_val += self.flash(firmware_path, redirect=False)
+        ret_val += self.do_flash(firmware_path, redirect=False)
         ret_val += self.disable_dtr()
         ret_val += self.serial_redirection.start()
         return ret_val
@@ -105,14 +105,32 @@ class NodeZigduino(OpenNodeBase):
         ret_val += self.serial_redirection.stop()
         # Reboot needs 8 seconds before ending linux sees it in < 2 seconds
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
-        ret_val += self.flash(None, redirect=False)
+        ret_val += self.do_flash(None, redirect=False)
         return ret_val
 
-    @logger_call("Flash of Zigduino node")
-    def flash(self, firmware_path=None, redirect=True):
+    def flash(self, firmware_path=None, binary=False, offset=None):
         """ Flash the given firmware on Zigduino node
         :param firmware_path: Path to the firmware to be flashed on `node`.
-            If None, flash 'idle' firmware """
+            If None, flash 'idle' firmware
+        :param binary: whether to flash a binary file
+        :param offset: at which offset to flash the binary file
+        :param redirect: whether to stop the serial redirection before flashing
+        """
+        return self.do_flash(firmware_path, binary, offset, True)
+
+    @logger_call("Flash of Zigduino node")
+    def do_flash(self, firmware_path=None, binary=False,
+                 offset=None, redirect=True):
+        """ Flash the given firmware on Zigduino node
+        :param firmware_path: Path to the firmware to be flashed on `node`.
+            If None, flash 'idle' firmware
+        :param binary: whether to flash a binary file
+        :param offset: at which offset to flash the binary file
+        :param redirect: whether to stop the serial redirection before flashing
+        """
+        if binary:
+            raise NotImplementedError(
+                'Binary flashing at %s not implemented' % offset)
         ret_val = 0
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Zigduino: %s', firmware_path)
