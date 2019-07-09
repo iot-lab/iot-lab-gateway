@@ -19,17 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node for Nucleo 64 F0 RB """
+""" Open Node for Nucleo 64 F070 """
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_st_link import NodeStLinkBase
 
 
-class NodeStNucleo64f0(NodeStLinkBase):
+class NodeStNucleo64f070(NodeStLinkBase):
     # pylint:disable=no-member
-    """ Open node STM32 Nucleo 64 F0 St-Link based board implementation """
+    """ Open node STM32 Nucleo 64 F070 St-Link based board implementation """
 
-    TYPE = 'st_nucleo64f0'
-    OPENOCD_CFG_FILE = static_path('iot-lab-st-nucleo64f0.cfg')
+    TYPE = 'st_nucleo64f070'
+    OPENOCD_CFG_FILE = static_path('iot-lab-st-nucleo64f070.cfg')
     OPENOCD_PATH = '/opt/openocd-0.10.0/bin/openocd'
-    FW_IDLE = static_path('st-nucleo64f0_idle.elf')
-    FW_AUTOTEST = static_path('st-nucleo64f0_autotest.elf')
+    FW_IDLE = static_path('st-nucleo64f070_idle.elf')
+    FW_AUTOTEST = static_path('st-nucleo64f070_autotest.elf')
