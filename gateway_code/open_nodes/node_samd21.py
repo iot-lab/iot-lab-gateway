@@ -25,7 +25,7 @@ from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_edbg import NodeEdbgBase
 
 
-class NodeSamrd21(NodeEdbgBase):
+class NodeSamd21(NodeEdbgBase):
     """ Open node SAMD21 implementation """
 
     TYPE = 'samd21'
