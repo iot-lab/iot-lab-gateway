@@ -193,4 +193,4 @@ class ControlNodeCcn(ControlNodeBase):
 
     def status(self):
         """ Check Control node status """
-        return gateway_code.utils.ftdi_check.ftdi_check('control', '4232')
+        return gateway_code.utils.ftdi_check.ftdi_check('control', '2232')
