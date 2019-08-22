@@ -123,5 +123,8 @@ class NodeA8(OpenNodeBase):
         return 0
 
     @staticmethod
-    def flash(firmware_path, binary=False, offset=None):
+    def flash(firmware_path=None, binary=False, offset=None):
+        """Flash a firmware on an A8 node.
+
+        This is not supported so does nothing actually."""
         return 0

@@ -93,8 +93,8 @@ class NodeEdbgBase(OpenNodeBase):
                               If None, flash 'idle' firmware.
         """
         if binary:
-            raise NotImplementedError(
-                'Binary flashing at %s not implemented' % offset)
+            LOGGER.error('FLASH: binary mode not supported with edbg')
+            return 1
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on %s: %s',
                     self.TYPE.upper(), firmware_path)

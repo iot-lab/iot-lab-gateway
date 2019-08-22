@@ -111,7 +111,7 @@ class OpenNodeBase(object):
         pass  # pragma: no cover
 
     @abc.abstractmethod
-    def flash(self, firmware_path, binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=None):
         """ Flash firmware on the open_node """
         pass  # pragma: no cover
 

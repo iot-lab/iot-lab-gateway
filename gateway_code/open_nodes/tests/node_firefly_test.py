@@ -93,6 +93,9 @@ class TestNodeFirefly(unittest.TestCase):
         assert wait_tty.call_count == 0
         assert wait_no_tty.call_count == 0
 
+        # verify binary mode is not supported
+        assert self.node.flash(self.fw_path, binary=True) == 1
+
         # Flash idle firmware
         assert self.node.flash() == 0
         self.node.cc2538.flash.assert_called_with(self.node.FW_IDLE)

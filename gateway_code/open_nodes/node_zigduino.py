@@ -129,8 +129,8 @@ class NodeZigduino(OpenNodeBase):
         :param redirect: whether to stop the serial redirection before flashing
         """
         if binary:
-            raise NotImplementedError(
-                'Binary flashing at %s not implemented' % offset)
+            LOGGER.error('FLASH: binary mode not supported with Zigduino')
+            return 1
         ret_val = 0
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Zigduino: %s', firmware_path)
