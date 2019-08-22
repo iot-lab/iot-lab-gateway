@@ -102,6 +102,9 @@ class TestNodeLeonardo(unittest.TestCase):
         self.node.avrdude.flash.assert_called_with(self.node.FW_IDLE)
         assert wait_tty.call_count == 1
 
+        # verify binary mode is not supported
+        assert self.node.flash(self.fw_path, binary=True) == 1
+
         # Simulate a bootloader error
         self.trigger_bootloader.return_value = 1
         wait_tty.call_count = 0

@@ -90,8 +90,9 @@ class NodeFirefly(OpenNodeBase):
     def flash(self, firmware_path=None,
               binary=False, offset=None):
         if binary:
-            raise NotImplementedError(
-                'Binary flashing at %s not implemented' % offset)
+            LOGGER.error('FLASH: binary mode not supported with Firefly')
+            return 1
+
         return self.do_flash(firmware_path, True)
 
     @logger_call("Node firefly : flash of firefly node")

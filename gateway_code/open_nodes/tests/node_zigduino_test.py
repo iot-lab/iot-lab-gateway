@@ -126,6 +126,9 @@ class TestNodeZigduino(unittest.TestCase):
         self.node.serial_redirection.stop.assert_called_once()
         self.node.serial_redirection.start.assert_called_once()
 
+        # verify binary mode is not supported
+        assert self.node.flash(self.fw_path, binary=True) == 1
+
         # Flash idle firmware
         wait_tty.call_count = 0
         wait_no_tty.call_count = 0

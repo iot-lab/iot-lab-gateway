@@ -126,7 +126,7 @@ class BaseOpenNode(OpenNodeBase):
     def status(self):
         return 0
 
-    def flash(self, firmware_path, binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=None):
         return 0
 
 
@@ -187,6 +187,7 @@ def test_open_node_inheritance():
     assert board_instance.setup('path/to/firmware') == 42
     assert board_instance.teardown() == 4242
     assert board_instance.status() == 0
+    assert board_instance.flash() == 0
 
 
 def test_node_verify_errors():

@@ -98,6 +98,9 @@ class TestNodeEdbgBase(unittest.TestCase):
         assert self.node.teardown() == 0
         self.node.edbg.flash.assert_called_with(self.node.FW_IDLE)
 
+        # verify binary mode is not supported
+        assert self.node.flash(self.fw_path, binary=True) == 1
+
         # Flash a firmware
         assert self.node.flash(self.fw_path) == 0
         self.node.edbg.flash.assert_called_with(self.fw_path)
