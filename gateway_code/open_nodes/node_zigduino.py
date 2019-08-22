@@ -120,7 +120,7 @@ class NodeZigduino(OpenNodeBase):
 
     @logger_call("Flash of Zigduino node")
     def do_flash(self, firmware_path=None, binary=False,
-                 offset=None, redirect=True):
+                 offset=None, redirect=True):  # pylint:disable=unused-argument
         """ Flash the given firmware on Zigduino node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware
