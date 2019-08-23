@@ -213,7 +213,7 @@ class TestsProgrammer(unittest.TestCase):
         args = ['programmer.py', '/path/to/firmware']
         with mock.patch('sys.argv', args):
             ret = flash()
-            self.assertEqual(ret, 1)
+            self.assertEqual(ret, -1)
 
         args2 = ['programmer.py']
         with mock.patch('sys.argv', args2):

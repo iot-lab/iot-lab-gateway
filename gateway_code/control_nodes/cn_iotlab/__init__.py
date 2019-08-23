@@ -163,7 +163,7 @@ class ControlNodeIotlab(ControlNodeBase):
         return ret
 
     @logger_call("Control node : flash the open node")
-    def flash(self, firmware_path=None, binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=0):
         """ Flash the given firmware on Control Node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.

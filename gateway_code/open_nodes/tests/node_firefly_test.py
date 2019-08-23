@@ -96,6 +96,9 @@ class TestNodeFirefly(unittest.TestCase):
         # verify binary mode is not supported
         assert self.node.flash(self.fw_path, binary=True) == 1
 
+        # verify binary offset is not supported
+        assert self.node.flash(self.fw_path, binary=False, offset=42) == 1
+
         # Flash idle firmware
         assert self.node.flash() == 0
         self.node.cc2538.flash.assert_called_with(self.node.FW_IDLE)

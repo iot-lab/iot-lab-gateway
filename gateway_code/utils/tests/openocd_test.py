@@ -52,6 +52,20 @@ class TestsMethods(unittest.TestCase):
         ret = self.ocd.flash(NodeM3.FW_IDLE)
         self.assertEqual(42, ret)
 
+    @mock.patch('gateway_code.common.abspath')
+    def test_flash_binary(self, abspath_mock, call_mock):
+        """ Test flash a binary firmware"""
+        fw_path = '/tmp/firmware.bin'
+        abspath_mock.return_value = fw_path
+        call_mock.return_value = 0
+        ret = self.ocd.flash(fw_path, binary=True, offset=42)
+        self.assertEqual(0, ret)
+        command_list = call_mock.call_args[1]['args']
+        self.assertEqual(
+            " ".join(command_list[-8:]),
+            openocd.OpenOCD.FLASH_BIN.format(
+                fw_path, 42).replace('"', '').strip())
+
     def test_reset(self, call_mock):
         """ Test reset"""
         call_mock.return_value = 0

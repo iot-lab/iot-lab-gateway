@@ -103,7 +103,7 @@ class OpenOCD(object):
         """ Reset """
         return self._call_cmd(self.RESET)
 
-    def flash(self, fw_file, binary=False, offset=None):
+    def flash(self, fw_file, binary=False, offset=0):
         """ Flash firmware """
         try:
             path = common.abspath(fw_file)

@@ -87,10 +87,14 @@ class NodeFirefly(OpenNodeBase):
         ret_val += self.do_flash(None, toggle_redirect=False)
         return ret_val
 
-    def flash(self, firmware_path=None,
-              binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=0):
+        """Flash the given firmware on Firefly."""
         if binary:
             LOGGER.error('FLASH: binary mode not supported with Firefly')
+            return 1
+
+        if offset != 0:
+            LOGGER.error('FLASH: flash offset is not supported with Firefly')
             return 1
 
         return self.do_flash(firmware_path, True)

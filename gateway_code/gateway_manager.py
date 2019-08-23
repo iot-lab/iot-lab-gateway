@@ -330,7 +330,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
     @common.synchronous('rlock')
     @logger_call("Gateway Manager : Flash of node")
-    def node_flash(self, node, firmware_path, binary=False, offset=None):
+    def node_flash(self, node, firmware_path, binary=False, offset=0):
         """
         Flash the given firmware on the given node
 
