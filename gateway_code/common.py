@@ -181,16 +181,60 @@ def booleanize(value):
     True values are 'y', 'yes', 't', 'true', 'on', '1' and 1;
     False values are 'n', 'no', 'f', 'false', 'off', '0', 0 and None.
     Raises ValueError if 'value' is anything else.
+
+    >>> booleanize(False)
+    False
+    >>> booleanize('n')
+    False
+    >>> booleanize('no')
+    False
+    >>> booleanize('false')
+    False
+    >>> booleanize('False')
+    False
+    >>> booleanize('off')
+    False
+    >>> booleanize('0')
+    False
+    >>> booleanize(0)
+    False
+    >>> booleanize(None)
+    False
+    >>> booleanize(True)
+    True
+    >>> booleanize('y')
+    True
+    >>> booleanize('yes')
+    True
+    >>> booleanize('true')
+    True
+    >>> booleanize('True')
+    True
+    >>> booleanize('on')
+    True
+    >>> booleanize('1')
+    True
+    >>> booleanize(1)
+    True
+    >>> booleanize([])
+    Traceback (most recent call last):
+        ...
+    ValueError: invalid value '[]'
+    >>> booleanize({})
+    Traceback (most recent call last):
+        ...
+    ValueError: invalid value '{}'
     """
 
     if isinstance(value, bool):
         return value
 
-    value = value.lower()
+    if isinstance(value, basestring):
+        value = value.lower()
 
     if value in ('y', 'yes', 't', 'true', 'on', '1', 1):
         return True
     elif value in ('n', 'no', 'f', 'false', 'off', '0', 0, None):
         return False
     else:
-        raise ValueError("invalid truth value %r" % (value,))
+        raise ValueError("invalid value '{}'".format(value))
