@@ -118,10 +118,7 @@ def flash():
             print err
             return 1
 
-        if control_node:
-            ret = node.flash(firmware_path)
-        else:
-            ret = node.flash(firmware_path, opts.bin, opts.offset)
+        ret = node.flash(firmware_path, opts.bin, opts.offset)
 
     _print_result(ret, _FLASH, node.TYPE)
     return ret
