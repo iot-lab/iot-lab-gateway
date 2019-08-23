@@ -190,7 +190,7 @@ class GatewayRest(bottle.Bottle):
 
         query = request.get('query', {})
         binary = booleanize(query.get('binary', False))
-        offset = query.get('offset')
+        offset = int(query.get('offset', '0'))
         firmware_file = self._extract_firmware()
         if firmware_file is None:
             return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
