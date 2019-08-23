@@ -129,6 +129,9 @@ class TestNodeZigduino(unittest.TestCase):
         # verify binary mode is not supported
         assert self.node.flash(self.fw_path, binary=True) == 1
 
+        # verify binary offset is not supported
+        assert self.node.flash(self.fw_path, binary=False, offset=42) == 1
+
         # Flash idle firmware
         wait_tty.call_count = 0
         wait_no_tty.call_count = 0

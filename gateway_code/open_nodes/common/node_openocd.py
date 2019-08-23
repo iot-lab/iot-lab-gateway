@@ -93,7 +93,7 @@ class NodeOpenOCDBase(OpenNodeBase):
         return ret_val
 
     @logger_call("Node OpenOCD: flash of openocd node")
-    def flash(self, firmware_path=None, binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=0):
         """ Flash the given firmware on openocd node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.

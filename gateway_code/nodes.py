@@ -81,7 +81,7 @@ class ControlNodeBase(object):
         pass  # pragma: no cover
 
     @abc.abstractmethod
-    def flash(self, firmware_path, binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=0):
         """ Flash firmware on the control_node """
         pass  # pragma: no cover
 
@@ -108,11 +108,6 @@ class OpenNodeBase(object):
     @abc.abstractmethod
     def status(self):
         """ Status of the node """
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def flash(self, firmware_path=None, binary=False, offset=None):
-        """ Flash firmware on the open_node """
         pass  # pragma: no cover
 
     @classmethod

@@ -50,7 +50,7 @@ def _setup_parser(cmd, board_cfg):
             help='use if firmware is a binary file '
         )
         parser.add_argument(
-            '--offset',
+            '--offset', default=0, type=int,
             help='offset at which to flash the binary file'
         )
     return parser.parse_args()
@@ -109,16 +109,20 @@ def flash():
         _print_result(ret, _FLASH)
         return ret
 
-    try:
-        firmware_path = common.abspath(firmware)
-    except IOError as err:
-        print err
-        return 1
-
-    if hasattr(node, _FLASH):
-        ret = node.flash(firmware_path, opts.bin, opts.offset)
-    else:
+    if not hasattr(node, _FLASH):
         ret = -1
+    else:
+        try:
+            firmware_path = common.abspath(firmware)
+        except IOError as err:
+            print err
+            return 1
+
+        if control_node:
+            ret = node.flash(firmware_path)
+        else:
+            ret = node.flash(firmware_path, opts.bin, opts.offset)
+
     _print_result(ret, _FLASH, node.TYPE)
     return ret
 

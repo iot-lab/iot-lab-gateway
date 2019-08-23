@@ -94,7 +94,7 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         assert self.node.setup(self.fw_path) == 0
         assert self.node.openocd.flash.call_count == 1
         self.node.openocd.flash.assert_called_with(
-            self.fw_path, False, None)
+            self.fw_path, False, 0)
         assert ser.call_count == 0
         assert tty.call_count == 1
 
@@ -102,20 +102,20 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         tty.call_count = 0
         assert self.node.teardown() == 0
         self.node.openocd.flash.assert_called_with(
-            self.node.FW_IDLE, False, None)
+            self.node.FW_IDLE, False, 0)
         assert tty.call_count == 1
 
         # Flash a firmware
         assert self.node.flash(self.fw_path) == 0
         tty.call_count = 0
         self.node.openocd.flash.assert_called_with(
-            self.fw_path, False, None)
+            self.fw_path, False, 0)
         assert ser.call_count == 0
         assert tty.call_count == 0
 
         assert self.node.flash() == 0
         self.node.openocd.flash.assert_called_with(
-            self.node.FW_IDLE, False, None)
+            self.node.FW_IDLE, False, 0)
         assert ser.call_count == 0
         assert tty.call_count == 0
 
@@ -125,7 +125,7 @@ class TestNodeOpenOCDBase(unittest.TestCase):
                    'NodeOpenOCDTest.DIRTY_SERIAL', True):
             assert self.node.flash(self.fw_path) == 0
             self.node.openocd.flash.assert_called_with(
-                self.fw_path, False, None)
+                self.fw_path, False, 0)
             assert ser.call_count == 1
             assert tty.call_count == 0
 
@@ -133,7 +133,7 @@ class TestNodeOpenOCDBase(unittest.TestCase):
             ser.side_effect = serial.serialutil.SerialException
             assert self.node.flash() == 1
             self.node.openocd.flash.assert_called_with(
-                self.node.FW_IDLE, False, None)
+                self.node.FW_IDLE, False, 0)
 
         # Flash with JLINK_SERIAL attribute
         # pylint:disable=invalid-name,attribute-defined-outside-init
@@ -141,5 +141,5 @@ class TestNodeOpenOCDBase(unittest.TestCase):
                    'NodeOpenOCDTest.JLINK_SERIAL', True):
             assert self.node.flash(self.fw_path) == 0
             self.node.openocd.flash.assert_called_with(
-                self.fw_path, False, None)
+                self.fw_path, False, 0)
             assert tty.call_count == 1

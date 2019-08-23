@@ -108,7 +108,7 @@ class NodeZigduino(OpenNodeBase):
         ret_val += self.do_flash(None, redirect=False)
         return ret_val
 
-    def flash(self, firmware_path=None, binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=0):
         """ Flash the given firmware on Zigduino node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware
@@ -120,7 +120,7 @@ class NodeZigduino(OpenNodeBase):
 
     @logger_call("Flash of Zigduino node")
     def do_flash(self, firmware_path=None, binary=False,
-                 offset=None, redirect=True):  # pylint:disable=unused-argument
+                 offset=0, redirect=True):  # pylint:disable=unused-argument
         """ Flash the given firmware on Zigduino node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware
@@ -131,6 +131,11 @@ class NodeZigduino(OpenNodeBase):
         if binary:
             LOGGER.error('FLASH: binary mode not supported with Zigduino')
             return 1
+
+        if offset != 0:
+            LOGGER.error('FLASH: flash offset is not supported with Zigduino')
+            return 1
+
         ret_val = 0
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on Zigduino: %s', firmware_path)

@@ -89,7 +89,7 @@ class NodeLeonardo(OpenNodeBase):
         return ret_val
 
     @logger_call("Node Leonardo : Flash of leonardo node")
-    def flash(self, firmware_path=None, binary=False, offset=None):
+    def flash(self, firmware_path=None, binary=False, offset=0):
         """ Flash the given firmware on Leonardo node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
@@ -102,6 +102,9 @@ class NodeLeonardo(OpenNodeBase):
             return 1
         if binary:
             LOGGER.error('FLASH: binary mode not supported with Leonardo')
+            return 1
+        if offset != 0:
+            LOGGER.error('FLASH: flash offset is not supported with Leonardo')
             return 1
 
         ret_val = 0
