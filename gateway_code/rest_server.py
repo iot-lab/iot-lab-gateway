@@ -189,8 +189,16 @@ class GatewayRest(bottle.Bottle):
         LOGGER.debug('REST: Flash OpenNode')
 
         query = request.query
-        binary = booleanize(query.get('binary', False))
-        offset = int(query.get('offset', '0'))
+        binary_value = query.binary  # pylint:disable=no-member
+        if binary_value == '':
+            binary = False
+        else:
+            binary = booleanize(binary_value)
+        offset_value = query.offset  # pylint:disable=no-member
+        if offset_value == '':
+            offset = 0
+        else:
+            offset = int(offset_value)
         firmware_file = self._extract_firmware()
         if firmware_file is None:
             return {'ret': 1, 'error': "Wrong file args: required 'firmware'"}
