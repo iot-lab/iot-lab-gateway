@@ -344,7 +344,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
 
         target_node = self._nodes[node]
 
-        if not bin and not \
+        if not binary and not \
                 elftarget.is_compatible_with_node(firmware_path, target_node):
             LOGGER.error('Invalid firmware target, not flashing.')
             return 1
