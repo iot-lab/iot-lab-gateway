@@ -47,8 +47,9 @@ class NodeExample(OpenNodeBase):
         return 1
 
     @logger_call("Node Example : flash of example node")
-    def flash(self, firmware_path=None, binary=False, offset=None):
-        # Here
+    def flash(self, firmware_path=None, binary=False, offset=0):
+        # Here you will call the flasher corresponding to your node.
+        # OpenOCD, EDBG, AVRdude, CC2538-bsl can be used.
         return 1
 
     @logger_call("Node Example : reset of example node")
