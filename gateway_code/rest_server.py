@@ -188,7 +188,7 @@ class GatewayRest(bottle.Bottle):
         Requires: request.files contains 'firmware' file argument """
         LOGGER.debug('REST: Flash OpenNode')
 
-        query = request.get('query', {})
+        query = request.query
         binary = booleanize(query.get('binary', False))
         offset = int(query.get('offset', '0'))
         firmware_file = self._extract_firmware()

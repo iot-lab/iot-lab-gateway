@@ -225,6 +225,24 @@ class TestRestMethods(unittest.TestCase):
         # valid command
         ret = self.server.post('/open/flash', upload_files=files)
         self.assertEqual(0, ret.json['ret'])
+        self.g_m.node_flash.assert_called_once()
+        args = self.g_m.node_flash.call_args[0]
+        assert args[-3].endswith('idle.elf')  # firmware temporary file
+        assert args[-2] is False  # binary mode
+        assert args[-1] == 0  # binary offset
+
+        # Flash as binary with different offset
+        self.g_m.node_flash.call_count = 0
+        extra = query_string('binary=true&offset=42')
+        ret = self.server.post('/open/flash',
+                               upload_files=files,
+                               extra_environ=extra)
+        self.assertEqual(0, ret.json['ret'])
+        self.g_m.node_flash.assert_called_once()
+        args = self.g_m.node_flash.call_args[0]
+        assert args[-3].endswith('idle.elf')  # firmware temporary file
+        assert args[-2] is True  # binary mode
+        assert args[-1] == 42  # binary offset
 
         # Error no firmware
         ret = self.server.post('/open/flash', upload_files=[])
