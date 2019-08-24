@@ -62,9 +62,9 @@ class TestsMethods(unittest.TestCase):
         self.assertEqual(0, ret)
         command_list = call_mock.call_args[1]['args']
         self.assertEqual(
-            " ".join(command_list[-8:]),
+            " ".join(command_list[-10:]),
             openocd.OpenOCD.FLASH_BIN.format(
-                fw_path, 42).replace('"', '').strip())
+                fw_path, hex(42)).replace('"', '').strip())
 
     def test_reset(self, call_mock):
         """ Test reset"""
