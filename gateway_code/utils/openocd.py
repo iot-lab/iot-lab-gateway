@@ -63,6 +63,7 @@ class OpenOCD(object):
     FLASH_BIN = (' -c "reset halt"'
                  ' -c "reset init"'
                  ' -c "program {0} verify {1}"'
+                 ' -c "reset run"'
                  ' -c "shutdown"')
 
     DEBUG = ' -c "reset halt"'
@@ -108,7 +109,7 @@ class OpenOCD(object):
         try:
             path = common.abspath(fw_file)
             if binary:
-                return self._call_cmd(self.FLASH_BIN.format(path, offset))
+                return self._call_cmd(self.FLASH_BIN.format(path, hex(offset)))
             return self._call_cmd(self.FLASH.format(path))
         except IOError as err:
             LOGGER.error('%s', err)
