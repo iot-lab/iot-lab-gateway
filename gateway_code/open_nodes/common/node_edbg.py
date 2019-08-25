@@ -92,23 +92,15 @@ class NodeEdbgBase(OpenNodeBase):
         :param firmware_path: Path to the firmware to be flashed on `node`.
                               If None, flash 'idle' firmware.
         """
-        if binary:
-            LOGGER.error('FLASH: binary mode not supported with edbg')
-            return 1
-
-        if offset != 0:
-            LOGGER.error('FLASH: flash offset is not supported with Firefly')
-            return 1
-
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on %s: %s',
                     self.TYPE.upper(), firmware_path)
         self._current_fw = firmware_path
 
         if self._in_debug:
-            return self.openocd.flash(firmware_path)
+            return self.openocd.flash(firmware_path, binary, offset)
 
-        return self.edbg.flash(firmware_path)
+        return self.edbg.flash(firmware_path, binary, offset)
 
     @logger_call("Node EDBG: reset of EDBG node")
     def reset(self):
