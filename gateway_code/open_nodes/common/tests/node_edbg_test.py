@@ -92,24 +92,24 @@ class TestNodeEdbgBase(unittest.TestCase):
         # Setup the node
         assert self.node.setup(self.fw_path) == 0
         assert self.node.edbg.flash.call_count == 1
-        self.node.edbg.flash.assert_called_with(self.fw_path)
+        self.node.edbg.flash.assert_called_with(self.fw_path, False, 0)
 
         # Teardown the node
         assert self.node.teardown() == 0
-        self.node.edbg.flash.assert_called_with(self.node.FW_IDLE)
-
-        # verify binary mode is not supported
-        assert self.node.flash(self.fw_path, binary=True) == 1
-
-        # verify binary offset is not supported
-        assert self.node.flash(self.fw_path, binary=False, offset=42) == 1
+        self.node.edbg.flash.assert_called_with(self.node.FW_IDLE, False, 0)
 
         # Flash a firmware
         assert self.node.flash(self.fw_path) == 0
-        self.node.edbg.flash.assert_called_with(self.fw_path)
+        self.node.edbg.flash.assert_called_with(self.fw_path, False, 0)
 
         assert self.node.flash() == 0
-        self.node.edbg.flash.assert_called_with(self.node.FW_IDLE)
+        self.node.edbg.flash.assert_called_with(self.node.FW_IDLE, False, 0)
+
+        # verify binary mode and offset works
+        assert self.node.flash(self.fw_path, binary=True) == 0
+        self.node.edbg.flash.assert_called_with(self.fw_path, True, 0)
+        assert self.node.flash(self.fw_path, binary=True, offset=42) == 0
+        self.node.edbg.flash.assert_called_with(self.fw_path, True, 42)
 
     @patch('gateway_code.common.wait_tty')
     @patch('gateway_code.common.wait_no_tty')
@@ -135,7 +135,8 @@ class TestNodeEdbgBase(unittest.TestCase):
         assert self.node.debug_start() == 0
         assert self.node.edbg.flash.call_count == 1
         assert self.node.openocd.flash.call_count == 1
-        self.node.openocd.flash.assert_called_with(self.node._current_fw)
+        self.node.openocd.flash.assert_called_with(
+            self.node._current_fw, False, 0)
         assert self.node._current_fw == self.node.FW_AUTOTEST
         assert self.node._in_debug
 
