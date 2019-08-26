@@ -29,6 +29,7 @@ class NodeStIotnode(NodeStLinkBase):
     """ Open node STM32 IOTNODE implementation """
 
     TYPE = 'st_iotnode'
+    ROM_START_ADDR = 0x08000000
     OPENOCD_CFG_FILE = static_path('iot-lab-st-iotnode.cfg')
     FW_IDLE = static_path('st-iotnode_idle.elf')
     FW_AUTOTEST = static_path('st-iotnode_autotest.elf')

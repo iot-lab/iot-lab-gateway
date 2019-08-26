@@ -29,6 +29,7 @@ class NodeStLrwan1(NodeStLinkBase):
     """ Open node STM32 LRWAN1 implementation """
 
     TYPE = 'st_lrwan1'
+    ROM_START_ADDR = 0x08000000
     OPENOCD_CFG_FILE = static_path('iot-lab-st-lrwan1.cfg')
     FW_IDLE = static_path('st-lrwan1_idle.elf')
     FW_AUTOTEST = static_path('st-lrwan1_autotest.elf')

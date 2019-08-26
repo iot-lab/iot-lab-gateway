@@ -39,6 +39,7 @@ class NodeOpenOCDBase(OpenNodeBase):
     """ Open node OpenOCD implemention """
 
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+    ROM_START_ADDR = 0x0
     OPENOCD_CLASS = OpenOCD
     OPENOCD_PATH = 'openocd'
 
@@ -103,6 +104,7 @@ class NodeOpenOCDBase(OpenNodeBase):
         """
         firmware_path = firmware_path or self.FW_IDLE
         LOGGER.info('Flash firmware on OpenOCD: %s', firmware_path)
+        offset = int(self.ROM_START_ADDR) + offset
         ret_val = self.openocd.flash(firmware_path, binary, offset)
         if hasattr(self, 'JLINK_SERIAL') and self.JLINK_SERIAL:
             ret_val += common.wait_tty(self.TTY, LOGGER)
