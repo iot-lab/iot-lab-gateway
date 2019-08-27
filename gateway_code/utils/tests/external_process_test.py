@@ -66,11 +66,11 @@ class _DummyProcess(ExternalProcess):
 
     It's implemented as a stoppable thread running top in a loop.
     """
-    SLEEP = ('/usr/bin/sleep 2')
+    PROC = ('/usr/bin/sleep 2')
     NAME = "dummy"
 
     def __init__(self):
-        self.process_cmd = shlex.split(self.SLEEP)
+        self.process_cmd = shlex.split(self.PROC)
         self.stdout = open(os.devnull, 'w')
         super(_DummyProcess, self).__init__()
 
@@ -111,7 +111,7 @@ class TestComplexExternalProcessStop(unittest.TestCase):
         only_sigkill = os.path.join(CURRENT_DIR, 'only_sigkill.py')
         only_sigkill = 'python %s' % only_sigkill
 
-        with mock.patch.object(_DummyProcess, 'SLEEP', only_sigkill):
+        with mock.patch.object(_DummyProcess, 'PROC', only_sigkill):
             m_process = _DummyProcess()
             m_process.start()
             time.sleep(5)
