@@ -66,7 +66,7 @@ class _DummyProcess(ExternalProcess):
 
     It's implemented as a stoppable thread running top in a loop.
     """
-    TOP = ('/usr/bin/top')
+    TOP = ('/usr/bin/sleep 2')
     NAME = "dummy"
 
     def __init__(self):
