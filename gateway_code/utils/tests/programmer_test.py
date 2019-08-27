@@ -71,12 +71,22 @@ class TestsProgrammer(unittest.TestCase):
             self.assertEqual(ret, 1)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    def test_flash_failed(self):
+    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    def test_flash_failed(self, call_mock):
         """ Test flash failed"""
         args = ['programmer.py']
+        call_mock.return_value = 1
         with mock.patch('sys.argv', args):
             ret = flash()
             self.assertEqual(ret, -2)
+
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('a8'))
+    def test_no_flash(self):
+        """ Test flash failed"""
+        args = ['programmer.py', '/dev/null']
+        with mock.patch('sys.argv', args):
+            ret = flash()
+            self.assertEqual(ret, -1)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     @mock.patch('gateway_code.utils.subprocess_timeout.call')
@@ -107,10 +117,12 @@ class TestsProgrammer(unittest.TestCase):
             self.assertEqual(ret, 0)
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    @mock.patch('gateway_code.utils.openocd.OpenOCD._openocd_args')
     @mock.patch("signal.pause")
-    def test_openocd_debug(self, pause_mock):
+    def test_openocd_debug(self, pause_mock, ocd_mock):
         """ Test openocd debug """
         args = ['programmer.py']
+        ocd_mock.return_value = {'args': ['sleep', '42']}
         pause_mock.side_effect = KeyboardInterrupt
         with mock.patch('sys.argv', args):
             ret = debug()
