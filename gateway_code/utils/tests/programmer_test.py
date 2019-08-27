@@ -122,7 +122,7 @@ class TestsProgrammer(unittest.TestCase):
     def test_openocd_debug(self, pause_mock, ocd_mock):
         """ Test openocd debug """
         args = ['programmer.py']
-        ocd_mock.return_value = {'args': ['sleep', '42']}
+        ocd_mock.return_value = {'args': ['sleep', '2']}
         pause_mock.side_effect = KeyboardInterrupt
         with mock.patch('sys.argv', args):
             ret = debug()
