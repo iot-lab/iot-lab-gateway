@@ -85,9 +85,9 @@ class OpenOCD(object):
         '-f "/dev/null" -f "target/stm32.cfg"'
 
         # Abspath
-        >>> OpenOCD._config('gateway_code/static/iot-lab-m3.cfg')
+        >>> OpenOCD._config('gateway_code/static/iot-lab.cfg')
         ... # doctest: +ELLIPSIS
-        '-f "/.../gateway_code/static/iot-lab-m3.cfg"'
+        '-f "/.../gateway_code/static/iot-lab.cfg"'
         """
         cfg_file = common.abspath(config_file)
         opts = [cfg_file] + list(opts)

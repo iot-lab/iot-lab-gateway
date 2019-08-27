@@ -33,9 +33,8 @@ class NodeA8M3(NodeOpenOCDBase):
     TYPE = 'a8_m3'
     TTY = '/dev/ttyA8_M3'
     BAUDRATE = 500000
-    OPENOCD_PATH = 'openocd'  # Use old openocd
-    OPENOCD_CFG_FILE = static_path('iot-lab-a8-m3.cfg')
-    OPENOCD_OPTS = ('target/stm32f1x.cfg',)
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
+    OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
     FW_IDLE = static_path('a8-m3_idle.elf')
     FW_AUTOTEST = static_path('a8-m3_autotest.elf')
     ALIM = '3.3V'

@@ -75,8 +75,8 @@ class TestsMethods(unittest.TestCase):
 
         # Verify command
         command_list = popen_mock.call_args[1]['args']
-        self.assertEqual(len(command_list), 12)
-        self.assertEqual(command_list[0], 'openocd')
+        self.assertEqual(len(command_list), 10)
+        self.assertEqual(command_list[0], NodeM3.OPENOCD_PATH)
         self.assertEqual(command_list[-6:],
                          ['-c', 'init', '-c', 'targets', '-c', 'reset halt'])
         # don't test middle args as depends on local path

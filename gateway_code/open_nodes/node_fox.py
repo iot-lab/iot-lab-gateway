@@ -33,9 +33,8 @@ class NodeFox(NodeOpenOCDBase):
     TYPE = 'fox'
     TTY = '/dev/iotlab/ttyON_FOX'
     BAUDRATE = 500000
-    OPENOCD_PATH = 'openocd'  # Use old openocd
-    OPENOCD_CFG_FILE = static_path('iot-lab-fox.cfg')
-    OPENOCD_OPTS = ('target/stm32f1x.cfg',)
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
+    OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
     FW_IDLE = static_path('fox_idle.elf')
     FW_AUTOTEST = static_path('fox_autotest.elf')
 
