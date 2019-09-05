@@ -35,6 +35,7 @@ class NodeA8M3(NodeOpenOCDBase):
     BAUDRATE = 500000
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
+    OPENOCD_OPTS = (static_path('iot-lab-a8-m3.cfg'),)
     FW_IDLE = static_path('a8-m3_idle.elf')
     FW_AUTOTEST = static_path('a8-m3_autotest.elf')
     ALIM = '3.3V'
