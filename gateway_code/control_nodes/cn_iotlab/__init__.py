@@ -41,8 +41,8 @@ class ControlNodeIotlab(ControlNodeBase):
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     TTY = '/dev/ttyCN'
     BAUDRATE = 500000
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')
-    OPENOCD_OPTS = ('target/stm32f1x.cfg',)
     FW_CONTROL_NODE = static_path('control_node.elf')
     FEATURES = ['leds',
                 'open_node_power',
