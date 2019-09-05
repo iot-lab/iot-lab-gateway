@@ -37,7 +37,8 @@ class ControlNodeIotlabm3(ControlNodeIotlab):
     FEATURES = ['leds',
                 'radio']
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
-    OPENOCD_CFG_FILE = static_path('iot-lab-cn-m3.cfg')
+    OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
+    OPENOCD_OPTS = (static_path('iot-lab-cn-m3.cfg'),)
 
     @logger_call("Control node : profile configuration")
     def configure_profile(self, profile=None):

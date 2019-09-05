@@ -42,7 +42,8 @@ class ControlNodeIotlab(ControlNodeBase):
     TTY = '/dev/ttyCN'
     BAUDRATE = 500000
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
-    OPENOCD_CFG_FILE = static_path('iot-lab-cn.cfg')
+    OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
+    OPENOCD_OPTS = (static_path('iot-lab-cn.cfg'),)
     FW_CONTROL_NODE = static_path('control_node.elf')
     FEATURES = ['leds',
                 'open_node_power',
