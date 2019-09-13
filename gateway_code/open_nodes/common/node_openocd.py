@@ -40,7 +40,7 @@ class NodeOpenOCDBase(OpenNodeBase):
 
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
     OPENOCD_CLASS = OpenOCD
-    OPENOCD_PATH = '/opt/openocd-0.10.0/bin/openocd'
+    OPENOCD_PATH = 'openocd'
 
     AUTOTEST_AVAILABLE = [
         'echo', 'get_time',  # mandatory
