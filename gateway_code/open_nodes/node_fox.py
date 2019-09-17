@@ -33,6 +33,7 @@ class NodeFox(NodeOpenOCDBase):
     TYPE = 'fox'
     TTY = '/dev/iotlab/ttyON_FOX'
     BAUDRATE = 500000
+    ROM_START_ADDR = 0x08000000
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
     OPENOCD_OPTS = (static_path('iot-lab-fox.cfg'),)
