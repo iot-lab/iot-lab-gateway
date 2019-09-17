@@ -33,6 +33,7 @@ class NodeA8M3(NodeOpenOCDBase):
     TYPE = 'a8_m3'
     TTY = '/dev/ttyA8_M3'
     BAUDRATE = 500000
+    ROM_START_ADDR = 0x08000000
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
     OPENOCD_OPTS = (static_path('iot-lab-a8-m3.cfg'),)
