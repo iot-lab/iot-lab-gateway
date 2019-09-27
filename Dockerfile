@@ -76,23 +76,12 @@ RUN git clone https://github.com/mytestbed/oml.git && \
     make install && \
     cd .. && rm -rf oml
 
-#openocd install (for M3 and SAMR21)
-RUN git clone https://github.com/ntfreak/openocd && \
-    cd openocd && \
-    git checkout v0.9.0 && \
-    ./bootstrap && \
-    ./configure  --enable-legacy-ft2232_libftdi --disable-ftdi2232 \
-        --disable-ftd2xx --enable-cmsis-dap --enable-hidapi-libusb && \
-    make && \
-    make install && \
-    cd .. && rm -rf openocd
-
 #openocd 0.10
 RUN git clone https://github.com/ntfreak/openocd openocd10 && \
     cd openocd10 && \
     git checkout v0.10.0 && \
     ./bootstrap && \
-    ./configure --prefix=/opt/openocd-0.10.0 --enable-cmsis-dap --enable-hidapi-libusb && \
+    ./configure --enable-cmsis-dap --enable-hidapi-libusb && \
     make && \
     make install && \
     cd .. && rm -rf openocd10
