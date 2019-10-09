@@ -4,7 +4,7 @@ Introduction
 The IoT-LAB experimental platform allows users to conduct remote
 experiments on wireless sensor board (such as an Arduino board with an
 Xbee module). For this purpose,a board called *open-node*, can be
-connected to the IoT-LAB gateway, via the usb port. Below, the picture
+connected to the IoT-LAB gateway, via the usb port. Below is a picture
 of an open-node connected to a gateway.
 
 ![Gateway and wireless sensor board (e.g. Fox node)](gateway.jpg)
@@ -66,17 +66,22 @@ Between two plugs, the device name as detected by the
 embedded linux running on the gateway can change: for example,
 an unique device can be successively detected as ttyUSB0 and then
 as ttyUSB1. As it is essential to have a fixed name for your device,
-you have to write a udev rules specific for your device. To do such a
-thing, you must create a file named `your_node.rules` (with `your_node`
+you have to write a udev rules specific for your device. We already
+developed rules for connecting to widely used microcontroller interfaces:
+J-LINK, STLINK and CMSIS-DAP. If your board uses one of these, then you 
+don't need to write a `.rules` file in `bin/rules.d`. Otherwise, you
+will have to write a udev rule file. 
+
+To do this, you must create a file (e.g. named `your_node.rules` with `your_node`
 the name of your node). Using the command `udevadm`, you have to
 retrieve some information to identify your node such as the serial
 id, the vendor id or the product id. You must set a name for the
 device and set the right group (dialout) and the right mode (664).
-The convention is to name device `ttyON_NODENAME`.
-Below the example of the udev rule for the M3 node:
+The usual convention is to name device `ttyON_NODENAME`.
+Below is the example of the udev rule for the M3 node:
 
     SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_SERIAL}=="IoT-LAB_M3",
-    ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="ttyON_M3"
+    ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="iotlab/ttyON_M3"
 
     SUBSYSTEM=="usb", ATTR{idProduct}=="6011", ATTR{idVendor}=="0403",
     MODE="0664", GROUP="dialout"
@@ -84,12 +89,13 @@ Below the example of the udev rule for the M3 node:
 Plugin integration
 ------------------
 
-### Naming convention
+### Plugin classes
 
 As said previously, the application is based on a system of plugin: if
-you want to add a node, you just have to write a specific file to
-interface with the application. When the application is launched,
-it reads the name of your open node located in the file
+you want to add a node, you just have to write a file to
+interface with the application in the correct place to be loaded by the plugin system. 
+
+When the application is launched, it reads the name of your open node in the file
 
     /var/local/config/board_type
 
@@ -98,8 +104,7 @@ class is in the python file
 
     gateway_code/open_node/node_{nameofyournode}.py
 
-but the `node_` naming is not mandatory, it just needs to be imported at some point
-(all the files inside gateway_code/open_node are imported to look for open node classes)
+but the `node_` naming is not mandatory, it just needs to be imported at some point. 
 
 In order to write plugin code for an open node, you just need to subclass
 `OpenNodeBase` located in `gateway_code.nodes` and add a TYPE attribute in it:
@@ -112,7 +117,7 @@ In order to write plugin code for an open node, you just need to subclass
 and put that file in `gateway_code/open_nodes`
 
 There are methods that are mandatory to implement (enforced through abc.abstractmethod)
-so that your class can be instantiated to control a node, you can look at `doc/node_example.py`
+so that your class can be instantiated to control a node, you can look at [doc/node_example.py](doc/node_example.py)
 for an open node example.
 
 For example, if `stm32nucleo` is registered on the gateway,
@@ -122,6 +127,14 @@ the class used by the gateway will be
 
     class Customnode(OpenNodeBase):
       TYPE = 'stm32nucleo'
+      
+In many cases, it's not difficult to add a new node based on a node that is close to it
+or to a common type of node. Nodes using openOCD to connect to it can 
+derive from `gateway_code.open_nodes.common.node_openocd.NodeOpenOCDBase`, 
+mostly just providing a `OPENOCD_CFG_FILE` attributes is enough. 
+
+We recommend you look at all the examples of open nodes supported by the platform for
+inspiration: [gateway_code/open_nodes](gateway_code/open_nodes)
 
 ### Interfacing the python code
 
@@ -163,9 +176,8 @@ look at `doc/node_example.py`
 ### Errors and return values
 
 When one of the function described above terminates with a success, the
-return value must be 0. When the return value is different from 0, the
-application knows that something went wrong. Except status, all the methods
-in the template file return an error.
+return value must be `0` (the number 0). When the return value is different from 0, the
+application knows that something went wrong. 
 
 ### Flashing the open node
 
@@ -232,7 +244,7 @@ for you to build and use them. (if using MacOS, see Appendix below)
 Using Docker
 ------------
 
-If you want to run tests with the Docker images, first build them:
+If you want to run tests with the Docker containers, first build the Docker images:
 
     make build-docker-image-test
 
@@ -250,7 +262,7 @@ To run the unit tests with the provided Docker image, just run:
 The purpose of integration tests is to verify that your flashing tool
 and firmwares behave as expected when called by the gateway code.
 
-To run the integration tests with the provided Docker image, just run:
+To run the integration tests inside a docker container, just run:
 
     make BOARD={node_name} integration-test
 
@@ -277,9 +289,9 @@ Run:
 
     make BOARD={node_name} local-integration-test
 
-This will create a temporary config directorty,
+This will create a temporary config directory,
 containing the board_type and hostname,
-equivalent to the /var/local/config in the IoT-LAB infrastructure,
+equivalent to the `/var/local/config` in the IoT-LAB infrastructure,
 and run `tox -e test`
 
 Appendices
@@ -288,7 +300,7 @@ Appendices
 Autotests available
 -------------------
 
-Bellow you will find commands that can be sent by the gateway during the
+Bellow you will find autotest commands that can be sent by the gateway during the
 tests and the corresponding format of the return expected.
 
 ### Mandatory
@@ -332,7 +344,7 @@ Start Docker Toolbox with the Docker Quickstart Terminal, then do this additionn
         docker@default:~$ git clone https://www.github.com/iot-lab/iot-lab-gateway.git && cd iot-lab-gateway
         docker@default:~$ sudo cp bin/rules.d/* /etc/udev/rules.d/.
         docker@default:~$ sudo udevadm control --reload
-1. Thanks to the VirtualBox GUI or via VBoxManage command line, add a USB device filter for the device to be used as Open Node.
+1. Thanks to the VirtualBox GUI or via VBoxManage command line, add a USB device filter for the device  used as Open Node.
 
         $ VBoxManage list usbhost
         $ VBoxManage usbfilter add 1 --target default --name M3 --vendorid 0403 --productid 6010
@@ -342,3 +354,8 @@ Start Docker Toolbox with the Docker Quickstart Terminal, then do this additionn
         $ VBoxManage controlvm default natpf1 "serial_redirection,tcp,127.0.0.1,20000,,20000"
 
 Build the docker image and run `docker-run` as explained above.
+
+There might be similar problems with running under Windows with certain versions of Docker for Windows, or inside a Ubuntu VM
+on a Windows host, don't hesitate to contact us if you're facing problems with the setup. The setup should be 
+similar to the above, udev rules should be on the topmost host, and devices forwarded correctly to the place
+where the Docker daemon can reach them correctly.
