@@ -131,7 +131,7 @@ the class used by the gateway will be
 In many cases, it's not difficult to add a new node based on a node that is close to it
 or to a common type of node. Nodes using openOCD to connect to it can 
 derive from `gateway_code.open_nodes.common.node_openocd.NodeOpenOCDBase`, 
-mostly just providing a `OPENOCD_CFG_FILE` attributes is enough. 
+mostly just providing a `OPENOCD_CFG_FILE` attribute is enough. 
 
 We recommend you look at all the examples of open nodes supported by the platform for
 inspiration: [gateway_code/open_nodes](gateway_code/open_nodes)
@@ -238,29 +238,38 @@ on [ci-firmwares](https://github.com/iot-lab/ci-firmwares)
 Testing your implementation
 ===========================
 
-We've provided Dockerfiles with all the dependencies and a Makefile
-for you to build and use them. (if using MacOS, see Appendix below)
-
-Using Docker
-------------
-
-If you want to run tests with the Docker containers, first build the Docker images:
-
-    make build-docker-image-test
+For unit-testing and integration-testing it's recommended to use the 
+provided Docker images, but you can test without Docker if you want.
 
 ### Unit tests
 
 The purpose of unit tests is to verify your Python code,
 independently from connections to a physical board.
 
-To run the unit tests with the provided Docker image, just run:
-
-    make test
-
 ### Integration tests
 
 The purpose of integration tests is to verify that your flashing tool
 and firmwares behave as expected when called by the gateway code.
+
+Setup udev-rules
+----------------
+
+The udev-rules must be setup on the host computer in order to map the custom iotlab TTY in the docker container:
+
+    make setup-udev-rules
+
+Using Docker
+------------
+
+You should read [DOCKER.md](DOCKER.md) for prerequisites
+
+Build the testing image:
+
+    make build-docker-image-test
+
+To run the unit tests with the provided Docker image, just run:
+
+    make test
 
 To run the integration tests inside a docker container, just run:
 
@@ -277,22 +286,13 @@ for running the tests.
 >
 >     pip install tox
 
-### Unit tests
-
-Run:
+To run the unit tests:
 
     make local-test
 
-### Integration tests
-
-Run:
+To run the integration tests:
 
     make BOARD={node_name} local-integration-test
-
-This will create a temporary config directory,
-containing the board_type and hostname,
-equivalent to the `/var/local/config` in the IoT-LAB infrastructure,
-and run `tox -e test`
 
 Appendices
 ==========
@@ -344,7 +344,7 @@ Start Docker Toolbox with the Docker Quickstart Terminal, then do this additionn
         docker@default:~$ git clone https://www.github.com/iot-lab/iot-lab-gateway.git && cd iot-lab-gateway
         docker@default:~$ sudo cp bin/rules.d/* /etc/udev/rules.d/.
         docker@default:~$ sudo udevadm control --reload
-1. Thanks to the VirtualBox GUI or via VBoxManage command line, add a USB device filter for the device  used as Open Node.
+1. Thanks to the VirtualBox GUI or via VBoxManage command line, add a USB device filter for the device used as Open Node.
 
         $ VBoxManage list usbhost
         $ VBoxManage usbfilter add 1 --target default --name M3 --vendorid 0403 --productid 6010
@@ -355,7 +355,7 @@ Start Docker Toolbox with the Docker Quickstart Terminal, then do this additionn
 
 Build the docker image and run `docker-run` as explained above.
 
-There might be similar problems with running under Windows with certain versions of Docker for Windows, or inside a Ubuntu VM
-on a Windows host, don't hesitate to contact us if you're facing problems with the setup. The setup should be 
-similar to the above, udev rules should be on the topmost host, and devices forwarded correctly to the place
+There might be similar problems when running under Windows with certain versions of Docker for Windows, or inside a Ubuntu VM
+on a Windows host, don't hesitate to contact us if you are facing problems with the setup. The setup should be 
+similar to the above, udev rules should be set on the host, and devices forwarded correctly to the place
 where the Docker daemon can reach them correctly.
