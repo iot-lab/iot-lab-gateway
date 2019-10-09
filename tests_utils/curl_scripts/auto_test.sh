@@ -1,5 +1,7 @@
 #! /bin/bash -x
 
+# start a blink autotest and radio ping pong on channel 22 with the control node
+
 if [[ "x" == "x$1" ]]
 then
         IP_ADDR=192.168.1.5
