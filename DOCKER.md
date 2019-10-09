@@ -1,16 +1,23 @@
 Docker Image of iot-lab-gateway
 ===============================
 
-The included Dockerfile includes all the necessary dependencies listed in [INSTALL.md](INSTALL.md), without you having
-to install them on your host machine.
+The provided Dockerfile builds a Docker image that installs all the necessary dependencies listed in [INSTALL.md](INSTALL.md), 
+without you having to install them on the host machine. 
 
-The only prerequisite before running the image for the first time is installing udev rules on the host. The udev rules create a subdirectory /dev/iotlab
+The only prerequisite on the host before running the container for the first time is to install udev rules on the host, which is done with:
 
     python setup.py udev_rules_install
+    
+Alternatively, 
+
+    make setup-udev-rules
+    udevadm control --reload
+
+The udev rules create a subdirectory /dev/iotlab which will be populated once a supported board is plugged.
 
 For the following commands sudo might be needed depending on whether your user is in the `docker` group:
 
-To build the image :
+To build the image (need to be done only once, unless you modify the Dockerfile):
 
     make build-docker-image
 
