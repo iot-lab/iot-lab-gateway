@@ -1,6 +1,21 @@
 Changelog
 =========
 
+Version 2.9.0
+-------------
+
++ Open nodes
+  - New nucleo-f070rb open node
+  - New samd21 open node
+  - New st-cell02 open node
+  - Refactor IoT-LAB ON openocd configuration
+  - st-lrwan1 enable dual bank support in openocd configuration
+
++ Utils
+  - Enable remote debugging on boards using JLink
+  - Drop support for openocd 0.9
+  - Add option for flashing binary firmware instead of only elf
+
 Version 2.8.0
 -------------
 
