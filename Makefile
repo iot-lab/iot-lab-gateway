@@ -28,13 +28,13 @@ setup-cfg-dir:
 	echo $(BOARD)-00 > /tmp/cfg_dir/hostname
 
 test:
-	docker run -t --rm \
+	docker run -ti --rm \
 		-v $(PWD):/shared \
 		-e LOCAL_USER_ID=`id -u $(USER)` \
 		iot-lab-gateway-tests tox $(POSARGS)
 
 integration-test: setup-cfg-dir
-	docker run -t --rm \
+	docker run -ti --rm \
 		-v $(PWD):/shared \
 		-v /dev/iotlab:/dev/iotlab \
 		-v /tmp/cfg_dir:/shared/cfg_dir \
