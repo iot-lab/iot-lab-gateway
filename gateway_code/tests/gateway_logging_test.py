@@ -26,7 +26,11 @@
 import tempfile
 import unittest
 import logging
-from StringIO import StringIO
+
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 import mock
 

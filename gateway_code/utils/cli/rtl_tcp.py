@@ -26,6 +26,8 @@ Usage: rtl_tcp <port> <frequency>
 
 """
 
+from __future__ import print_function
+
 import argparse
 import signal
 from .. import rtl_tcp
@@ -44,10 +46,10 @@ def main():
     process = rtl_tcp.RtlTcp(opts.port, opts.frequency)
     try:
         process.start()
-        print 'Press Ctrl+C to stop'
+        print('Press Ctrl+C to stop')
         signal.pause()
     except KeyboardInterrupt:
         pass
     finally:
         process.stop()
-        print 'Stopped'
+        print('Stopped')

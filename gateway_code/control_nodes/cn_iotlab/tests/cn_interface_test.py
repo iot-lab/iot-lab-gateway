@@ -27,7 +27,7 @@
 # pylint: disable=maybe-no-member
 # pylint: disable=too-many-public-methods
 
-import Queue
+import queue
 import unittest
 import logging
 import mock
@@ -48,7 +48,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.popen.terminate.side_effect = self._terminate
         self.popen.poll.return_value = None
 
-        self.readline_ret_vals = Queue.Queue(0)
+        self.readline_ret_vals = queue.Queue(0)
         self.popen.stderr.readline.side_effect = self.readline_ret_vals.get
         self.readline_ret_vals.put('cn_serial_ready\n')
 

@@ -40,7 +40,7 @@ Pylint and pep8 checker:
     python setup.py pep8
 """
 
-from setuptools import setup, Command, Extension, find_packages
+from setuptools import setup, Command, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.command.install import install
 
@@ -71,7 +71,6 @@ def get_version(package):
 
 
 SCRIPTS = glob('bin/scripts/*')
-SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
 INSTALL_REQUIRES += ['pyelftools']
@@ -177,11 +176,16 @@ class Release(install):
         execute(self, post_install, [self])
 
 
-PACKAGE_DATA = {'static': ['static/*']}
+PACKAGE_DATA = {
+    'static': ['static/*'],
+    'control_node_serial_interface':
+        ['control_node_serial/control_node_serial_interface']
+}
 
 setup(name=PACKAGE,
       version=get_version(PACKAGE),
       description='Linux Gateway code',
+      long_description="Linux Gateway code",
       author='IoT-Lab Team',
       author_email='admin@iot-lab.info',
       url='http://www.iot-lab.info',
@@ -191,7 +195,6 @@ setup(name=PACKAGE,
       scripts=SCRIPTS,
       include_package_data=True,
       package_data=PACKAGE_DATA,
-      ext_modules=[Extension('control_node_serial_interface', [])],
 
       cmdclass={
           'build_ext': BuildExt,
