@@ -67,8 +67,8 @@ def logger_call(msg, log_lvl='info', err_lvl='warning'):
 def empty_queue(queue):
     """ Remove all items in Queue
 
-    >>> import Queue
-    >>> queue = Queue.Queue(0)
+    >>> import queue
+    >>> queue = queue.Queue(0)
     >>> _ = [queue.put(i) for i in range(0, 10)]
 
     >>> queue.empty()

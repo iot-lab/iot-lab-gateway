@@ -25,6 +25,7 @@
 Usage: mjpg_streamer <port>
 
 """
+from __future__ import print_function
 
 import argparse
 import signal
@@ -43,10 +44,10 @@ def main():
     process = mjpg_streamer.MjpgStreamer(opts.port)
     try:
         process.start()
-        print 'Press Ctrl+C to stop'
+        print('Press Ctrl+C to stop')
         signal.pause()
     except KeyboardInterrupt:
         pass
     finally:
         process.stop()
-        print 'Stopped'
+        print('Stopped')

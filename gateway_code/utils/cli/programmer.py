@@ -22,6 +22,8 @@
 
 """ Programmer to flash/reset/debug nodes  """
 
+from __future__ import print_function
+
 import os
 import signal
 import argparse
@@ -67,13 +69,13 @@ def _get_node(board_cfg, control_node=False):
 
 def _print_result(ret, cmd, node=None):
     if ret == 0:
-        print '{} OK\n'.format(cmd)
+        print('{} OK\n'.format(cmd))
     elif ret == -1:
-        print 'error: {} not supported for board {}\n'.format(cmd, node)
+        print('error: {} not supported for board {}\n'.format(cmd, node))
     elif ret == -2:
-        print 'error: {} too few arguments\n'.format(cmd)
+        print('error: {} too few arguments\n'.format(cmd))
     else:
-        print '{} KO: {}\n'.format(cmd, ret)
+        print('{} KO: {}\n'.format(cmd, ret))
 
 
 @log_to_stderr
@@ -115,7 +117,7 @@ def flash():
         try:
             firmware_path = common.abspath(firmware)
         except IOError as err:
-            print err
+            print(err)
             return 1
 
         ret = node.flash(firmware_path, opts.bin, opts.offset)
@@ -130,10 +132,10 @@ def _debug(node):
     if ret:
         return ret
     try:
-        print 'Type Ctrl+C to quit'
+        print('Type Ctrl+C to quit')
         signal.pause()
     except KeyboardInterrupt:
-        print 'Ctrl+C'
+        print('Ctrl+C')
     finally:
         node.debug_stop()
     return 0

@@ -22,6 +22,8 @@
 
 """ Test node_connection.OpenNodeConnection """
 
+from __future__ import print_function
+
 import time
 import unittest
 import threading
@@ -71,9 +73,9 @@ class TestOpenNodeConnection(unittest.TestCase):
                 time.sleep(self.write_delay)
                 self.redirect.stdin.write('READ_LINE %s' % line)
         except (AttributeError, IOError) as err:
-            print err
+            print(err)
         else:
-            print "_open_node_thread stopped"
+            print("_open_node_thread stopped")
 
     def test_sending_multiple_commands(self):
         with OpenNodeConnection() as conn:

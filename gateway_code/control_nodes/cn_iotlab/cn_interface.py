@@ -26,7 +26,7 @@ Manage sending commands and receiving messages
 """
 
 from subprocess import PIPE
-import Queue
+import queue
 import threading
 import logging
 from tempfile import NamedTemporaryFile
@@ -68,11 +68,11 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         self.tty = tty
         self.process = None
         self.reader_thread = None
-        self.msgs = Queue.Queue(1)
+        self.msgs = queue.Queue(1)
         self.measures_debug = None
 
         self._send_mutex = threading.Semaphore(1)
-        self._wait_ready = Queue.Queue(1)
+        self._wait_ready = queue.Queue(1)
         self._oml_cfg_file = None
 
         # cleanup in case of error
@@ -197,7 +197,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         else:  # control node answer to a command
             try:
                 self.msgs.put_nowait(answer)
-            except Queue.Full:
+            except queue.Full:
                 LOGGER.error('Control node answer queue full: %r', answer)
 
     def measures_handler(self, line):
@@ -236,7 +236,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
                 self.process.stdin.write(command_str)
                 # wait for answer 1 second at max
                 answer_cn = self.msgs.get(block=True, timeout=1.0)
-            except Queue.Empty:
+            except queue.Empty:
                 LOGGER.error('control_node_serial answer timeout')
                 answer_cn = None
             except AttributeError:

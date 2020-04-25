@@ -26,10 +26,9 @@ It should help mocking tests as it is not necessary to know if using
 subprocess32 on subrocess.
 """
 
-import sys
-if sys.version_info[0] < 3:
+try:
     from subprocess32 import call, Popen, TimeoutExpired
-else:  # pragma: no cover
+except ImportError:
     from subprocess import call, Popen
     from subprocess import TimeoutExpired  # pylint:disable=no-name-in-module
 

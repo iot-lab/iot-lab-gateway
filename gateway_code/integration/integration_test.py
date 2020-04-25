@@ -24,6 +24,7 @@
 
 # pylint: disable=protected-access
 # pylint: disable=too-many-public-methods
+from __future__ import print_function
 
 import os
 import os.path
@@ -32,7 +33,6 @@ import math
 import subprocess
 import logging
 from threading import Thread
-from itertools import izip
 
 import pytest
 import mock
@@ -365,7 +365,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # check timestamps are sorted in correct order
         for values in measures.values():
             timestamps = [t_start] + values['timestamps'] + [time.time()]
-            _sorted = all([a < b for a, b in izip(timestamps, timestamps[1:])])
+            _sorted = all([a < b for a, b in zip(timestamps, timestamps[1:])])
             self.assertTrue(_sorted)
 
         # there should be no new measures since profile update
@@ -440,8 +440,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # No real reasons, just verifying that it at least the same
         for meas_type, num_meas in (('radio', 1000), ('consumption', 50000)):
             num_lines = len(open(exp_files[meas_type]).readlines())
-            print 'num measures lines: %s: %d' % (meas_type, num_lines)
-            print 'num measures ref: %s: %d' % (meas_type, num_meas)
+            print('num measures lines: %s: %d' % (meas_type, num_lines))
+            print('num measures ref: %s: %d' % (meas_type, num_meas))
             # Was failing some times, disable
             # self.assertTrue(num_meas < num_lines)
 
