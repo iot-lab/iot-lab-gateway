@@ -24,6 +24,7 @@
 """ Common functions of the module """
 
 import os
+import sys
 import time
 import errno
 
@@ -41,6 +42,13 @@ import functools
 
 import logging
 LOGGER = logging.getLogger('gateway_code')
+
+
+if int(sys.version[0]) < 3:
+    # pylint: disable=undefined-variable
+    _basestring = basestring  # noqa
+else:
+    _basestring = str
 
 
 def logger_call(msg, log_lvl='info', err_lvl='warning'):
@@ -236,7 +244,7 @@ def booleanize(value):
     if isinstance(value, bool):
         return value
 
-    if isinstance(value, basestring):
+    if isinstance(value, _basestring):
         value = value.lower()
 
     if value in ('y', 'yes', 't', 'true', 'on', '1', 1):
