@@ -26,7 +26,12 @@ Manage sending commands and receiving messages
 """
 
 from subprocess import PIPE
-import queue
+
+try:
+    import Queue as queue
+except ImportError:
+    import queue
+
 import threading
 import logging
 from tempfile import NamedTemporaryFile

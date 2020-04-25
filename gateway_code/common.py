@@ -26,6 +26,14 @@
 import os
 import time
 import errno
+
+try:
+    # pylint: disable=unused-import
+    import Queue as queue  # noqa
+except ImportError:
+    # pylint: disable=unused-import
+    import queue  # noqa
+
 # http://code.activestate.com/recipes/\
 #     577105-synchronization-decorator-for-class-methods/
 # About `functools.wraps` http://stackoverflow.com/a/309000/395687
@@ -64,21 +72,20 @@ def logger_call(msg, log_lvl='info', err_lvl='warning'):
     return _wrap
 
 
-def empty_queue(queue):
+def empty_queue(my_queue):
     """ Remove all items in Queue
 
-    >>> import queue
-    >>> queue = queue.Queue(0)
-    >>> _ = [queue.put(i) for i in range(0, 10)]
+    >>> my_queue = queue.Queue(0)
+    >>> _ = [my_queue.put(i) for i in range(0, 10)]
 
-    >>> queue.empty()
+    >>> my_queue.empty()
     False
-    >>> empty_queue(queue)
-    >>> queue.empty()
+    >>> empty_queue(my_queue)
+    >>> my_queue.empty()
     True
     """
-    while not queue.empty():
-        queue.get_nowait()
+    while not my_queue.empty():
+        my_queue.get_nowait()
 
 
 def wait_cond(timeout, value, fct, *args, **kwargs):
