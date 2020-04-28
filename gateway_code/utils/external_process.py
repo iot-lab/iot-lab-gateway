@@ -108,11 +108,11 @@ class ExternalProcess(threading.Thread):
         """
         sigterm = int(sigterm)
         sigint = int(sigint)
-        for _ in xrange(0, sigterm):
+        for _ in range(sigterm):
             yield signal.SIGTERM
 
         LOGGER.info('External process signal: escalading to SIGINT')
-        for _ in xrange(0, sigint):
+        for _ in range(sigint):
             yield signal.SIGINT
 
         LOGGER.warning('External process signal: escalading to SIGKILL')
