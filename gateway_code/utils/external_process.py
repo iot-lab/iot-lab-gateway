@@ -34,6 +34,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 
 class ExternalProcess(threading.Thread):
+    # pylint: disable=no-member,method-hidden
     """ Class running an external process in background
 
     It's implemented as a stoppable thread running the process in a loop.
@@ -78,8 +79,9 @@ class ExternalProcess(threading.Thread):
         # kill
         while self.is_alive():
             try:
-                sig = signals.next()
-                self.process.send_signal(sig)
+                if self.process is not None:
+                    sig = next(signals)
+                    self.process.send_signal(sig)
             except OSError as err:
                 # errno == 3 'No such proccess', already terminated: OK
                 assert err.errno == 3, 'Unknown error num: %r' % err.errno
@@ -146,4 +148,5 @@ class ExternalProcess(threading.Thread):
 
         ret = self.check_error(retcode)
         time.sleep(0.5)  # prevent quick loop
+        self._started.clear()
         return ret
