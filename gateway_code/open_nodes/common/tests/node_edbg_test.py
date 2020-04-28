@@ -24,7 +24,6 @@
 import unittest
 from mock import patch, Mock
 
-from gateway_code.nodes import OpenNodeBase
 from gateway_code.open_nodes.common.node_edbg import NodeEdbgBase
 from gateway_code.open_nodes.node_arduino_zero import NodeArduinoZero
 
@@ -62,11 +61,6 @@ class TestNodeEdbgBase(unittest.TestCase):
 
     def tearDown(self):
         patch.stopall()
-
-    @classmethod
-    def tearDownClass(cls):
-        # Explicitly clear OpenNodeBase registry at the end of all tests.
-        del OpenNodeBase.__registry__[NodeEdbgTest.TYPE]
 
     def test_edbg_node_basic(self):
         """Test basic functions of an edbg based node."""

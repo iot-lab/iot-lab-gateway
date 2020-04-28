@@ -29,15 +29,15 @@ from mock import patch
 
 from gateway_code.nodes import (open_node_class, control_node_class,
                                 all_open_nodes_types, all_control_nodes_types,
-                                OpenNodeBase, ControlNodeBase)
+                                OpenNodeBase, ControlNodeBase, REGISTRY)
 from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.open_nodes.node_m3 import NodeM3
 
 
 def test_node_class():
     """Test loading essential open node classes."""
-    assert NodeM3 == open_node_class('m3')
-    assert NodeA8 == open_node_class('a8')
+    assert NodeM3.__name__ == open_node_class('m3').__name__
+    assert NodeA8.__name__ == open_node_class('a8').__name__
 
 
 def test_open_node_class_errors():
@@ -85,10 +85,14 @@ def test_registry_open_node():
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
         AUTOTEST_AVAILABLE = ['echo', 'get_time']
 
+    REGISTRY[MyNode.TYPE] = MyNode
+
     assert open_node_class("my_node") == MyNode
 
     with pytest.raises(ValueError):
         open_node_class("invalid_node")
+
+    del REGISTRY[MyNode.TYPE]
 
 
 def test_registry_control_node():
@@ -99,12 +103,16 @@ def test_registry_control_node():
         TYPE = "my_control_node"
         ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
 
+    REGISTRY[MyControlNode.TYPE] = MyControlNode
+
     assert control_node_class("my_control_node") == MyControlNode
 
     assert "my_control_node" in all_control_nodes_types()
 
     with pytest.raises(ValueError):
         control_node_class("invalid_node")
+
+    del REGISTRY[MyControlNode.TYPE]
 
 
 # parent class no TYPE
@@ -140,17 +148,17 @@ def test_registry_inheritance():
         """Derivation + OpenNode mixin"""
         TYPE = "mixin_derived_open_node"
 
+    REGISTRY[BaseOpenNode.TYPE] = BaseOpenNode
+    REGISTRY[DerivedOpenNode.TYPE] = DerivedOpenNode
+    REGISTRY[MixinDerivedOpenNode.TYPE] = MixinDerivedOpenNode
+
     assert open_node_class("base_open_node") == BaseOpenNode
     assert open_node_class("derived_open_node") == DerivedOpenNode
     assert open_node_class("mixin_derived_open_node") == MixinDerivedOpenNode
 
-    class TypeMissingDerivedOpenNode(BaseOpenNode):
-        # pylint:disable=abstract-method
-        """trap with missing TYPE"""
-        pass
-
-    # the derived class overrides the base class in the registry
-    assert open_node_class("base_open_node") == TypeMissingDerivedOpenNode
+    del REGISTRY[BaseOpenNode.TYPE]
+    del REGISTRY[DerivedOpenNode.TYPE]
+    del REGISTRY[MixinDerivedOpenNode.TYPE]
 
 
 def test_open_node_inheritance():
@@ -166,6 +174,9 @@ def test_open_node_inheritance():
     class NodeStLinkBoard2(BaseOpenNode, OpenNodeBase):
         """derived class 2"""
         TYPE = "stlink_board_2"
+
+    REGISTRY[NodeStLinkBoard1.TYPE] = NodeStLinkBoard1
+    REGISTRY[NodeStLinkBoard2.TYPE] = NodeStLinkBoard2
 
     board_1 = open_node_class("stlink_board_1")
     board_2 = open_node_class("stlink_board_2")
@@ -185,6 +196,9 @@ def test_open_node_inheritance():
     assert board_instance.teardown() == 4242
     assert board_instance.status() == 0
 
+    del REGISTRY[NodeStLinkBoard1.TYPE]
+    del REGISTRY[NodeStLinkBoard2.TYPE]
+
 
 def test_node_verify_errors():
     """test case for verify open node method."""
@@ -195,11 +209,13 @@ def test_node_verify_errors():
         TYPE = "open_node_elf_target_invalid"
         ELF_TARGET = ('INVALID')
 
+    REGISTRY[OpenNodeElfTargetInvalid.TYPE] = OpenNodeElfTargetInvalid
+
     with pytest.raises(ValueError):
         open_node_class("open_node_elf_target_invalid")
 
     # Remove test node from registry
-    del OpenNodeBase.__registry__["open_node_elf_target_invalid"]
+    del REGISTRY[OpenNodeElfTargetInvalid.TYPE]
 
     class OpenNodeNoElfTargetNone(BaseOpenNode):
         # pylint:disable=abstract-method,unused-variable
@@ -207,11 +223,13 @@ def test_node_verify_errors():
         TYPE = "open_node_elf_target_none"
         ELF_TARGET = None
 
+    REGISTRY[OpenNodeNoElfTargetNone.TYPE] = OpenNodeNoElfTargetNone
+
     with pytest.raises(ValueError):
         open_node_class("open_node_elf_target_none")
 
     # Remove test node from registry
-    del OpenNodeBase.__registry__["open_node_elf_target_none"]
+    del REGISTRY[OpenNodeNoElfTargetNone.TYPE]
 
     class OpenNodeInvalidAutotest(BaseOpenNode):
         # pylint:disable=abstract-method,unused-variable
@@ -219,18 +237,22 @@ def test_node_verify_errors():
         TYPE = "open_node_invalid_autotest"
         AUTOTEST_AVAILABLE = ['echo', 'invalid']
 
+    REGISTRY[OpenNodeInvalidAutotest.TYPE] = OpenNodeInvalidAutotest
+
     with pytest.raises(ValueError):
         open_node_class("open_node_invalid_autotest")
 
     # Remove test node from registry
-    del OpenNodeBase.__registry__["open_node_invalid_autotest"]
+    del REGISTRY[OpenNodeInvalidAutotest.TYPE]
 
     class OpenNodeIncompatibleElf(BaseOpenNode):
-            # pylint:disable=abstract-method,unused-variable
+        # pylint:disable=abstract-method,unused-variable
         """OpenNode with incompatible firmwares."""
         TYPE = "open_node_incompatible_elf"
         FW_IDLE = "idle"
         FW_AUTOTEST = "autotest"
+
+    REGISTRY[OpenNodeIncompatibleElf.TYPE] = OpenNodeIncompatibleElf
 
     with patch('gateway_code.utils.'
                'elftarget.is_compatible_with_node') as is_compatible:
@@ -239,4 +261,4 @@ def test_node_verify_errors():
             open_node_class("open_node_incompatible_elf")
 
     # Remove test node from registry
-    del OpenNodeBase.__registry__["open_node_incompatible_elf"]
+    del REGISTRY[OpenNodeIncompatibleElf.TYPE]
