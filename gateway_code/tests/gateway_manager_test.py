@@ -55,7 +55,7 @@ class TestGatewayManager(unittest.TestCase):
         """ Run setup with a flash fail error """
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=1)
-        with pytest.raises(StandardError):
+        with pytest.raises(RuntimeError):
             g_m.setup()
 
     def test_exp_update_profile_error(self):

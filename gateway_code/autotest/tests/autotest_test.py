@@ -230,13 +230,7 @@ class TestAutoTestsErrorCases(unittest.TestCase):
     def test_assert(self, check):
         ret = 1
         check.return_value = ret
-        with pytest.raises(autotest.FatalError) as exc:
+        with pytest.raises(autotest.FatalError) as exc_info:
             assert self.g_v._assert(1, "noop", "err_log", "err_msg") == ret
-        assert "err_msg" in str(exc)
-
-
-class TestAutotestFatalError(unittest.TestCase):
-
-    def test_fatal_error(self):
-        error = autotest.FatalError("error_value")
-        self.assertEqual("'error_value'", str(error))
+        assert exc_info.type is autotest.FatalError
+        assert "err_msg" in str(exc_info.value)
