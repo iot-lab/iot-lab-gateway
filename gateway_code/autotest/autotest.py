@@ -79,15 +79,8 @@ def autotest_control_node_checker(*required):
 
 
 class FatalError(Exception):
-
     """ FatalError during tests """
-
-    def __init__(self, value):
-        super(FatalError, self).__init__()
-        self.value = value
-
-    def __str__(self):
-        return repr(self.value)
+    pass
 
 
 def tst_ok(bool_value):
