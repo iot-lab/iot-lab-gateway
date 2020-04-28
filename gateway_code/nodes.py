@@ -24,26 +24,29 @@
 """ Common logic for plugin nodes classes """
 import abc
 import os
+import inspect
 import pkgutil
 
 from gateway_code.utils import elftarget
 
 
-class MetaNode(abc.ABCMeta):
+def with_metaclass(meta, *bases):
+    """Create a base class with a metaclass."""
+    return meta("NewBase", bases, {})
+
+
+class NodeBase(with_metaclass(abc.ABCMeta)):
+    # pylint: disable=too-few-public-methods
     """ metaclass combining registry and abstract contract """
 
-    def __init__(cls, name, bases, class_dict):
-        super(MetaNode, cls).__init__(name, bases, class_dict)
-        if not hasattr(cls, '__registry__'):
-            cls.__registry__ = {}
-        else:
-            if hasattr(cls, 'TYPE'):
-                cls.__registry__[cls.TYPE] = cls
+    @abc.abstractmethod
+    def status(self):
+        """ Status of the node """
+        pass  # pragma: no cover
 
 
-class ControlNodeBase(object):
+class ControlNodeBase(NodeBase):
     """ Class to inherit, for control node classes """
-    __metaclass__ = MetaNode
 
     @abc.abstractmethod
     def start(self, exp_id, exp_files=None):
@@ -85,15 +88,9 @@ class ControlNodeBase(object):
         """ Flash firmware on the control_node """
         pass  # pragma: no cover
 
-    @abc.abstractmethod
-    def status(self):
-        """ Status of the node """
-        pass  # pragma: no cover
 
-
-class OpenNodeBase(object):
+class OpenNodeBase(NodeBase):
     """ class to inherit, for open node classes """
-    __metaclass__ = MetaNode
 
     @abc.abstractmethod
     def setup(self, firmware_path):
@@ -103,11 +100,6 @@ class OpenNodeBase(object):
     @abc.abstractmethod
     def teardown(self):
         """ Cleanup the open node """
-        pass  # pragma: no cover
-
-    @abc.abstractmethod
-    def status(self):
-        """ Status of the node """
         pass  # pragma: no cover
 
     @classmethod
@@ -133,26 +125,37 @@ class OpenNodeBase(object):
         return ret_val
 
 
+REGISTRY = dict()
+
+
 # import all the nodes/plugins
 def import_all_nodes(pkg_dir):
     """Looks into the given relative path for modules and imports them"""
     pkg_dir = os.path.join(os.path.dirname(__file__), pkg_dir)
-    for (module_loader, name, _) in pkgutil.iter_modules([pkg_dir]):
+    for module_loader, name, _ in pkgutil.iter_modules([pkg_dir]):
         if name in ['tests', 'common']:
             continue
-        module_loader.find_module(name).load_module(name)
+        module = module_loader.find_module(name).load_module(name)
+        class_members = inspect.getmembers(module, inspect.isclass)
+        for class_member_tuple in class_members:
+            class_member_name, class_member = class_member_tuple
+            if (not issubclass(
+                    class_member, NodeBase) or
+                    class_member_name.endswith("Base")):
+                continue
+            REGISTRY[class_member.TYPE] = class_member
 
 
 import_all_nodes('open_nodes')
 import_all_nodes('control_nodes')
 
 
-def _node_class(cld, board_type):
+def _node_class(board_type):
     """Return the open node class implementation for `board_type`.
 
     :raises ValueError: if board class can't be found """
     try:
-        output_class = cld.__registry__[board_type]
+        output_class = REGISTRY[board_type]
         # Class sanity check
         assert output_class.TYPE == board_type
     except KeyError:
@@ -165,7 +168,7 @@ def open_node_class(board_type):
     """Return the open node class implementation for `board_type`.
 
     :raises ValueError: if board class can't be found """
-    output_class = _node_class(OpenNodeBase, board_type)
+    output_class = _node_class(board_type)
     if output_class.verify() != 0:
         raise ValueError('Invalid open node class {}'.format(
             output_class.__name__))
@@ -176,14 +179,16 @@ def control_node_class(cn_type):
     """Return the control node class implementation for `cn_type`.
 
     :raises ValueError: if board class can't be found """
-    return _node_class(ControlNodeBase, cn_type)
+    return _node_class(cn_type)
 
 
 def all_open_nodes_types():
     """Returns all the open nodes classes"""
-    return OpenNodeBase.__registry__.keys()
+    return [key for key in REGISTRY
+            if issubclass(REGISTRY[key], OpenNodeBase)]
 
 
 def all_control_nodes_types():
     """Returns all the control nodes classes"""
-    return ControlNodeBase.__registry__.keys()
+    return [key for key in REGISTRY
+            if issubclass(REGISTRY[key], ControlNodeBase)]

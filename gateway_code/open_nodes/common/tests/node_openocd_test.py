@@ -25,7 +25,6 @@ import unittest
 import serial
 from mock import patch, Mock
 
-from gateway_code.nodes import OpenNodeBase
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 from gateway_code.open_nodes.node_microbit import NodeMicrobit
 
@@ -63,11 +62,6 @@ class TestNodeOpenOCDBase(unittest.TestCase):
 
     def tearDown(self):
         patch.stopall()
-
-    @classmethod
-    def tearDownClass(cls):
-        # Explicitly clear OpenNodeBase registry at the end of all tests.
-        del OpenNodeBase.__registry__[NodeOpenOCDTest.TYPE]
 
     def test_openocd_node_basic(self):
         """Test basic functions of an openocd based node."""

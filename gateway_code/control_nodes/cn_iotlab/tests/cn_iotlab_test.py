@@ -24,7 +24,6 @@
 import unittest
 from mock import Mock, patch, call
 
-from gateway_code.nodes import ControlNodeBase, import_all_nodes
 from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
 
 
@@ -66,15 +65,6 @@ class TestCnIotlab(unittest.TestCase):
 
     def tearDown(self):
         patch.stopall()
-
-    @classmethod
-    def tearDownClass(cls):
-        # Mocking some features of the control node has side effects on
-        # following tests. We need to explicitly clear ControlNodeBase registry
-        # at the end of all unit tests and reimport the available control
-        # nodes.
-        del ControlNodeBase.__registry__[ControlNodeIotlab.TYPE]
-        import_all_nodes('control_nodes')
 
     def test_start(self):
         """Test start of iotlab control node."""
