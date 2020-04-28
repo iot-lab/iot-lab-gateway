@@ -383,7 +383,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         exp_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
         exp_files = {}
 
-        for name, exp_file in config.EXP_FILES.iteritems():
+        for name, exp_file in config.EXP_FILES.items():
             file_path = os.path.join(exp_dir, exp_file.format(node_id=node_id))
             exp_files[name] = config.create_user_file(file_path)
 
@@ -392,7 +392,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
     @staticmethod
     def cleanup_user_exp_files(exp_files):
         """ Delete empty user experiment files """
-        for exp_file in exp_files.itervalues():
+        for exp_file in exp_files.values():
             config.clean_user_file(exp_file)
 
 # Exp folders creation used in tests
@@ -405,7 +405,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         Also useful for integration tests
         """
         exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
-        for file_dir in config.EXP_FILES.iterkeys():
+        for file_dir in config.EXP_FILES:
             try:
                 os.makedirs(exp_files_dir + file_dir)
             except OSError:
