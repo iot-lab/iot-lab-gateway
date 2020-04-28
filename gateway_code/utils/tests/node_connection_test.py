@@ -67,11 +67,12 @@ class TestOpenNodeConnection(unittest.TestCase):
     def _open_node_thread(self):
         try:
             while True:
-                line = self.redirect.stdout.readline()
+                line = self.redirect.stdout.readline().decode()
                 if not line:
                     break
                 time.sleep(self.write_delay)
-                self.redirect.stdin.write('READ_LINE %s' % line)
+                self.redirect.stdin.write('READ_LINE {}'.format(line).encode())
+                self.redirect.stdin.flush()
         except (AttributeError, IOError) as err:
             print(err)
         else:

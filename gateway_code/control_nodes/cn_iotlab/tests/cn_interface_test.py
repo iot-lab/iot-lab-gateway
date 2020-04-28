@@ -171,7 +171,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.assertNotIn('-d', args)
 
         # OML config
-        args = self.cn._cn_interface_args('<omlc></omlc>')
+        args = self.cn._cn_interface_args(b'<omlc></omlc>')
         self.assertIn('-c', args)
         self.assertNotIn('-d', args)
         self.cn._oml_cfg_file.close()
@@ -191,7 +191,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     def test_config_oml(self):
-        oml_xml_cfg = '''<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>'''
+        oml_xml_cfg = b'''<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>'''
         self.cn.start(oml_xml_cfg)
         self.assertIsNotNone(self.cn._oml_cfg_file)
 

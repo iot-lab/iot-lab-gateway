@@ -161,7 +161,8 @@ class GatewayRest(bottle.Bottle):
             # ValueError: no files in multipart request
             return None
 
-        profile = json.load(_prof.file)  # ValueError on invalid profile
+        # ValueError on invalid profile
+        profile = json.loads(_prof.file.read().decode())
         LOGGER.debug('REST: Profile json dict: %r', profile)
         return profile
 

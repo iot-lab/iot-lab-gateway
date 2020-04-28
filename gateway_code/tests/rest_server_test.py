@@ -121,8 +121,8 @@ class TestRestMethods(unittest.TestCase):
         self.g_m.exp_start.return_value = 0
 
         files = []
-        files += [('firmware', 'idle.elf', 'elf32arm0X1234')]
-        files += [('profile', 'profile.json', self.PROFILE_STR)]
+        files += [('firmware', 'idle.elf', b'elf32arm0X1234')]
+        files += [('profile', 'profile.json', self.PROFILE_STR.encode())]
 
         ret = self.server.post(self.EXP_START, upload_files=files)
         self.assertEqual(0, ret.json['ret'])
@@ -135,7 +135,7 @@ class TestRestMethods(unittest.TestCase):
 
     def test_exp_start_invalid_profile(self):
 
-        files = [('profile', 'inval_profile.json', 'invalid json profile}')]
+        files = [('profile', 'inval_profile.json', b'invalid json profile}')]
         ret = self.server.post(self.EXP_START, upload_files=files)
         self.assertEqual(1, ret.json['ret'])
 
@@ -220,7 +220,7 @@ class TestRestMethods(unittest.TestCase):
 
     def test_flash_function(self):
         self.g_m.node_flash.return_value = 0
-        files = [('firmware', 'idle.elf', 'elf32arm0X1234')]
+        files = [('firmware', 'idle.elf', b'elf32arm0X1234')]
 
         # valid command
         ret = self.server.post('/open/flash', upload_files=files)
