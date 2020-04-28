@@ -62,7 +62,7 @@ class TestGatewayLogging(unittest.TestCase):
             log_handler.close()
 
             # file has data
-            log_content = log_file.read()
+            log_content = log_file.read().decode()
             self.assertNotEqual(0, len(log_content))
             self.assertIn(test_log, log_content)
 
