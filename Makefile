@@ -4,6 +4,7 @@ PORT ?= 8080
 SERIAL_PORT ?= 20000
 CONTROL_NODE_TYPE ?= no
 POSARGS ?=
+TOXENV ?=
 
 DOCKER_IMAGE ?= fitiotlab/iot-lab-gateway
 DOCKER_IMAGE_TEST ?= $(DOCKER_IMAGE)-tests
@@ -34,6 +35,7 @@ test:
 	docker run -ti --rm \
 		-v $(PWD):/shared \
 		-e LOCAL_USER_ID=`id -u $(USER)` \
+		-e TOXENV=$(TOXENV) \
 		$(DOCKER_IMAGE_TEST) tox $(POSARGS)
 
 integration-test: setup-cfg-dir
