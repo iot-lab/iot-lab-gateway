@@ -23,6 +23,7 @@
 
 from __future__ import print_function
 
+import sys
 import logging
 
 from elftools.elf.constants import SH_FLAGS
@@ -85,7 +86,6 @@ def get_elf_load_addr(firmware_path):
 
 def main():
     """Read class and machine for given firmware."""
-    import sys
     print(elf_target(sys.argv[1]))
 
 
