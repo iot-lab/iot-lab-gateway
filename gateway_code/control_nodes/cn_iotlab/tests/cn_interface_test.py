@@ -129,8 +129,8 @@ class TestControlNodeSerial(unittest.TestCase):
         self.log_error.check(('gateway_code', 'WARNING',
                               'Control node serial not terminated, kill it'))
 
-
 # Test command sending
+
     def test_send_command(self):
         self.popen.stdin.write.side_effect = \
             (lambda *x: self.readline_ret_vals.put('start ACK\n'))
