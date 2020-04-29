@@ -61,7 +61,7 @@ def _setup_parser(cmd, board_cfg):
 def _get_node(board_cfg, control_node=False):
     if control_node:
         return board_cfg.cn_class(board_cfg.node_id, None)
-    elif board_cfg.linux_on_class is not None:
+    if board_cfg.linux_on_class is not None:
         # Linux open node
         return board_cfg.linux_on_class()
     return board_cfg.board_class()

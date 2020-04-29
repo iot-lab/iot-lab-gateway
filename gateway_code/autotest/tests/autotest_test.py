@@ -119,9 +119,9 @@ class TestProtocolGPS(unittest.TestCase):
             cmd = args[0]
             if cmd == 'test_pps_start':
                 return (0, ['ACK', 'test_pps_start'])
-            elif cmd == 'test_pps_stop':
+            if cmd == 'test_pps_stop':
                 return (0, ['ACK', 'test_pps_stop'])
-            elif cmd == 'test_pps_get':
+            if cmd == 'test_pps_get':
                 return pps_get_values.pop(0)
 
             raise ValueError('Unknown command %r' % cmd)

@@ -134,10 +134,9 @@ class Protocol(object):
 
         if radio is None:
             return self._stop_radio()
-
         if radio.mode == 'rssi':
             return self._config_radio_measure(radio)
-        elif radio.mode == 'sniffer':
+        if radio.mode == 'sniffer':
             return self._config_radio_sniffer(radio)
 
         raise NotImplementedError("Uknown radio mode: {}".format(radio.mode))
