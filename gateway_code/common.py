@@ -163,7 +163,7 @@ def deepgetattr(obj, attr):
 
     http://pingfive.typepad.com/blog/2010/04/deep-getattr-python-function.html
     """
-    return reduce(getattr, attr.split('.'), obj)
+    return functools.reduce(getattr, attr.split('.'), obj)
 
 
 def object_attr_has(obj, features_attr, required_list):
