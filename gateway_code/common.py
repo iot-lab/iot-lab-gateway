@@ -249,7 +249,8 @@ def booleanize(value):
 
     if value in ('y', 'yes', 't', 'true', 'on', '1', 1):
         return True
-    elif value in ('n', 'no', 'f', 'false', 'off', '0', 0, None):
+
+    if value in ('n', 'no', 'f', 'false', 'off', '0', 0, None):
         return False
-    else:
-        raise ValueError("invalid value '{}'".format(value))
+
+    raise ValueError("invalid value '{}'".format(value))
