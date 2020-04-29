@@ -32,6 +32,7 @@ except ImportError:
     from io import StringIO
 
 import mock
+import pytest
 from testfixtures import LogCapture
 
 from gateway_code.open_nodes.node_m3 import NodeM3
@@ -55,16 +56,16 @@ class TestElfTarget(unittest.TestCase):
         target = elftarget.elf_target(firmware('leonardo_idle.elf'))
         self.assertEqual(target, ('ELFCLASS32', 'EM_AVR'))
 
-    def test_invalid_elf(self):
+    def test_invalid_elf(self):  # pylint: disable=no-self-use
         """Test invalid elf files or non elf files."""
         # elf relocation file
-        self.assertRaisesRegexp(
-            ValueError, 'Not an executable elf file: ET_REL',
-            elftarget.elf_target, firmware('idle.c.o'))
+        with pytest.raises(ValueError) as exc_info:
+            elftarget.elf_target(firmware('idle.c.o'))
+        assert 'Not an executable elf file: ET_REL' in str(exc_info.value)
         # wsn430 firmware
-        self.assertRaisesRegexp(
-            ValueError, 'Not a valid elf file',
-            elftarget.elf_target, firmware('wsn430_print_uids.hex'))
+        with pytest.raises(ValueError) as exc_info:
+            elftarget.elf_target(firmware('wsn430_print_uids.hex'))
+        assert 'Not a valid elf file' in str(exc_info.value)
 
 
 class TestElfTargetIsCompatibleWithNode(unittest.TestCase):
