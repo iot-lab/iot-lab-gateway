@@ -25,20 +25,20 @@ def main(command_file_path):
                 time.sleep(1)
                 continue
 
-            print >> sys.stderr, stripped_line
+            sys.stderr.write(stripped_line + '\n')
             # comments
             if stripped_line[0] == '#':
                 continue
 
-            print stripped_line
+            print(stripped_line)
             # sleep after each line, blank lines act as delay
             time.sleep(1)
 
 
 if __name__ == '__main__':
-    print >> sys.stderr, ' '.join(sys.argv)
+    sys.stderr.write(' '.join(sys.argv) + '\n')
     if len(sys.argv) != 2:
-        print >> sys.stderr, "Usage: %s <command_file>" % sys.argv[0]
+        sys.stderr.write("Usage: %s <command_file>\n" % sys.argv[0])
         exit(1)
 
     command_file_path = sys.argv[1]
