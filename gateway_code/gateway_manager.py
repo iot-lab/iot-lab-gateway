@@ -27,6 +27,7 @@ import os
 import re
 import time
 import errno
+import shutil
 from threading import RLock, Timer
 
 import gateway_code.config as config
@@ -418,7 +419,6 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         Used in integration tests.
         Implemented here after the '_create' method for completeness """
         exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
-        import shutil
         try:
             shutil.rmtree(exp_files_dir)
         except OSError:
