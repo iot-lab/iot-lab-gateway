@@ -40,13 +40,14 @@ class OpenNodeConnection(object):
         self.address = (host, port)
         self.timeout = timeout
         self.fd = None  # pylint:disable=invalid-name
+        self.sock = None
 
     def start(self):
         """ Connect to the serial_redirection """
         try:
-            sock = self.try_connect(self.address)
-            sock.settimeout(self.timeout)  # pylint:disable=no-member
-            self.fd = sock.makefile('rw')
+            self.sock = self.try_connect(self.address)
+            self.sock.settimeout(self.timeout)  # pylint:disable=no-member
+            self.fd = self.sock.makefile('rw')
             return 0
         except IOError:
             return 1
@@ -56,6 +57,7 @@ class OpenNodeConnection(object):
         for reconnection """
         self.fd.close()
         self.fd = None
+        self.sock = None
 
         # Wait redirection restarted
         # Should not wait on start because connection should work instantly
