@@ -25,6 +25,7 @@
 REST server listening to the experiment handler
 """
 
+import argparse
 import json
 import errno
 import logging
@@ -362,8 +363,6 @@ def _parse_arguments(args):
     :param args: arguments, without the script name == sys.argv[1:]
     :type args: list
     """
-    import argparse
-
     parser = argparse.ArgumentParser()
     parser.add_argument('host', type=str, help="Server address to bind to")
     parser.add_argument('port', type=int, help="Server port to bind to")
