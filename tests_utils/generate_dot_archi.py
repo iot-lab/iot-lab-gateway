@@ -111,7 +111,7 @@ def generate_dot(files):
             ret += ' [style=invis, constraint=false]'
         ret += '\n'
 
-    for cluster, nodes in extract_clusters(files).iteritems():
+    for cluster, nodes in extract_clusters(files).items():
         ret += str_cluster(cluster, nodes)
 
     # clusters
@@ -126,7 +126,7 @@ def main():
     dot_path = '%s.dot' % FILE
     png_path = '%s.png' % FILE
 
-    files = check_output('find gateway_code/ -name \*py'
+    files = check_output('find gateway_code/ -name \\*py'
                          ' ! -name __init__.py'
                          ' -not -path "*integration/*"'
                          ' -not -path "*cli/*"'
