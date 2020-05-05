@@ -45,7 +45,7 @@ class TestCnIotlab(unittest.TestCase):
         self.cn_node.cn_serial.stop.return_value = 0
 
         cn_protocol_class = patch('gateway_code.control_nodes.cn_iotlab.'
-                                  'cn_interface.ControlNodeSerial').start()
+                                  'cn_protocol.Protocol').start()
         self.cn_node.protocol = cn_protocol_class.return_value
         self.cn_node.protocol.start_stop.return_value = 0
         self.cn_node.protocol.green_led_blink.return_value = 0
