@@ -124,6 +124,10 @@ class BaseOpenNode(OpenNodeBase):
     TTY = '/dev/iotlab/tty_stlink'
     BAUDRATE = 4242
 
+    @property
+    def programmer(self):
+        return None
+
     def setup(self, firmware_path):
         print("setup base open node with {}".format(firmware_path))
         return 42
@@ -195,6 +199,7 @@ def test_open_node_inheritance():
     assert board_instance.setup('path/to/firmware') == 42
     assert board_instance.teardown() == 4242
     assert board_instance.status() == 0
+    assert board_instance.programmer is None
 
     del REGISTRY[NodeStLinkBoard1.TYPE]
     del REGISTRY[NodeStLinkBoard2.TYPE]

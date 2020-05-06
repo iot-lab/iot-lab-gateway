@@ -34,3 +34,4 @@ def test_node_no():
     assert node.reset() == 0
     assert node.status() == 0
     assert node.verify() == 0
+    assert node.programmer is None

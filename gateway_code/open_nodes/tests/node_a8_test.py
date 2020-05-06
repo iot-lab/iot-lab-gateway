@@ -42,6 +42,9 @@ class TestNodeA8(unittest.TestCase):
 
         a8_node = NodeA8()
 
+        # programmer instance
+        assert a8_node.programmer is None
+
         serial_expect.expect.return_value = ''
         ret = a8_node.wait_booted(0)
         self.assertEqual(ret, '')

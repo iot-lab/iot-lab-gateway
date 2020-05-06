@@ -60,6 +60,9 @@ class TestNodeZigduino(unittest.TestCase):
         # Node status always returns 0
         assert NodeZigduino.status() == 0
 
+        # programmer instance
+        assert self.node.programmer == self.node.avrdude
+
         # Reset the node
         wait_tty.return_value = 0
         assert self.node.reset() == 0
