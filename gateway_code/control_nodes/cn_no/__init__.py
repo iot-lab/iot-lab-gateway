@@ -39,6 +39,11 @@ class ControlNodeNo(ControlNodeBase):
         self.default_profile = default_profile
         self.profile = self.default_profile
 
+    @property
+    def programmer(self):
+        """No programmer is available on this type of control node."""
+        return None
+
     @logger_call("Control node : Start")
     def start(self, exp_id, exp_files=None):  # pylint:disable=unused-argument
         """ Start ControlNode serial interface """

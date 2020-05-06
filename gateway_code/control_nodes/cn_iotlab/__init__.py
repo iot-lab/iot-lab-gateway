@@ -60,6 +60,11 @@ class ControlNodeIotlab(ControlNodeBase):
         self.open_node_state = 'stop'
         self.profile = self.default_profile
 
+    @property
+    def programmer(self):
+        """Returns the openocd instance of the open node."""
+        return self.openocd
+
     @logger_call("Control node : Starting of control node serial interface")
     def start(self, exp_id, exp_files=None):
         """ Start ControlNode serial interface """
