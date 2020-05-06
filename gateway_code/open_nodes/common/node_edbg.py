@@ -56,6 +56,11 @@ class NodeEdbgBase(OpenNodeBase):
         self._current_fw = None
         self._in_debug = False
 
+    @property
+    def programmer(self):
+        """Returns the openocd instance of the open node."""
+        return self.edbg
+
     @logger_call("Node EDBG: Setup of EDBG node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """

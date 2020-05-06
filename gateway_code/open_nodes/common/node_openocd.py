@@ -55,6 +55,11 @@ class NodeOpenOCDBase(OpenNodeBase):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.openocd = self.OPENOCD_CLASS.from_node(self)
 
+    @property
+    def programmer(self):
+        """Returns the openocd instance of the open node."""
+        return self.openocd
+
     def clear_serial(self):
         """Clear serial link by flushing the input buffer."""
         try:

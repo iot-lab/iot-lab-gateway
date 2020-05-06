@@ -32,6 +32,11 @@ class NodeNoBase(OpenNodeBase):
     # pylint:disable=no-member
     """Open node No implementation."""
 
+    @property
+    def programmer(self):
+        """There's no programmer instance for this type of open node."""
+        return None
+
     @logger_call("Node No: Setup of no node")
     def setup(self, firmware_path=None):
         # pylint:disable=unused-argument,no-self-use

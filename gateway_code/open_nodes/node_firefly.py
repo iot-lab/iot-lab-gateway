@@ -65,6 +65,11 @@ class NodeFirefly(OpenNodeBase):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.cc2538 = CC2538(self.FIREFLY_CONF)
 
+    @property
+    def programmer(self):
+        """Returns the cc2538 programmer instance of the open node."""
+        return self.cc2538
+
     @logger_call("Node firefly : Setup of firefly node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """

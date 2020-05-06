@@ -68,6 +68,11 @@ class NodeLeonardo(OpenNodeBase):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.avrdude = AvrDude(self.AVRDUDE_CONF)
 
+    @property
+    def programmer(self):
+        """Returns the avrdude programmer instance of the open node."""
+        return self.avrdude
+
     @logger_call("Node Leonardo : Setup of leonardo node")
     def setup(self, firmware_path):
         """ Flash open node, create serial redirection """
