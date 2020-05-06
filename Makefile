@@ -5,6 +5,9 @@ SERIAL_PORT ?= 20000
 CONTROL_NODE_TYPE ?= no
 POSARGS ?=
 
+DOCKER_IMAGE ?= fitiotlab/iot-lab-gateway
+DOCKER_IMAGE_TEST ?= $(DOCKER_IMAGE)-tests
+
 .PHONY: build-docker-image build-docker-image-test setup-udev-rules \
 	    test local-test \
 	    integration-test local-integration-test \
@@ -12,10 +15,10 @@ POSARGS ?=
 	    setup-cfg-dir
 
 build-docker-image:
-	docker build -t iot-lab-gateway .
+	docker build -t $(DOCKER_IMAGE) .
 
 build-docker-image-test: build-docker-image
-	docker build -t iot-lab-gateway-tests tests
+	docker build -t $(DOCKER_IMAGE_TEST) tests
 
 setup-udev-rules:
 	sudo cp bin/rules.d/* /etc/udev/rules.d/.
@@ -31,7 +34,7 @@ test:
 	docker run -ti --rm \
 		-v $(PWD):/shared \
 		-e LOCAL_USER_ID=`id -u $(USER)` \
-		iot-lab-gateway-tests tox $(POSARGS)
+		$(DOCKER_IMAGE_TEST) tox $(POSARGS)
 
 integration-test: setup-cfg-dir
 	docker run -ti --rm \
@@ -41,7 +44,7 @@ integration-test: setup-cfg-dir
 		-e LOCAL_USER_ID=`id -u $(USER)` \
 		-e IOTLAB_GATEWAY_CFG_DIR=/shared/cfg_dir \
 		--privileged \
-		iot-lab-gateway-tests tox -e test $(POSARGS)
+		$(DOCKER_IMAGE_TEST) tox -e test $(POSARGS)
 
 GW_USER = test
 EXPERIMENT = 123
@@ -67,7 +70,7 @@ run: setup-cfg-dir setup-exp-dir
 		-p $(PORT):8080 \
 		-p $(SERIAL_PORT):20000 \
 		--privileged \
-		iot-lab-gateway
+		$(DOCKER_IMAGE)
 
 local-test:
 	tox
