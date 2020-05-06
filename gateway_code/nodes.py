@@ -44,6 +44,11 @@ class NodeBase(with_metaclass(abc.ABCMeta)):
         """ Status of the node """
         pass  # pragma: no cover
 
+    @abc.abstractproperty
+    def programmer(self):
+        """Returns the programmer instance of an open node."""
+        pass  # pragma: no cover
+
 
 class ControlNodeBase(NodeBase):
     """ Class to inherit, for control node classes """
