@@ -53,6 +53,11 @@ class NodeA8(OpenNodeBase):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self._a8_expect = None
 
+    @property
+    def programmer(self):
+        """There's no programmer for A8 node."""
+        return None
+
     @logger_call("Node A8 : setup of a8 node")
     def setup(self, _firmware, debug=True):  # pylint: disable=arguments-differ
         """ Wait that open nodes tty appears and start A8 boot log """

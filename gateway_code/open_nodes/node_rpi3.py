@@ -53,6 +53,11 @@ class NodeRpi3(OpenNodeBase):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self._rpi3_expect = None
 
+    @property
+    def programmer(self):
+        """There's no programmer for RPI3 node."""
+        return None
+
     @logger_call("Node RPi3 : setup of rpi3 node")
     def setup(self, _firmware, debug=True):  # pylint: disable=arguments-differ
         """ Wait that open nodes tty appears and start RPi3 boot log """

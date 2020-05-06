@@ -65,6 +65,11 @@ class NodeZigduino(OpenNodeBase):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
         self.avrdude = AvrDude(self.AVRDUDE_CONF)
 
+    @property
+    def programmer(self):
+        """Returns the avrdude programmer instance of the open node."""
+        return self.avrdude
+
     def disable_dtr(self):
         """ Disable serial port DTR in order to avoid
             board autoreset at first connection
