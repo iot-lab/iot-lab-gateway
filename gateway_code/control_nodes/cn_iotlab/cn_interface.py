@@ -209,7 +209,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         """ Debug measures """
         LOGGER.debug(line)
         if self.measures_debug is not None:
-            self.measures_debug(line)
+            self.measures_debug(line)  # pylint:disable=not-callable
 
     def _reader(self):
         """ Reader thread worker.
