@@ -42,6 +42,7 @@ def test_control_node_no_basic():
     assert cn_no.autotest_teardown(None) == 0
     assert cn_no.start_experiment("test") == 0
     assert cn_no.stop_experiment() == 0
+    assert cn_no.programmer is None
 
 
 @mock.patch("gateway_code.control_nodes.cn_no.ControlNodeNo.configure_profile")

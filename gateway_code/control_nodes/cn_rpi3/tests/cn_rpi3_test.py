@@ -61,6 +61,7 @@ class TestCnRPI3(unittest.TestCase):
         assert cn_rpi3.status() == 0
         assert cn_rpi3.autotest_setup(None) == 0
         assert cn_rpi3.autotest_teardown(None) == 0
+        assert cn_rpi3.programmer is None
 
     def test_cn_rpi3_open_start_stop(self, call):  # pylint:disable=no-self-use
         """Test open node start calls the right command."""
