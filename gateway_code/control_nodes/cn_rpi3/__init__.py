@@ -64,6 +64,11 @@ class ControlNodeRpi3(ControlNodeBase):
         self.open_node_state = 'stop'
         self.mjpg_streamer = MjpgStreamer(self.MJPG_STREAMER_PORT)
 
+    @property
+    def programmer(self):
+        """No programmer is available on this type of control node."""
+        return None
+
     @logger_call("Control node: Start")
     def start(self, exp_id, exp_files=None):  # pylint:disable=unused-argument
         """ Start ControlNode serial interface """
