@@ -40,6 +40,10 @@ _DEBUG = 'debug'
 
 def _setup_parser(cmd, board_cfg):
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-q', '--quiet',
+        action='store_true', help='Disable verbose output'
+    )
     if board_cfg.cn_type == 'iotlab' and not board_cfg.linux_on_class:
         parser.add_argument('-cn', '--control-node', dest="cn",
                             action="store_true",
@@ -85,7 +89,12 @@ def reset():
     opts = _setup_parser(_RESET, board_cfg)
     control_node = opts.cn if hasattr(opts, 'cn') else False
     node = _get_node(board_cfg, control_node)
-    ret = node.reset() if hasattr(node, _RESET) else -1
+    if node.programmer is not None:
+        if not opts.quiet:
+            node.programmer.out = None
+        ret = node.reset()
+    else:
+        ret = -1
     _print_result(ret, _RESET, node.TYPE)
     return ret
 
@@ -111,7 +120,7 @@ def flash():
         _print_result(ret, _FLASH)
         return ret
 
-    if not hasattr(node, _FLASH):
+    if node.programmer is None:
         ret = -1
     else:
         try:
@@ -119,7 +128,8 @@ def flash():
         except IOError as err:
             print(err)
             return 1
-
+        if not opts.quiet:
+            node.programmer.out = None
         ret = node.flash(firmware_path, opts.bin, opts.offset)
 
     _print_result(ret, _FLASH, node.TYPE)

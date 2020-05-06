@@ -44,7 +44,17 @@ class TestsProgrammer(unittest.TestCase):
             ret = flash()
             self.assertEqual(ret, 0)
 
+        args += ['-q']
+        with mock.patch('sys.argv', args):
+            ret = flash()
+            self.assertEqual(ret, 0)
+
         args2 = ['programmer.py']
+        with mock.patch('sys.argv', args2):
+            ret = reset()
+            self.assertEqual(ret, 0)
+
+        args2 += ['-q']
         with mock.patch('sys.argv', args2):
             ret = reset()
             self.assertEqual(ret, 0)
