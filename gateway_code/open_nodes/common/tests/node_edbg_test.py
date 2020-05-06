@@ -77,6 +77,9 @@ class TestNodeEdbgBase(unittest.TestCase):
         # debug stop
         assert self.node.debug_stop() == 0
 
+        # programmer instance
+        assert self.node.programmer == self.node.edbg
+
     @patch('gateway_code.common.wait_tty')
     @patch('gateway_code.common.wait_no_tty')
     def test_edbg_node_flash(self, no_tty, tty):

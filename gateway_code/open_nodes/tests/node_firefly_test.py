@@ -56,6 +56,9 @@ class TestNodeFirefly(unittest.TestCase):
         # Node status always returns 0
         assert NodeFirefly.status() == 0
 
+        # programmer instance
+        assert self.node.programmer == self.node.cc2538
+
     @patch('gateway_code.common.wait_no_tty')
     def test_setup(self, wait_no_tty, wait_tty):
         """Test setup function of a firefly node."""

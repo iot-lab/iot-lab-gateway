@@ -78,6 +78,9 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         # debug stop
         assert self.node.debug_stop() == 0
 
+        # programmer instance
+        assert self.node.programmer == self.node.openocd
+
     @patch('serial.Serial')
     @patch('gateway_code.common.wait_tty')
     @patch('gateway_code.common.wait_no_tty')
