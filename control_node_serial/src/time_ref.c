@@ -22,7 +22,21 @@
 #include "time_ref.h"
 
 struct timeval set_time_ref;
+struct timeval time_sync_ref;
 
+
+// calculates addition of positive arguments
+int timeval_add(struct timeval *result, struct timeval *a, struct timeval *b)
+{
+    result->tv_sec = a->tv_sec + b->tv_sec;
+    result->tv_usec = a->tv_usec + b->tv_usec;
+    if (result->tv_usec >= 1000000)
+    {
+        result->tv_sec++;
+        result->tv_usec -= 1000000;
+    }
+    return 0;
+}
 
 /* http://www.gnu.org/software/libc/manual/html_node/Elapsed-Time.html */
 int timeval_substract(struct timeval *result, struct timeval *x,

@@ -126,6 +126,7 @@ struct dict_entry commands_d[] = {
     {"stop",            OPEN_NODE_STOP},
     {"set_time",        SET_TIME},
     {"set_node_id",     SET_NODE_ID},
+    {"time_sync",       TIME_SYNC},
 
     {"green_led_on",    GREEN_LED_ON},
     {"green_led_blink", GREEN_LED_BLINK},
@@ -199,6 +200,18 @@ static int cmd_set_time(char *cmd_str, struct command_buffer *cmd_buff,
     gettimeofday(&set_time_ref, NULL);
     append_data(cmd_buff, &set_time_ref.tv_sec,  sizeof(uint32_t));
     append_data(cmd_buff, &set_time_ref.tv_usec, sizeof(uint32_t));
+    return 0;
+}
+
+static int cmd_time_sync(char *cmd_str, struct command_buffer *cmd_buff,
+        struct command_description *command)
+{
+    /* cmd_str == "%s" */
+    (void)cmd_str;
+    (void)command;
+    (void)cmd_buff;
+
+    gettimeofday(&time_sync_ref, NULL);
     return 0;
 }
 
@@ -413,6 +426,7 @@ struct command_description commands[] = {
     {"config_radio_stop",                0, (cmd_fct_t)cmd_no_args},
 
     {"set_time",                         0, (cmd_fct_t)cmd_set_time},
+    {"time_sync",                        0, (cmd_fct_t)cmd_time_sync},
     {"set_node_id %8s %i",               2, (cmd_fct_t)cmd_set_node_id},
     {"green_led_on",                     0, (cmd_fct_t)cmd_no_args},
     {"green_led_blink",                  0, (cmd_fct_t)cmd_no_args},
