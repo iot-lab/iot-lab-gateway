@@ -46,7 +46,7 @@ integration-test: setup-cfg-dir
 		-e LOCAL_USER_ID=`id -u $(USER)` \
 		-e IOTLAB_GATEWAY_CFG_DIR=/shared/cfg_dir \
 		--privileged \
-		$(DOCKER_IMAGE_TEST) tox -e test $(POSARGS)
+		$(DOCKER_IMAGE_TEST) tox -e tests $(POSARGS)
 
 GW_USER = test
 EXPERIMENT = 123
@@ -79,7 +79,7 @@ local-test:
 
 local-integration-test: setup-cfg-dir
 	IOTLAB_GATEWAY_CFG_DIR=/tmp/cfg_dir
-	tox -e test
+	tox -e tests
 
 local-run: setup-cfg-dir
 	IOTLAB_GATEWAY_CFG_DIR=/tmp/cfg_dir
