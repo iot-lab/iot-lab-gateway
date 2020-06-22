@@ -160,7 +160,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
         self.log_error.check(
             ('gateway_code', 'ERROR',
-             'Control node answer queue full: %r' % ['start', 'ACK']))
+             'Control node answer queue full: {}'.format(['start', 'ACK'])))
 
 # _cn_interface_args
 
