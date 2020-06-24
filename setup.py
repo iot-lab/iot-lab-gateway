@@ -40,7 +40,7 @@ Pylint and pep8 checker:
     python setup.py pep8
 """
 
-from setuptools import setup, Command, find_packages
+from setuptools import setup, Command, Extension, find_packages
 from setuptools.command.build_ext import build_ext
 from distutils.command.install import install
 
@@ -71,6 +71,10 @@ def get_version(package):
 
 
 SCRIPTS = glob('bin/scripts/*')
+if sys.version_info[0] < 3:
+    # Python 3 cannot install binaries via the script parameter
+    # TODO: move control_node_serial in its own project
+    SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
 INSTALL_REQUIRES += ['pyelftools']
@@ -178,8 +182,6 @@ class Release(install):
 
 PACKAGE_DATA = {
     'static': ['static/*'],
-    'control_node_serial_interface':
-        ['control_node_serial/control_node_serial_interface']
 }
 
 setup(name=PACKAGE,
@@ -195,6 +197,7 @@ setup(name=PACKAGE,
       scripts=SCRIPTS,
       include_package_data=True,
       package_data=PACKAGE_DATA,
+      ext_modules=[Extension('control_node_serial_interface', [])],
 
       cmdclass={
           'build_ext': BuildExt,
