@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:19.10
 MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
 
 # This file is a part of IoT-LAB gateway_code
