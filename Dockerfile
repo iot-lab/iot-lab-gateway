@@ -84,7 +84,7 @@ RUN git clone https://github.com/ntfreak/openocd openocd10 && \
     cd openocd10 && \
     git checkout v0.10.0 && \
     ./bootstrap && \
-    ./configure --enable-cmsis-dap --enable-hidapi-libusb && \
+    ./configure --enable-cmsis-dap --enable-hidapi-libusb --disable-werror && \
     make && \
     make install && \
     cd .. && rm -rf openocd10
