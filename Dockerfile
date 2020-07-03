@@ -92,7 +92,7 @@ RUN git clone https://github.com/ntfreak/openocd openocd10 && \
 #openocd dev
 RUN git clone https://github.com/ntfreak/openocd openocd-dev && \
     cd openocd-dev && \
-    git checkout 05e0d633bad9e8b0bdfaf16fc76ab1f9d9419d8b && \
+    git checkout 7c88e76a76588fa0e3ab645adfc46e8baff6a3e4 && \
     ./bootstrap && \
     ./configure --prefix=/opt/openocd-dev --enable-cmsis-dap --enable-hidapi-libusb && \
     make && \
