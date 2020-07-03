@@ -20,19 +20,20 @@ MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-#MANDATORY
+ENV DEBIAN_FRONTEND noninteractive
+
+ENV LC_ALL C.UTF-8
+ENV LANG C.UTF-8
+
 RUN apt-get update && \
     apt-get install -y git \
+        # MANDATORY
         python-dev \
         python-setuptools \
         python3-dev \
         python3-setuptools \
-        socat && \
-    apt-get clean
-
-#openocd
-RUN apt-get update && \
-    apt-get install -y \
+        socat \
+        # openocd
         build-essential \
         libftdi-dev \
         libhidapi-dev \
@@ -44,29 +45,29 @@ RUN apt-get update && \
         libxml2-dev \
         ruby \
         libtool \
-        pkg-config && \
-    apt-get clean
-
-#AVR (arduino like)
-RUN apt-get update && \
-    apt-get install -y \
-        avrdude && \
-    apt-get clean
-
-#To do http requests (to upload an experiment for instance)
-RUN apt-get update && \
-    apt-get install -y \
-        curl && \
+        pkg-config \
+        # To do http requests (to upload an experiment for instance)
+        curl \
+        # liboml2 install
+        autoconf \
+        automake \
+        libtool \
+        gnulib \
+        libpopt-dev \
+        libxml2 \
+        libsqlite3-dev \
+        pkg-config \
+        libxml2-utils \
+        # cc2538 for firefly
+        python-pip \
+        binutils \
+        # AVR (arduino like)
+        avrdude \
+        && \
     apt-get clean
 
 #liboml2 install
 RUN mkdir /var/www && chown www-data:www-data /var/www
-
-RUN apt-get update && \
-    apt-get install -y \
-        autoconf automake libtool gnulib libpopt-dev \
-        libxml2 libsqlite3-dev pkg-config libxml2-utils && \
-    apt-get clean
 
 RUN git clone https://github.com/mytestbed/oml.git && \
     cd oml && \
@@ -118,8 +119,6 @@ RUN git clone https://github.com/iot-lab/iot-lab-ftdi-utils/  && \
 # cc2538 for firefly
 RUN git clone https://github.com/JelmerT/cc2538-bsl && \
     cp cc2538-bsl/cc2538-bsl.py /usr/bin/. && \
-    apt-get update && \
-    apt-get install -y python-pip binutils && \
     pip install intelhex
 
 WORKDIR /setup_dir
