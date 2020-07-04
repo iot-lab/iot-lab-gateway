@@ -29,6 +29,7 @@ class NodeNucleof070RB(NodeStLinkBase):
     """ Open node STM32 Nucleo F070RB St-Link based board implementation """
 
     TYPE = 'nucleo_f070rb'
+    ROM_START_ADDR = 0x08000000
     OPENOCD_CFG_FILE = static_path('iot-lab-nucleo-f070rb.cfg')
     FW_IDLE = static_path('nucleo-f070rb_idle.elf')
     FW_AUTOTEST = static_path('nucleo-f070rb_autotest.elf')
