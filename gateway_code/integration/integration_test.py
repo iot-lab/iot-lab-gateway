@@ -53,6 +53,8 @@ USER = 'harter'
 EXP_ID = 123
 EXP_START = '/exp/start/{exp_id}/{user}'.format(user=USER, exp_id=123)
 
+GDB_CMD = 'gdb' if os.uname()[4] == 'armv7l' else 'gdb-multiarch'
+
 APP_JSON = 'application/json'
 GATEWAY_LOGGER = logging.getLogger('gateway_code')
 
@@ -216,7 +218,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         firmware = abspath(board_class.FW_AUTOTEST)
         gdb_cmd = [
-            'gdb',
+            GDB_CMD,
             '-ex', 'set confirm off',
             '-ex', 'target remote localhost:3333',
             '-ex', 'monitor reset halt',
