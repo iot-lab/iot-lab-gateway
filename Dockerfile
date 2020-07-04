@@ -33,6 +33,7 @@ RUN apt-get update && \
         python3-dev \
         python3-setuptools \
         socat \
+        gdb-multiarch \
         # openocd
         build-essential \
         libftdi-dev \
