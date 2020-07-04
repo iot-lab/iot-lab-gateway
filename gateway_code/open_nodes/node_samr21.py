@@ -30,7 +30,6 @@ class NodeSamr21(NodeOpenOCDBase):
 
     TYPE = 'samr21'
     OPENOCD_CFG_FILE = static_path('iot-lab-samr21.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('samr21_idle.elf')
     FW_AUTOTEST = static_path('samr21_autotest.elf')
     TTY = '/dev/iotlab/ttyON_CMSIS_DAP'

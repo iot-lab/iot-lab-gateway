@@ -42,6 +42,5 @@ class NodeMicrobit(NodeOpenOCDBase):
     BAUDRATE = 115200
     OPENOCD_CLASS = OpenOCDCustomReset
     OPENOCD_CFG_FILE = static_path('iot-lab-microbit.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('microbit_idle.elf')
     FW_AUTOTEST = static_path('microbit_autotest.elf')

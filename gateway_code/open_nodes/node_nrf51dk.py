@@ -30,7 +30,6 @@ class NodeNrf51Dk(NodeOpenOCDBase):
 
     TYPE = 'nrf51dk'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf51dk.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('nrf51dk_idle.elf')
     FW_AUTOTEST = static_path('nrf51dk_autotest.elf')
     TTY = '/dev/iotlab/ttyON_CMSIS-DAP'

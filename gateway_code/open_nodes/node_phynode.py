@@ -29,7 +29,6 @@ class NodePhynode(NodeOpenOCDBase):
     """ Open node phyNode implementation """
 
     TYPE = 'phynode'
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab-phynode.cfg')
     FW_IDLE = static_path('phynode_idle.elf')
     FW_AUTOTEST = static_path('phynode_autotest.elf')

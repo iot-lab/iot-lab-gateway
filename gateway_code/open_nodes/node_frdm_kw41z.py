@@ -30,7 +30,6 @@ class NodeFrdmKw41z(NodeJLinkBase):
 
     TYPE = 'frdm_kw41z'
     OPENOCD_CFG_FILE = static_path('iot-lab-frdm-kw41z.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('frdm-kw41z_idle.elf')
     FW_AUTOTEST = static_path('frdm-kw41z_autotest.elf')
     DIRTY_SERIAL = False

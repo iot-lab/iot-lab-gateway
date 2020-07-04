@@ -31,6 +31,5 @@ class NodeStIotnode(NodeStLinkBase):
     TYPE = 'st_iotnode'
     ROM_START_ADDR = 0x08000000
     OPENOCD_CFG_FILE = static_path('iot-lab-st-iotnode.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('st-iotnode_idle.elf')
     FW_AUTOTEST = static_path('st-iotnode_autotest.elf')
