@@ -55,6 +55,8 @@ class NodeLeonardo(OpenNodeBase):
         'baudrate': 9600,
         'model': 'atmega32u4',
         'programmer': 'avr109',
+        'hex_prefix': '',
+        'flash_opts': '-D',
     }
 
     AUTOTEST_AVAILABLE = [

@@ -53,6 +53,8 @@ class NodeZigduino(OpenNodeBase):
         'baudrate': 57600,
         'model': 'atmega128rfa1',
         'programmer': 'arduino',
+        'hex_prefix': '',
+        'flash_opts': '-D',
     }
 
     AUTOTEST_AVAILABLE = [
