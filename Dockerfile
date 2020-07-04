@@ -63,6 +63,7 @@ RUN apt-get update && \
         binutils \
         # AVR (arduino like)
         avrdude \
+        avarice \
         && \
     apt-get clean
 
