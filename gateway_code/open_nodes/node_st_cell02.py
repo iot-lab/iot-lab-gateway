@@ -30,6 +30,5 @@ class NodeStCell02(NodeStLinkBase):
 
     TYPE = 'st_cell02'
     OPENOCD_CFG_FILE = static_path('iot-lab-st-cell02.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('st-cell02_idle.elf')
     FW_AUTOTEST = static_path('st-cell02_autotest.elf')

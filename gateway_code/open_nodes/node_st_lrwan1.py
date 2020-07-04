@@ -31,6 +31,5 @@ class NodeStLrwan1(NodeStLinkBase):
     TYPE = 'st_lrwan1'
     ROM_START_ADDR = 0x08000000
     OPENOCD_CFG_FILE = static_path('iot-lab-st-lrwan1.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('st-lrwan1_idle.elf')
     FW_AUTOTEST = static_path('st-lrwan1_autotest.elf')

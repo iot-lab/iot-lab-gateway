@@ -32,6 +32,5 @@ class NodeArduinoZero(NodeOpenOCDBase):
     TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
     BAUDRATE = 115200
     OPENOCD_CFG_FILE = static_path('iot-lab-arduino-zero.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('arduino-zero_idle.elf')
     FW_AUTOTEST = static_path('arduino-zero_autotest.elf')

@@ -29,7 +29,6 @@ class NodeNrf52840Mdk(NodeOpenOCDBase):
     """ Open node NRF52840-MDK implementation """
 
     TYPE = 'nrf52840mdk'
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf528xxmdk.cfg')
     FW_IDLE = static_path('nrf52840mdk_idle.elf')
     FW_AUTOTEST = static_path('nrf52840mdk_autotest.elf')
