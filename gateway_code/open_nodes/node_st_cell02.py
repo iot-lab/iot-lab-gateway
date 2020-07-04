@@ -29,6 +29,7 @@ class NodeStCell02(NodeStLinkBase):
     """ Open node STM32 CELL02 (NB-IoT) implementation """
 
     TYPE = 'st_cell02'
+    ROM_START_ADDR = 0x08000000
     OPENOCD_CFG_FILE = static_path('iot-lab-st-cell02.cfg')
     FW_IDLE = static_path('st-cell02_idle.elf')
     FW_AUTOTEST = static_path('st-cell02_autotest.elf')
