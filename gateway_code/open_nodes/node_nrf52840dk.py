@@ -30,5 +30,6 @@ class NodeNrf52840Dk(NodeJLinkBase):
 
     TYPE = 'nrf52840dk'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf52xxxdk.cfg')
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('nrf52840dk_idle.elf')
     FW_AUTOTEST = static_path('nrf52840dk_autotest.elf')

@@ -29,8 +29,8 @@ class NodeNrf52832Mdk(NodeOpenOCDBase):
     """ Open node NRF52832-MDK implementation """
 
     TYPE = 'nrf52832mdk'
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf528xxmdk.cfg')
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('nrf52832mdk_idle.elf')
     FW_AUTOTEST = static_path('nrf52832mdk_autotest.elf')
     TTY = '/dev/iotlab/ttyON_CMSIS-DAP'
