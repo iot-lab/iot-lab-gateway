@@ -22,13 +22,16 @@
 """ Open Node Arduino Zero experiment implementation """
 
 from gateway_code.config import static_path
-from gateway_code.open_nodes.common.node_edbg import NodeEdbgBase
+from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
-class NodeArduinoZero(NodeEdbgBase):
+class NodeArduinoZero(NodeOpenOCDBase):
     """ Open node Arduino Zero implementation """
 
     TYPE = 'arduino_zero'
+    TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
+    BAUDRATE = 115200
     OPENOCD_CFG_FILE = static_path('iot-lab-arduino-zero.cfg')
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('arduino-zero_idle.elf')
     FW_AUTOTEST = static_path('arduino-zero_autotest.elf')
