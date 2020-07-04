@@ -29,8 +29,8 @@ class NodeDwm1001(NodeOpenOCDBase):
     """ Open node DWM1001 implementation """
 
     TYPE = 'dwm1001'
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf52xxxdk.cfg')
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('dwm1001_idle.elf')
     FW_AUTOTEST = static_path('dwm1001_autotest.elf')
     TTY = '/dev/iotlab/ttyON_DWM1001'

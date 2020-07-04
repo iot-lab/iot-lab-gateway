@@ -30,5 +30,6 @@ class NodeNucleof070RB(NodeStLinkBase):
 
     TYPE = 'nucleo_f070rb'
     OPENOCD_CFG_FILE = static_path('iot-lab-nucleo-f070rb.cfg')
+    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('nucleo-f070rb_idle.elf')
     FW_AUTOTEST = static_path('nucleo-f070rb_autotest.elf')
