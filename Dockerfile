@@ -34,6 +34,7 @@ RUN apt-get update && \
         python3-setuptools \
         socat \
         gdb-multiarch \
+        unzip \
         # openocd
         build-essential \
         libftdi-dev \
@@ -100,6 +101,17 @@ RUN git clone https://github.com/ntfreak/openocd openocd-dev && \
     make && \
     make install && \
     cd .. && rm -rf openocd-dev
+
+#openocd 0.10.0 with TI's code
+RUN git clone git://git.ti.com/sdo-emu/openocd.git && \
+    cd openocd/openocd && \
+    git checkout 4765fd4c864c47d48754350c196bd5c5ce9c5ed9 && \
+    autoreconf -f -i && \
+    ./configure --prefix=/opt/openocd-ti --disable-werror && \
+    make && \
+    make install && \
+    cd ../.. && rm -rf openocd
+
 
 # edbg
 RUN git clone https://github.com/ataradov/edbg && \
