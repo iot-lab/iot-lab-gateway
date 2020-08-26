@@ -38,11 +38,15 @@ LOGGER = logging.getLogger('gateway_code')
 
 class AvrDude(object):
     """ Debugger class, implemented as a global variable storage """
-    _ARVDUDE_CONF_KEYS = {'tty', 'baudrate', 'model', 'programmer'}
+    _ARVDUDE_CONF_KEYS = {
+        'tty', 'baudrate', 'model', 'programmer', 'hex_prefix', 'flash_opts'
+    }
     DEVNULL = open(os.devnull, 'w')
 
-    AVRDUDE = 'avrdude -p {model} -P {tty} -c {programmer} -b {baudrate} {cmd}'
-    FLASH = ' -D -U {0}'
+    AVRDUDE_TTY_CONF = '-P {tty} -b {baudrate}'
+    AVRDUDE_PROG_CONF = '-p {model} -c {programmer}'
+    AVRDUDE = 'avrdude {prog_conf} {tty_conf} {cmd}'
+    FLASH = ' {flash_opts} -U {hex_prefix}{hex_path}'
 
     TIMEOUT = 100
 
@@ -57,17 +61,24 @@ class AvrDude(object):
         """ Flash firmware """
         try:
             hex_path = common.abspath(hex_file)
-            return self._call_cmd(self.FLASH.format(hex_path))
+            return self._call_cmd(self.FLASH.format(
+                hex_path=hex_path,
+                **self.conf
+            ))
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
+
+    @logger_call("AvrDude : reset")
+    def reset(self):
+        """Reset board: just call avrdude with an empty command."""
+        return self._call_cmd('')
 
     def _call_cmd(self, command_str):
         """ Create the subprocess """
         kwargs = self._avrdude_args(command_str)
         try:
-            return subprocess_timeout.call(timeout=self.timeout,
-                                           **kwargs)
+            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
         except subprocess_timeout.TimeoutExpired as exc:
             LOGGER.error("Openocd '%s' timeout: %s", command_str, exc)
             return 1
@@ -75,7 +86,15 @@ class AvrDude(object):
     def _avrdude_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
-        cmd = self.AVRDUDE.format(cmd=command_str, **self.conf)
+        if self.conf['tty'] is not None:
+            tty_conf = self.AVRDUDE_TTY_CONF.format(**self.conf)
+        else:
+            tty_conf = ''
+        prog_conf = self.AVRDUDE_PROG_CONF.format(**self.conf)
+
+        cmd = self.AVRDUDE.format(
+            cmd=command_str, tty_conf=tty_conf, prog_conf=prog_conf
+        )
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 

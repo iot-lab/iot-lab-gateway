@@ -36,6 +36,7 @@ import serial
 import mock
 
 from gateway_code.open_nodes.node_leonardo import NodeLeonardo
+from gateway_code.open_nodes.node_atmega256rfr2 import NodeAtmega256rfr2
 from .. import avrdude
 
 
@@ -51,6 +52,10 @@ class TestsMethods(unittest.TestCase):
         call_mock.return_value = 0
         ret = self.avr.flash(NodeLeonardo.FW_IDLE)
         self.assertEqual(0, ret)
+        assert 'atmega32u4' in call_mock.call_args.kwargs['args']
+        assert 'avr109' in call_mock.call_args.kwargs['args']
+        assert NodeLeonardo.TTY_PROG in call_mock.call_args.kwargs['args']
+        assert '-D' in call_mock.call_args.kwargs['args']
 
         call_mock.return_value = 42
         ret = self.avr.flash(NodeLeonardo.FW_IDLE)
@@ -145,3 +150,35 @@ class TestTriggerBootloader(unittest.TestCase):
         serial_mock.side_effect = OSError()
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog)
         self.assertNotEqual(0, ret)
+
+
+class TestsXplainedMethods(unittest.TestCase):
+    """Tests avrdude methods used with xplained programmer."""
+
+    def setUp(self):
+        self.avr = avrdude.AvrDude(NodeAtmega256rfr2.AVRDUDE_CONF)
+
+    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    def test_flash(self, call_mock):
+        """Test flash."""
+        call_mock.return_value = 0
+        ret = self.avr.flash(NodeAtmega256rfr2.FW_IDLE)
+        self.assertEqual(0, ret)
+        assert 'm256rfr2' in call_mock.call_args.kwargs['args']
+        assert 'xplainedpro' in call_mock.call_args.kwargs['args']
+        assert 'tty' not in call_mock.call_args.kwargs['args']
+        assert '-D' not in call_mock.call_args.kwargs['args']
+        assert call_mock.call_args.kwargs['args'][-1].startswith('flash:w:')
+
+        call_mock.return_value = 42
+        ret = self.avr.flash(NodeAtmega256rfr2.FW_IDLE)
+        self.assertEqual(42, ret)
+
+    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    def test_reset(self, call_mock):
+        call_mock.return_value = 0
+        ret = self.avr.reset()
+        self.assertEqual(0, ret)
+        assert 'm256rfr2' in call_mock.call_args.kwargs['args']
+        assert 'xplainedpro' in call_mock.call_args.kwargs['args']
+        assert NodeAtmega256rfr2.TTY not in call_mock.call_args.kwargs['args']
