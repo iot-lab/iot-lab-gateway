@@ -44,7 +44,7 @@ class OpenOCD(object):
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-    OPENOCD = ('{openocd_path} --debug=0'
+    OPENOCD = ('{openocd_path} --debug={debug_level}'
                ' {config}'
                ' -c "init"'
                ' -c "targets"'
@@ -155,7 +155,9 @@ class OpenOCD(object):
     def _openocd_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
+        debug_level = 0 if self.out is not None else 2
         cmd = self.OPENOCD.format(openocd_path=self.openocd_path,
+                                  debug_level=debug_level,
                                   config=self.config, cmd=command_str)
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}

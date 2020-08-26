@@ -218,6 +218,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         gdb_cmd = [
             'gdb',
             '-ex', 'set confirm off',
+            '-ex', 'set remotetimeout 5000',
             '-ex', 'target remote localhost:3333',
             '-ex', 'monitor reset halt',
             '-ex', 'monitor flash write_image erase %s' % firmware,

@@ -1,0 +1,3 @@
+# open nodes TTY
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1051", ENV{ID_USB_INTERFACE_NUM}=="00", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_HIFIVE1B"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="1366", ATTRS{idProduct}=="1051", MODE="0664", GROUP="dialout"
