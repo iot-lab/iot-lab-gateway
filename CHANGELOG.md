@@ -1,6 +1,26 @@
 Changelog
 =========
 
+Version 2.10.0
+--------------
+
++ General
+  - Add Python 3 support
+
++ Open nodes
+  - New Decawave DWM1001 open node (dwm1001)
+  - New ST P-NUCLEO-WB55 (nucleo-wb55)
+  - New Microchip SAMR34 Xplained Pro (samr34)
+  - Use openocd-dev by default
+  - samd21/samr21/arduino-zero: drop edbg and use openocd instead
+  - Bind Openocd server to any address
+
++ Utils
+  - programmer is verbose by default
+
++ CI
+  - Use prebuilt Docker image from DockerHub instead of building it in Travis
+
 Version 2.9.0
 -------------
 
