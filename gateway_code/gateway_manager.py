@@ -55,7 +55,7 @@ class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
         self.rlock = RLock()
 
         # Nodes instance
-        self.open_node = self.board_cfg.board_class()
+        self.open_node = self.board_cfg.board_class(ip_listen=self.board_cfg.ip_address)
         self.control_node = self.board_cfg.cn_class(
             self.board_cfg.node_id, self.board_cfg.default_profile)
         self._nodes = {'control': self.control_node, 'open': self.open_node}

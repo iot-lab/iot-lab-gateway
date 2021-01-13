@@ -46,6 +46,9 @@ class BoardConfig(object):  # pylint:disable=too-few-public-methods
 
         self.robot_type = config.read_config('robot', None)
         self.node_id = config.read_config('hostname')
+        self.ip_alias = config.read_config('ip_alias')
+        self.ip_address = self.ip_alias.split("/")[0]
+        self.netmask = self.ip_alias.split("/")[1]
 
         self.profile_from_dict = functools.partial(profile.Profile.from_dict,
                                                    self.board_class)

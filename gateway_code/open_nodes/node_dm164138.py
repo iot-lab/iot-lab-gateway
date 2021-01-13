@@ -36,8 +36,8 @@ class NodeDm164138(NodeNoBase):
     TTY = '/dev/iotlab/ttyON_DM164138'
     BAUDRATE = 57600
 
-    def __init__(self):
-        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
+    def __init__(self, ip_listen):
+        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE, ip_listen=ip_listen)
 
     @logger_call("Setup of RN2483 node")
     def setup(self, firmware_path=None):

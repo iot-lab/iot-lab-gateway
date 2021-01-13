@@ -41,14 +41,14 @@ class SerialRedirection(ExternalProcess):
     want
     """
     SOCAT = ('socat -d'
-             ' TCP4-LISTEN:20000,reuseaddr'
+             ' TCP4-LISTEN:20000,reuseaddr,bind={ip_listen}'
              ' open:{tty},b{baud},{serial_opts}')
     NAME = "serial redirection"
 
-    def __init__(self, tty, baudrate, serial_opts=('echo=0', 'raw')):
+    def __init__(self, tty, baudrate, serial_opts=('echo=0', 'raw'), ip_listen="0.0.0.0"):
         self.tty = tty
         self.process_cmd = shlex.split(
-            self.SOCAT.format(tty=tty, baud=baudrate,
+            self.SOCAT.format(ip_listen=ip_listen, tty=tty, baud=baudrate,
                               serial_opts=','.join(serial_opts)))
 
         super(SerialRedirection, self).__init__()
