@@ -1,0 +1,10 @@
+# Strataggem stghw00025_b1 open nodes TTY and JTAG
+SUBSYSTEMS=="usb", ENV{.LOCAL_ifNum}="$attr{bInterfaceNumber}"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SBPT1TJG", ENV{.LOCAL_ifNum}=="00",  SYMLINK+="iotlab/jtagON_XLBEE1", GROUP="dialout", MODE="0660"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SBPT1TJG", ENV{.LOCAL_ifNum}=="01",  SYMLINK+="iotlab/jtagON_XLBEE2", GROUP="dialout", MODE="0660"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SBPT1TJG", ENV{.LOCAL_ifNum}=="02",  SYMLINK+="iotlab/ttyON_XLBEE1", GROUP="dialout", MODE="0660"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SBPT1TJG", ENV{.LOCAL_ifNum}=="03",  SYMLINK+="iotlab/ttyON_XLBEE2", GROUP="dialout", MODE="0660"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SAPT1TJG", ENV{.LOCAL_ifNum}=="00",  SYMLINK+="iotlab/jtagON_XLBEE3", GROUP="dialout", MODE="0660"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SAPT1TJG", ENV{.LOCAL_ifNum}=="01",  SYMLINK+="iotlab/jtagON_STGHW00025", GROUP="dialout", MODE="0660"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SAPT1TJG", ENV{.LOCAL_ifNum}=="02",  SYMLINK+="iotlab/ttyON_XLBEE3", GROUP="dialout", MODE="0660"
+SUBSYSTEMS=="usb", KERNEL=="ttyUSB*", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6011", ATTRS{serial}=="SAPT1TJG", ENV{.LOCAL_ifNum}=="03",  SYMLINK+="iotlab/ttyON_STGHW00025", GROUP="dialout", MODE="0660"

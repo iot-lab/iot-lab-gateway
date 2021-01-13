@@ -51,8 +51,8 @@ class NodeOpenOCDBase(OpenNodeBase):
 
     ALIM = '5V'
 
-    def __init__(self):
-        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
+    def __init__(self, ip_listen):
+        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE, ip_listen=ip_listen)
         self.openocd = self.OPENOCD_CLASS.from_node(self)
 
     @property
