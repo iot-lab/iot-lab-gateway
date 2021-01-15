@@ -122,6 +122,12 @@ RUN git clone https://github.com/JelmerT/cc2538-bsl && \
     cp cc2538-bsl/cc2538-bsl.py /usr/bin/. && \
     pip install intelhex
 
+# control_node_serial
+RUN git clone https://github.com/iot-lab/control_node_serial && \
+    make -C control_node_serial && \
+    cp control_node_serial/control_node_serial_interface /usr/bin/. && \
+    rm -rf control_node_serial
+
 WORKDIR /setup_dir
 COPY . /setup_dir/
 RUN python setup.py install
