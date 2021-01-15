@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - '*'
+
+jobs:
+  python-test:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+      fail-fast: false
+      matrix:
+        python-version: [2.7, 3.5, 3.6, 3.7, 3.8]
+    steps:
+    - uses: actions/checkout@master
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install tox
+    - name: Test with tox
+      run: |
+        tox -e py$(echo ${{ matrix.python-version }} | tr -d .)-tests
+    - name: Check style
+      if: ${{ matrix.python-version == 3.8 }}
+      run: |
+        tox -e py$(echo ${{ matrix.python-version }} | tr -d .)-lint
+        tox -e copying
+    - name: Upload coverage to Codecov
+      if: ${{ (matrix.python-version == 3.8 || matrix.python-version == 2.7) }}
+      uses: codecov/codecov-action@v1
+      with:
+        fail_ci_if_error: true
+  docker-test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Test within Docker image
+      run: make test
