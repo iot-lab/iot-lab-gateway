@@ -32,14 +32,14 @@ setup-cfg-dir:
 	echo $(BOARD)-00 > /tmp/cfg_dir/hostname
 
 test:
-	docker run -ti --rm \
+	docker run --rm \
 		-v $(PWD):/shared \
 		-e LOCAL_USER_ID=`id -u $(USER)` \
 		-e TOXENV=$(TOXENV) \
 		$(DOCKER_IMAGE_TEST) tox $(POSARGS)
 
 integration-test: setup-cfg-dir
-	docker run -ti --rm \
+	docker run --rm \
 		-v $(PWD):/shared \
 		-v /dev/iotlab:/dev/iotlab \
 		-v /tmp/cfg_dir:/shared/cfg_dir \
