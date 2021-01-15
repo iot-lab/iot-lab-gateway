@@ -1,7 +1,8 @@
 IoT-LAB Gateway
 ===============
 
-[![Build Status](https://travis-ci.org/iot-lab/iot-lab-gateway.svg?branch=master)](https://travis-ci.org/iot-lab/iot-lab-gateway)
+
+[![Build Status](https://github.com/iot-lab/cli-tools/workflows/CI/badge.svg)](https://github.com/iot-lab/cli-tools/actions?query=workflow%3ACI+branch%3Amaster)
 [![codecov](https://codecov.io/gh/iot-lab/iot-lab-gateway/branch/master/graph/badge.svg)](https://codecov.io/gh/iot-lab/iot-lab-gateway)
 
 
