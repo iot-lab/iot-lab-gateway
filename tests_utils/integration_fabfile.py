@@ -17,11 +17,6 @@ EXCLUDE += ['obj', 'results']
 EXCLUDE += ['*.log', '*.out', './*.xml']
 EXCLUDE += ['iotlab']  # test user measures directory
 
-EXCLUDE += ['control_node_serial/obj']
-EXCLUDE += ['control_node_serial/tests/results/']
-EXCLUDE += ['control_node_serial/tests/obj/']
-EXCLUDE += ['control_node_serial/tests/bin/']
-
 SCRIPT_DIR = os.path.dirname((__file__))
 LOCAL = os.path.dirname(SCRIPT_DIR)
 REMOTE = "/tmp/iot-lab-gateway"
@@ -66,7 +61,6 @@ def _do_upload():
 def download():
     """ Download tests results """
     extra_opts = (" --exclude='.tox' --exclude='*egg*'"
-                  " --include='control_node_serial/'"
                   " --include='*/'"
                   " --include='*xml'"
                   " --exclude='*'")
@@ -139,17 +133,6 @@ def python_test(*attrs):
     return ret
 
 
-@runs_once
-@task
-def c_test():
-    """ Execute `control_node_serial` tests """
-    upload()
-    kill()
-    ret = tox_call('control_node_serial', 'www-data')
-    download()
-    return ret
-
-
 def tox_call(cmd, user, *attrs):
     """ Call given tox command as user with attributes """
     cmd = 'tox -e %s' % cmd
@@ -169,5 +152,4 @@ def all():
     # Runs_once combined with 'execute'
     # to only execute once per host but with c_test run at the end
     execute(python_test)
-    execute(c_test)
     execute(server_restart)
