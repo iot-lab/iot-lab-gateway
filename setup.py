@@ -40,8 +40,7 @@ Pylint and pep8 checker:
     python setup.py pep8
 """
 
-from setuptools import setup, Command, Extension, find_packages
-from setuptools.command.build_ext import build_ext
+from setuptools import setup, Command, find_packages
 from distutils.command.install import install
 
 import sys
@@ -71,10 +70,6 @@ def get_version(package):
 
 
 SCRIPTS = glob('bin/scripts/*')
-if sys.version_info[0] < 3:
-    # Python 3 cannot install binaries via the script parameter
-    # TODO: move control_node_serial in its own project
-    SCRIPTS += ['control_node_serial/control_node_serial_interface']
 
 INSTALL_REQUIRES = ['argparse', 'bottle', 'paste', 'pyserial']
 INSTALL_REQUIRES += ['pyelftools']
@@ -83,22 +78,6 @@ if sys.version_info[0] < 3:
     INSTALL_REQUIRES += ['subprocess32']
 
 UDEV_RULES = glob('bin/rules.d/*.rules')
-
-
-class BuildExt(build_ext):
-    """Overwrite build_ext to build control node serial."""
-
-    def run(self):
-        """Build control node serial interface."""
-        # Don't build for Pylint
-        if self.distribution.script_args == ['lint']:
-            return
-
-        args = ['make', '-C', 'control_node_serial', 'realclean', 'all']
-        try:
-            subprocess.check_call(args)
-        except subprocess.CalledProcessError as err:
-            exit(err.returncode)
 
 
 def simple_command(function):
@@ -197,10 +176,8 @@ setup(name=PACKAGE,
       scripts=SCRIPTS,
       include_package_data=True,
       package_data=PACKAGE_DATA,
-      ext_modules=[Extension('control_node_serial_interface', [])],
 
       cmdclass={
-          'build_ext': BuildExt,
           'release': Release,
           'post_install': simple_command(post_install),
           'udev_rules_install': simple_command(udev_rules),
