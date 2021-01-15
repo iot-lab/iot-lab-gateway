@@ -14,7 +14,7 @@ files_list=$(echo "${files_list}" | grep -v \
     -e '.md$' \
     -e '.elf' \
     -e '.hex' \
-    -e '.github/workflows/python-test.yml' \
+    -e '.github/workflows/continuous-integration.yml' \
     -e 'codecov.yml' \
     -e 'Dockerfile' \
     -e 'node.z1' \
