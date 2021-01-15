@@ -2,7 +2,7 @@ IoT-LAB Gateway
 ===============
 
 
-[![Build Status](https://github.com/iot-lab/iot-lab-gateway/workflows/CI/badge.svg)](https://github.com/iot-lab/iot-lab-gateway/actions?query=workflow%3ACI+branch%3Amaster)
+[![Build Status](https://github.com/iot-lab/iot-lab-gateway/workflows/python-test/badge.svg)](https://github.com/iot-lab/iot-lab-gateway/actions?query=workflow%3Apython-test+branch%3Amaster)
 [![codecov](https://codecov.io/gh/iot-lab/iot-lab-gateway/branch/master/graph/badge.svg)](https://codecov.io/gh/iot-lab/iot-lab-gateway)
 
 
