@@ -59,7 +59,7 @@ RUN apt-get update && \
         pkg-config \
         libxml2-utils \
         # cc2538 for firefly
-        python-pip \
+        python3-pip \
         binutils \
         # AVR (arduino like)
         avrdude \
@@ -120,7 +120,7 @@ RUN git clone https://github.com/iot-lab/iot-lab-ftdi-utils/  && \
 # cc2538 for firefly
 RUN git clone https://github.com/JelmerT/cc2538-bsl && \
     cp cc2538-bsl/cc2538-bsl.py /usr/bin/. && \
-    pip install intelhex
+    pip3 install intelhex
 
 # control_node_serial
 RUN git clone https://github.com/iot-lab/control_node_serial && \
@@ -130,7 +130,7 @@ RUN git clone https://github.com/iot-lab/control_node_serial && \
 
 WORKDIR /setup_dir
 COPY . /setup_dir/
-RUN python setup.py install
+RUN python3 setup.py install
 RUN rm -r /setup_dir
 
 #test with M3 config

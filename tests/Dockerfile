@@ -21,11 +21,11 @@ FROM fitiotlab/iot-lab-gateway:latest
 
 # Update
 RUN apt-get update && \
-    apt-get install -y sudo python-pip valgrind gdb
+    apt-get install -y sudo python3-pip valgrind gdb
 
 # Install app dependencies
-RUN sudo pip install --upgrade pip && \
-    sudo pip install tox codecov
+RUN python3 -m pip install --upgrade pip && \
+    python3 -m pip install tox codecov
 
 RUN apt-get -y --no-install-recommends install \
     ca-certificates \
