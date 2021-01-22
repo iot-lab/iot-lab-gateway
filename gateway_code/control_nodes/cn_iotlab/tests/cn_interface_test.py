@@ -27,10 +27,7 @@
 # pylint: disable=maybe-no-member
 # pylint: disable=too-many-public-methods
 
-try:
-    import Queue as queue
-except ImportError:
-    import queue
+import queue
 
 import unittest
 import logging
