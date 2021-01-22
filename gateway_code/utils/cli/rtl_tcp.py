@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
 # This file is a part of IoT-LAB gateway_code
@@ -25,8 +24,6 @@
 Usage: rtl_tcp <port> <frequency>
 
 """
-
-from __future__ import print_function
 
 import argparse
 import signal

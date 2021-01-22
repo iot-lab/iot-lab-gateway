@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
 # This file is a part of IoT-LAB gateway_code
@@ -21,8 +20,6 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 """ Programmer to flash/reset/debug nodes  """
-
-from __future__ import print_function
 
 import os
 import signal

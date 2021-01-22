@@ -27,13 +27,8 @@ import os
 import sys
 import time
 import errno
-
-try:
-    # pylint: disable=unused-import
-    import Queue as queue  # noqa
-except ImportError:
-    # pylint: disable=unused-import
-    import queue  # noqa
+# pylint: disable=unused-import
+import queue  # noqa
 
 # http://code.activestate.com/recipes/\
 #     577105-synchronization-decorator-for-class-methods/

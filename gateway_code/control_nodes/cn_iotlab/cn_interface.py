@@ -25,17 +25,13 @@
 Manage sending commands and receiving messages
 """
 
-from subprocess import PIPE
-
-try:
-    import Queue as queue
-except ImportError:
-    import queue
-
+import queue
 import threading
 import logging
-from tempfile import NamedTemporaryFile
 import atexit
+
+from subprocess import PIPE
+from tempfile import NamedTemporaryFile
 
 from gateway_code import common
 from gateway_code.utils import subprocess_timeout
