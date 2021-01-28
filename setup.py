@@ -1,4 +1,4 @@
-#! /usr/share/env python
+#! /usr/share/env python3
 # -*- coding:utf-8 -*-
 
 # This file is a part of IoT-LAB gateway_code

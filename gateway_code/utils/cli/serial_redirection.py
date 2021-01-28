@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
 # This file is a part of IoT-LAB gateway_code
@@ -21,8 +20,6 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 """ CLI client for serial_redirection """
-
-from __future__ import print_function
 
 import signal
 import gateway_code.board_config as board_config

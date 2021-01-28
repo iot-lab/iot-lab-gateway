@@ -4,7 +4,7 @@ setuptools-lint
 pylint
 flake8
 nosexcover
-mock
+mock==3.0.5
 WebTest
 testfixtures
 codecov>=1.4.0

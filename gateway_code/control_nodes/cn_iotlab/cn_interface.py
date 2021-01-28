@@ -25,20 +25,20 @@
 Manage sending commands and receiving messages
 """
 
-from subprocess import PIPE
-
-try:
-    import Queue as queue
-except ImportError:
-    import queue
-
+import queue
+import sys
 import threading
 import logging
-from tempfile import NamedTemporaryFile
 import atexit
+
+from subprocess import PIPE
+from tempfile import NamedTemporaryFile
 
 from gateway_code import common
 from gateway_code.utils import subprocess_timeout
+
+# There are encoding issues with Python 3.5
+PY35 = sys.version_info.major == 3 and sys.version_info.minor == 5
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -124,7 +124,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
 
         # Save xml configuration in a temporary file
         cfg_file = NamedTemporaryFile(suffix='--oml.config')
-        cfg_file.write(oml_xml_config)
+        cfg_file.write(oml_xml_config.encode())
         cfg_file.flush()
 
         return cfg_file
@@ -217,10 +217,13 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         Reads and handle control node answers
         """
         while self.process.poll() is None:
-            line = self.process.stderr.readline()
+            if PY35:
+                line = self.process.stderr.readline().decode().strip()
+            else:
+                line = self.process.stderr.readline().strip()
             if line == '':
                 break
-            self._handle_answer(line.strip())
+            self._handle_answer(line)
         else:
             LOGGER.error('Control node serial reader thread ended prematurely')
             self._wait_ready.put(1)  # in case of failure at startup
@@ -237,8 +240,8 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
             # remove existing items (old not treated answers)
             common.empty_queue(self.msgs)
             try:
-                LOGGER.debug('control_node_cmd: %r', command_args)
-                self.process.stdin.write(command_str)
+                self.process.stdin.write(command_str.encode())
+                self.process.stdin.flush()
                 # wait for answer 1 second at max
                 answer_cn = self.msgs.get(block=True, timeout=1.0)
             except queue.Empty:
