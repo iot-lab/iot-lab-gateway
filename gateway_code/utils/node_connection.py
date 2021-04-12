@@ -94,11 +94,6 @@ class OpenNodeConnection(object):
         LOGGER.debug("Command answer: %r", answer)
         return answer
 
-    def empty(self):
-        """ Empty out buffer """
-        while self._readline() is not None:
-            pass  # pragma: no cover
-
     def _writeline(self, line):
         """ Write a line """
         self.fd.write(line + '\n')

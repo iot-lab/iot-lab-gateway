@@ -87,8 +87,7 @@ class OpenLinuxConnection(object):
     def get_mac_addr(self):
         """ Get eth0 mac address """
         mac_addr_s = self.ssh_run(MAC_CMD)
-        mac_addr = mac_addr_s.strip()
-        return mac_addr
+        return mac_addr_s.strip()
 
     def flash(self):
         """ Flash firmware on open node """
@@ -105,7 +104,7 @@ class OpenLinuxConnection(object):
         LOGGER.debug(cmd)
 
         output = check_output(shlex.split(cmd), stderr=STDOUT)
-        return output
+        return output.decode()
 
     def scp(self, src, dest):
         """ SCP scr to Linux node at dest """
