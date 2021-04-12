@@ -40,7 +40,7 @@ def ftdi_check(node, ftdi_type, description=None):
     LOGGER.info("Check %r node ftdi", node)
 
     output = subprocess.check_output(['ftdi-devices-list', '-t', ftdi_type])
-    lines = (output.splitlines())
+    lines = (output.decode('latin-1').splitlines())
     dev_number = ftdi_parse_device_number(lines[2])
     found = (dev_number > 0) and \
             ((description is None) or

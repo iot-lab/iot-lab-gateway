@@ -54,7 +54,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
         self.readline_ret_vals = queue.Queue(0)
         self.popen.stderr.readline.side_effect = self.readline_ret_vals.get
-        self.readline_ret_vals.put('cn_serial_ready\n')
+        self.readline_ret_vals.put(b'cn_serial_ready\n')
 
         self.cn = cn_interface.ControlNodeSerial('tty')
         self.log_error = LogCapture('gateway_code', level=logging.WARNING)
@@ -65,7 +65,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.log_error.uninstall()
 
     def _terminate(self):
-        self.readline_ret_vals.put('')
+        self.readline_ret_vals.put(b'')
 
     def test_normal_start_stop(self):
         ret_start = self.cn.start()
@@ -94,7 +94,7 @@ class TestControlNodeSerial(unittest.TestCase):
     def test_stop_with_cn_interface_allready_stopped(self):
 
         # Simulate cn_interface stopped
-        self.readline_ret_vals.put('')
+        self.readline_ret_vals.put(b'')
         self.popen.stdin.write.side_effect = IOError()
         self.popen.terminate.side_effect = OSError()
 
@@ -133,7 +133,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def test_send_command(self):
         self.popen.stdin.write.side_effect = \
-            (lambda *x: self.readline_ret_vals.put('start ACK\n'))
+            (lambda *x: self.readline_ret_vals.put(b'start ACK\n'))
 
         self.cn.start()
         ret = self.cn.send_command(['start', 'DC'])
@@ -152,15 +152,15 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def test_answer_and_answer_with_queue_full(self):
         # get two answers without sending command
-        self.readline_ret_vals.put('set ACK\n')
-        self.readline_ret_vals.put('start ACK\n')
+        self.readline_ret_vals.put(b'set ACK\n')
+        self.readline_ret_vals.put(b'start ACK\n')
 
         self.cn.start()
         self.cn.stop()
 
         self.log_error.check(
             ('gateway_code', 'ERROR',
-             'Control node answer queue full: {}'.format(['start', 'ACK'])))
+             'Control node answer queue full: {}'.format([u'start', u'ACK'])))
 
 # _cn_interface_args
 
@@ -171,7 +171,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.assertNotIn('-d', args)
 
         # OML config
-        args = self.cn._cn_interface_args(b'<omlc></omlc>')
+        args = self.cn._cn_interface_args('<omlc></omlc>')
         self.assertIn('-c', args)
         self.assertNotIn('-d', args)
         self.cn._oml_cfg_file.close()
@@ -191,7 +191,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     def test_config_oml(self):
-        oml_xml_cfg = b'''<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>'''
+        oml_xml_cfg = '''<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>'''
         self.cn.start(oml_xml_cfg)
         self.assertIsNotNone(self.cn._oml_cfg_file)
 

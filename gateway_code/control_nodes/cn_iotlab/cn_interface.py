@@ -123,7 +123,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
             return None
 
         # Save xml configuration in a temporary file
-        cfg_file = NamedTemporaryFile(suffix='--oml.config')
+        cfg_file = NamedTemporaryFile(suffix='--oml.config', mode='w')
         cfg_file.write(oml_xml_config)
         cfg_file.flush()
 
@@ -217,7 +217,7 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
         Reads and handle control node answers
         """
         while self.process.poll() is None:
-            line = self.process.stderr.readline()
+            line = self.process.stderr.readline().decode()
             if line == '':
                 break
             self._handle_answer(line.strip())
@@ -238,7 +238,8 @@ class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
             common.empty_queue(self.msgs)
             try:
                 LOGGER.debug('control_node_cmd: %r', command_args)
-                self.process.stdin.write(command_str)
+                self.process.stdin.write(command_str.encode())
+                self.process.stdin.flush()
                 # wait for answer 1 second at max
                 answer_cn = self.msgs.get(block=True, timeout=1.0)
             except queue.Empty:

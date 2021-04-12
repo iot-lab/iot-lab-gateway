@@ -57,10 +57,10 @@ APP_JSON = 'application/json'
 GATEWAY_LOGGER = logging.getLogger('gateway_code')
 
 
-def file_tuple(fieldname, file_path):
+def file_tuple(fieldname, file_path, mode='rb'):
     """ Return upload_file tuple """
     filename = os.path.basename(file_path)
-    with open(file_path) as file_fd:
+    with open(file_path, mode=mode) as file_fd:
         content = file_fd.read()
 
     return (fieldname, filename, content)
@@ -305,7 +305,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
     def _update_profile(self, profilefilename=None, assert_ret=True):
         """Update profile with given 'profilename' file."""
         if profilefilename is not None:
-            profile = file_tuple('profile', CURRENT_DIR + profilefilename)[-1]
+            profile = file_tuple('profile', CURRENT_DIR + profilefilename,
+                                 mode='r')[-1]
         else:
             profile = ''
 
@@ -365,7 +366,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # check timestamps are sorted in correct order
         for values in measures.values():
             timestamps = [t_start] + values['timestamps'] + [time.time()]
-            _sorted = all([a < b for a, b in zip(timestamps, timestamps[1:])])
+            _sorted = all(a < b for a, b in zip(timestamps, timestamps[1:]))
             self.assertTrue(_sorted)
 
         # there should be no new measures since profile update

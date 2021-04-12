@@ -115,8 +115,8 @@ class AutoTestManager(object):
     @staticmethod
     def get_local_mac_addr():
         """ Get eth0 mac address """
-        mac_addr = check_output(MAC_CMD, stderr=STDOUT, shell=True).strip()
-        return mac_addr
+        mac_addr = check_output(MAC_CMD, stderr=STDOUT, shell=True)
+        return mac_addr.decode().strip()
 
     def setup_control_node(self):
         """ setup connection with control_node"""
@@ -210,8 +210,6 @@ class AutoTestManager(object):
             ret_val += self._setup_linux_open_node()
         else:
             ret_val += self._setup_open_node()
-
-        self.on_serial.empty()  # flush messages that can be bufferred
 
         if ret_val != 0:  # pragma: no cover
             raise FatalError('Setup Open Node failed')
@@ -600,7 +598,7 @@ class AutoTestManager(object):
         # ['ACK', sensor, '3.6E-2', '-1.56E-1', '1.0320001', unit]
 
         values = self._run_test(
-            10, [sensor], (lambda x: tuple([float(val) for val in x[2:5]])))
+            10, [sensor], (lambda x: tuple(float(val) for val in x[2:5])))
 
         test_ok = len(set(values)) > 1  # got different values
         return self._check(tst_ok(test_ok), sensor, values)
@@ -777,7 +775,7 @@ class AutoTestManager(object):
 
         # check that consumption is higher with each led than with no leds on
         led_0 = led_consumption.pop(0)
-        test_ok = all([led_0 < v for v in led_consumption])
+        test_ok = all(led_0 < v for v in led_consumption)
         ret_val += self._check(tst_ok(test_ok), 'leds_using_conso',
                                (led_0, led_consumption))
         return ret_val
@@ -818,13 +816,13 @@ def extract_measures(meas_list):
         if meas[1] == 'consumption_measure':
             # ['measures_debug', 'consumption_measure'
             #     '1378387028.906210', '0.257343', '3.216250', '0.080003']
-            values = tuple([float(v) for v in meas[3:6]])
+            values = tuple(float(v) for v in meas[3:6])
             meas_dict['consumption']['values'].append(values)
             meas_dict['consumption']['timestamps'].append(float(meas[2]))
         elif meas[1] == 'radio_measure':
             # ['measures_debug:', 'radio_measure',
             #      '1378466517.186216', '11', '-91']
-            values = tuple([int(v) for v in meas[3:5]])
+            values = tuple(int(v) for v in meas[3:5])
             meas_dict['radio']['values'].append(values)
             meas_dict['radio']['timestamps'].append(float(meas[2]))
         else:

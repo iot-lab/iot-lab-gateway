@@ -59,7 +59,7 @@ class TestSerialExpect(unittest.TestCase):
             return self.read_ret.pop(0)
         except IndexError:
             time.sleep(0.1)
-            return ''
+            return b''
 
     def test_run_init_and_del(self):
         self.serial_class.assert_called_with('TTY', 1234, timeout=0.1)
@@ -67,40 +67,41 @@ class TestSerialExpect(unittest.TestCase):
 
     def test_send(self):
         self.expect.send('a_command')
-        self.serial.write.assert_called_with('a_command\n')
+        self.serial.write.assert_called_with(b'a_command\n')
 
     def test_expect(self):
-        self.read_ret = ['abcde12345']
+        self.read_ret = [b'abcde12345']
         ret = self.expect.expect('ab.*45')
         self.assertEqual('abcde12345', ret)
 
     def test_expect_empty(self):
         self.read_ret = []
-        assert self.serial.read(1) == ''
+        assert self.serial.read(1) == b''
 
     def test_expect_timeout(self):
-        self.read_ret = ['wrong_text']
+        self.read_ret = [b'wrong_text']
         ret = self.expect.expect('ab.*45', 0.0)
         self.assertEqual('', ret)  # timeout
 
     def test_expect_on_multiple_reads(self):
-        self.read_ret = ['a234567890123456', '', 'b234567890123456', '123456c']
-        expected_ret = ''.join(self.read_ret)
+        self.read_ret = [b'a234567890123456', b'', b'b234567890123456',
+                         b'123456c']
+        expected_ret = (b''.join(self.read_ret)).decode()
 
         ret = self.expect.expect('a.*c')
         self.assertEqual(expected_ret, ret)
 
     def test_expect_list(self):
-        self.read_ret = ['aaaa']
+        self.read_ret = [b'aaaa']
         ret = self.expect.expect_list(['a', 'b'])
         self.assertEqual('a', ret)
 
-        self.read_ret = ['b']
+        self.read_ret = [b'b']
         ret = self.expect.expect_list(['a', 'b'])
         self.assertEqual('b', ret)
 
     def test_expect_read_new_line(self):
-        self.read_ret = ['ab\ncd', 'a00d']
+        self.read_ret = [b'ab\ncd', b'a00d']
         ret = self.expect.expect('a.*d')
         self.assertEqual('a00d', ret)
 
@@ -133,7 +134,7 @@ class TestSerialExpect(unittest.TestCase):
         logger.debug = mock.Mock(side_effet=ValueError(""))
         self.expect = serial_expect.SerialExpect('TTY', 1234, logger=logger)
 
-        self.read_ret = ['123\n456', '789\n', 'abcd']
+        self.read_ret = [b'123\n456', b'789\n', b'abcd']
         ret = self.expect.expect('a.*d')
         self.assertEqual(ret, 'abcd')
 
@@ -143,6 +144,6 @@ class TestSerialExpect(unittest.TestCase):
 
     def test_context_manager(self):
         with serial_expect.SerialExpect('TTY', 1234) as ser:
-            self.read_ret = ['123\n456', '789\n', 'abcd']
+            self.read_ret = [b'123\n456', b'789\n', b'abcd']
             ret = ser.expect('a.*d')
             self.assertEqual(ret, 'abcd')

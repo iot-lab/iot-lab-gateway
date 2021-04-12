@@ -49,7 +49,7 @@ class SerialExpect(object):
 
     def send(self, data):
         """ Write given data to serial with newline"""
-        self.fd.write(data + '\n')
+        self.fd.write((data + '\n').encode())
 
     def expect_list(self, pattern_list, timeout=float('+inf')):
         """ expect multiple patterns """
@@ -88,11 +88,11 @@ class SerialExpect(object):
 
             # add new bytes to remaining of last line
             # no multiline patterns
-            buff = buff.split('\n')[-1] + read_bytes
+            buff = buff.split('\n')[-1] + read_bytes.decode('latin-1')
 
             # print each line with timestamp on front
             if self.logger is not None:
-                print_buff += read_bytes
+                print_buff += read_bytes.decode('latin-1')
                 lines = print_buff.splitlines()
 
                 # keep last line in buffer if not newline terminated
