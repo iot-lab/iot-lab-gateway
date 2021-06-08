@@ -345,10 +345,10 @@ class GatewayRest(bottle.Bottle):
                     return 'Error: 503 Service Unavailable\n'
                 LOGGER.error('RestServer: %r', err)
                 raise err
-            except:
+            except Exception as exc:
                 # Catch all for debugging
                 traceback.print_exc()
-                raise
+                raise exc
         return _wrapped_f
 
 # Command line functions

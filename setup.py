@@ -40,14 +40,14 @@ Pylint and pep8 checker:
     python setup.py pep8
 """
 
-from setuptools import setup, Command, find_packages
-from distutils.command.install import install
-
 import sys
 import os
 import subprocess
 import shutil
 from glob import glob
+from distutils.command.install import install
+from setuptools import setup, Command, find_packages
+
 
 PACKAGE = 'gateway_code'
 # GPL compatible http://www.gnu.org/licenses/license-list.html#CeCILL
@@ -92,9 +92,11 @@ def simple_command(function):
         user_options = []
 
         def initialize_options(self):
+            """Initialize options."""
             pass
 
         def finalize_options(self):
+            """Finalize options."""
             pass
 
         def run(self):
