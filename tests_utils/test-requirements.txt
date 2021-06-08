@@ -1,7 +1,7 @@
 pytest>=3.0
 pytest-cov
-setuptools-lint
 pylint
+pycodestyle
 flake8
 nosexcover
 mock
