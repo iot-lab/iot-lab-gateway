@@ -45,7 +45,7 @@ class TestFtdiCheck(unittest.TestCase):
                 Description: ControlNode
                 Serial:
             All done, success!
-            ''')
+            ''').encode('latin-1')
         self.assertEqual(0, ftdi_check('control', '4232'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '4232'])
 
@@ -56,7 +56,7 @@ class TestFtdiCheck(unittest.TestCase):
             Listing FT2232 devices...
             No FTDI device found
             All done, success!
-            ''')
+            ''').encode('latin-1')
         self.assertEqual(1, ftdi_check('open', '2232'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '2232'])
 
@@ -76,7 +76,7 @@ class TestFtdiCheck(unittest.TestCase):
                 Description: M3
                 Serial:
             All done, success!
-            ''')
+            ''').encode('latin-1')
         self.assertEqual(0, ftdi_check('control', '4232'))
         self.assertEqual(0, ftdi_check('control', '4232', description='M3'))
         m_check_output.assert_called_with(['ftdi-devices-list', '-t', '4232'])
