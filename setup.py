@@ -63,10 +63,13 @@ def get_version(package):
 
     Inspired from pep8 setup.py
     """
+    version = '-1'
     with open(os.path.join(package, '__init__.py')) as init_fd:
         for line in init_fd:
             if line.startswith('__version__'):
-                return eval(line.split('=')[-1])  # pylint:disable=eval-used
+                version = eval(line.split('=')[-1])  # pylint:disable=eval-used
+                break
+    return version
 
 
 SCRIPTS = glob('bin/scripts/*')
