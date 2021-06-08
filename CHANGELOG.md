@@ -1,6 +1,17 @@
 Changelog
 =========
 
+Version 2.11.0
+--------------
+
++ Control Nodes
+  - Use external repository
+
++ Tests and CI
+  - Use GitHub actions instead of Travis
+  - Fix Python3 encoding support (autotest/integration)
+  - Remove Python3.5 version support
+
 Version 2.10.0
 --------------
 
