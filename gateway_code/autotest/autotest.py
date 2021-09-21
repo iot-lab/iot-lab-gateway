@@ -275,7 +275,7 @@ class AutoTestManager(object):
 
             # switch to DC and configure open node
             self._setup_open_node_connection()
-            time.sleep(1)
+            time.sleep(3)
             self.check_echo()
             self.check_get_time()
 
