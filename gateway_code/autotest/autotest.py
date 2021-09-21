@@ -99,6 +99,7 @@ class AutoTestManager(object):
         self.g_m = gateway_manager
         board_cfg = board_config.BoardConfig()
         self.on_class = board_cfg.board_class
+        self.on_board_type = board_cfg.board_type
         self.cn_class = board_cfg.cn_class
         self.linux_on_class = board_cfg.linux_on_class
 
@@ -275,7 +276,11 @@ class AutoTestManager(object):
 
             # switch to DC and configure open node
             self._setup_open_node_connection()
-            time.sleep(3)
+            # add more delay for slow boards
+            if self.on_board_type == 'zigduino':
+                time.sleep(3)
+            else:
+                time.sleep(1)
             self.check_echo()
             self.check_get_time()
 
