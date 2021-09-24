@@ -25,7 +25,7 @@
 from __future__ import print_function
 
 import signal
-import gateway_code.board_config as board_config
+from gateway_code import board_config
 from . import log_to_stderr
 
 

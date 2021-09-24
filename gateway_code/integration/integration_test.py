@@ -109,7 +109,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         board_class = self.board_cfg.board_class
 
         # The Linux node is really different from the others
-        if board_class.TYPE == 'a8' or board_class.TYPE == 'rpi3':
+        if board_class.TYPE in ('a8', 'rpi3'):
             self._run_simple_experiment_linux_node()
         else:
             self._run_simple_experiment_node(board_class)
@@ -397,8 +397,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
 
         # Max profile and firmware if possible
         files = []
-        if (self.board_cfg.board_class.TYPE != 'a8' and
-                self.board_cfg.board_class.TYPE != 'rpi3'):
+        if self.board_cfg.board_class.TYPE not in ('a8', 'rpi3'):
             files.append(file_tuple('firmware',
                                     self.board_cfg.board_class.FW_AUTOTEST))
 
@@ -432,8 +431,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         self.assertEqual(0, self.server.delete('/exp/stop').json['ret'])
 
         # Got no error during tests (use assertEquals for printing result)
-        if (self.board_cfg.board_class.TYPE != 'a8' and
-                self.board_cfg.board_class.TYPE != 'rpi3'):
+        if self.board_cfg.board_class.TYPE not in ('a8', 'rpi3'):
             # On Linux nodes, ignore error 'Boot failed in time:'
             self.log_error.check()
 
@@ -543,8 +541,7 @@ class TestIntegrationOther(ExperimentRunningMock):
 
     def test_invalid_tty_exp_linux_node(self):
         """ Test start where tty is not visible """
-        if (self.board_cfg.board_type != 'a8' and
-                self.board_cfg.board_type != 'rpi3'):
+        if self.board_cfg.board_type not in ('a8', 'rpi3'):
             pytest.skip("Only for Linux nodes")
 
         c_n = self.g_m.control_node
@@ -573,8 +570,7 @@ class TestInvalidCases(test_integration_mock.GatewayCodeMock):
     def test_invalid_files(self):
         """ Test invalid flash files """
         # Only if flash available
-        if (self.board_cfg.board_type == 'a8' or
-                self.board_cfg.board_type == 'rpi3'):
+        if self.board_cfg.board_type in ('a8', 'rpi3'):
             pytest.skip("Not for Linux nodes")
 
         # Flash with a profile

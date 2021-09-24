@@ -36,7 +36,7 @@ from gateway_code import common
 from gateway_code.autotest import open_linux_interface
 from gateway_code.profile import Consumption, Radio
 from gateway_code.utils.node_connection import OpenNodeConnection
-import gateway_code.board_config as board_config
+from gateway_code import board_config
 
 LOGGER = logging.getLogger('gateway_code')
 
@@ -158,7 +158,7 @@ class AutoTestManager(object):
           * get
 
         """
-        assert self.on_class.TYPE == 'a8' or self.on_class.TYPE == 'rpi3'
+        assert self.on_class.TYPE in ('a8', 'rpi3')
         # Should be adapted if already booted, so not enabled for cn_no
         assert self.cn_class.TYPE == 'iotlab'
 

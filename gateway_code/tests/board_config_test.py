@@ -33,7 +33,7 @@ import unittest
 
 import mock
 
-import gateway_code.board_config as board_config
+from gateway_code import board_config
 from . import utils
 
 

@@ -130,7 +130,7 @@ class OpenNodeBase(NodeBase):
         return ret_val
 
 
-REGISTRY = dict()
+REGISTRY = {}
 
 
 # import all the nodes/plugins

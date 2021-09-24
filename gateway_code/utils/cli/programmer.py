@@ -28,7 +28,7 @@ import os
 import signal
 import argparse
 
-import gateway_code.board_config as board_config
+from gateway_code import board_config
 from gateway_code.utils.cli import log_to_stderr
 from gateway_code import common
 

@@ -30,13 +30,13 @@ import errno
 import shutil
 from threading import RLock, Timer
 
-import gateway_code.config as config
+from gateway_code import config
 from gateway_code import common
 from gateway_code.common import logger_call, wait_tty, wait_no_tty
 from gateway_code.autotest import autotest
 from gateway_code.utils import elftarget
 
-import gateway_code.board_config as board_config
+from gateway_code import board_config
 
 from gateway_code import gateway_logging
 

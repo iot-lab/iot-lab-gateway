@@ -52,8 +52,7 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         self.assertEqual(0, ret_dict['ret'])
 
         # test that ON still on
-        if (self.board_cfg.board_type == 'a8' or
-                self.board_cfg.board_type == 'rpi3'):
+        if self.board_cfg.board_type in ('a8', 'rpi3'):
             # Don't know ip address, just check TTY
             self.assertTrue(os.path.exists(self.board_cfg.board_class.TTY))
         else:

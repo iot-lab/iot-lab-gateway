@@ -23,7 +23,7 @@
 """ Board Config """
 
 import functools
-import gateway_code.config as config  # allow mocking as 'gateway_code.config'
+from gateway_code import config
 from gateway_code import profile
 from gateway_code import nodes
 
