@@ -17,7 +17,7 @@ jobs:
       max-parallel: 5
       fail-fast: false
       matrix:
-        python-version: [2.7, 3.6, 3.7, 3.8]
+        python-version: [2.7, 3.6, 3.7, 3.8, 3.9]
     steps:
     - uses: actions/checkout@master
     - name: Set up Python ${{ matrix.python-version }}
@@ -33,12 +33,12 @@ jobs:
       run: |
         tox -e py$(echo ${{ matrix.python-version }} | tr -d .)-tests
     - name: Check style
-      if: ${{ matrix.python-version == 3.8 }}
+      if: ${{ matrix.python-version == 3.9 }}
       run: |
         tox -e py$(echo ${{ matrix.python-version }} | tr -d .)-lint
         tox -e copying
     - name: Upload coverage to Codecov
-      if: ${{ (matrix.python-version == 3.8 || matrix.python-version == 2.7) }}
+      if: ${{ (matrix.python-version == 3.9 || matrix.python-version == 2.7) }}
       uses: codecov/codecov-action@v1
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
