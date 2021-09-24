@@ -1,6 +1,16 @@
 Changelog
 =========
 
+Version 2.12.0
+--------------
+
++ Open Nodes
+  - New ST NUCLEO-WL55JC (nucleo-wl55jc)
+
++ Tests and CI
+  - Fix Zigduino serial latency
+  - Add Python3.9 version support
+
 Version 2.11.0
 --------------
 

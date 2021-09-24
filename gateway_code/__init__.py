@@ -20,4 +20,4 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-__version__ = '2.11.0'
+__version__ = '2.12.0'
