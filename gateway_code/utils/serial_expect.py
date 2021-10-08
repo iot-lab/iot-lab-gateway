@@ -155,5 +155,5 @@ class SerialExpectForSocket(SerialExpect):
 
     def close(self):
         """ Close connection and wait until it's restartable """
-        super(SerialExpectForSocket, self).close()
+        super().close()
         time.sleep(1)  # Wait SerialRedirection restarts and can be reconnected

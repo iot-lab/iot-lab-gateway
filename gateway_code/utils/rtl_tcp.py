@@ -45,7 +45,7 @@ class RtlTcp(ExternalProcess):
     def __init__(self, port, frequency):
         self.process_cmd = shlex.split(self.RTL_TCP.format(
             port=port, frequency=frequency))
-        super(RtlTcp, self).__init__()
+        super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""

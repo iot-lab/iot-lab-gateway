@@ -74,13 +74,13 @@ class ExperimentRunningMock(test_integration_mock.GatewayCodeMock):
     """ Create environment for running experiments """
 
     def setUp(self):
-        super(ExperimentRunningMock, self).setUp()
+        super().setUp()
         # config experiment and create folder
         self.g_m._create_user_exp_folders(USER, EXP_ID)
         self.log_error = LogCapture('gateway_code', level=logging.ERROR)
 
     def tearDown(self):
-        super(ExperimentRunningMock, self).tearDown()
+        super().tearDown()
         self.g_m._destroy_user_exp_folders(USER, EXP_ID)
         self.log_error.uninstall()
 
@@ -465,7 +465,7 @@ class TestExperimentTimeout(ExperimentRunningMock):
     """ Test the 'timeout' feature of experiments """
 
     def setUp(self):
-        super(TestExperimentTimeout, self).setUp()
+        super().setUp()
         self.timeout_mock = mock.Mock(side_effect=self.g_m._timeout_exp_stop)
         patch.object(self.g_m, '_timeout_exp_stop', self.timeout_mock).start()
 

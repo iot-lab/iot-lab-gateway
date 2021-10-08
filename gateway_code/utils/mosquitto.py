@@ -43,7 +43,7 @@ class Mosquitto(ExternalProcess):
 
     def __init__(self, port):
         self.process_cmd = shlex.split(MOSQUITTO_CMD.format(port=port))
-        super(Mosquitto, self).__init__()
+        super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""

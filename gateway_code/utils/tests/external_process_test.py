@@ -72,7 +72,7 @@ class _DummyProcess(ExternalProcess):
     def __init__(self):
         self.process_cmd = shlex.split(self.PROC)
         self.stdout = open(os.devnull, 'w')
-        super(_DummyProcess, self).__init__()
+        super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""
