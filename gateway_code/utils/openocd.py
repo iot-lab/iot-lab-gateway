@@ -40,7 +40,7 @@ LOGGER = logging.getLogger('gateway_code')
 OpenOCDArgs = namedtuple("OpenOCDArgs", ['path', 'config_file', 'opts'])
 
 
-class OpenOCD(object):
+class OpenOCD:
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 

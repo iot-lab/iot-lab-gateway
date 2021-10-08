@@ -101,7 +101,7 @@ class TestSynchronousDecorator(unittest.TestCase):
     def test_synchronous_decorator(self):
 
         # using RLock as it's what I want to use at the end
-        class PutAfterTime(object):  # pylint: disable=too-few-public-methods
+        class PutAfterTime:  # pylint: disable=too-few-public-methods
 
             def __init__(self):
                 self.rlock = RLock()

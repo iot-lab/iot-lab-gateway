@@ -28,7 +28,7 @@ and methods to convert it to config commands
 # pylint:disable=too-many-arguments,too-few-public-methods
 
 
-class Profile(object):
+class Profile:
 
     """ Experiment monitoring Profile """
 
@@ -69,7 +69,7 @@ class Profile(object):
             raise ValueError('Invalid profile: %r' % err)
 
 
-class Consumption(object):
+class Consumption:
 
     """ Consumption monitoring configuration """
     choices = {
@@ -99,7 +99,7 @@ class Consumption(object):
         self.current = current
 
 
-class Radio(object):
+class Radio:
 
     """ Radio monitoring configuration """
     choices = {

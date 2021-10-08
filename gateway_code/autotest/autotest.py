@@ -89,7 +89,7 @@ def tst_ok(bool_value):
 
 
 # pylint:disable=too-many-public-methods,too-many-instance-attributes
-class AutoTestManager(object):
+class AutoTestManager:
     """ Gateway and open node auto tests """
 
     # Global used in tests to store checked open node features

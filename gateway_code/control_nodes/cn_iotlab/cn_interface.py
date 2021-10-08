@@ -60,7 +60,7 @@ OML_XML = '''
 '''
 
 
-class ControlNodeSerial(object):  # pylint:disable=too-many-instance-attributes
+class ControlNodeSerial:  # pylint:disable=too-many-instance-attributes
     """
     Class handling the communication with the control node serial program
     """

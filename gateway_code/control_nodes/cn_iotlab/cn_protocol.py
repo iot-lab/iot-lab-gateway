@@ -23,7 +23,7 @@
 """ Protocol between python code and control_node_serial_interface C code """
 
 
-class Protocol(object):
+class Protocol:
     """ Implements commands that can be sent to control node interface """
 
     def __init__(self, sender):

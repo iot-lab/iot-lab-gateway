@@ -31,7 +31,7 @@ import logging
 LOGGER = logging.getLogger('gateway_code')
 
 
-class OpenNodeConnection(object):
+class OpenNodeConnection:
     """ Connects to serial port redirection and sends messages """
     HOST = 'localhost'
     PORT = 20000

@@ -43,7 +43,7 @@ from gateway_code import gateway_logging
 LOGGER = gateway_logging.LOGGER
 
 
-class GatewayManager(object):  # pylint:disable=too-many-instance-attributes
+class GatewayManager:  # pylint:disable=too-many-instance-attributes
     """ Gateway Manager class,
 
     Manages experiments, open node and control node """

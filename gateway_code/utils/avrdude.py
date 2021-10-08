@@ -36,7 +36,7 @@ from . import subprocess_timeout
 LOGGER = logging.getLogger('gateway_code')
 
 
-class AvrDude(object):
+class AvrDude:
     """ Debugger class, implemented as a global variable storage """
     _ARVDUDE_CONF_KEYS = {'tty', 'baudrate', 'model', 'programmer'}
     DEVNULL = open(os.devnull, 'w')
