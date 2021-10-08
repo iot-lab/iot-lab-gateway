@@ -52,8 +52,8 @@ class TestConfig(unittest.TestCase):
 
     def test_default_profile(self):
         default_profile_dict = {
-            u'power': u'dc',
-            u'profilename': u'_default_profile',
+            'power': 'dc',
+            'profilename': '_default_profile',
         }
         self.assertEqual(default_profile_dict, config.DEFAULT_PROFILE)
 
@@ -65,7 +65,7 @@ class TestConfig(unittest.TestCase):
             pass
 
     def test_user_files(self):
-        file_path = '/tmp/test_%s' % os.uname()[1]
+        file_path = f'/tmp/test_{os.uname()[1]}'
         self._rmfile(file_path)
 
         config.create_user_file(file_path)
