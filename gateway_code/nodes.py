@@ -190,11 +190,15 @@ def control_node_class(cn_type):
 
 def all_open_nodes_types():
     """Returns all the open nodes classes"""
-    return [key for key in REGISTRY
-            if issubclass(REGISTRY[key], OpenNodeBase)]
+    return [
+        key for key, value in REGISTRY.items()
+        if issubclass(value, OpenNodeBase)
+    ]
 
 
 def all_control_nodes_types():
     """Returns all the control nodes classes"""
-    return [key for key in REGISTRY
-            if issubclass(REGISTRY[key], ControlNodeBase)]
+    return [
+        key for key, value in REGISTRY.items()
+        if issubclass(value, ControlNodeBase)
+    ]
