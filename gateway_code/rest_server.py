@@ -52,7 +52,7 @@ class GatewayRest(bottle.Bottle):
     """
 
     def __init__(self, gateway_manager):
-        super(GatewayRest, self).__init__()
+        super().__init__()
         self.gateway_manager = gateway_manager
         self.board_config = board_config.BoardConfig()
         self._app_routing()
@@ -328,7 +328,7 @@ class GatewayRest(bottle.Bottle):
         """Add a route but catch some exceptions."""
         # pylint:disable=arguments-differ, keyword-arg-before-vararg
         callback = self._cb_wrap(callback)
-        return super(GatewayRest, self).route(path, method, callback, **kwargs)
+        return super().route(path, method, callback, **kwargs)
 
     @staticmethod
     def _cb_wrap(func):

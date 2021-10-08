@@ -53,7 +53,7 @@ class LoraGatewayBridge(ExternalProcess):
             _bridge_cfg = os.path.join(CFG_DIR, _bridge_conf_filename)
         self.process_cmd = shlex.split(LORA_GATEWAY_BRIDGE_CMD.format(
             bridge=LORA_GATEWAY_BRIDGE, cfg_file=_bridge_cfg))
-        super(LoraGatewayBridge, self).__init__()
+        super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""

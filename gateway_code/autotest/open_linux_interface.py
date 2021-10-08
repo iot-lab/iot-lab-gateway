@@ -44,7 +44,7 @@ IP_CMD = ("ip addr show dev eth0 " +
 class LinuxConnectionError(Exception):
     """ FatalError during tests """
     def __init__(self, value, err_msg):
-        super(LinuxConnectionError, self).__init__()
+        super().__init__()
         self.value = value
         self.err_msg = err_msg
 

@@ -59,14 +59,14 @@ class ExternalProcess(threading.Thread):
         Must be called in __init__ and after stop.
         This will allow calling start-stop without re-instanciating """
         # threading.Thread init
-        super(ExternalProcess, self).__init__(target=self._target)
+        super().__init__(target=self._target)
         self.daemon = True
 
     def start(self):
         """ Start the external process Thread """
         self._run = True
         LOGGER.debug('%s start', self.NAME)
-        super(ExternalProcess, self).start()
+        super().start()
         # wait for 'Popen' to have been called
         return 0 if self._started.wait(15.0) else 1
 

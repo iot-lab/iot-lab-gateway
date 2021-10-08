@@ -49,7 +49,7 @@ class MjpgStreamer(ExternalProcess):
     def __init__(self, port):
         self.process_cmd = shlex.split(self.MJPG_STREAMER.format(port=port))
         self.stdout = open(MJPG_STREAMER_LOG_FILE, 'w')
-        super(MjpgStreamer, self).__init__()
+        super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""

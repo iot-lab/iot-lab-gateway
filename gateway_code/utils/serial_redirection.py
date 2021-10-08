@@ -50,8 +50,7 @@ class SerialRedirection(ExternalProcess):
         self.process_cmd = shlex.split(
             self.SOCAT.format(tty=tty, baud=baudrate,
                               serial_opts=','.join(serial_opts)))
-
-        super(SerialRedirection, self).__init__()
+        super().__init__()
 
     def check_error(self, retcode):
         """Check the return code on exit and print a warning on error."""
