@@ -59,7 +59,7 @@ class TestRestMethods(unittest.TestCase):
     EXP_START = '/exp/start/{exp_id}/{user}'.format(user='user', exp_id=123)
 
     PROFILE_STR = '{ "profilename": "_default_profile", "power": "dc" }'
-    PROFILE_DICT = {u'profilename': u'_default_profile', u'power': u'dc'}
+    PROFILE_DICT = {'profilename': '_default_profile', 'power': 'dc'}
 
     def setUp(self):
         mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3')).start()
