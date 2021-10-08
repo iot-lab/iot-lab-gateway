@@ -54,7 +54,7 @@ class Profile:
                 self.radio = Radio(**radio)
 
         except TypeError as err:
-            raise ValueError("Error in %s arguments %r" % (_current, err))
+            raise ValueError(f"Error in {_current} arguments {err}")
 
     @classmethod
     def from_dict(cls, open_node_type, profile_dict):
@@ -66,7 +66,7 @@ class Profile:
         try:
             return Profile(open_node_type, **profile_dict)
         except (ValueError, TypeError, AssertionError) as err:
-            raise ValueError('Invalid profile: %r' % err)
+            raise ValueError(f"Invalid profile: {err}")
 
 
 class Consumption:

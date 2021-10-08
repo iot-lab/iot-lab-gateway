@@ -52,7 +52,7 @@ class TestOpenNodeConnection(unittest.TestCase):
 
     def setUp(self):
         port = OpenNodeConnection.PORT
-        tcp_listen = 'tcp4-listen:{port},reuseaddr,fork'.format(port=port)
+        tcp_listen = f'tcp4-listen:{port},reuseaddr,fork'
         cmd = ['socat', '-', tcp_listen]
         self.redirect = Popen(cmd, stdout=PIPE, stdin=PIPE)
 
@@ -71,7 +71,7 @@ class TestOpenNodeConnection(unittest.TestCase):
                 if not line:
                     break
                 time.sleep(self.write_delay)
-                self.redirect.stdin.write('READ_LINE {}'.format(line).encode())
+                self.redirect.stdin.write(f'READ_LINE {line}'.encode())
                 self.redirect.stdin.flush()
         except (AttributeError, IOError) as err:
             print(err)

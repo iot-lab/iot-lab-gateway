@@ -76,8 +76,7 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         # Setup control node
         ret = self.node_flash('control', None)  # Flash default
         if ret != 0:
-            raise RuntimeError("Control node flash failed: 'ret:{}'"
-                               .format(ret))
+            raise RuntimeError(f"Control node flash failed: 'ret:{ret}'")
         return ret
 
     @staticmethod

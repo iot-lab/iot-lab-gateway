@@ -97,8 +97,7 @@ class OpenOCD:
         """
         cfg_file = common.abspath(config_file)
         opts = [cfg_file] + list(opts)
-        opts = ('-f "%s"' % opt for opt in opts)
-        return ' '.join(opts)
+        return ' '.join((f'-f "{opt}"' for opt in opts))
 
     def reset(self):
         """ Reset """

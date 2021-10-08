@@ -243,12 +243,14 @@ class TestHandleAnswer(unittest.TestCase):
     def test_error(self):
         self.cn._handle_answer('error 42')
         self.log.check(
-            ('gateway_code', 'ERROR', 'Control node error: %r' % '42'))
+            ('gateway_code', 'ERROR', "Control node error: '42'")
+        )
 
     def test_cn_serial_error(self):
         self.cn._handle_answer('cn_serial_error: any error msg')
         self.log.check(
-            ('gateway_code', 'ERROR', 'cn_serial_error: any error msg'))
+            ('gateway_code', 'ERROR', 'cn_serial_error: any error msg')
+        )
 
     def test_measures_debug(self):
         msg = ('measures_debug: consumption_measure 1377268768.841070:'

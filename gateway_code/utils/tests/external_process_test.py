@@ -108,8 +108,7 @@ class TestComplexExternalProcessStop(unittest.TestCase):
         log = LogCapture('gateway_code', level=logging.WARNING)
         self.addCleanup(log.uninstall)
 
-        only_sigkill = os.path.join(CURRENT_DIR, 'only_sigkill.py')
-        only_sigkill = 'python %s' % only_sigkill
+        only_sigkill = f'python {os.path.join(CURRENT_DIR, "only_sigkill.py")}'
 
         with mock.patch.object(_DummyProcess, 'PROC', only_sigkill):
             m_process = _DummyProcess()

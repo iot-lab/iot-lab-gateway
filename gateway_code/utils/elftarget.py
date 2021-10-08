@@ -54,7 +54,7 @@ def elf_target(filepath):
     e_machine = elffile.header['e_machine']
 
     if e_type != TYPE_EXECUTABLE:
-        raise ValueError('Not an executable elf file: %s' % e_type)
+        raise ValueError(f'Not an executable elf file: {e_type}')
 
     return e_class, e_machine
 

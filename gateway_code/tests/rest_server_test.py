@@ -56,7 +56,7 @@ def query_string(query_str):
 
 class TestRestMethods(unittest.TestCase):
 
-    EXP_START = '/exp/start/{exp_id}/{user}'.format(user='user', exp_id=123)
+    EXP_START = '/exp/start/123/user'
 
     PROFILE_STR = '{ "profilename": "_default_profile", "power": "dc" }'
     PROFILE_DICT = {'profilename': '_default_profile', 'power': 'dc'}

@@ -43,8 +43,7 @@ class TestAutoTests(test_integration_mock.GatewayCodeMock):
         extra = query_string('channel=22&flash=1&gps=')
         ret = self.server.put('/autotest/blink', extra_environ=extra)
         ret_dict = ret.json
-        ret_string = '{}\n'.format(ret_dict)
-        sys.stderr.write(ret_string)
+        sys.stderr.write(f'{ret_dict}\n')
 
         self.assertEqual([], ret_dict['error'])
         self.assertIn('on_serial_echo', ret_dict['success'])

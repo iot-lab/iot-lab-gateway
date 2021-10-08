@@ -44,7 +44,7 @@ def _setup_parser(cmd, board_cfg):
     if board_cfg.cn_type == 'iotlab' and not board_cfg.linux_on_class:
         parser.add_argument('-cn', '--control-node', dest="cn",
                             action="store_true",
-                            help='%s control node' % cmd)
+                            help=f'{cmd} control node')
     if cmd == 'flash':
         parser.add_argument('firmware', nargs='?', help='Firmware path')
         parser.add_argument(
@@ -70,13 +70,13 @@ def _get_node(board_cfg, control_node=False):
 
 def _print_result(ret, cmd, node=None):
     if ret == 0:
-        print('{} OK\n'.format(cmd))
+        print(f'{cmd} OK\n')
     elif ret == -1:
-        print('error: {} not supported for board {}\n'.format(cmd, node))
+        print(f'error: {cmd} not supported for board {node}\n')
     elif ret == -2:
-        print('error: {} too few arguments\n'.format(cmd))
+        print(f'error: {cmd} too few arguments\n')
     else:
-        print('{} KO: {}\n'.format(cmd, ret))
+        print(f'{cmd} KO: {ret}\n')
 
 
 @log_to_stderr
@@ -155,8 +155,8 @@ def debug():
     opts = _setup_parser(_DEBUG, board_cfg)
     control_node = opts.cn if hasattr(opts, 'cn') else False
     node = _get_node(board_cfg, control_node)
-    start_debug = hasattr(node, '{}_start'.format(_DEBUG))
-    stop_debug = hasattr(node, '{}_stop'.format(_DEBUG))
+    start_debug = hasattr(node, f'{_DEBUG}_start')
+    stop_debug = hasattr(node, f'{_DEBUG}_stop')
     ret = _debug(node) if (start_debug and stop_debug) else -1
     _print_result(ret, _DEBUG, node.TYPE)
     return ret

@@ -179,7 +179,8 @@ class AutoTestManager:
             self.linux_connection.start()
         except open_linux_interface.LinuxConnectionError as err:
             self._assert(1,
-                         'linux_node_init_error: %s' % err.err_msg, str(err),
+                         f'linux_node_init_error: {err.err_msg}',
+                         str(err),
                          'Setup Connection failed')
 
         # save mac address
@@ -377,7 +378,7 @@ class AutoTestManager:
         """
         answer = self._on_serial_send_command(cmd)
         if (answer is None) or (answer[0:2] != ['ACK', cmd[0]]):
-            self._check(1, "On Command: %r" % cmd, answer)
+            self._check(1, f"On Command: {cmd}", answer)
             return (1, answer)
         return (0, answer)
 
@@ -560,7 +561,7 @@ class AutoTestManager:
         teardown control node """
         on_cmd = on_cmd or cn_command  # on_cmd is the same as cn_command
         args = args or []
-        debug_str = '%s_on_cn' % cn_command[0]
+        debug_str = f'{cn_command[0]}_on_cn'
         ret_val = 0
 
         # setup control node

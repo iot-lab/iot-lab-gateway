@@ -112,6 +112,7 @@ def simple_command(function):
 def execute(self, function, args=()):
     """Run distutils execute function with args and auto-doc."""
     msg = function.__doc__.splitlines()[0]
+    # pylint:disable=consider-using-f-string
     msg = 'running %s: %s' % (function.__name__, msg)
     self.execute(function, args, msg)
 

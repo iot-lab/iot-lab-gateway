@@ -124,7 +124,7 @@ class TestProtocolGPS(unittest.TestCase):
             if cmd == 'test_pps_get':
                 return pps_get_values.pop(0)
 
-            raise ValueError('Unknown command %r' % cmd)
+            raise ValueError(f'Unknown command {cmd}')
 
         with mock.patch.object(self.g_v, '_on_call', _on_call):
             pps_get_values = [(0, ['ACK', 'test_pps_get', '0', 'pps']),

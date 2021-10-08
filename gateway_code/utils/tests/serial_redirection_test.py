@@ -65,7 +65,7 @@ class _SerialRedirectionTestCase(unittest.TestCase):
     @staticmethod
     def _serial(tty, baud):
         """Create a local pty with socat."""
-        cmd = ['socat', '-', 'pty,link=%s,raw,b%d,echo=0' % (tty, baud)]
+        cmd = ['socat', '-', f'pty,link={tty},raw,b{baud},echo=0']
         return Popen(cmd, stdout=PIPE, stdin=PIPE)
 
 
@@ -82,14 +82,14 @@ class TestSerialRedirection(_SerialRedirectionTestCase):
             conn = OpenNodeConnection.try_connect(('0.0.0.0', 20000))
 
             # TCP send
-            sock_txt = b'HelloFromSock: %u\n' % i
+            sock_txt = f'HelloFromSock: {i}\n'.encode()
             conn.send(sock_txt)
             ret = self.serial.stdout.read(len(sock_txt))
             self.assertEqual(ret, sock_txt)
             logging.debug(ret)
 
             # Serial send
-            serial_txt = b'HelloFromSerial %u\n' % i
+            serial_txt = f'HelloFromSerial {i}\n'.encode()
             self.serial.stdin.write(serial_txt)
             self.serial.stdin.flush()
             ret = conn.recv(len(serial_txt))

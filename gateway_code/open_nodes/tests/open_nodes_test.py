@@ -129,7 +129,7 @@ class BaseOpenNode(OpenNodeBase):
         return None
 
     def setup(self, firmware_path):
-        print("setup base open node with {}".format(firmware_path))
+        print(f"setup base open node with {firmware_path}")
         return 42
 
     def teardown(self):

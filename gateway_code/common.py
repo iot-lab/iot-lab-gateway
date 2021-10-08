@@ -240,4 +240,4 @@ def booleanize(value):
     if value in ('n', 'no', 'f', 'false', 'off', '0', 0, None):
         return False
 
-    raise ValueError("invalid value '{}'".format(value))
+    raise ValueError(f"invalid value '{value}'")
