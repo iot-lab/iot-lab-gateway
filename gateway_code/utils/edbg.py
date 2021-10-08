@@ -34,7 +34,7 @@ from . import subprocess_timeout
 LOGGER = logging.getLogger('gateway_code')
 
 
-class Edbg(object):
+class Edbg:
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 

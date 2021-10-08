@@ -32,7 +32,7 @@ import time
 import serial
 
 
-class SerialExpect(object):
+class SerialExpect:
     """ Simple Expect implementation for serial """
 
     def __init__(self, tty, baudrate, logger=None):

@@ -29,7 +29,7 @@ from gateway_code import nodes
 
 
 # Implemented as a class to be loaded dynamically and allow mocking in tests
-class BoardConfig(object):  # pylint:disable=too-few-public-methods
+class BoardConfig:  # pylint:disable=too-few-public-methods
     """ Class BoardConfig, aggregates all the configuration.
 
     It's a class because it should be evaluated at runtime to allow mocking.

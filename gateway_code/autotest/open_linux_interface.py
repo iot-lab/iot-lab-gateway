@@ -52,7 +52,7 @@ class LinuxConnectionError(Exception):
         return repr(self.value) + ' : ' + repr(self.err_msg)
 
 
-class OpenLinuxConnection(object):
+class OpenLinuxConnection:
     """ Connection to the Linux node, redirect open node serial link """
     def __init__(self):
         self.ip_addr = None
