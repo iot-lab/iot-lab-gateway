@@ -165,7 +165,7 @@ def _node_class(board_type):
         # Class sanity check
         assert output_class.TYPE == board_type
     except KeyError:
-        raise ValueError('Board %s not implemented' % board_type)
+        raise ValueError(f'Board {board_type} not implemented')
     else:
         return output_class
 
@@ -176,8 +176,7 @@ def open_node_class(board_type):
     :raises ValueError: if board class can't be found """
     output_class = _node_class(board_type)
     if output_class.verify() != 0:
-        raise ValueError('Invalid open node class {}'.format(
-            output_class.__name__))
+        raise ValueError(f'Invalid open node class {output_class.__name__}')
     return output_class
 
 

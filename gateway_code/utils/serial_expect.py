@@ -131,8 +131,7 @@ class SerialExpectForSocket(SerialExpect):
     # Just a hack to use the same class without changing init
     def __init__(self,  # pylint:disable=super-init-not-called
                  host='localhost', port=20000, logger=None):
-        url = 'socket://{host}:{port}'.format(host=host, port=port)
-        self.fd = self.try_connect(url, timeout=0.1)
+        self.fd = self.try_connect(f'socket://{host}:{port}', timeout=0.1)
         self.logger = logger
 
     @staticmethod

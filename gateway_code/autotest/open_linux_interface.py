@@ -32,7 +32,7 @@ from gateway_code.utils.serial_expect import SerialExpectForSocket
 
 LOGGER = logging.getLogger('gateway_code')
 
-_SSH_OPTS = '-F {ssh_cfg}'.format(ssh_cfg=static_path('ssh_linux_config'))
+_SSH_OPTS = f'-F {static_path("ssh_linux_config")}'
 SSH_CMD = 'ssh ' + _SSH_OPTS + ' {ip_addr} "source /etc/profile; {cmd}"'
 SCP_CMD = 'scp ' + _SSH_OPTS + ' {path} {ip_addr}:{remote_path}'
 
@@ -80,7 +80,7 @@ class OpenLinuxConnection:
             # Run dummy command to hide warning "adding to list of known host"
             self.ssh_run('echo "ssh ok"')
         except CalledProcessError as err:  # pragma: no cover
-            raise LinuxConnectionError("Linux node ssh failed %s" % str(err),
+            raise LinuxConnectionError(f"Linux node ssh failed {str(err)}",
                                        "linux_node_ssh_connection_failed")
         self.ssh_run('/etc/init.d/serial_redirection restart')
 

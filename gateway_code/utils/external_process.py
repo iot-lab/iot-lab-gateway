@@ -84,7 +84,7 @@ class ExternalProcess(threading.Thread):
                     self.process.send_signal(sig)
             except OSError as err:
                 # errno == 3 'No such proccess', already terminated: OK
-                assert err.errno == 3, 'Unknown error num: %r' % err.errno
+                assert err.errno == 3, f'Unknown error num: {err.errno}'
             time.sleep(0.1)
         self.process = None
         self._started.clear()

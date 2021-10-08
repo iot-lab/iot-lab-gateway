@@ -51,7 +51,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
 
 USER = 'harter'
 EXP_ID = 123
-EXP_START = '/exp/start/{exp_id}/{user}'.format(user=USER, exp_id=123)
+EXP_START = f'/exp/start/{EXP_ID}/{USER}'
 
 APP_JSON = 'application/json'
 GATEWAY_LOGGER = logging.getLogger('gateway_code')
@@ -200,7 +200,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         """Check that nodes echo or not."""
 
         # do it multiple times for reliability
-        ret_list = self.send_n_cmds('echo %s' % msg, tries)
+        ret_list = self.send_n_cmds(f'echo {msg}', tries)
 
         # Two different commands to have more verbosity on error
         if echo:
@@ -220,7 +220,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             '-ex', 'set confirm off',
             '-ex', 'target remote localhost:3333',
             '-ex', 'monitor reset halt',
-            '-ex', 'monitor flash write_image erase %s' % firmware,
+            '-ex', f'monitor flash write_image erase {firmware}',
             '-ex', 'monitor reset init',
             '-ex', 'monitor reset run',
             '-ex', 'quit',
@@ -439,8 +439,8 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # No real reasons, just verifying that it at least the same
         for meas_type, num_meas in (('radio', 1000), ('consumption', 50000)):
             num_lines = len(open(exp_files[meas_type]).readlines())
-            print('num measures lines: %s: %d' % (meas_type, num_lines))
-            print('num measures ref: %s: %d' % (meas_type, num_meas))
+            print(f'num measures lines: {meas_type}: {num_lines}')
+            print(f'num measures ref: {meas_type}: {num_meas}')
             # Was failing some times, disable
             # self.assertTrue(num_meas < num_lines)
 

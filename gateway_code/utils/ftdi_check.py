@@ -45,7 +45,7 @@ def ftdi_check(node, ftdi_type, description=None):
     found = (dev_number > 0) and \
             ((description is None) or
              ftdi_lookup_description(lines[3:], description))
-    msg = "{}{} node ftdi found".format(("" if found else "No "), node)
+    msg = f"{'' if found else 'No '}{node} node ftdi found"
     LOGGER.info(msg)
     return 0 if found else 1
 
