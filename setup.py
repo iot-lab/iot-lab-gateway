@@ -91,13 +91,13 @@ def simple_command(function):
 
         user_options = []
 
-        def initialize_options(self):
+        def initialize_options(self):  # pylint:disable=no-self-use
             """Initialize options."""
-            pass
+            ...
 
-        def finalize_options(self):
+        def finalize_options(self):  # pylint:disable=no-self-use
             """Finalize options."""
-            pass
+            ...
 
         def run(self):
             """Run function with or without self argument."""
