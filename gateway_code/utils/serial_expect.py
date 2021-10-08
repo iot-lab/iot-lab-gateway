@@ -88,7 +88,8 @@ class SerialExpect:
 
             # add new bytes to remaining of last line
             # no multiline patterns
-            buff = buff.split('\n')[-1] + read_bytes.decode('latin-1')
+            buff = buff.rsplit('\n', maxsplit=1)[-1]
+            buff += read_bytes.decode('latin-1')
 
             # print each line with timestamp on front
             if self.logger is not None:
