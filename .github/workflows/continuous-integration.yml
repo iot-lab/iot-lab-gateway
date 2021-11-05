@@ -91,6 +91,10 @@ jobs:
         with:
           repository: iot-lab/iot-lab-dev
           token: ${{ secrets.IOTLAB_TOKEN }}
+      - name: Check out the repo
+        uses: actions/checkout@v2
+        with:
+          path: ./parts/iot-lab-gateway
       - name: Decrypt password
         run: make decrypt_passwords
       - name: Launch integration tests
