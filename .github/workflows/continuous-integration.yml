@@ -54,36 +54,36 @@ jobs:
     strategy:
       matrix:
         boards:
-          - node-id: 17
+          - archi: a8
+            node-id: 17
             site: devgrenoble
-            archi: a8
-          - node-id: 17
+          - archi: m3
+            node-id: 17
             site: devgrenoble
-            archi: m3
-          - node-id: 1 # samr21
+          - archi: custom
+            node-id: 1 # samr21
             site: devgrenoble
-            archi: custom
-          - node-id: 4 # nucleo-wl55jc
+          - archi: custom
+            node-id: 4 # nucleo-wl55jc
             site: devgrenoble
-            archi: custom
-          - node-id: 29 # microbit
+          - archi: custom
+            node-id: 29 # microbit
             site: devsaclay
-            archi: custom
-          - node-id: 30 # arduino-zero
+          - archi: custom
+            node-id: 30 # arduino-zero
             site: devsaclay
-            archi: custom
-          - node-id: 31 # st-lrwan1
+          - archi: custom
+            node-id: 31 # st-lrwan1
             site: devsaclay
-            archi: custom
-          - node-id: 32  # nrf52dk
+          - archi: custom
+            node-id: 32  # nrf52dk
             site: devsaclay
-            archi: custom
-          - node-id: 33 # nrf52840dk
+          - archi: custom
+            node-id: 33 # nrf52840dk
             site: devsaclay
-            archi: custom
-          - node-id: 4 # zigduino
+          - archi: custom
+            node-id: 4 # zigduino
             site: devstrasbourg
-            archi: custom
       fail-fast: false
     steps:
       - name: Check out install-lib repo
