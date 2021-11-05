@@ -92,5 +92,6 @@ jobs:
           repository: iot-lab/iot-lab-dev
           token: ${{ secrets.IOTLAB_TOKEN }}
       - name: Launch integration tests
+        working-directory: ./install_lib
         run: |
           fab ci:${{ matrix.boards.archi }}_ids=${{ matrix.boards.node-id }} nodes.test_gateway_code:codecov_token=${{ secrets.CODECOV_TOKEN }} -H root@${{ matrix.boards.site }}.iot-lab.info:2222
