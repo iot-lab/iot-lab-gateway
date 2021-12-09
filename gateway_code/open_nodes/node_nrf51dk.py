@@ -22,15 +22,13 @@
 """ Open Node NRF51DK experiment implementation """
 
 from gateway_code.config import static_path
-from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
-class NodeNrf51Dk(NodeOpenOCDBase):
+class NodeNrf51Dk(NodeDapLinkBase):
     """ Open node NRF51DK implementation """
 
     TYPE = 'nrf51dk'
     OPENOCD_CFG_FILE = static_path('iot-lab-nrf51dk.cfg')
     FW_IDLE = static_path('nrf51dk_idle.elf')
     FW_AUTOTEST = static_path('nrf51dk_autotest.elf')
-    TTY = '/dev/iotlab/ttyON_CMSIS-DAP'
-    BAUDRATE = 115200
