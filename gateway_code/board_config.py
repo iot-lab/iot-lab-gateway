@@ -38,6 +38,18 @@ class BoardConfig:  # pylint:disable=too-few-public-methods
     def __init__(self):
         board_type = config.read_config('board_type')
         self.board_class = nodes.open_node_class(board_type)
+        # Apply OpenOCD specific attributes to support multiple nodes on the
+        # same gateway
+        if hasattr(self.board_class, "OPENOCD_CLASS"):
+            self.board_class.BIND_IP = config.read_config('ip', '0.0.0.0')
+            self.board_class.OPENOCD_SERIAL_NUMBER = config.read_config(
+                'serial_number', None
+            )
+            if self.board_class.OPENOCD_SERIAL_NUMBER is not None:
+                self.board_class.TTY = (
+                    f"/dev/iotlab/tty_{self.board_class.OPENOCD_SERIAL_NUMBER}"
+                )
+
         cn_type = config.read_config('control_node_type', 'iotlab')
         self.cn_class = nodes.control_node_class(cn_type)
         linux_on_type = config.read_config('linux_open_node_type', None)
