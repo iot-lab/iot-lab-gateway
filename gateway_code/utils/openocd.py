@@ -37,36 +37,58 @@ from . import subprocess_timeout
 
 LOGGER = logging.getLogger('gateway_code')
 
-OpenOCDArgs = namedtuple("OpenOCDArgs", ['path', 'config_file', 'opts'])
+OpenOCDArgs = namedtuple(
+    "OpenOCDArgs",
+    [
+        'path',
+        'config_file',
+        'opts',
+        'bind_ip',
+        'serial_number',
+        'serial_cmd',
+    ]
+)
 
 
 class OpenOCD:
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-    OPENOCD = ('{openocd_path} --debug=0'
-               ' {config}'
-               ' -c "init"'
-               ' -c "targets"'
-               ' {cmd}')
+    OPENOCD = (
+        '{openocd_path} --debug=0'
+        ' {serial_cmd}'
+        ' {config}'
+        ' -c "init"'
+        ' -c "targets"'
+        ' {cmd}'
+    )
 
-    RESET = (' -c "reset run"'
-             ' -c "shutdown"')
+    RESET = (
+        ' -c "reset run"'
+        ' -c "shutdown"'
+    )
 
-    FLASH = (' -c "reset halt"'
-             ' -c "reset init"'
-             ' -c "flash write_image erase {0}"'
-             ' -c "verify_image {0}"'
-             ' -c "reset run"'
-             ' -c "shutdown"')
+    FLASH = (
+        ' -c "reset halt"'
+        ' -c "reset init"'
+        ' -c "flash write_image erase {firmware}"'
+        ' -c "verify_image {firmware}"'
+        ' -c "reset run"'
+        ' -c "shutdown"'
+    )
 
-    FLASH_BIN = (' -c "reset halt"'
-                 ' -c "reset init"'
-                 ' -c "program {0} verify {1}"'
-                 ' -c "reset run"'
-                 ' -c "shutdown"')
+    FLASH_BIN = (
+        ' -c "reset halt"'
+        ' -c "reset init"'
+        ' -c "program {firmware} verify {offset}"'
+        ' -c "reset run"'
+        ' -c "shutdown"'
+    )
 
-    DEBUG = ' -c "reset halt"'
+    DEBUG = (
+        ' -c "reset halt"'
+        ' -c "bindto {bind_ip}"'
+    )
     TIMEOUT = 100
 
     def __init__(self, openocd_args,
@@ -74,6 +96,18 @@ class OpenOCD:
         self.openocd_path = openocd_args.path
         self.config = self._config(openocd_args.config_file, openocd_args.opts)
         self.timeout = timeout
+        self.bind_ip = openocd_args.bind_ip
+
+        # Compute the serial_cmd string. Empty if no serial number or cmd is
+        # available.
+        self.serial_cmd = ""
+        if (
+            openocd_args.serial_cmd is not None and
+            openocd_args.serial_number is not None
+        ):
+            self.serial_cmd = openocd_args.serial_cmd.format(
+                serial=openocd_args.serial_number
+            )
 
         self.out = None if verb else self.DEVNULL
 
@@ -108,8 +142,13 @@ class OpenOCD:
         try:
             path = common.abspath(fw_file)
             if binary:
-                return self._call_cmd(self.FLASH_BIN.format(path, hex(offset)))
-            return self._call_cmd(self.FLASH.format(path))
+                return self._call_cmd(
+                    self.FLASH_BIN.format(
+                        firmware=path,
+                        offset=hex(offset)
+                    )
+                )
+            return self._call_cmd(self.FLASH.format(firmware=path))
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
@@ -118,7 +157,9 @@ class OpenOCD:
         """ Start a debugger process """
         LOGGER.debug('Debug start')
         self.debug_stop()  # kill previous process
-        self._debug = subprocess.Popen(**self._openocd_args(self.DEBUG))
+        self._debug = subprocess.Popen(
+            **self._openocd_args(self.DEBUG.format(bind_ip=self.bind_ip))
+        )
         LOGGER.debug('Debug started')
         return 0
 
@@ -154,8 +195,12 @@ class OpenOCD:
     def _openocd_args(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
-        cmd = self.OPENOCD.format(openocd_path=self.openocd_path,
-                                  config=self.config, cmd=command_str)
+        cmd = self.OPENOCD.format(
+            openocd_path=self.openocd_path,
+            serial_cmd=self.serial_cmd,
+            config=self.config,
+            cmd=command_str
+        )
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
@@ -172,8 +217,23 @@ class OpenOCD:
             nodeclass.OPENOCD_PATH = "openocd"
         if not hasattr(nodeclass, "OPENOCD_OPTS"):
             nodeclass.OPENOCD_OPTS = ()
+        if not hasattr(nodeclass, "BIND_IP"):
+            # Debugger listens to any addresses by default
+            nodeclass.BIND_IP = "0.0.0.0"
+        if not hasattr(nodeclass, "OPENOCD_SERIAL_NUMBER"):
+            # No serial number provided by default => can only work with a
+            # single board per gateway
+            nodeclass.OPENOCD_SERIAL_NUMBER = None
+        if not hasattr(nodeclass, "OPENOCD_SERIAL_CMD"):
+            nodeclass.OPENOCD_SERIAL_CMD = None
 
-        return cls(OpenOCDArgs(nodeclass.OPENOCD_PATH,
-                               nodeclass.OPENOCD_CFG_FILE,
-                               nodeclass.OPENOCD_OPTS),
-                   *args, **kwargs)
+        return cls(
+            OpenOCDArgs(
+                nodeclass.OPENOCD_PATH,
+                nodeclass.OPENOCD_CFG_FILE,
+                nodeclass.OPENOCD_OPTS,
+                nodeclass.BIND_IP,
+                nodeclass.OPENOCD_SERIAL_NUMBER,
+                nodeclass.OPENOCD_SERIAL_CMD,
+            ), *args, **kwargs
+        )

@@ -64,7 +64,9 @@ class TestsMethods(unittest.TestCase):
         self.assertEqual(
             " ".join(command_list[-10:]),
             openocd.OpenOCD.FLASH_BIN.format(
-                fw_path, hex(42)).replace('"', '').strip())
+                firmware=fw_path, offset=hex(42)
+            ).replace('"', '').strip()
+        )
 
     def test_reset(self, call_mock):
         """ Test reset"""
@@ -89,11 +91,18 @@ class TestsMethods(unittest.TestCase):
 
         # Verify command
         command_list = popen_mock.call_args[1]['args']
-        self.assertEqual(len(command_list), 12)
+        self.assertEqual(len(command_list), 14)
         self.assertEqual(command_list[0], NodeM3.OPENOCD_PATH)
-        self.assertEqual(command_list[-6:],
-                         ['-c', 'init', '-c', 'targets', '-c', 'reset halt'])
-        assert command_list[-7] == NodeM3.OPENOCD_OPTS[0]
+        self.assertEqual(
+            command_list[-8:],
+            [
+                '-c', 'init',
+                '-c', 'targets',
+                '-c', 'reset halt',
+                '-c', 'bindto 0.0.0.0'
+            ]
+        )
+        assert command_list[-9] == NodeM3.OPENOCD_OPTS[0]
         # don't test middle args as depends on local path
         popen_mock.reset_mock()
 
@@ -150,15 +159,42 @@ class TestsCall(unittest.TestCase):
 
 class TestsFlashInvalidPaths(unittest.TestCase):
     def test_invalid_config_file_path(self):
-        self.assertRaises(IOError, openocd.OpenOCD,
-                          OpenOCDArgs('openocd', '/invalid/path', ()))
+        self.assertRaises(
+            IOError,
+            openocd.OpenOCD,
+            OpenOCDArgs(
+                'openocd',
+                '/invalid/path',
+                (),
+                "0.0.0.0",
+                None,
+                None,
+            )
+        )
 
     def test_invalid_openocd_path(self):
-        self.assertRaises(IOError, openocd.OpenOCD,
-                          OpenOCDArgs('/wrong/openocd', '/invalid/path', ()))
+        self.assertRaises(
+            IOError,
+            openocd.OpenOCD,
+            OpenOCDArgs(
+                '/wrong/openocd',
+                '/invalid/path',
+                (),
+                "0.0.0.0",
+                None,
+                None,
+            )
+        )
 
     def test_invalid_firmware_path(self):
         ret = openocd.OpenOCD(
-            OpenOCDArgs('openocd', NodeM3.OPENOCD_CFG_FILE, ())
+            OpenOCDArgs(
+                'openocd',
+                NodeM3.OPENOCD_CFG_FILE,
+                (),
+                "0.0.0.0",
+                None,
+                None,
+            )
         ).flash('/invalid/path')
         self.assertNotEqual(0, ret)
