@@ -22,15 +22,13 @@
 """ Open Node SAMR30 experiment implementation """
 
 from gateway_code.config import static_path
-from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
-class NodeSamr30(NodeOpenOCDBase):
+class NodeSamr30(NodeDapLinkBase):
     """ Open node SAMR30 implementation """
 
     TYPE = 'samr30'
     OPENOCD_CFG_FILE = static_path('iot-lab-samr30.cfg')
     FW_IDLE = static_path('samr30_idle.elf')
     FW_AUTOTEST = static_path('samr30_autotest.elf')
-    TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
-    BAUDRATE = 115200

@@ -22,10 +22,10 @@
 """ Open Node SAMR34 experiment implementation """
 
 from gateway_code.config import static_path
-from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
-class NodeSamr34(NodeOpenOCDBase):
+class NodeSamr34(NodeDapLinkBase):
     """ Open node SAMR34 implementation """
 
     TYPE = 'samr34'
@@ -33,5 +33,3 @@ class NodeSamr34(NodeOpenOCDBase):
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
     FW_IDLE = static_path('samr34_idle.elf')
     FW_AUTOTEST = static_path('samr34_autotest.elf')
-    TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
-    BAUDRATE = 115200

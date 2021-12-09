@@ -23,7 +23,7 @@
 
 from gateway_code.config import static_path
 from gateway_code.utils.openocd import OpenOCD
-from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
 class OpenOCDCustomReset(OpenOCD):
@@ -34,12 +34,10 @@ class OpenOCDCustomReset(OpenOCD):
              '-c "shutdown"')
 
 
-class NodeMicrobit(NodeOpenOCDBase):
+class NodeMicrobit(NodeDapLinkBase):
     """ Open node Micro:Bit implementation """
 
     TYPE = 'microbit'
-    TTY = '/dev/iotlab/ttyON_CMSIS-DAP'
-    BAUDRATE = 115200
     OPENOCD_CLASS = OpenOCDCustomReset
     OPENOCD_CFG_FILE = static_path('iot-lab-microbit.cfg')
     FW_IDLE = static_path('microbit_idle.elf')

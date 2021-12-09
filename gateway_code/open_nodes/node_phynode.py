@@ -22,10 +22,10 @@
 """ Open Node Phytec phyNode experiment implementation """
 
 from gateway_code.config import static_path
-from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
-class NodePhynode(NodeOpenOCDBase):
+class NodePhynode(NodeDapLinkBase):
     """ Open node phyNode implementation """
 
     TYPE = 'phynode'
@@ -33,4 +33,3 @@ class NodePhynode(NodeOpenOCDBase):
     FW_IDLE = static_path('phynode_idle.elf')
     FW_AUTOTEST = static_path('phynode_autotest.elf')
     TTY = '/dev/iotlab/ttyON_PHYNODE'
-    BAUDRATE = 115200

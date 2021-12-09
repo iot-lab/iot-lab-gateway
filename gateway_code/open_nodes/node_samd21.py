@@ -22,15 +22,13 @@
 """ Open Node SAMD21 experiment implementation """
 
 from gateway_code.config import static_path
-from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
+from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
-class NodeSamd21(NodeOpenOCDBase):
+class NodeSamd21(NodeDapLinkBase):
     """ Open node SAMD21 implementation """
 
     TYPE = 'samd21'
     OPENOCD_CFG_FILE = static_path('iot-lab-samd21.cfg')
     FW_IDLE = static_path('samd21_idle.elf')
     FW_AUTOTEST = static_path('samd21_autotest.elf')
-    TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
-    BAUDRATE = 115200
