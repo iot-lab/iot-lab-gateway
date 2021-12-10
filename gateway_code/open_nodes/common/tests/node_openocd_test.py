@@ -33,6 +33,7 @@ class NodeOpenOCDTest(NodeOpenOCDBase):
     """A test node derived from NodeOpenOCDBase."""
     TYPE = 'openocd_test'
     TTY = '/dev/iotlab/ttyTestOpenOCD'
+    BIND_IP = '0.0.0.0'
     BAUDRATE = 115200
     ROM_START_ADDR = 0xaa
     OPENOCD_CFG_FILE = NodeMicrobit.OPENOCD_CFG_FILE

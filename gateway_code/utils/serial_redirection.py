@@ -40,16 +40,23 @@ class SerialRedirection(ExternalProcess):
     Socat is run in a loop instead of using 'tcp-listen,..,fork' because we
     want
     """
-    SOCAT = ('socat -d'
-             ' TCP4-LISTEN:20000,reuseaddr'
-             ' open:{tty},b{baud},{serial_opts}')
+    SOCAT = (
+        'socat -d'
+        ' TCP4-LISTEN:20000,reuseaddr,bind={bind_ip}'
+        ' open:{tty},b{baud},{serial_opts}'
+    )
     NAME = "serial redirection"
 
-    def __init__(self, tty, baudrate, serial_opts=('echo=0', 'raw')):
+    def __init__(
+        self, tty, baudrate, bind_ip='0.0.0.0', serial_opts=('echo=0', 'raw')
+    ):
         self.tty = tty
         self.process_cmd = shlex.split(
-            self.SOCAT.format(tty=tty, baud=baudrate,
-                              serial_opts=','.join(serial_opts)))
+            self.SOCAT.format(
+                bind_ip=bind_ip, tty=tty, baud=baudrate,
+                serial_opts=','.join(serial_opts)
+            )
+        )
         super().__init__()
 
     def check_error(self, retcode):
