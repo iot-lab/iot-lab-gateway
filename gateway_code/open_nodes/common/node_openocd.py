@@ -42,6 +42,7 @@ class NodeOpenOCDBase(OpenNodeBase):
     ROM_START_ADDR = 0x0
     OPENOCD_CLASS = OpenOCD
     OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
+    BIND_IP = '0.0.0.0'
 
     AUTOTEST_AVAILABLE = [
         'echo', 'get_time',  # mandatory
@@ -52,7 +53,9 @@ class NodeOpenOCDBase(OpenNodeBase):
     ALIM = '5V'
 
     def __init__(self):
-        self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
+        self.serial_redirection = SerialRedirection(
+            self.TTY, self.BAUDRATE, bind_ip=self.BIND_IP
+        )
         self.openocd = self.OPENOCD_CLASS.from_node(self)
 
     @property
