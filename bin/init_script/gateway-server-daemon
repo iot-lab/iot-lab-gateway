@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # This file is a part of IoT-LAB gateway_code
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
@@ -24,60 +24,98 @@
 # Init script for Gateway Server using bottle
 # http://bottlepy.org
 
-DESC="Gateway Server"
-NAME=gateway-server
-PIDDIR=/var/run/${NAME}
-PIDFILE=$PIDDIR/${NAME}.pid
-LOGDIR=/var/log/${NAME}
-LOGFILE=$LOGDIR/bottle.log
-DAEMONUSER=www-data
-
-DAEMON=gateway-rest-server
-DAEMON_OPTS="0.0.0.0 8080 --log-folder=$LOGDIR"
-
 # add path for finding openocd and gateway-rest-server
 export PATH=$PATH:/usr/local/bin
 
+: ${CONFDIR:="/var/local/config"}
+NAME=gateway-server
+DAEMON=gateway-rest-server
+DAEMONUSER=www-data
 
+daemon_control() {
+  local command=$1
+  local bind_ip=$2
 
-case "$1" in
-  start)
-    echo "Starting $DESC ... "
-    if [ ! -d $PIDDIR ]; then
-         mkdir -p $PIDDIR
-         chown $DAEMONUSER:$DAEMONUSER $PIDDIR
-    fi
-    if [ ! -d $LOGDIR ]; then
-         mkdir -p $LOGDIR
-         chown $DAEMONUSER:$DAEMONUSER $LOGDIR
-    fi
-    start-stop-daemon --start -m --pidfile $PIDFILE -b --chuid $DAEMONUSER:$DAEMONUSER --exec /bin/bash -- -c "exec $DAEMON $DAEMON_OPTS >> $LOGFILE 2>&1"
-    ;;
-  stop)
-    echo "Stopping $DESC ... "
-    /sbin/start-stop-daemon --stop --pidfile $PIDFILE
-    # Many daemons don't delete their pidfiles when they exit.
-    rm -f $PIDFILE
-    ;;
-  restart)
-    echo -n "Restarting $DESC ... "
-    $0 stop
-    sleep 5
-    $0 start
-    ;;
-  status)
-    PID=`/bin/ps -eo 'pid,cmd'| grep $DAEMON | grep -v grep | awk '{sub("^ ", "", $0); print $0}' | cut -d " " -f 1`
-    if [[ -n "$PID" ]]; then
-       echo "$DESC (pid $PID) is running."
-    else
-       echo "$DESC is stopped."
-    fi
-    ;;
-  *)
-    echo "Usage: /etc/init.d/bottle {start|stop|restart|status}"
-    exit 1
-    ;;
-esac
+  local desc="Gateway Server"
+  local piddir=/var/run/${NAME}
+  local logdir=/var/log/${NAME}
+  local confdir=${CONFDIR}
+
+  if [ -n $3 ]
+  then
+    local on=$3
+    desc+=" (${on})"
+    piddir+="/${on}"
+    logdir+="/${on}"
+    confdir+="/${on}"
+  fi
+
+  local pidfile=${piddir}/${NAME}.pid
+  local logfile=${logdir}/bottle.log
+  local daemon_opts="${bind_ip} 8080 --log-folder=${logdir}"
+
+  case "${command}" in
+    start)
+      echo "Starting ${desc} ... "
+      if [ ! -d ${piddir} ]; then
+           mkdir -p ${piddir}
+           chown ${DAEMONUSER}:${DAEMONUSER} ${piddir}
+      fi
+      if [ ! -d ${logdir} ]; then
+           mkdir -p ${logdir}
+           chown ${DAEMONUSER}:${DAEMONUSER} ${logdir}
+      fi
+      IOTLAB_GATEWAY_CFG_DIR=${confdir} start-stop-daemon --start -m --pidfile ${pidfile} -b --chuid ${DAEMONUSER}:${DAEMONUSER} --exec /bin/bash -- -c "exec ${DAEMON} ${daemon_opts} >> ${logfile} 2>&1"
+      ;;
+    stop)
+      echo "Stopping ${desc} ... "
+      /sbin/start-stop-daemon --stop --pidfile ${pidfile}
+      # Many daemons don't delete their pidfiles when they exit.
+      rm -f ${pidfile}
+      ;;
+    restart)
+      echo -n "Restarting ${desc} ... "
+      $0 stop
+      sleep 5
+      $0 start
+      ;;
+    status)
+      if [[ -f "${pidfile}" ]]; then
+         echo "${desc} (pid $(cat ${pidfile})) is running."
+      else
+         echo "${desc} is stopped."
+      fi
+      ;;
+    *)
+      echo "Usage: /etc/init.d/bottle {start|stop|restart|status}"
+      exit 1
+      ;;
+  esac
+}
+
+main() {
+  if [ -f "${CONFDIR}/board_type" ]
+  then
+    daemon_control "$1" "0.0.0.0"
+  else
+    for on_conf_path in $(find ${CONFDIR} -mindepth 1 -type d | sort)
+    do
+      local ip_file="${on_conf_path}"/ip
+      if [ -f "${ip_file}" ]
+      then
+        local bind_ip=$(cat "${ip_file}")
+      else
+        local bind_ip="0.0.0.0"
+      fi
+      daemon_control "$1" "${bind_ip}" "$(basename "${on_conf_path}")"
+    done
+  fi
+}
+
+COMMAND="$1"
+shift # pop $1 from $@
+
+main ${COMMAND}
 
 exit 0
 
