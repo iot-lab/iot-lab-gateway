@@ -41,7 +41,7 @@ PYCOM_SAFE_REBOOT_SEQUENCE = {
 }
 PYCOM_FLASH_ERASE_SEQUENCE = (
     b"import os\r\n",
-    b"os.mkfs('/flash')\r\n",  # Erase the flash
+    b"os.fsformat('/flash')\r\n",  # Erase the flash
 )
 PYCOM_RESET_SEQUENCE = (
     b"import machine\r\n",
