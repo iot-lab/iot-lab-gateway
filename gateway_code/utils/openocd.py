@@ -56,8 +56,8 @@ class OpenOCD:
 
     OPENOCD = (
         '{openocd_path} --debug=0'
-        ' {serial_cmd}'
         ' {config}'
+        ' {serial_cmd}'
         ' -c "init"'
         ' -c "targets"'
         ' {cmd}'
