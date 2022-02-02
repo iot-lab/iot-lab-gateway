@@ -41,9 +41,11 @@ daemon_control() {
   local logdir=/var/log/${NAME}
   local confdir=${CONFDIR}
 
-  if [ -n $3 ]
+  local on=""
+
+  if [ -n "$3" ]
   then
-    local on=$3
+    on+=$3
     desc+=" (${on})"
     piddir+="/${on}"
     logdir+="/${on}"
@@ -74,10 +76,10 @@ daemon_control() {
       rm -f ${pidfile}
       ;;
     restart)
-      echo -n "Restarting ${desc} ... "
-      $0 stop
-      sleep 5
-      $0 start
+      echo "Restarting ${desc} ... "
+      daemon_control stop ${bind_ip} ${on}
+      sleep 2
+      daemon_control start ${bind_ip} ${on}
       ;;
     status)
       if [[ -f "${pidfile}" ]]; then
