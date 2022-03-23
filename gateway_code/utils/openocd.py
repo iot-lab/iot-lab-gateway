@@ -58,6 +58,7 @@ class OpenOCD:
         '{openocd_path} --debug=0'
         ' {config}'
         ' {serial_cmd}'
+        ' -c "bindto {bind_ip}"'
         ' -c "init"'
         ' -c "targets"'
         ' {cmd}'
@@ -87,7 +88,6 @@ class OpenOCD:
 
     DEBUG = (
         ' -c "reset halt"'
-        ' -c "bindto {bind_ip}"'
     )
     TIMEOUT = 100
 
@@ -158,7 +158,7 @@ class OpenOCD:
         LOGGER.debug('Debug start')
         self.debug_stop()  # kill previous process
         self._debug = subprocess.Popen(
-            **self._openocd_args(self.DEBUG.format(bind_ip=self.bind_ip))
+            **self._openocd_args(self.DEBUG)
         )
         LOGGER.debug('Debug started')
         return 0
@@ -199,6 +199,7 @@ class OpenOCD:
             openocd_path=self.openocd_path,
             serial_cmd=self.serial_cmd,
             config=self.config,
+            bind_ip=self.bind_ip,
             cmd=command_str
         )
         args = shlex.split(cmd)
