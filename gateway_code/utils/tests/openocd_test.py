@@ -96,10 +96,10 @@ class TestsMethods(unittest.TestCase):
         self.assertEqual(
             command_list[-8:],
             [
+                '-c', 'bindto 0.0.0.0',
                 '-c', 'init',
                 '-c', 'targets',
                 '-c', 'reset halt',
-                '-c', 'bindto 0.0.0.0'
             ]
         )
         assert command_list[-9] == NodeM3.OPENOCD_OPTS[0]
