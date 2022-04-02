@@ -117,11 +117,13 @@ class OpenNodeBase(NodeBase):
                 len(cls.ELF_TARGET) != 2):
             ret_val += 1
 
-        for firmware_attr in ('FW_IDLE', 'FW_AUTOTEST'):
-            firmware = getattr(cls, firmware_attr, None)
-            if (firmware is not None and not
-                    elftarget.is_compatible_with_node(firmware, cls)):
-                ret_val += 1
+        # skip on iotlab gateways because of too little RAM
+        if os.uname()[4] != 'armv7l':
+            for firmware_attr in ('FW_IDLE', 'FW_AUTOTEST'):
+                firmware = getattr(cls, firmware_attr, None)
+                if (firmware is not None and not
+                        elftarget.is_compatible_with_node(firmware, cls)):
+                    ret_val += 1
 
         required_autotest = {'echo', 'get_time'}  # mandatory
         if (getattr(cls, 'AUTOTEST_AVAILABLE', None) is None or
