@@ -23,6 +23,7 @@
 
 from __future__ import print_function
 
+import os
 import pytest
 
 from mock import patch
@@ -258,11 +259,13 @@ def test_node_verify_errors():
 
     REGISTRY[OpenNodeIncompatibleElf.TYPE] = OpenNodeIncompatibleElf
 
-    with patch('gateway_code.utils.'
-               'elftarget.is_compatible_with_node') as is_compatible:
-        is_compatible.return_value = False
-        with pytest.raises(ValueError):
-            open_node_class("open_node_incompatible_elf")
+    # skip on iotlab gateways because of too little RAM
+    if os.uname()[4] != 'armv7l':
+        with patch('gateway_code.utils.'
+                   'elftarget.is_compatible_with_node') as is_compatible:
+            is_compatible.return_value = False
+            with pytest.raises(ValueError):
+                open_node_class("open_node_incompatible_elf")
 
     # Remove test node from registry
     del REGISTRY[OpenNodeIncompatibleElf.TYPE]
