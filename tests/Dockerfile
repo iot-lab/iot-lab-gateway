@@ -21,7 +21,7 @@ FROM fitiotlab/iot-lab-gateway:latest
 
 # Update
 RUN apt-get update && \
-    apt-get install -y sudo python3-pip valgrind gdb
+    apt-get install -y sudo python3-pip valgrind gdb gdb-multiarch
 
 # Install app dependencies
 RUN python3 -m pip install --upgrade pip && \
