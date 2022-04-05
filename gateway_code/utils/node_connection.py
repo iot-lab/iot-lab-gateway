@@ -28,12 +28,15 @@ import time
 import socket
 
 import logging
+
+from gateway_code import config
+
 LOGGER = logging.getLogger('gateway_code')
 
 
 class OpenNodeConnection:
     """ Connects to serial port redirection and sends messages """
-    HOST = 'localhost'
+    HOST = config.read_config('ip', 'localhost')
     PORT = 20000
 
     def __init__(self, host=HOST, port=PORT, timeout=5.0):
