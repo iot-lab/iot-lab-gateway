@@ -19,16 +19,16 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node Phytec phyNode experiment implementation """
+""" Open Node Microbit v2 experiment implementation """
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
-class NodePhynode(NodeDapLinkBase):
-    """ Open node phyNode implementation """
+class NodeMicrobit2(NodeDapLinkBase):
+    """ Open node Microbit2 implementation """
 
-    TYPE = 'phynode'
-    OPENOCD_CFG_FILE = static_path('iot-lab-phynode.cfg')
-    FW_IDLE = static_path('phynode_idle.elf')
-    FW_AUTOTEST = static_path('phynode_autotest.elf')
+    TYPE = 'microbit2'
+    OPENOCD_CFG_FILE = static_path('iot-lab-microbit2.cfg')
+    FW_IDLE = static_path('microbit2_idle.elf')
+    FW_AUTOTEST = static_path('microbit2_autotest.elf')

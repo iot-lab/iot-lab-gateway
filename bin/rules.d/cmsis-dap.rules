@@ -1,9 +1,11 @@
 # CMSIS DAP Node
 
 # Serial link
-
 SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ENV{ID_VENDOR}=="Atmel_Corp.", ENV{ID_MODEL}=="EDBG_CMSIS-DAP", ENV{ID_USB_INTERFACE_NUM}=="01",  SYMLINK+="iotlab/ttyON_CMSIS_DAP"
 SUBSYSTEM=="usb", ATTR{idProduct}=="2111", ATTR{idVendor}=="03eb", MODE="0664", GROUP="dialout"
+
+SUBSYSTEM=="tty", ATTRS{idVendor}=="0d28", ATTRS{idProduct}=="0204", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_CMSIS-DAP"
+SUBSYSTEM=="usb", ATTRS{idVendor}=="0d28", ATTRS{idProduct}=="0204", MODE="0664", GROUP="dialout"
 
 # Flashing interface
 KERNEL=="hidraw*", SUBSYSTEM=="hidraw", MODE="0664", GROUP="dialout"
