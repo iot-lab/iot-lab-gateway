@@ -28,8 +28,6 @@ ENV LANG C.UTF-8
 RUN apt-get update && \
     apt-get install -y git \
         # MANDATORY
-        python-dev \
-        python-setuptools \
         python3-dev \
         python3-setuptools \
         socat \
@@ -69,16 +67,6 @@ RUN apt-get update && \
 
 #liboml2 install
 RUN mkdir /var/www && chown www-data:www-data /var/www
-
-RUN git clone https://github.com/mytestbed/oml.git && \
-    cd oml && \
-    git checkout tags/v2.11.0 && \
-    ./autogen.sh && \
-    ./configure --disable-doc --disable-doxygen-doc --disable-doxygen-dot \ 
-        --disable-android --disable-doxygen-html --disable-option-checking && \
-    make && \
-    make install && \
-    cd .. && rm -rf oml
 
 #openocd 0.10
 RUN git clone https://github.com/ntfreak/openocd openocd10 && \
@@ -121,6 +109,15 @@ RUN git clone https://github.com/iot-lab/iot-lab-ftdi-utils/  && \
 RUN git clone https://github.com/JelmerT/cc2538-bsl && \
     cp cc2538-bsl/cc2538-bsl.py /usr/bin/. && \
     pip3 install intelhex
+
+RUN git clone https://github.com/iot-lab/oml.git -b iotlab && \
+    cd oml && \
+    ./autogen.sh && \
+    ./configure --disable-doc --disable-doxygen-doc --disable-doxygen-dot \
+        --disable-android --disable-doxygen-html --disable-option-checking && \
+    make && \
+    make install && \
+    cd .. && rm -rf oml
 
 # control_node_serial
 RUN git clone https://github.com/iot-lab/control_node_serial && \
