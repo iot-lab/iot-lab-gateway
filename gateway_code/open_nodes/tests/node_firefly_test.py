@@ -54,7 +54,7 @@ class TestNodeFirefly(unittest.TestCase):
         assert wait_tty.call_count == 0
 
         # Node status always returns 0
-        assert NodeFirefly.status() == 0
+        assert self.node.status() == 0
 
         # programmer instance
         assert self.node.programmer == self.node.cc2538

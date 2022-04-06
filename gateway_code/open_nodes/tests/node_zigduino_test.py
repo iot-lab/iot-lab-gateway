@@ -58,7 +58,7 @@ class TestNodeZigduino(unittest.TestCase):
     def test_basic(self, wait_tty):
         """Test basic functions of a zigduino node."""
         # Node status always returns 0
-        assert NodeZigduino.status() == 0
+        assert self.node.status() == 0
 
         # programmer instance
         assert self.node.programmer == self.node.avrdude

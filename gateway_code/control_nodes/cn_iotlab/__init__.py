@@ -199,6 +199,6 @@ class ControlNodeIotlab(ControlNodeBase):
         So wait 2 seconds to be safe.  """
         time.sleep(2)
 
-    def status(self):
+    def status(self):  # pylint:disable=no-self-use
         """ Check Control node status """
         return gateway_code.utils.ftdi_check.ftdi_check('control', '4232')

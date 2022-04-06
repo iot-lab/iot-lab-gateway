@@ -50,7 +50,6 @@ class NodeM3(NodeOpenOCDBase):
         'leds_on', 'leds_off', 'leds_blink',
     ]
 
-    @staticmethod
-    def status():
+    def status(self):  # pylint:disable=no-self-use
         """ Check M3 node status """
         return gateway_code.utils.ftdi_check.ftdi_check('m3', '2232')

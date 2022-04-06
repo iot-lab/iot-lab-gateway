@@ -92,8 +92,8 @@ class NodeRpi3(OpenNodeBase):
 
     def wait_booted(self, timeout):
         """ Monitor RPi3 tty to check if node booted """
+        t_start = time.time()
         try:
-            t_start = time.time()
             LOGGER.debug("Time before boot %s", datetime.datetime.now())
             self._rpi3_expect = SerialExpectForSocket(logger=LOGGER)
             match = self._rpi3_expect.expect(' login: ', timeout=timeout)
@@ -121,8 +121,7 @@ class NodeRpi3(OpenNodeBase):
             pass
         return 0
 
-    @staticmethod
-    def status():
+    def status(self):  # pylint:disable=no-self-use
         """ Check RPi3 node status """
         # No check done for the moment
         return 0

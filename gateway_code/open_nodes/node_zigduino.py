@@ -184,8 +184,7 @@ class NodeZigduino(OpenNodeBase):
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
         return ret_val
 
-    @staticmethod
-    def status():
+    def status(self):  # pylint:disable=no-self-use
         """ Check Zigduino node status """
         # It's impossible for us to check the status of the zigduino node
         return 0

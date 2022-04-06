@@ -30,8 +30,9 @@ def test_cn_iotlabm3_status():
     """Test status method of iotlabm3 control node."""
     # Flash and status does nothing
     with patch('gateway_code.utils.ftdi_check.ftdi_check') as ftdi_check:
+        node = ControlNodeIotlabm3('test', None)
         ftdi_check.return_value = 42
-        assert ControlNodeIotlabm3.status() == 42
+        assert node.status() == 42
         ftdi_check.assert_called_with('controlNode', '2232')
 
 

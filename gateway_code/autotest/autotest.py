@@ -80,7 +80,6 @@ def autotest_control_node_checker(*required):
 
 class FatalError(Exception):
     """ FatalError during tests """
-    ...
 
 
 def tst_ok(bool_value):

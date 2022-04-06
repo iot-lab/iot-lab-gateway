@@ -372,7 +372,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         # there should be no new measures since profile update
         # wait 5 more seconds that no measures arrive
         # wait_cond is used as 'check still false'
-        wait_cond(5, False, lambda: [] == self.cn_measures)
+        wait_cond(5, False, lambda: not self.cn_measures)
         self.assertEqual([], self.cn_measures)
 
         # Stop experiment

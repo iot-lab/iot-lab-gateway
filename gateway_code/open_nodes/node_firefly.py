@@ -129,7 +129,6 @@ class NodeFirefly(OpenNodeBase):
         LOGGER.info('Reset firefly node')
         return self.cc2538.reset()
 
-    @staticmethod
-    def status():
+    def status(self):  # pylint:disable=no-self-use
         """ check the node status """
         return 0
