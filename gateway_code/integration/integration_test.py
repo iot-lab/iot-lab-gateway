@@ -39,6 +39,7 @@ import mock
 from mock import patch
 from testfixtures import LogCapture
 
+from gateway_code import config
 from gateway_code.tests.rest_server_test import query_string
 
 from gateway_code.integration import test_integration_mock
@@ -215,10 +216,11 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
             return
 
         firmware = abspath(board_class.FW_AUTOTEST)
+        hostname = config.read_config('ip', 'localhost')
         gdb_cmd = [
             'gdb',
             '-ex', 'set confirm off',
-            '-ex', 'target remote localhost:3333',
+            '-ex', f'target remote {hostname}:3333',
             '-ex', 'monitor reset halt',
             '-ex', f'monitor flash write_image erase {firmware}',
             '-ex', 'monitor reset init',
