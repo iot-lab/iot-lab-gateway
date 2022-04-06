@@ -218,7 +218,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         firmware = abspath(board_class.FW_AUTOTEST)
         hostname = config.read_config('ip', 'localhost')
         gdb_cmd = [
-            'gdb',
+            'gdb' if os.uname()[4] == 'armv7l' else 'gdb-multiarch',
             '-ex', 'set confirm off',
             '-ex', f'target remote {hostname}:3333',
             '-ex', 'monitor reset halt',
