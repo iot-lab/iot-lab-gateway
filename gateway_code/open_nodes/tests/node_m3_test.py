@@ -29,7 +29,8 @@ from gateway_code.open_nodes.node_m3 import NodeM3
 @patch('gateway_code.utils.ftdi_check.ftdi_check')
 def test_node_m3_status(ftdi_check):
     """Test ftdi_check is correctly called."""
+    node = NodeM3()
     ftdi_check.return_value = 42
-    assert NodeM3.status() == 42
+    assert node.status() == 42
     ftdi_check.assert_called_once()
     ftdi_check.assert_called_with('m3', '2232')

@@ -42,13 +42,13 @@ class NodeBase(with_metaclass(abc.ABCMeta)):
     @abc.abstractmethod
     def status(self):
         """ Status of the node """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @property
     @abc.abstractmethod
     def programmer(self):
         """Returns the programmer instance of an open node."""
-        ...  # pragma: no cover
+        # pragma: no cover
 
 
 class ControlNodeBase(NodeBase):
@@ -57,42 +57,42 @@ class ControlNodeBase(NodeBase):
     @abc.abstractmethod
     def start(self, exp_id, exp_files=None):
         """ This method is called when starting an experiment """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def stop(self):
         """ This method is called when stopping an experiment """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def start_experiment(self, profile):
         """ Configure experiment and monitoring on ControlNode"""
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def stop_experiment(self):
         """ Cleanup Control node Monitoring and experiment """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def autotest_setup(self, measures_handler):
         """ Setup the control node for the open node autotest """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def autotest_teardown(self, stop_on):
         """ Cleanup the control node for the open node autotest """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def configure_profile(self, profile=None):
         """ Setup the profile used by the control node """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def flash(self, firmware_path=None, binary=False, offset=0):
         """ Flash firmware on the control_node """
-        ...  # pragma: no cover
+        # pragma: no cover
 
 
 class OpenNodeBase(NodeBase):
@@ -101,12 +101,12 @@ class OpenNodeBase(NodeBase):
     @abc.abstractmethod
     def setup(self, firmware_path):
         """ Setup the open node with a firmware"""
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @abc.abstractmethod
     def teardown(self):
         """ Cleanup the open node """
-        ...  # pragma: no cover
+        # pragma: no cover
 
     @classmethod
     def verify(cls):

@@ -70,7 +70,7 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         self.node.openocd.reset.assert_called_once()
 
         # Node status always returns 0
-        assert NodeOpenOCDTest.status() == 0
+        assert self.node.status() == 0
 
         # debug start
         assert self.node.debug_start() == 0

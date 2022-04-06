@@ -61,7 +61,6 @@ class ControlNodeIotlabm3(ControlNodeIotlab):
         """ Stop open node with 'power' source """
         return 0
 
-    @staticmethod
-    def status():
+    def status(self):  # pylint:disable=no-self-use
         """ Check Control node status """
         return gateway_code.utils.ftdi_check.ftdi_check('controlNode', '2232')

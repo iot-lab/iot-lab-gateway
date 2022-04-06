@@ -127,8 +127,7 @@ class NodeLeonardo(OpenNodeBase):
         ret_val += common.wait_tty(self.TTY, LOGGER, self.TTY_RESTORE_TIME)
         return ret_val
 
-    @staticmethod
-    def status():
+    def status(self):  # pylint:disable=no-self-use
         """ Check Leonardo node status """
         # It's impossible for us to check the status of the leonardo node
         return 0

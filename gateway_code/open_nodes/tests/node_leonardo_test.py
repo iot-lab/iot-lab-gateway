@@ -57,7 +57,7 @@ class TestNodeLeonardo(unittest.TestCase):
         wait_tty.assert_called_once()
 
         # Node status always returns 0
-        assert NodeLeonardo.status() == 0
+        assert self.node.status() == 0
 
     @patch('gateway_code.common.wait_no_tty')
     def test_setup(self, wait_no_tty, wait_tty):

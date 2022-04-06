@@ -229,6 +229,7 @@ class ControlNodeSerial:  # pylint:disable=too-many-instance-attributes
         :return: received answers or `None` if timeout caught
         """
         command_str = ' '.join(command_args) + '\n'
+        answer_cn = None
         with self._send_mutex:
             # remove existing items (old not treated answers)
             common.empty_queue(self.msgs)
@@ -240,13 +241,10 @@ class ControlNodeSerial:  # pylint:disable=too-many-instance-attributes
                 answer_cn = self.msgs.get(block=True, timeout=1.0)
             except queue.Empty:
                 LOGGER.error('control_node_serial answer timeout')
-                answer_cn = None
             except AttributeError:
                 LOGGER.error('control_node_serial stdin is None')
-                answer_cn = None
             except IOError:
                 LOGGER.error('control_node_serial process is terminated')
-                answer_cn = None
             finally:
                 LOGGER.debug('control_node_answer: %r', answer_cn)
 

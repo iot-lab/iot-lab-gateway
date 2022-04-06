@@ -59,8 +59,7 @@ class NodeNoBase(OpenNodeBase):
         """Does nothing."""
         return 0
 
-    @staticmethod
-    def status():  # pylint:disable=no-self-use
+    def status(self):  # pylint:disable=no-self-use
         """Does nothing."""
         return 0
 

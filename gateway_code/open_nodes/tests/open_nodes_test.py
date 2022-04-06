@@ -70,7 +70,6 @@ def test_missing_overrides():
     # pylint: disable=abstract-method
     class MyNode(OpenNodeBase):
         """methods purposefully not implemented"""
-        ...
 
     # trying to instantiate it raises TypeError
     pytest.raises(TypeError, MyNode.__init__)
