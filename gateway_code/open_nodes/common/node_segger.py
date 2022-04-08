@@ -38,6 +38,8 @@ class NodeSeggerBase(OpenNodeBase):
     # pylint:disable=no-member
     """ Open node JLink Segger implemention """
 
+    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+
     SEGGER_CLASS = Segger
 
     AUTOTEST_AVAILABLE = [
