@@ -30,6 +30,8 @@ import subprocess
 import atexit
 
 import logging
+import tempfile
+
 from collections import namedtuple
 
 from gateway_code import common
@@ -107,7 +109,23 @@ class Segger:
     def flash(self, fw_file, binary=False, offset=0):
         """ Flash firmware """
         try:
-            self._commandline_file(fw_file, offset)
+            fw_path = common.abspath(fw_file)
+            if not binary:
+                LOGGER.info('Creating bin file from %s', fw_path)
+                bin_file = tempfile.NamedTemporaryFile(suffix='.bin')
+                bin_path = bin_file.name
+                LOGGER.info('Created bin file in %s', bin_path)
+
+                # creating hex file
+                to_bin_command = 'objcopy -I elf32-big -O binary {elf} {bin}'
+                cmd = to_bin_command.format(elf=fw_path, bin=bin_path)
+                ret_value = self._call_cmd(cmd)
+                LOGGER.info('To bin conversion ret value : %d', ret_value)
+                fw_path = bin_path
+                # Ensure offset is 0 with elf firmware
+                offset = 0
+
+            self._commandline_file(fw_path, offset)
             _cmd = self.FLASH.format(jlink_device=self.jlink_device,
                                     jlink_speed=JLINK_SPEED,
                                     jlink_itf=self.jlink_itf,
@@ -118,9 +136,24 @@ class Segger:
             LOGGER.error('%s', err)
             return 1
 
-    def _commandline_file(self, fw_file, offset=0):
+    def _call_cmd(self, command_str):
+        """ Run the given command_str."""
+        kwargs = self._cmd_args(command_str)
+        LOGGER.info(kwargs)
+        try:
+            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
+        except subprocess_timeout.TimeoutExpired as exc:
+            LOGGER.error("Edbg '%s' timeout: %s", command_str, exc)
+            return 1
+
+    def _cmd_args(self, command_str):
+        """ Get subprocess arguments for command_str """
+        # Generate full command arguments
+        args = shlex.split(command_str)
+        return dict(args=args, stdout=self.out, stderr=self.out)
+
+    def _commandline_file(self, fw_path, offset=0):
         """ Generate JLinkExe batch commands file """
-        fw_path = common.abspath(fw_file)
         # opening first file in append mode and second file in read mode
         f_reset = open(self.segger_args.reset_file, 'r')
         flash_addr = hex(self.jlink_flash_addr + offset)
