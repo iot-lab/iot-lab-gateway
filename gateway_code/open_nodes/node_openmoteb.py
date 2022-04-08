@@ -29,8 +29,8 @@ class NodeOpenmoteb(NodeSeggerBase):
     """ Open node Openmoteb implementation """
 
     TYPE = 'openmoteb'
-    FW_IDLE = static_path('openmoteb_idle.bin')
-    FW_AUTOTEST = static_path('openmoteb_autotest.bin')
+    FW_IDLE = static_path('openmote-b_idle.elf')
+    FW_AUTOTEST = static_path('openmote-b_autotest.elf')
     JLINK_DEVICE = "CC2538SF53"
     JLINK_IF = "JTAG"
     JLINK_RESET_FILE = static_path("openmoteb_reset.seg")
