@@ -109,6 +109,7 @@ class Segger:
     def flash(self, fw_file, binary=False, offset=0):
         """ Flash firmware """
         try:
+            ret_value = 0
             fw_path = common.abspath(fw_file)
             if not binary:
                 LOGGER.info('Creating bin file from %s', fw_path)
@@ -118,26 +119,29 @@ class Segger:
                 # creating bin file
                 to_bin_command = 'objcopy -I elf32-big -O binary {elf} {bin}'
                 cmd = to_bin_command.format(elf=fw_path, bin=bin_path)
-                ret_value = self._call_cmd(cmd)
+                ret_value = self._call_cmd_objcopy(cmd)
                 LOGGER.info('To bin conversion ret value : %d', ret_value)
                 fw_path = bin_path
                 # Ensure offset is 0 with elf firmware
                 offset = 0
 
+            # Flashing
             self._commandline_file(fw_path, offset)
             _cmd = self.FLASH.format(jlink_device=self.jlink_device,
                                     jlink_speed=JLINK_SPEED,
                                     jlink_itf=self.jlink_itf,
                                     cmdfile=JLINK_CMDFILE_FLASH)
-            LOGGER.info("FLASH: %s", _cmd)
-            return self._call_cmd_flash(_cmd)
+            LOGGER.info("FLASH command: %s", _cmd)
+            ret_value += self._call_cmd_flash(_cmd)
+            LOGGER.info('Flashing ret value : %d', ret_value)
+            return ret_value
         except IOError as err:
             LOGGER.error('%s', err)
             return 1
 
-    def _call_cmd(self, command_str):
+    def _call_cmd_objcopy(self, command_str):
         """ Run the given command_str."""
-        kwargs = self._cmd_args(command_str)
+        kwargs = self._cmd_args_objcopy(command_str)
         LOGGER.info("CONVERT ELF TO BIN KWARGS: %s", kwargs)
         try:
             return subprocess_timeout.call(timeout=self.timeout, **kwargs)
@@ -145,7 +149,7 @@ class Segger:
             LOGGER.error("Segger convert elf to bin '%s' timeout: %s", command_str, exc)
             return 1
 
-    def _cmd_args(self, command_str):
+    def _cmd_args_objcopy(self, command_str):
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
         args = shlex.split(command_str)
