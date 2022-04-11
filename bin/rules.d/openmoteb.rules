@@ -1,2 +1,2 @@
 # open nodes openmoteb
-KERNEL=="ttyUSB1" , SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403" , ATTRS{idProduct}=="6010" , MODE="0664", GROUP="dialout", SYMLINK+="iotlab/ttyON_OPENMOTEB"
+SUBSYSTEM=="tty", SUBSYSTEMS=="usb", ATTRS{idVendor}=="0403" , ATTRS{idProduct}=="6010" , ENV{ID_USB_INTERFACE_NUM}=="01", MODE="0664", GROUP="dialout", SYMLINK+="iotlab/ttyON_OPENMOTEB"
