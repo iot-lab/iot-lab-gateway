@@ -115,8 +115,7 @@ class Segger:
                 bin_file = tempfile.NamedTemporaryFile(suffix='.bin')
                 bin_path = bin_file.name
                 LOGGER.info('Created bin file in %s', bin_path)
-
-                # creating hex file
+                # creating bin file
                 to_bin_command = 'objcopy -I elf32-big -O binary {elf} {bin}'
                 cmd = to_bin_command.format(elf=fw_path, bin=bin_path)
                 ret_value = self._call_cmd(cmd)
@@ -139,11 +138,11 @@ class Segger:
     def _call_cmd(self, command_str):
         """ Run the given command_str."""
         kwargs = self._cmd_args(command_str)
-        LOGGER.info(kwargs)
+        LOGGER.info("CONVERT ELF TO BIN KWARGS: %s", kwargs)
         try:
             return subprocess_timeout.call(timeout=self.timeout, **kwargs)
         except subprocess_timeout.TimeoutExpired as exc:
-            LOGGER.error("Edbg '%s' timeout: %s", command_str, exc)
+            LOGGER.error("Segger convert elf to bin '%s' timeout: %s", command_str, exc)
             return 1
 
     def _cmd_args(self, command_str):
