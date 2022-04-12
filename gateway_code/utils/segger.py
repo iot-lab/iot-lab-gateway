@@ -40,7 +40,7 @@ from . import subprocess_timeout
 LOGGER = logging.getLogger('gateway_code')
 
 JLinkSeggerArgs = namedtuple("JLinkSeggerArgs", ['path', 'opts', 'serial',
-                                                 'reset_file', 'flash_addr', 'itf', 'device' ])
+                             'reset_file', 'flash_addr', 'itf', 'device'])
 
 # default GDB port
 GDB_PORT = 3333
@@ -52,6 +52,7 @@ JLINK = "JLinkExe"
 JLINK_SERVER = "JLinkGDBServer"
 JLINK_SPEED = 2000
 JLINK_CMDFILE_FLASH = "/tmp/burn.seg"
+
 
 class Segger:
     """ Debugger class, implemented as a global variable storage """
@@ -70,8 +71,8 @@ class Segger:
              ' -commandfile "{cmdfile}"')
 
     JLINKSERVER_CMD = ('{jlink_path}' + '/' + JLINK_SERVER +
-                    ' {jlink_serial}'
-                    ' {cmd}')
+                       ' {jlink_serial}'
+                       ' {cmd}')
 
     DEBUG = (' -nogui 1'
              ' -silent'
@@ -80,7 +81,6 @@ class Segger:
              ' -if "{jlink_itf}"'
              ' -port "{gdb_port}"'
              ' -telnetport "{telnet_port}"')
-
 
     TIMEOUT = 100
 
@@ -101,9 +101,9 @@ class Segger:
     def reset(self):
         """ Reset """
         _cmd = self.FLASH.format(jlink_device=self.jlink_device,
-                                jlink_speed=JLINK_SPEED,
-                                jlink_itf=self.jlink_itf,
-                                cmdfile=self.segger_args.reset_file)
+                                 jlink_speed=JLINK_SPEED,
+                                 jlink_itf=self.jlink_itf,
+                                 cmdfile=self.segger_args.reset_file)
         return self._call_cmd_flash(_cmd)
 
     def flash(self, fw_file, binary=False, offset=0):
@@ -128,9 +128,9 @@ class Segger:
             # Flashing
             self._commandline_file(fw_path, offset)
             _cmd = self.FLASH.format(jlink_device=self.jlink_device,
-                                    jlink_speed=JLINK_SPEED,
-                                    jlink_itf=self.jlink_itf,
-                                    cmdfile=JLINK_CMDFILE_FLASH)
+                                     jlink_speed=JLINK_SPEED,
+                                     jlink_itf=self.jlink_itf,
+                                     cmdfile=JLINK_CMDFILE_FLASH)
             LOGGER.info("FLASH command: %s", _cmd)
             ret_value += self._call_cmd_flash(_cmd)
             LOGGER.info('Flashing ret value : %d', ret_value)
@@ -146,7 +146,8 @@ class Segger:
         try:
             return subprocess_timeout.call(timeout=self.timeout, **kwargs)
         except subprocess_timeout.TimeoutExpired as exc:
-            LOGGER.error("Segger convert elf to bin '%s' timeout: %s", command_str, exc)
+            LOGGER.error("Segger convert elf to bin '%s' timeout: %s",
+                         command_str, exc)
             return 1
 
     def _cmd_args_objcopy(self, command_str):
@@ -198,13 +199,14 @@ class Segger:
         LOGGER.debug('Debug start')
 
         _cmd = self.DEBUG.format(jlink_device=self.jlink_device,
-                                jlink_speed=JLINK_SPEED,
-                                jlink_itf=self.jlink_itf,
-                                gdb_port=GDB_PORT,
-                                telnet_port=TELNET_PORT)
+                                 jlink_speed=JLINK_SPEED,
+                                 jlink_itf=self.jlink_itf,
+                                 gdb_port=GDB_PORT,
+                                 telnet_port=TELNET_PORT)
         LOGGER.info("DEBUG: %s", _cmd)
         self.debug_stop()  # kill previous process
-        self._debug = subprocess.Popen(**self._segger_args_jlinkgdbserver(_cmd))
+        self._debug = subprocess.Popen(**self.
+                                       _segger_args_jlinkgdbserver(_cmd))
         LOGGER.debug('Debug started')
         return 0
 
@@ -232,8 +234,8 @@ class Segger:
         if self.jlink_serial != "":
             serial_server_arg = f"-select usb='{self.jlink_serial}'"
         cmd = self.JLINKSERVER_CMD.format(jlink_path=self.jlink_path,
-                                       jlink_serial=serial_server_arg,
-                                       cmd=command_str)
+                                          jlink_serial=serial_server_arg,
+                                          cmd=command_str)
         args = shlex.split(cmd)
         return {'args': args, 'stdout': self.out, 'stderr': self.out}
 
@@ -259,8 +261,8 @@ class Segger:
             * nodeclass.JLINK_PATH_PATH: jlink command full path (optional)
             * nodeclass.JLINK_OPTS: iterable telling other config options
               (optional)
-            * nodeclass.JLINK_SERIAL: JLink unique id for handling multiple nodes
-              (optional)
+            * nodeclass.JLINK_SERIAL: JLink unique id for handling multiple
+              nodes (optional)
 
             NOTE: JLINK_SERIAL should be move as config resource
         """
@@ -272,10 +274,10 @@ class Segger:
             nodeclass.JLINK_SERIAL = ""
 
         return cls(JLinkSeggerArgs(nodeclass.JLINK_PATH,
-                               nodeclass.JLINK_OPTS,
-                               nodeclass.JLINK_SERIAL,
-                               nodeclass.JLINK_RESET_FILE,
-                               nodeclass.JLINK_FLASH_ADDR,
-                               nodeclass.JLINK_IF,
-                               nodeclass.JLINK_DEVICE),
+                                   nodeclass.JLINK_OPTS,
+                                   nodeclass.JLINK_SERIAL,
+                                   nodeclass.JLINK_RESET_FILE,
+                                   nodeclass.JLINK_FLASH_ADDR,
+                                   nodeclass.JLINK_IF,
+                                   nodeclass.JLINK_DEVICE),
                    *args, **kwargs)
