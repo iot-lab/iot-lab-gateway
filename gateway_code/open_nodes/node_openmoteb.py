@@ -35,6 +35,6 @@ class NodeOpenmoteb(NodeSeggerBase):
     JLINK_IF = "JTAG"
     JLINK_RESET_FILE = static_path("openmoteb_reset.seg")
     # CC2538 default flash_addr 0x200000
-    JLINK_FLASH_ADDR = 2097152
+    JLINK_FLASH_ADDR = 0x200000
     TTY = '/dev/iotlab/ttyON_OPENMOTEB'
     BAUDRATE = 115200
