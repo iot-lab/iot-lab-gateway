@@ -127,13 +127,7 @@ class NodeSeggerBase(OpenNodeBase):
         LOGGER.info('segger node debugger stop')
         return self.segger.debug_stop()
 
-    @staticmethod
-    def status():  # pylint: disable=arguments-differ
+    def status(self):
         """ Check segger node status """
         # Status is called when open node is not powered
-        return 0
-
-    @classmethod
-    def verify(cls):  # pylint:disable=unused-argument
-        """ This class use binaries firmware """
         return 0
