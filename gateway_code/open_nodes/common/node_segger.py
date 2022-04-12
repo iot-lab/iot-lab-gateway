@@ -128,7 +128,7 @@ class NodeSeggerBase(OpenNodeBase):
         return self.segger.debug_stop()
 
     @staticmethod
-    def status():
+    def status():  # pylint: disable=arguments-differ
         """ Check segger node status """
         # Status is called when open node is not powered
         return 0
