@@ -121,7 +121,7 @@ class NodeRpi3(OpenNodeBase):
             pass
         return 0
 
-    def status(self):  # pylint:disable=no-self-use
+    def status(self):
         """ Check RPi3 node status """
         # No check done for the moment
         return 0

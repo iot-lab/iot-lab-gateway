@@ -136,7 +136,7 @@ class NodeOpenOCDBase(OpenNodeBase):
         LOGGER.info('openocd node debugger stop')
         return self.openocd.debug_stop()
 
-    def status(self):  # pylint:disable=no-self-use
+    def status(self):
         """ Check openocd node status """
         # Status is called when open node is not powered
         return 0

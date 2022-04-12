@@ -49,6 +49,6 @@ class NodeA8M3(NodeOpenOCDBase):
         'leds_on', 'leds_off', 'leds_blink',
     ]
 
-    def status(self):  # pylint:disable=no-self-use
+    def status(self):
         """ Check A8-M3 node status """
         return gateway_code.utils.ftdi_check.ftdi_check('a8-m3', '2232')

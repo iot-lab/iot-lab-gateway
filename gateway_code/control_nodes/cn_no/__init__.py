@@ -95,6 +95,6 @@ class ControlNodeNo(ControlNodeBase):
         self.profile = profile or self.default_profile
         return 0
 
-    def status(self):  # pylint:disable=no-self-use
+    def status(self):
         """ Check Control node status """
         return 0

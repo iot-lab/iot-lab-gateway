@@ -129,7 +129,7 @@ class NodeEdbgBase(OpenNodeBase):
         self._in_debug = False
         return self.openocd.debug_stop()
 
-    def status(self):  # pylint:disable=no-self-use
+    def status(self):
         """ Check EDBG node status """
         # Status is called when open node is not powered
         # So can't check for FTDI
