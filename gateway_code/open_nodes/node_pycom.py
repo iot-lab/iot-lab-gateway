@@ -46,7 +46,8 @@ PYCOM_RESET_SEQUENCE = (
     b"machine.reset()\r\n",
 )
 
-PYCOM_UPDATE_BIN = "sudo /usr/bin/python3 /usr/local/share/pycom/eps32/tools/fw_updater/updater.py"
+PYCOM_UPDATE_BIN = "sudo /usr/bin/python3 " \
+    + "/usr/local/share/pycom/eps32/tools/fw_updater/updater.py"
 PYCOM_FLASH_ERASE_HARD = "{bin} --pic -p {port} erase_fs"
 
 
@@ -59,6 +60,7 @@ def _call_cmd(command_str):
     except subprocess_timeout.TimeoutExpired as exc:
         LOGGER.error("Command '%s' timeout: %s", command_str, exc)
         return 1
+
 
 class NodePycom(NodeNoBase):
     """ Open node Pycom implementation """
@@ -95,7 +97,8 @@ class NodePycom(NodeNoBase):
             ssh -L 20000:<pycom node>:20000 <login>@<site>.iot-lab.info
             socat PTY,link=/tmp/ttyS0,echo=0,crnl TCP:localhost:20000
         """
-        ret_val = _call_cmd(PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN, port=self.TTY))
+        ret_val = _call_cmd(PYCOM_FLASH_ERASE_HARD
+                            .format(bin=PYCOM_UPDATE_BIN, port=self.TTY))
         ret_val += gateway_code.common.wait_tty(self.TTY, LOGGER, timeout=10)
         ret_val += self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
         ret_val += self._send_sequence(PYCOM_FLASH_ERASE_SEQUENCE)
@@ -109,7 +112,8 @@ class NodePycom(NodeNoBase):
         ret_val = self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
         ret_val += self._send_sequence(PYCOM_FLASH_ERASE_SEQUENCE)
         ret_val += self.serial_redirection.stop()
-        ret_val += _call_cmd(PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN, port=self.TTY))
+        ret_val += _call_cmd(PYCOM_FLASH_ERASE_HARD
+                             .format(bin=PYCOM_UPDATE_BIN, port=self.TTY))
         return ret_val
 
     @logger_call("Node Pycom: reset node")
