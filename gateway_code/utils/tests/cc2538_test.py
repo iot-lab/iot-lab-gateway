@@ -42,7 +42,7 @@ class TestCC2538(unittest.TestCase):
         self.assertEqual(0x00200000, elf_addr)
         elf = os.path.abspath(static_path('firefly_idle.elf'))
         elf_addr = get_elf_load_addr(elf)
-        self.assertEqual(0x00202000, elf_addr)
+        self.assertEqual(0x00200000, elf_addr)
 
 
 @mock.patch('gateway_code.utils.subprocess_timeout.call')
