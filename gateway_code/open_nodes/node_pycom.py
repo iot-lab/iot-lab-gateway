@@ -46,7 +46,7 @@ PYCOM_RESET_SEQUENCE = (
     b"machine.reset()\r\n",
 )
 
-PYCOM_UPDATE_BIN = "sudo /usr/bin/python3 " \
+PYCOM_UPDATE_BIN = "/usr/bin/python3 " \
     + "/usr/local/share/pycom/eps32/tools/fw_updater/updater.py"
 PYCOM_FLASH_ERASE_HARD = "{bin} --pic -p {port} erase_fs"
 
