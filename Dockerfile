@@ -125,6 +125,12 @@ RUN git clone https://github.com/iot-lab/control_node_serial && \
     cp control_node_serial/control_node_serial_interface /usr/bin/. && \
     rm -rf control_node_serial
 
+# pycom-utils
+RUN git clone https://github.com/iot-lab/pycom-utils && \
+    mkdir -p /usr/local/share/pycom/eps32/tools/fw_updater && \
+    cd pycom-utils && \
+    cp *.py /usr/local/share/pycom/eps32/tools/fw_updater/
+
 WORKDIR /setup_dir
 COPY . /setup_dir/
 RUN python3 setup.py install
