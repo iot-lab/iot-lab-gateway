@@ -24,13 +24,15 @@
 import time
 import logging
 import shlex
+import subprocess
+
 import serial
 
 import gateway_code.common
 from gateway_code.common import logger_call
 from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.open_nodes.common.node_no import NodeNoBase
-from gateway_code.utils import subprocess_timeout
+
 
 LOGGER = logging.getLogger('gateway_code')
 PYCOM_SAFE_REBOOT_SEQUENCE = {
@@ -49,17 +51,6 @@ PYCOM_RESET_SEQUENCE = (
 PYCOM_UPDATE_BIN = "/usr/bin/python3 " \
     + "/usr/local/share/pycom/eps32/tools/fw_updater/updater.py"
 PYCOM_FLASH_ERASE_HARD = "{bin} --pic -p {port} erase_fs"
-
-
-def _call_cmd(command_str):
-    """ Run the given command_str."""
-
-    kwargs = {'args': shlex.split(command_str)}
-    try:
-        return subprocess_timeout.call(**kwargs)
-    except subprocess_timeout.TimeoutExpired as exc:
-        LOGGER.error("Command '%s' timeout: %s", command_str, exc)
-        return 1
 
 
 class NodePycom(NodeNoBase):
@@ -97,8 +88,9 @@ class NodePycom(NodeNoBase):
             ssh -L 20000:<pycom node>:20000 <login>@<site>.iot-lab.info
             socat PTY,link=/tmp/ttyS0,echo=0,crnl TCP:localhost:20000
         """
-        ret_val = _call_cmd(PYCOM_FLASH_ERASE_HARD
-                            .format(bin=PYCOM_UPDATE_BIN, port=self.TTY))
+        pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN,
+                                                  port=self.TTY)
+        ret_val = subprocess.call(shlex.split(pycom_str))
         ret_val += gateway_code.common.wait_tty(self.TTY, LOGGER, timeout=10)
         ret_val += self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
         ret_val += self._send_sequence(PYCOM_FLASH_ERASE_SEQUENCE)
@@ -112,8 +104,9 @@ class NodePycom(NodeNoBase):
         ret_val = self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
         ret_val += self._send_sequence(PYCOM_FLASH_ERASE_SEQUENCE)
         ret_val += self.serial_redirection.stop()
-        ret_val += _call_cmd(PYCOM_FLASH_ERASE_HARD
-                             .format(bin=PYCOM_UPDATE_BIN, port=self.TTY))
+        pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN,
+                                                  port=self.TTY)
+        ret_val += subprocess.call(shlex.split(pycom_str))
         return ret_val
 
     @logger_call("Node Pycom: reset node")
