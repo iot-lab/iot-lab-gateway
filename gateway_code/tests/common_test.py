@@ -26,7 +26,6 @@
 # pylint >= 1.4
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
-# pylint: disable=no-self-use
 
 import unittest
 import time

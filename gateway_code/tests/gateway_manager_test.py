@@ -45,13 +45,13 @@ from . import utils
 @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
 class TestGatewayManager(unittest.TestCase):
 
-    def test_setup(self):  # pylint:disable=no-self-use
+    def test_setup(self):
         """ Test running gateway_manager with setup without error """
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=0)
         assert g_m.setup() == 0
 
-    def test_setup_fail_flash(self):  # pylint:disable=no-self-use
+    def test_setup_fail_flash(self):
         """ Run setup with a flash fail error """
         g_m = gateway_manager.GatewayManager()
         g_m.node_flash = mock.Mock(return_value=1)
@@ -69,7 +69,7 @@ class TestGatewayManager(unittest.TestCase):
 # # # # # # # # # # # # # # # # # # # # #
 
     @mock.patch('gateway_code.config.EXP_FILES_DIR', './iotlab/')
-    def test_create_and_del_user_exp_files(self):  # pylint:disable=no-self-use
+    def test_create_and_del_user_exp_files(self):
         """ Create files and clean them"""
         g_m = gateway_manager.GatewayManager()
         g_m._create_user_exp_folders('user', 123)

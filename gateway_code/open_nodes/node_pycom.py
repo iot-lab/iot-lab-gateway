@@ -96,6 +96,6 @@ class NodePycom(NodeNoBase):
         return ret_val
 
     @logger_call("Node Pycom: reset node")
-    def reset(self):  # pylint:disable=no-self-use
+    def reset(self):
         """Machine reset of the pycom node."""
         return self._send_sequence(PYCOM_RESET_SEQUENCE)

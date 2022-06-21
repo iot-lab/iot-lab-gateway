@@ -48,7 +48,7 @@ class TestCnRPI3(unittest.TestCase):
         mock.patch.stopall()
         shutil.rmtree(self.temp_dir)
 
-    def test_cn_rpi3_basic(self, call):  # pylint:disable=no-self-use
+    def test_cn_rpi3_basic(self, call):
         """Test basic empty features of RPI3 control node."""
         call.return_value = 0
 
@@ -63,7 +63,7 @@ class TestCnRPI3(unittest.TestCase):
         assert cn_rpi3.autotest_teardown(None) == 0
         assert cn_rpi3.programmer is None
 
-    def test_cn_rpi3_open_start_stop(self, call):  # pylint:disable=no-self-use
+    def test_cn_rpi3_open_start_stop(self, call):
         """Test open node start calls the right command."""
         call.return_value = 0
 
@@ -83,7 +83,7 @@ class TestCnRPI3(unittest.TestCase):
 
         assert cn_rpi3.open_node_state == 'stop'
 
-    def test_cn_rpi3_timeout(self, call):  # pylint:disable=no-self-use
+    def test_cn_rpi3_timeout(self, call):
         """Test open node start/stop with timeout."""
         call.side_effect = subprocess_timeout.TimeoutExpired(mock.Mock("test"),
                                                              'timeout')
@@ -102,7 +102,7 @@ class TestCnRPI3(unittest.TestCase):
     @mock.patch('gateway_code.utils.mjpg_streamer.MjpgStreamer.stop')
     @mock.patch('gateway_code.utils.mjpg_streamer.MjpgStreamer.start')
     def test_cn_rpi3_configure_profile(self, cam_start, cam_stop, call):
-        # pylint:disable=too-many-arguments,no-self-use
+        # pylint:disable=too-many-arguments
         """Test open node profile confguration with start/stop experiment."""
         call.return_value = 0
         cam_start.return_value = 0
