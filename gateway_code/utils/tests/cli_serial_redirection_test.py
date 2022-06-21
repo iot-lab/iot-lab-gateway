@@ -72,7 +72,6 @@ class TestMain(unittest.TestCase):
 
     @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
     def test_signal_handling(self):
-        # pylint: disable=no-self-use
         """ Test signal handling """
         pid = os.getpid()
 

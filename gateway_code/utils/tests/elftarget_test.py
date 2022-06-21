@@ -56,7 +56,7 @@ class TestElfTarget(unittest.TestCase):
         target = elftarget.elf_target(firmware('leonardo_idle.elf'))
         self.assertEqual(target, ('ELFCLASS32', 'EM_AVR'))
 
-    def test_invalid_elf(self):  # pylint: disable=no-self-use
+    def test_invalid_elf(self):
         """Test invalid elf files or non elf files."""
         # elf relocation file
         with pytest.raises(ValueError) as exc_info:

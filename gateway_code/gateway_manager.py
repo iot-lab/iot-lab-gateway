@@ -370,7 +370,7 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         return ret
 
     @common.synchronous('rlock')
-    def sleep(self, seconds):  # pylint:disable=no-self-use
+    def sleep(self, seconds):
         """Sleep `seconds` seconds."""
         time.sleep(seconds)
         return 0

@@ -39,23 +39,23 @@ class NodeNoBase(OpenNodeBase):
 
     @logger_call("Node No: Setup of no node")
     def setup(self, firmware_path=None):
-        # pylint:disable=unused-argument,no-self-use
+        # pylint:disable=unused-argument
         """.Does nothing."""
         return 0
 
     @logger_call("Node No: teardown of no node")
-    def teardown(self):  # pylint:disable=no-self-use
+    def teardown(self):
         """.Does nothing."""
         return 0
 
     @logger_call("Node No: flash of no node")
     def flash(self, firmware_path=None, binary=False, offset=0):
-        # pylint:disable=unused-argument,no-self-use
+        # pylint:disable=unused-argument
         """Does nothing."""
         return 0
 
     @logger_call("Node No: reset of no node")
-    def reset(self):  # pylint:disable=no-self-use
+    def reset(self):
         """Does nothing."""
         return 0
 
