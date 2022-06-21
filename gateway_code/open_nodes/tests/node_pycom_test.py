@@ -21,7 +21,6 @@
 
 """ gateway_code.open_nodes.node_pycom unit tests files """
 
-import logging
 import shlex
 
 import unittest
