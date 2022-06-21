@@ -35,6 +35,7 @@ import mock
 from ..node_connection import OpenNodeConnection
 
 # pylint:disable=missing-docstring
+# pylint:disable=C2801
 
 
 @pytest.fixture()

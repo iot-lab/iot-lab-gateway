@@ -37,6 +37,8 @@ import functools
 import logging
 LOGGER = logging.getLogger('gateway_code')
 
+# pylint: disable=C2801
+
 
 def logger_call(msg, log_lvl='info', err_lvl='warning'):
     """ Decorator to wrap a function with logs
