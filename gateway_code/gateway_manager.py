@@ -157,7 +157,7 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
         # with Pycom boards, trigger 2 power-cycle to ensure REPL is correctly
         # started
-        if self.open_node.TYPE == 'pycom' and  self.control_node.TYPE != 'no':
+        if self.open_node.TYPE == 'pycom' and self.control_node.TYPE != 'no':
             for _ in range(2):
                 LOGGER.debug("Power cycle %s board", self.open_node.TYPE)
                 ret_val += self.control_node.open_stop()
