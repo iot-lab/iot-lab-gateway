@@ -19,7 +19,23 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node Openmoteb experiment implementation """
+"""
+    Open Node Openmoteb experiment implementation.
+
+    Openmoteb lifecycle is handled by a Segger J-Link (JTAG).
+    In this setup, both Openmoteb and Segger J-Link use an USB port each.
+    Openmoteb serial port is accessed via it's own USB port.
+
+    +------------+
+    |JLINK Segger|===  USB port (99-jlink.rules)
+    +------------+
+          |
+        JTAG
+          |
+    +------------+
+    | Openmoteb  |===  USB port ttyON_OPENMOTEB (openmoteb.rules)
+    +------------+
+"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_segger import NodeSeggerBase
