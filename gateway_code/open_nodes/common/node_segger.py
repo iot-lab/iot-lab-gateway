@@ -36,7 +36,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 class NodeSeggerBase(OpenNodeBase):
     # pylint:disable=no-member
-    """ Open node JLink Segger implemention """
+    """ Open node JLink Segger implementation """
 
     ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
 
