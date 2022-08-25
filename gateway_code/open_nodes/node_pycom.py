@@ -59,6 +59,7 @@ class NodePycom(NodeNoBase):
     TYPE = 'pycom'
     TTY = '/dev/iotlab/ttyON_PYCOM'
     BAUDRATE = 115200
+    ALIM = '5V'
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(
