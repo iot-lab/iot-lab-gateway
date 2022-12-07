@@ -53,7 +53,7 @@ def _call_cmd(command_str):
 
 class ControlNodeRpi3(ControlNodeBase):
     """ No Control Node """
-    TYPE = 'rpi3'
+    TYPE = 'cnrpi3'
     FEATURES = ['open_node_power']
     MJPG_STREAMER_PORT = 40000
 
