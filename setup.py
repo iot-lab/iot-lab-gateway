@@ -45,7 +45,7 @@ import os
 import subprocess
 import shutil
 from glob import glob
-from distutils.command.install import install
+from distutils.command.install import install  # pylint:disable=W4901
 from setuptools import setup, Command, find_packages
 
 

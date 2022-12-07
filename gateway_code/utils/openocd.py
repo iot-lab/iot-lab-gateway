@@ -50,7 +50,7 @@ OpenOCDArgs = namedtuple(
 )
 
 
-class OpenOCD:
+class OpenOCD:   # pylint:disable=too-many-instance-attributes
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
