@@ -45,7 +45,7 @@ import os
 import subprocess
 import shutil
 from glob import glob
-from distutils.command.install import install  # pylint:disable=W4901
+from distutils.command.install import install  # pylint:disable=W4901,E0401
 from setuptools import setup, Command, find_packages
 
 
@@ -155,7 +155,7 @@ def add_www_data_to_dialout():
     subprocess.check_call(['usermod', '-a', '-G', 'dialout', 'www-data'])
 
 
-class Release(install):
+class Release(install):  # pylint:disable=R0903
     """Install and do the 'post installation' procedure too.
 
     Meant to be used directly on the gateways

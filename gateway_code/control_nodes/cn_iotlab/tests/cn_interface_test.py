@@ -130,7 +130,7 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def test_send_command(self):
         self.popen.stdin.write.side_effect = \
-            (lambda *x: self.readline_ret_vals.put(b'start ACK\n'))
+            lambda *x: self.readline_ret_vals.put(b'start ACK\n')
 
         self.cn.start()
         ret = self.cn.send_command(['start', 'DC'])
@@ -178,7 +178,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.cn._oml_cfg_file.close()
 
         # Debug mode
-        self.cn.measures_debug = (lambda x: None)
+        self.cn.measures_debug = lambda x: None
         args = self.cn._cn_interface_args()
         self.assertNotIn('-c', args)
         self.assertIn('-d', args)

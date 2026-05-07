@@ -141,7 +141,9 @@ REGISTRY = {}
 def import_all_nodes(pkg_dir):
     """Looks into the given relative path for modules and imports them"""
     pkg_dir_absolute = os.path.join(os.path.dirname(__file__), pkg_dir)
-    for module_finder, name, _ in pkgutil.iter_modules(path=[pkg_dir_absolute]):
+    for module_finder, name, _ in pkgutil.iter_modules(
+        path=[pkg_dir_absolute]
+    ):
         if name in ['tests', 'common']:
             continue
         spec = module_finder.find_spec(name)
@@ -171,8 +173,8 @@ def _node_class(board_type):
         assert output_class.TYPE == board_type
     except KeyError:
         raise ValueError(f'Board {board_type} not implemented')
-    else:
-        return output_class
+
+    return output_class
 
 
 def open_node_class(board_type):
