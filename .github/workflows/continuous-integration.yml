@@ -54,18 +54,6 @@ jobs:
     strategy:
       matrix:
         boards:
-          - archi: a8
-            node-id: 17
-            site: devgrenoble
-          - archi: m3
-            node-id: 17
-            site: devgrenoble
-          - archi: custom
-            node-id: 1 # samr21
-            site: devgrenoble
-          - archi: custom
-            node-id: 4 # nucleo-wl55jc
-            site: devgrenoble
           - archi: custom
             node-id: 29 # microbit
             site: devsaclay
