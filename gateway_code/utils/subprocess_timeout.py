@@ -27,10 +27,10 @@ subprocess32 on subrocess.
 """
 
 try:
-    from subprocess32 import call, Popen, TimeoutExpired
+    from subprocess32 import Popen, TimeoutExpired, call
 except ImportError:
-    from subprocess import call, Popen
-    from subprocess import TimeoutExpired  # pylint:disable=no-name-in-module
+    # pylint:disable=no-name-in-module
+    from subprocess import Popen, TimeoutExpired, call
 
 
-__all__ = ['call', 'Popen', 'TimeoutExpired']
+__all__ = ["call", "Popen", "TimeoutExpired"]

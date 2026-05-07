@@ -21,28 +21,30 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" AvrDude commands """
+"""AvrDude commands"""
 
+import logging
 import os
 import shlex
 
-import logging
 import serial
 
 from gateway_code import common
 from gateway_code.common import logger_call
+
 from . import subprocess_timeout
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class AvrDude:
-    """ Debugger class, implemented as a global variable storage """
-    _ARVDUDE_CONF_KEYS = {'tty', 'baudrate', 'model', 'programmer'}
-    DEVNULL = open(os.devnull, 'w')
+    """Debugger class, implemented as a global variable storage"""
 
-    AVRDUDE = 'avrdude -p {model} -P {tty} -c {programmer} -b {baudrate} {cmd}'
-    FLASH = ' -D -U {0}'
+    _ARVDUDE_CONF_KEYS = {"tty", "baudrate", "model", "programmer"}
+    DEVNULL = open(os.devnull, "w")
+
+    AVRDUDE = "avrdude -p {model} -P {tty} -c {programmer} -b {baudrate} {cmd}"
+    FLASH = " -D -U {0}"
 
     TIMEOUT = 100
 
@@ -54,41 +56,40 @@ class AvrDude:
 
     @logger_call("AvrDude : flash")
     def flash(self, hex_file):
-        """ Flash firmware """
+        """Flash firmware"""
         try:
             hex_path = common.abspath(hex_file)
             return self._call_cmd(self.FLASH.format(hex_path))
         except IOError as err:
-            LOGGER.error('%s', err)
+            LOGGER.error("%s", err)
             return 1
 
     def _call_cmd(self, command_str):
-        """ Create the subprocess """
+        """Create the subprocess"""
         kwargs = self._avrdude_args(command_str)
         try:
-            return subprocess_timeout.call(timeout=self.timeout,
-                                           **kwargs)
+            return subprocess_timeout.call(timeout=self.timeout, **kwargs)
         except subprocess_timeout.TimeoutExpired as exc:
             LOGGER.error("Openocd '%s' timeout: %s", command_str, exc)
             return 1
 
     def _avrdude_args(self, command_str):
-        """ Get subprocess arguments for command_str """
+        """Get subprocess arguments for command_str"""
         # Generate full command arguments
         cmd = self.AVRDUDE.format(cmd=command_str, **self.conf)
         args = shlex.split(cmd)
-        return {'args': args, 'stdout': self.out, 'stderr': self.out}
+        return {"args": args, "stdout": self.out, "stderr": self.out}
 
     @staticmethod
     def trigger_bootloader(tty, tty_prog, timeout=10, baudrate=1200):
-        """ Trigger leonardo bootloader
+        """Trigger leonardo bootloader
 
         To be programed the Leonardo has to be in his bootloader sequence.
         While in the bootloader, the Leonardo wait for a new program during 8s
         There are two way to launch the bootloader:
         - The first one physical by pressing the reset button
         - The software way by opening and closing the serial port at 1200bauds
-        This method perform the second method. """
+        This method perform the second method."""
         LOGGER.info("Triggering bootloader")
         try:
             LOGGER.info("Trigerring bootloader")

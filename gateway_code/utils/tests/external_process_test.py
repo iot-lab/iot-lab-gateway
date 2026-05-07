@@ -20,26 +20,25 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" test external_process module """
+"""test external_process module"""
 
-import os
-import time
-import shlex
-import logging
 import itertools
+import logging
+import os
+import shlex
 import signal
+import time
 import unittest
 
 import mock
 from testfixtures import LogCapture
 
 from ..external_process import ExternalProcess
-from ..serial_redirection import SerialRedirection
-from ..rtl_tcp import RtlTcp
+from ..lora_gateway_bridge import LORA_GATEWAY_BRIDGE, LORA_GATEWAY_BRIDGE_CMD, LoraGatewayBridge
 from ..mjpg_streamer import MjpgStreamer
 from ..mosquitto import Mosquitto
-from ..lora_gateway_bridge import (LoraGatewayBridge, LORA_GATEWAY_BRIDGE_CMD,
-                                   LORA_GATEWAY_BRIDGE)
+from ..rtl_tcp import RtlTcp
+from ..serial_redirection import SerialRedirection
 
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
@@ -51,44 +50,45 @@ from ..lora_gateway_bridge import (LoraGatewayBridge, LORA_GATEWAY_BRIDGE_CMD,
 
 CURRENT_DIR = os.path.dirname(__file__)
 
-TTY_TEST = '/tmp/ttySRT'
-BAUDRATE_TEST = '500000'
-RTL_PORT_TEST = '50000'
-RTL_FREQ_TEST = '86800000'
-CAMERA_PORT_TEST = '40000'
-MOSQUITTO_PORT_TEST = '1883'
+TTY_TEST = "/tmp/ttySRT"
+BAUDRATE_TEST = "500000"
+RTL_PORT_TEST = "50000"
+RTL_FREQ_TEST = "86800000"
+CAMERA_PORT_TEST = "40000"
+MOSQUITTO_PORT_TEST = "1883"
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class _DummyProcess(ExternalProcess):
-    """ Class implementing a dummy process
+    """Class implementing a dummy process
 
     It's implemented as a stoppable thread running top in a loop.
     """
-    PROC = '/usr/bin/sleep 2'
+
+    PROC = "/usr/bin/sleep 2"
     NAME = "dummy"
 
     def __init__(self):
         self.process_cmd = shlex.split(self.PROC)
-        self.stdout = open(os.devnull, 'w')
+        self.stdout = open(os.devnull, "w")
         super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""
         if retcode and self._run:
-            LOGGER.warning('%s error or restarted', self.NAME)
+            LOGGER.warning("%s error or restarted", self.NAME)
         return retcode
 
 
 class TestComplexExternalProcessStop(unittest.TestCase):
     """Test External process complex stop cases."""
 
-    @mock.patch('subprocess.Popen')
+    @mock.patch("subprocess.Popen")
     def test_terminate_non_running_process(self, m_popen):
-        """ Test the case where 'stop' is called on a process that is currently
+        """Test the case where 'stop' is called on a process that is currently
         being restarted.
-        It can happen if stop is called after an error """
+        It can happen if stop is called after an error"""
 
         process = _DummyProcess()
         m_process = process.process
@@ -101,23 +101,23 @@ class TestComplexExternalProcessStop(unittest.TestCase):
 
         self.assertTrue(m_process.send_signal.called)
 
-    @mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
-                '/tmp/mjpg_streamer_test.log')
+    @mock.patch(
+        "gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE", "/tmp/mjpg_streamer_test.log"
+    )
     def test_process_needs_sigkill(self):
         """Test cases where send_signal must be called multiple times."""
-        log = LogCapture('gateway_code', level=logging.WARNING)
+        log = LogCapture("gateway_code", level=logging.WARNING)
         self.addCleanup(log.uninstall)
 
         only_sigkill = f'python {os.path.join(CURRENT_DIR, "only_sigkill.py")}'
 
-        with mock.patch.object(_DummyProcess, 'PROC', only_sigkill):
+        with mock.patch.object(_DummyProcess, "PROC", only_sigkill):
             m_process = _DummyProcess()
             m_process.start()
             time.sleep(5)
             m_process.stop()
 
-        log.check(('gateway_code', 'WARNING',
-                   'External process signal: escalading to SIGKILL'))
+        log.check(("gateway_code", "WARNING", "External process signal: escalading to SIGKILL"))
 
 
 class TestSignalsIter(unittest.TestCase):
@@ -128,15 +128,38 @@ class TestSignalsIter(unittest.TestCase):
         signals_iter = _DummyProcess.signals_iter()
         signals = list(itertools.islice(signals_iter, 0, 32))
         expected = [
-            signal.SIGTERM, signal.SIGTERM, signal.SIGTERM, signal.SIGTERM,
-            signal.SIGTERM, signal.SIGTERM, signal.SIGTERM, signal.SIGTERM,
-            signal.SIGTERM, signal.SIGTERM,
-            signal.SIGINT, signal.SIGINT, signal.SIGINT, signal.SIGINT,
-            signal.SIGINT, signal.SIGINT, signal.SIGINT, signal.SIGINT,
-            signal.SIGINT, signal.SIGINT,
-            signal.SIGKILL, signal.SIGKILL, signal.SIGKILL, signal.SIGKILL,
-            signal.SIGKILL, signal.SIGKILL, signal.SIGKILL, signal.SIGKILL,
-            signal.SIGKILL, signal.SIGKILL, signal.SIGKILL, signal.SIGKILL,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGTERM,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGINT,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
+            signal.SIGKILL,
         ]
 
         self.assertEqual(signals, expected)
@@ -150,12 +173,12 @@ class TestSignalsIter(unittest.TestCase):
         self.assertEqual(signals, expected)
 
 
-@mock.patch('subprocess.Popen')
+@mock.patch("subprocess.Popen")
 class TestProcessSocat(unittest.TestCase):
     """SerialRedirection._call_process."""
 
     def test__call_socat_error(self, m_popen):
-        """ Test the _call_process error case """
+        """Test the _call_process error case"""
         m_popen.return_value.wait.return_value = -1
         m_redirect = SerialRedirection(TTY_TEST, BAUDRATE_TEST)
         m_redirect._run = True
@@ -164,21 +187,21 @@ class TestProcessSocat(unittest.TestCase):
         self.assertEqual(-1, ret)
 
     def test__call_socat_error_tty_not_found(self, m_popen):
-        """ Test the _call_process error case when path can't be found"""
+        """Test the _call_process error case when path can't be found"""
         m_popen.return_value.wait.return_value = -1
-        m_redirect = SerialRedirection('/dev/NotATty', BAUDRATE_TEST)
+        m_redirect = SerialRedirection("/dev/NotATty", BAUDRATE_TEST)
         m_redirect._run = True
 
         ret = m_redirect._call_process(m_redirect.stdout)
         self.assertEqual(-1, ret)
 
 
-@mock.patch('subprocess.Popen')
+@mock.patch("subprocess.Popen")
 class TestProcessRtlTcp(unittest.TestCase):
     """RtlTcp._call_process."""
 
     def test__call_rtl_tcp_error(self, m_popen):
-        """ Test the _call_process error case """
+        """Test the _call_process error case"""
         m_popen.return_value.wait.return_value = -1
         m_rtl_tcp = RtlTcp(RTL_PORT_TEST, RTL_FREQ_TEST)
         m_rtl_tcp._run = True
@@ -187,14 +210,15 @@ class TestProcessRtlTcp(unittest.TestCase):
         self.assertEqual(-1, ret)
 
 
-@mock.patch('subprocess.Popen')
+@mock.patch("subprocess.Popen")
 class TestProcessMjpgStreamer(unittest.TestCase):
     """MjpgStreamer._call_process."""
 
-    @mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
-                '/tmp/mjpg_streamer_test.log')
+    @mock.patch(
+        "gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE", "/tmp/mjpg_streamer_test.log"
+    )
     def test__call_mjpg_streamer_error(self, m_popen):
-        """ Test the _call_process error case """
+        """Test the _call_process error case"""
         m_popen.return_value.wait.return_value = -1
         m_mjpg_streamer = MjpgStreamer(CAMERA_PORT_TEST)
         m_mjpg_streamer._run = True
@@ -203,12 +227,12 @@ class TestProcessMjpgStreamer(unittest.TestCase):
         self.assertEqual(-1, ret)
 
 
-@mock.patch('subprocess.Popen')
+@mock.patch("subprocess.Popen")
 class TestProcessMosquitto(unittest.TestCase):
     """Mosquitto._call_process."""
 
     def test__call_mosquitto_error(self, m_popen):
-        """ Test the _call_process error case """
+        """Test the _call_process error case"""
         m_popen.return_value.wait.return_value = -1
         m_mosquitto = Mosquitto(MOSQUITTO_PORT_TEST)
         m_mosquitto._run = True
@@ -217,12 +241,12 @@ class TestProcessMosquitto(unittest.TestCase):
         self.assertEqual(-1, ret)
 
 
-@mock.patch('subprocess.Popen')
+@mock.patch("subprocess.Popen")
 class TestProcessLoraGatewayBridge(unittest.TestCase):
     """LoraGatewayBridge._call_process."""
 
     def test__call_lora_gateway_bridge_error(self, m_popen):
-        """ Test the _call_process error case """
+        """Test the _call_process error case"""
         m_popen.return_value.wait.return_value = -1
         m_lora_gateway_bridge = LoraGatewayBridge()
         m_lora_gateway_bridge._run = True
@@ -231,14 +255,15 @@ class TestProcessLoraGatewayBridge(unittest.TestCase):
         self.assertEqual(-1, ret)
 
 
-@mock.patch('gateway_code.utils.lora_gateway_bridge.CFG_DIR', '/tmp')
+@mock.patch("gateway_code.utils.lora_gateway_bridge.CFG_DIR", "/tmp")
 def test_custom_config_directory():
     """Test when using a custom config directory."""
-    _bridge_cfg = os.path.join('/tmp', 'lora-gateway-bridge.toml')
-    with open(_bridge_cfg, 'w') as f:
-        f.write('test')
+    _bridge_cfg = os.path.join("/tmp", "lora-gateway-bridge.toml")
+    with open(_bridge_cfg, "w") as f:
+        f.write("test")
     assert os.path.isfile(_bridge_cfg)
     m_lora_gateway_bridge = LoraGatewayBridge()
-    expected_cmd = shlex.split(LORA_GATEWAY_BRIDGE_CMD.format(
-        bridge=LORA_GATEWAY_BRIDGE, cfg_file=_bridge_cfg))
+    expected_cmd = shlex.split(
+        LORA_GATEWAY_BRIDGE_CMD.format(bridge=LORA_GATEWAY_BRIDGE, cfg_file=_bridge_cfg)
+    )
     assert m_lora_gateway_bridge.process_cmd == expected_cmd

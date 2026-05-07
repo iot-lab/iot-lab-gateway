@@ -20,20 +20,21 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" test serial_redirection module """
+"""test serial_redirection module"""
 
-import os
-import time
 import logging
+import os
 import socket
-from subprocess import Popen, PIPE
+import time
 import unittest
+from subprocess import PIPE, Popen
 
 import mock
 
 from gateway_code.common import wait_tty
-from ..serial_redirection import SerialRedirection
+
 from ..node_connection import OpenNodeConnection
+from ..serial_redirection import SerialRedirection
 
 # pylint: disable=invalid-name
 # pylint: disable=protected-access
@@ -47,10 +48,10 @@ CURRENT_DIR = os.path.dirname(__file__)
 
 
 class _SerialRedirectionTestCase(unittest.TestCase):
-    """ SerialRedirection class test """
+    """SerialRedirection class test"""
 
     def setUp(self):
-        self.tty = '/tmp/ttySRT'
+        self.tty = "/tmp/ttySRT"
         self.baud = 500000
         self.redirect = None
 
@@ -65,7 +66,7 @@ class _SerialRedirectionTestCase(unittest.TestCase):
     @staticmethod
     def _serial(tty, baud):
         """Create a local pty with socat."""
-        cmd = ['socat', '-', f'pty,link={tty},raw,b{baud},echo=1']
+        cmd = ["socat", "-", f"pty,link={tty},raw,b{baud},echo=1"]
         return Popen(cmd, stdout=PIPE, stdin=PIPE)
 
 
@@ -73,23 +74,23 @@ class TestSerialRedirection(_SerialRedirectionTestCase):
     """Test regular SerialRedirection."""
 
     def test_serialredirection_execution(self):
-        """ Test a standard SerialRedirection execution """
+        """Test a standard SerialRedirection execution"""
         self.redirect = SerialRedirection(self.tty, self.baud)
         self.redirect.start()
 
         for i in range(0, 3):
             # connect to port 20000
-            conn = OpenNodeConnection.try_connect(('0.0.0.0', 20000))
+            conn = OpenNodeConnection.try_connect(("0.0.0.0", 20000))
 
             # TCP send
-            sock_txt = f'HelloFromSock: {i}\n'.encode()
+            sock_txt = f"HelloFromSock: {i}\n".encode()
             conn.send(sock_txt)
             ret = self.serial.stdout.read(len(sock_txt))
             self.assertEqual(ret, sock_txt)
             logging.debug(ret)
 
             # Serial send
-            serial_txt = f'HelloFromSerial {i}\n'.encode()
+            serial_txt = f"HelloFromSerial {i}\n".encode()
             self.serial.stdin.write(serial_txt)
             self.serial.stdin.flush()
             ret = conn.recv(len(serial_txt))
@@ -101,7 +102,7 @@ class TestSerialRedirection(_SerialRedirectionTestCase):
         self.redirect.stop()
 
     def test_serialredirection_multiple_uses(self):
-        """ Test calling multiple times start-stop """
+        """Test calling multiple times start-stop"""
         self.redirect = SerialRedirection(self.tty, self.baud)
         self.assertEqual(0, self.redirect.start())
         self.assertEqual(0, self.redirect.stop())
@@ -111,14 +112,13 @@ class TestSerialRedirection(_SerialRedirectionTestCase):
         self.assertEqual(0, self.redirect.stop())
 
     def test_serialredirection_exclusion(self):
-        """ Check the exclusion of multiple connection on SerialRedirection """
+        """Check the exclusion of multiple connection on SerialRedirection"""
         self.redirect = SerialRedirection(self.tty, self.baud)
         self.redirect.start()
 
-        conn = OpenNodeConnection.try_connect(('0.0.0.0', 20000))
+        conn = OpenNodeConnection.try_connect(("0.0.0.0", 20000))
         time.sleep(1)
         # Second connection should fail
-        self.assertRaises(IOError,
-                          socket.create_connection, ('0.0.0.0', 20000))
+        self.assertRaises(IOError, socket.create_connection, ("0.0.0.0", 20000))
         conn.close()
         self.redirect.stop()

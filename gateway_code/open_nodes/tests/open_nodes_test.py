@@ -18,37 +18,42 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-"""open_nodes package tests """
-
+"""open_nodes package tests"""
 
 from __future__ import print_function
 
 import os
-import pytest
 
+import pytest
 from mock import patch
 
-from gateway_code.nodes import (open_node_class, control_node_class,
-                                all_open_nodes_types, all_control_nodes_types,
-                                OpenNodeBase, ControlNodeBase, REGISTRY)
+from gateway_code.nodes import (
+    REGISTRY,
+    ControlNodeBase,
+    OpenNodeBase,
+    all_control_nodes_types,
+    all_open_nodes_types,
+    control_node_class,
+    open_node_class,
+)
 from gateway_code.open_nodes.node_a8 import NodeA8
 from gateway_code.open_nodes.node_m3 import NodeM3
 
 
 def test_node_class():
     """Test loading essential open node classes."""
-    assert NodeM3.__name__ == open_node_class('m3').__name__
-    assert NodeA8.__name__ == open_node_class('a8').__name__
+    assert NodeM3.__name__ == open_node_class("m3").__name__
+    assert NodeA8.__name__ == open_node_class("a8").__name__
 
 
 def test_open_node_class_errors():
     """Test error while loading an open node class."""
     # No module
-    with pytest.raises(ValueError, match='^Board unknown not implemented*$'):
-        open_node_class('unknown')
+    with pytest.raises(ValueError, match="^Board unknown not implemented*$"):
+        open_node_class("unknown")
 
 
-@patch('subprocess.check_output')
+@patch("subprocess.check_output")
 def test_nodes_classes(check_output):
     """Test loading all implemented open nodes implementation."""
     # node_lora_gateway starts the lora_pkt_forwarder during initialization
@@ -77,13 +82,14 @@ def test_missing_overrides():
 
 
 def test_registry_open_node():
-    """ Verify the open node registry metaclass """
+    """Verify the open node registry metaclass"""
+
     class MyNode(OpenNodeBase):
         # pylint:disable=abstract-method
         """Basic empty OpenNode"""
         TYPE = "my_node"
-        ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-        AUTOTEST_AVAILABLE = ['echo', 'get_time']
+        ELF_TARGET = ("ELFCLASS32", "EM_ARM")
+        AUTOTEST_AVAILABLE = ["echo", "get_time"]
 
     REGISTRY[MyNode.TYPE] = MyNode
 
@@ -96,12 +102,13 @@ def test_registry_open_node():
 
 
 def test_registry_control_node():
-    """ Verify the control node registry metaclass """
+    """Verify the control node registry metaclass"""
+
     class MyControlNode(ControlNodeBase):
         # pylint:disable=abstract-method
         """Basic empty ControlNode"""
         TYPE = "my_control_node"
-        ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+        ELF_TARGET = ("ELFCLASS32", "EM_ARM")
 
     REGISTRY[MyControlNode.TYPE] = MyControlNode
 
@@ -118,10 +125,11 @@ def test_registry_control_node():
 # parent class no TYPE
 class BaseOpenNode(OpenNodeBase):
     """parent class with no TYPE attribute"""
+
     TYPE = "base_open_node"
-    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    AUTOTEST_AVAILABLE = ['echo', 'get_time']
-    TTY = '/dev/iotlab/tty_stlink'
+    ELF_TARGET = ("ELFCLASS32", "EM_ARM")
+    AUTOTEST_AVAILABLE = ["echo", "get_time"]
+    TTY = "/dev/iotlab/tty_stlink"
     BAUDRATE = 4242
 
     @property
@@ -140,7 +148,7 @@ class BaseOpenNode(OpenNodeBase):
 
 
 def test_registry_inheritance():
-    """ test case for open node that derive from other open nodes """
+    """test case for open node that derive from other open nodes"""
 
     class DerivedOpenNode(BaseOpenNode):
         # pylint:disable=abstract-method
@@ -167,16 +175,18 @@ def test_registry_inheritance():
 
 def test_open_node_inheritance():
     """
-        test case for open node that derive from other open nodes
-        in the case the superclass does not have the TYPE attribute
+    test case for open node that derive from other open nodes
+    in the case the superclass does not have the TYPE attribute
     """
 
     class NodeStLinkBoard1(BaseOpenNode):
         """derived class 1"""
+
         TYPE = "stlink_board_1"
 
     class NodeStLinkBoard2(BaseOpenNode, OpenNodeBase):
         """derived class 2"""
+
         TYPE = "stlink_board_2"
 
     REGISTRY[NodeStLinkBoard1.TYPE] = NodeStLinkBoard1
@@ -193,10 +203,10 @@ def test_open_node_inheritance():
 
     board_instance = board_1()
 
-    assert board_instance.TTY == '/dev/iotlab/tty_stlink'
+    assert board_instance.TTY == "/dev/iotlab/tty_stlink"
     assert board_instance.BAUDRATE == 4242
 
-    assert board_instance.setup('path/to/firmware') == 42
+    assert board_instance.setup("path/to/firmware") == 42
     assert board_instance.teardown() == 4242
     assert board_instance.status() == 0
     assert board_instance.programmer is None
@@ -212,7 +222,7 @@ def test_node_verify_errors():
         # pylint:disable=abstract-method,unused-variable
         """OpenNode with invalid elf target attribute."""
         TYPE = "open_node_elf_target_invalid"
-        ELF_TARGET = 'INVALID'
+        ELF_TARGET = "INVALID"
 
     REGISTRY[OpenNodeElfTargetInvalid.TYPE] = OpenNodeElfTargetInvalid
 
@@ -240,7 +250,7 @@ def test_node_verify_errors():
         # pylint:disable=abstract-method,unused-variable
         """OpenNode with invalid autotest attribute."""
         TYPE = "open_node_invalid_autotest"
-        AUTOTEST_AVAILABLE = ['echo', 'invalid']
+        AUTOTEST_AVAILABLE = ["echo", "invalid"]
 
     REGISTRY[OpenNodeInvalidAutotest.TYPE] = OpenNodeInvalidAutotest
 
@@ -260,9 +270,8 @@ def test_node_verify_errors():
     REGISTRY[OpenNodeIncompatibleElf.TYPE] = OpenNodeIncompatibleElf
 
     # skip on iotlab gateways because of too little RAM
-    if os.uname()[4] != 'armv7l':
-        with patch('gateway_code.utils.'
-                   'elftarget.is_compatible_with_node') as is_compatible:
+    if os.uname()[4] != "armv7l":
+        with patch("gateway_code.utils.elftarget.is_compatible_with_node") as is_compatible:
             is_compatible.return_value = False
             with pytest.raises(ValueError):
                 open_node_class("open_node_incompatible_elf")

@@ -19,10 +19,11 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.common.node_segger unit tests files """
+"""gateway_code.open_nodes.common.node_segger unit tests files"""
 
 import unittest
-from mock import patch, Mock
+
+from mock import Mock, patch
 
 from gateway_code.open_nodes.common.node_segger import NodeSeggerBase
 from gateway_code.open_nodes.node_openmoteb import NodeOpenmoteb
@@ -30,8 +31,9 @@ from gateway_code.open_nodes.node_openmoteb import NodeOpenmoteb
 
 class NodeSeggerTest(NodeSeggerBase):
     """A test node derived from NodeSeggerBase."""
-    TYPE = 'seggernode_test'
-    TTY = '/dev/iotlab/ttyTestSeggerNode'
+
+    TYPE = "seggernode_test"
+    TTY = "/dev/iotlab/ttyTestSeggerNode"
     BAUDRATE = 115200
     FW_IDLE = NodeOpenmoteb.FW_IDLE
     FW_AUTOTEST = NodeOpenmoteb.FW_AUTOTEST
@@ -46,8 +48,8 @@ class TestNodeSeggerBase(unittest.TestCase):
 
     def setUp(self):
         self.node = NodeSeggerTest()
-        self.fw_path = '/path/to/firmware'
-        segger_class = patch('gateway_code.utils.segger.Segger').start()
+        self.fw_path = "/path/to/firmware"
+        segger_class = patch("gateway_code.utils.segger.Segger").start()
         self.node.segger = segger_class.return_value
         self.node.segger.flash.return_value = 0
         self.node.serial_redirection.start = Mock()

@@ -19,8 +19,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.common.node_no unit tests file """
-
+"""gateway_code.open_nodes.common.node_no unit tests file"""
 
 from gateway_code.open_nodes.common.node_no import NodeNoBase
 

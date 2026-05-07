@@ -20,7 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" test serial_redirection module """
+"""test serial_redirection module"""
 
 import unittest
 
@@ -35,20 +35,20 @@ from ..cli import rtl_tcp
 
 
 class TestRtlTcpMain(unittest.TestCase):
-    """ Main function tests """
+    """Main function tests"""
 
-    @mock.patch('gateway_code.utils.rtl_tcp.RtlTcp')
-    @mock.patch('signal.pause')
+    @mock.patch("gateway_code.utils.rtl_tcp.RtlTcp")
+    @mock.patch("signal.pause")
     def test_main_function(self, m_pause, m_rtl_class):
-        """ Test cli.rtl_tcp main function
+        """Test cli.rtl_tcp main function
 
         Run and simulate 'stop' with a Ctrl+C
         """
         rtl = m_rtl_class.return_value
         m_pause.side_effect = KeyboardInterrupt()
 
-        args = ['rtl_tcp.py', '50000', '868000000']
-        with mock.patch('sys.argv', args):
+        args = ["rtl_tcp.py", "50000", "868000000"]
+        with mock.patch("sys.argv", args):
             rtl_tcp.main()
 
             self.assertTrue(m_pause.called)
@@ -58,10 +58,10 @@ class TestRtlTcpMain(unittest.TestCase):
 
 
 class TestRtlTcpParsing(unittest.TestCase):
-    """ PARSER tests """
+    """PARSER tests"""
 
     def test_parser(self):
-        """ Test cli.rtl_tcp PARSER """
-        opts = rtl_tcp.PARSER.parse_args(['50000', '868000000'])
+        """Test cli.rtl_tcp PARSER"""
+        opts = rtl_tcp.PARSER.parse_args(["50000", "868000000"])
         self.assertEqual(50000, opts.port)
         self.assertEqual(868000000, opts.frequency)

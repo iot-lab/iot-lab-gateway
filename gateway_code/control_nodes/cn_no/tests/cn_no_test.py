@@ -19,7 +19,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.control_node (No) unit tests files """
+"""gateway_code.control_node (No) unit tests files"""
 
 import mock
 
@@ -33,8 +33,8 @@ def test_control_node_no_basic():
     assert ControlNodeNo.setup() == 0
 
     # Flash and status does nothing
-    cn_no = ControlNodeNo('test', None)
-    assert cn_no.start('test') == 0
+    cn_no = ControlNodeNo("test", None)
+    assert cn_no.start("test") == 0
     assert cn_no.stop() == 0
     assert cn_no.flash() == 0
     assert cn_no.status() == 0
@@ -49,7 +49,7 @@ def test_control_node_no_basic():
 def test_start_stop_experiment(config):
     """Test starting and stoping experiment."""
     config.return_value = 0
-    cn_no = ControlNodeNo('test', None)
+    cn_no = ControlNodeNo("test", None)
     assert cn_no.start_experiment("test") == 0
     config.assert_called_with("test")
     assert cn_no.stop_experiment() == 0

@@ -19,15 +19,15 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node based on DAP Link programmer implementation """
+"""Open Node based on DAP Link programmer implementation"""
 
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
 class NodeDapLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
-    """ Open node DAP Link based board implementation """
+    """Open node DAP Link based board implementation"""
 
     OPENOCD_SERIAL_CMD = "-c 'cmsis_dap_serial {serial}'"
-    TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
+    TTY = "/dev/iotlab/ttyON_CMSIS_DAP"
     BAUDRATE = 115200
