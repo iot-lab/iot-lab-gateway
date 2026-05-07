@@ -19,22 +19,23 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.node_firefly unit tests files """
+"""gateway_code.open_nodes.node_firefly unit tests files"""
 
 import unittest
-from mock import patch, Mock
+
+from mock import Mock, patch
 
 from gateway_code.open_nodes.node_firefly import NodeFirefly
 
 
-@patch('gateway_code.common.wait_tty')
+@patch("gateway_code.common.wait_tty")
 class TestNodeFirefly(unittest.TestCase):
     """Unittest class for firefly nodes."""
 
     def setUp(self):
         self.node = NodeFirefly()
-        self.fw_path = '/path/to/firmware'
-        cc2538_class = patch('gateway_code.utils.cc2538.CC2538').start()
+        self.fw_path = "/path/to/firmware"
+        cc2538_class = patch("gateway_code.utils.cc2538.CC2538").start()
         self.node.cc2538 = cc2538_class.return_value
         self.node.cc2538.flash.return_value = 0
         self.node.cc2538.reset.return_value = 0
@@ -59,7 +60,7 @@ class TestNodeFirefly(unittest.TestCase):
         # programmer instance
         assert self.node.programmer == self.node.cc2538
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_setup(self, wait_no_tty, wait_tty):
         """Test setup function of a firefly node."""
         wait_no_tty.return_value = 0
@@ -72,7 +73,7 @@ class TestNodeFirefly(unittest.TestCase):
         self.node.serial_redirection.start.assert_called_once()
         assert self.node.serial_redirection.stop.call_count == 0
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_teardown(self, wait_no_tty, wait_tty):
         """Test teardown of a firefly node."""
         wait_no_tty.return_value = 0
@@ -85,7 +86,7 @@ class TestNodeFirefly(unittest.TestCase):
         self.node.serial_redirection.stop.assert_called_once()
         assert self.node.serial_redirection.start.call_count == 0
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_flash(self, wait_no_tty, wait_tty):
         """Test flash of a firefly node."""
         wait_no_tty.return_value = 0

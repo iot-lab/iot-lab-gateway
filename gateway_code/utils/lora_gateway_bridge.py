@@ -22,20 +22,18 @@
 
 """Module managing the lora gateway bridge tool."""
 
+import logging
 import os
 import shlex
 
-import logging
-
 from .external_process import ExternalProcess
 
-LOGGER = logging.getLogger('gateway_code')
-LOG_DIR = '/var/log/gateway-server'
-CFG_DIR = '/var/local/config'
-LORA_GATEWAY_BRIDGE_DIR = '/opt/lora-gateway-bridge'
-LORA_GATEWAY_BRIDGE = os.path.join(LORA_GATEWAY_BRIDGE_DIR,
-                                   'lora-gateway-bridge')
-LORA_GATEWAY_BRIDGE_CMD = '{bridge} -c {cfg_file}'
+LOGGER = logging.getLogger("gateway_code")
+LOG_DIR = "/var/log/gateway-server"
+CFG_DIR = "/var/local/config"
+LORA_GATEWAY_BRIDGE_DIR = "/opt/lora-gateway-bridge"
+LORA_GATEWAY_BRIDGE = os.path.join(LORA_GATEWAY_BRIDGE_DIR, "lora-gateway-bridge")
+LORA_GATEWAY_BRIDGE_CMD = "{bridge} -c {cfg_file}"
 
 
 class LoraGatewayBridge(ExternalProcess):
@@ -43,20 +41,21 @@ class LoraGatewayBridge(ExternalProcess):
 
     It's implemented as a stoppable thread running the pkt_forwarder in a loop.
     """
+
     NAME = "lora_gateway_bridge"
 
     def __init__(self):
-        _bridge_conf_filename = 'lora-gateway-bridge.toml'
-        _bridge_cfg = os.path.join(LORA_GATEWAY_BRIDGE_DIR,
-                                   _bridge_conf_filename)
+        _bridge_conf_filename = "lora-gateway-bridge.toml"
+        _bridge_cfg = os.path.join(LORA_GATEWAY_BRIDGE_DIR, _bridge_conf_filename)
         if os.path.isfile(os.path.join(CFG_DIR, _bridge_conf_filename)):
             _bridge_cfg = os.path.join(CFG_DIR, _bridge_conf_filename)
-        self.process_cmd = shlex.split(LORA_GATEWAY_BRIDGE_CMD.format(
-            bridge=LORA_GATEWAY_BRIDGE, cfg_file=_bridge_cfg))
+        self.process_cmd = shlex.split(
+            LORA_GATEWAY_BRIDGE_CMD.format(bridge=LORA_GATEWAY_BRIDGE, cfg_file=_bridge_cfg)
+        )
         super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""
         if retcode and self._run:
-            LOGGER.warning('%s error or restarted', self.NAME)
+            LOGGER.warning("%s error or restarted", self.NAME)
         return retcode

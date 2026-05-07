@@ -21,8 +21,8 @@
 
 """Control Node experiment implementation RPI3 ControlNode."""
 
-import os.path
 import logging
+import os.path
 import shlex
 
 from gateway_code.common import logger_call
@@ -30,10 +30,10 @@ from gateway_code.nodes import ControlNodeBase
 from gateway_code.utils import subprocess_timeout
 from gateway_code.utils.mjpg_streamer import MjpgStreamer
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
-LOCAL_CONFIG_DIR = '/var/local/config'
-CAMERA_CONFIG = os.path.join(LOCAL_CONFIG_DIR, 'camera')
+LOCAL_CONFIG_DIR = "/var/local/config"
+CAMERA_CONFIG = os.path.join(LOCAL_CONFIG_DIR, "camera")
 
 # This command controls the power of the open node/rtl_tcp USB stick via the
 # Yepkit module.
@@ -41,9 +41,9 @@ YKUSHCMD = "sudo ykushcmd {model} {cmd} {port}"
 
 
 def _call_cmd(command_str):
-    """ Run the given command_str."""
+    """Run the given command_str."""
 
-    kwargs = {'args': shlex.split(command_str)}
+    kwargs = {"args": shlex.split(command_str)}
     try:
         return subprocess_timeout.call(**kwargs)
     except subprocess_timeout.TimeoutExpired as exc:
@@ -52,16 +52,17 @@ def _call_cmd(command_str):
 
 
 class ControlNodeRpi3(ControlNodeBase):
-    """ No Control Node """
-    TYPE = 'cnrpi3'
-    FEATURES = ['open_node_power']
+    """No Control Node"""
+
+    TYPE = "cnrpi3"
+    FEATURES = ["open_node_power"]
     MJPG_STREAMER_PORT = 40000
 
     def __init__(self, node_id, default_profile):
         self.node_id = node_id
         self.default_profile = default_profile
         self.profile = self.default_profile
-        self.open_node_state = 'stop'
+        self.open_node_state = "stop"
         self.mjpg_streamer = MjpgStreamer(self.MJPG_STREAMER_PORT)
 
     @property
@@ -71,16 +72,16 @@ class ControlNodeRpi3(ControlNodeBase):
 
     @logger_call("Control node: Start")
     def start(self, exp_id, exp_files=None):  # pylint:disable=unused-argument
-        """ Start ControlNode serial interface """
+        """Start ControlNode serial interface"""
         ret_val = 0
-        ret_val += self.open_start('dc')
+        ret_val += self.open_start("dc")
         return ret_val
 
     @logger_call("Control node: Stop")
     def stop(self):
-        """ Start ControlNode """
+        """Start ControlNode"""
         ret_val = 0
-        ret_val += self.open_stop('dc')
+        ret_val += self.open_stop("dc")
         return ret_val
 
     @staticmethod
@@ -91,27 +92,27 @@ class ControlNodeRpi3(ControlNodeBase):
 
     @staticmethod
     def _ykush_params(cmd):
-        params = {'model': 'ykushxs', 'cmd': cmd, 'port': ''}
+        params = {"model": "ykushxs", "cmd": cmd, "port": ""}
         return params
 
     @logger_call("Control node: start power of open node")
     def open_start(self, power=None):  # pylint:disable=unused-argument
-        """ Start open node with 'power' source """
-        ykush_params = self._ykush_params('-u')
+        """Start open node with 'power' source"""
+        ykush_params = self._ykush_params("-u")
         ret_val = 0
         ret_val += _call_cmd(YKUSHCMD.format(**ykush_params))
         if ret_val == 0:
-            self.open_node_state = 'start'
+            self.open_node_state = "start"
         return ret_val
 
     @logger_call("Control node: stop power of open node")
     def open_stop(self, power=None):  # pylint:disable=unused-argument
-        """ Stop open node with 'power' source """
-        ykush_params = self._ykush_params('-d')
+        """Stop open node with 'power' source"""
+        ykush_params = self._ykush_params("-d")
         ret_val = 0
         ret_val += _call_cmd(YKUSHCMD.format(**ykush_params))
         if ret_val == 0:
-            self.open_node_state = 'stop'
+            self.open_node_state = "stop"
         return ret_val
 
     @logger_call("Control node: Flash")
@@ -122,7 +123,7 @@ class ControlNodeRpi3(ControlNodeBase):
 
     @logger_call("Control node: Start experiment")
     def start_experiment(self, profile):
-        """ Configure the experiment """
+        """Configure the experiment"""
         ret_val = 0
         ret_val += self.configure_profile(profile)
         if os.path.isfile(CAMERA_CONFIG):
@@ -135,7 +136,7 @@ class ControlNodeRpi3(ControlNodeBase):
         """Cleanup the control node configuration."""
         ret_val = 0
         ret_val += self.configure_profile(None)
-        ret_val += self.open_start('dc')
+        ret_val += self.open_start("dc")
         if os.path.isfile(CAMERA_CONFIG):
             ret_val += self.mjpg_streamer.stop()
             LOGGER.debug("Process stopped: mjpg_streamer, ret: %d", ret_val)
@@ -151,11 +152,11 @@ class ControlNodeRpi3(ControlNodeBase):
 
     @logger_call("Control node: profile configuration")
     def configure_profile(self, profile=None):
-        """ Configure the given profile on the control node """
-        LOGGER.info('Configure profile on Control Node')
+        """Configure the given profile on the control node"""
+        LOGGER.info("Configure profile on Control Node")
         self.profile = profile or self.default_profile
         return 0
 
     def status(self):
-        """ Check Control node status """
+        """Check Control node status"""
         return 0

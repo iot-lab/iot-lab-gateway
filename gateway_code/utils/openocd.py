@@ -21,53 +21,50 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" OpenOCD commands """
+"""OpenOCD commands"""
 
+import atexit
+import logging
 import os
 import shlex
 import subprocess
-
-import atexit
-
-import logging
 from collections import namedtuple
 
 from gateway_code import common
+
 from . import subprocess_timeout
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 OpenOCDArgs = namedtuple(
     "OpenOCDArgs",
     [
-        'path',
-        'config_file',
-        'opts',
-        'bind_ip',
-        'serial_number',
-        'serial_cmd',
-    ]
+        "path",
+        "config_file",
+        "opts",
+        "bind_ip",
+        "serial_number",
+        "serial_cmd",
+    ],
 )
 
 
-class OpenOCD:   # pylint:disable=too-many-instance-attributes
-    """ Debugger class, implemented as a global variable storage """
-    DEVNULL = open(os.devnull, 'w')
+class OpenOCD:  # pylint:disable=too-many-instance-attributes
+    """Debugger class, implemented as a global variable storage"""
+
+    DEVNULL = open(os.devnull, "w")
 
     OPENOCD = (
-        '{openocd_path} --debug=0'
-        ' {config}'
-        ' {serial_cmd}'
+        "{openocd_path} --debug=0"
+        " {config}"
+        " {serial_cmd}"
         ' -c "bindto {bind_ip}"'
         ' -c "init"'
         ' -c "targets"'
-        ' {cmd}'
+        " {cmd}"
     )
 
-    RESET = (
-        ' -c "reset run"'
-        ' -c "shutdown"'
-    )
+    RESET = ' -c "reset run" -c "shutdown"'
 
     FLASH = (
         ' -c "reset halt"'
@@ -86,13 +83,10 @@ class OpenOCD:   # pylint:disable=too-many-instance-attributes
         ' -c "shutdown"'
     )
 
-    DEBUG = (
-        ' -c "reset halt"'
-    )
+    DEBUG = ' -c "reset halt"'
     TIMEOUT = 100
 
-    def __init__(self, openocd_args,
-                 verb=False, timeout=TIMEOUT):
+    def __init__(self, openocd_args, verb=False, timeout=TIMEOUT):
         self.openocd_path = openocd_args.path
         self.config = self._config(openocd_args.config_file, openocd_args.opts)
         self.timeout = timeout
@@ -101,13 +95,8 @@ class OpenOCD:   # pylint:disable=too-many-instance-attributes
         # Compute the serial_cmd string. Empty if no serial number or cmd is
         # available.
         self.serial_cmd = ""
-        if (
-            openocd_args.serial_cmd is not None and
-            openocd_args.serial_number is not None
-        ):
-            self.serial_cmd = openocd_args.serial_cmd.format(
-                serial=openocd_args.serial_number
-            )
+        if openocd_args.serial_cmd is not None and openocd_args.serial_number is not None:
+            self.serial_cmd = openocd_args.serial_cmd.format(serial=openocd_args.serial_number)
 
         self.out = None if verb else self.DEVNULL
 
@@ -131,56 +120,49 @@ class OpenOCD:   # pylint:disable=too-many-instance-attributes
         """
         cfg_file = common.abspath(config_file)
         opts = [cfg_file] + list(opts)
-        return ' '.join((f'-f "{opt}"' for opt in opts))
+        return " ".join((f'-f "{opt}"' for opt in opts))
 
     def reset(self):
-        """ Reset """
+        """Reset"""
         return self._call_cmd(self.RESET)
 
     def flash(self, fw_file, binary=False, offset=0):
-        """ Flash firmware """
+        """Flash firmware"""
         try:
             path = common.abspath(fw_file)
             if binary:
-                return self._call_cmd(
-                    self.FLASH_BIN.format(
-                        firmware=path,
-                        offset=hex(offset)
-                    )
-                )
+                return self._call_cmd(self.FLASH_BIN.format(firmware=path, offset=hex(offset)))
             return self._call_cmd(self.FLASH.format(firmware=path))
         except IOError as err:
-            LOGGER.error('%s', err)
+            LOGGER.error("%s", err)
             return 1
 
     def debug_start(self):
-        """ Start a debugger process """
-        LOGGER.debug('Debug start')
+        """Start a debugger process"""
+        LOGGER.debug("Debug start")
         self.debug_stop()  # kill previous process
-        self._debug = subprocess.Popen(
-            **self._openocd_args(self.DEBUG)
-        )
-        LOGGER.debug('Debug started')
+        self._debug = subprocess.Popen(**self._openocd_args(self.DEBUG))
+        LOGGER.debug("Debug started")
         return 0
 
     def debug_stop(self):
-        """ Stop the debugger process """
+        """Stop the debugger process"""
         try:
-            LOGGER.debug('Debug stop')
+            LOGGER.debug("Debug stop")
             self._debug.terminate()
         except AttributeError:
-            LOGGER.debug('Debug not started.')  # None
+            LOGGER.debug("Debug not started.")  # None
         except OSError as err:
-            LOGGER.error('Debug stop error: %r', err)
+            LOGGER.error("Debug stop error: %r", err)
             return 1
         finally:
             self._debug = None
-            LOGGER.debug('Debug stopped')
+            LOGGER.debug("Debug stopped")
         return 0
 
     def _call_cmd(self, command_str):
-        """ Run the given command_str with init on openocd.
-        If openocd is in 'debug' mode, return an error """
+        """Run the given command_str with init on openocd.
+        If openocd is in 'debug' mode, return an error"""
         if self._debug:
             LOGGER.error("OpenOCD is in 'debug' mode, stop it to flash/reset")
             return 1
@@ -193,17 +175,17 @@ class OpenOCD:   # pylint:disable=too-many-instance-attributes
             return 1
 
     def _openocd_args(self, command_str):
-        """ Get subprocess arguments for command_str """
+        """Get subprocess arguments for command_str"""
         # Generate full command arguments
         cmd = self.OPENOCD.format(
             openocd_path=self.openocd_path,
             serial_cmd=self.serial_cmd,
             config=self.config,
             bind_ip=self.bind_ip,
-            cmd=command_str
+            cmd=command_str,
         )
         args = shlex.split(cmd)
-        return {'args': args, 'stdout': self.out, 'stderr': self.out}
+        return {"args": args, "stdout": self.out, "stderr": self.out}
 
     @classmethod
     def from_node(cls, nodeclass, *args, **kwargs):
@@ -236,5 +218,7 @@ class OpenOCD:   # pylint:disable=too-many-instance-attributes
                 nodeclass.BIND_IP,
                 nodeclass.OPENOCD_SERIAL_NUMBER,
                 nodeclass.OPENOCD_SERIAL_CMD,
-            ), *args, **kwargs
+            ),
+            *args,
+            **kwargs,
         )

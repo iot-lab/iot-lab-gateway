@@ -22,10 +22,10 @@
 
 """Common node utilities command line interface."""
 
-import logging
 import functools
+import logging
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 STREAM_STDERR = logging.StreamHandler()
 STREAM_STDERR.setLevel(logging.DEBUG)
 
@@ -42,6 +42,7 @@ def _unregister_stderr_logger():
 
 def log_to_stderr(func):
     """Decorator to add a stderr streamhandler."""
+
     @functools.wraps(func)
     def _wrapped(*args, **kwargs):
         """Wrapped with redirected logs."""
@@ -50,4 +51,5 @@ def log_to_stderr(func):
             return func(*args, **kwargs)
         finally:
             _unregister_stderr_logger()
+
     return _wrapped

@@ -18,35 +18,30 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-""" edbg commands """
+"""edbg commands"""
 
 # pylint: disable=too-few-public-methods
 
+import logging
 import os
 import shlex
-
-import logging
 import tempfile
 
 from gateway_code import common
+
 from . import subprocess_timeout
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class Edbg:
-    """ Debugger class, implemented as a global variable storage """
-    DEVNULL = open(os.devnull, 'w')
+    """Debugger class, implemented as a global variable storage"""
 
-    EDBG = '/usr/bin/edbg {cmd}'
+    DEVNULL = open(os.devnull, "w")
 
-    FLASH = (' -t atmel_cm0p'
-             ' -b'
-             ' -e'
-             ' -v'
-             ' -p'
-             ' -f {bin}'
-             ' -o {offset}')
+    EDBG = "/usr/bin/edbg {cmd}"
+
+    FLASH = " -t atmel_cm0p -b -e -v -p -f {bin} -o {offset}"
 
     TIMEOUT = 100
 
@@ -56,22 +51,22 @@ class Edbg:
         self.out = None if verb else self.DEVNULL
 
     def flash(self, fw_file, binary=False, offset=0):
-        """ Flash firmware """
+        """Flash firmware"""
         try:
             ret_value = 0
 
             fw_path = common.abspath(fw_file)
             if not binary:
-                LOGGER.info('Creating bin file from %s', fw_path)
-                bin_file = tempfile.NamedTemporaryFile(suffix='.bin')
+                LOGGER.info("Creating bin file from %s", fw_path)
+                bin_file = tempfile.NamedTemporaryFile(suffix=".bin")
                 bin_path = bin_file.name
-                LOGGER.info('Created bin file in %s', bin_path)
+                LOGGER.info("Created bin file in %s", bin_path)
 
                 # creating hex file
-                to_bin_command = 'objcopy -I elf32-big -O binary {elf} {bin}'
+                to_bin_command = "objcopy -I elf32-big -O binary {elf} {bin}"
                 cmd = to_bin_command.format(elf=fw_path, bin=bin_path)
                 ret_value = self._call_cmd(cmd)
-                LOGGER.info('To bin conversion ret value : %d', ret_value)
+                LOGGER.info("To bin conversion ret value : %d", ret_value)
                 fw_path = bin_path
                 # Ensure offset is 0 with elf firmware
                 offset = 0
@@ -80,7 +75,7 @@ class Edbg:
             flash_cmd = self.FLASH.format(bin=fw_path, offset=hex(offset))
             cmd = self.EDBG.format(cmd=flash_cmd)
             ret_value += self._call_cmd(cmd)
-            LOGGER.info('Flashing ret value : %d', ret_value)
+            LOGGER.info("Flashing ret value : %d", ret_value)
 
             if not binary:
                 # removing temporary bin file
@@ -88,11 +83,11 @@ class Edbg:
 
             return ret_value
         except IOError as err:
-            LOGGER.error('%s', err)
+            LOGGER.error("%s", err)
             return 1
 
     def _call_cmd(self, command_str):
-        """ Run the given command_str."""
+        """Run the given command_str."""
 
         kwargs = self._edbg_args(command_str)
         LOGGER.info(kwargs)
@@ -104,7 +99,7 @@ class Edbg:
             return 1
 
     def _edbg_args(self, command_str):
-        """ Get subprocess arguments for command_str """
+        """Get subprocess arguments for command_str"""
         # Generate full command arguments
         args = shlex.split(command_str)
         return {"args": args, "stdout": self.out, "stderr": self.out}

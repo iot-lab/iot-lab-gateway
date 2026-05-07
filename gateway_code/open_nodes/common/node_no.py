@@ -19,13 +19,14 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Experiment implementation of an open node that has no node."""
+"""Experiment implementation of an open node that has no node."""
+
 import logging
 
 from gateway_code.common import logger_call
 from gateway_code.nodes import OpenNodeBase
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class NodeNoBase(OpenNodeBase):

@@ -19,18 +19,18 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.node_m3 unit tests files """
+"""gateway_code.open_nodes.node_m3 unit tests files"""
 
 from mock import patch
 
 from gateway_code.open_nodes.node_m3 import NodeM3
 
 
-@patch('gateway_code.utils.ftdi_check.ftdi_check')
+@patch("gateway_code.utils.ftdi_check.ftdi_check")
 def test_node_m3_status(ftdi_check):
     """Test ftdi_check is correctly called."""
     node = NodeM3()
     ftdi_check.return_value = 42
     assert node.status() == 42
     ftdi_check.assert_called_once()
-    ftdi_check.assert_called_with('m3', '2232')
+    ftdi_check.assert_called_with("m3", "2232")
