@@ -19,16 +19,16 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node based on ST-Link programmer implementation """
+"""Open Node based on ST-Link programmer implementation"""
 
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
 class NodeStLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
-    """ Open node STM32 St-Link based board implementation """
+    """Open node STM32 St-Link based board implementation"""
 
     OPENOCD_SERIAL_CMD = "-c 'hla_serial {serial}'"
-    TTY = '/dev/iotlab/ttyON_STLINK'
+    TTY = "/dev/iotlab/ttyON_STLINK"
     BAUDRATE = 115200
     DIRTY_SERIAL = True

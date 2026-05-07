@@ -33,27 +33,28 @@ import unittest
 import mock
 
 from gateway_code import config
+
 from . import utils
 
 
 class TestConfig(unittest.TestCase):
 
     def test_read_config(self):
-        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_no_robot')):
-            self.assertEqual('m3', config.read_config('board_type'))
-            self.assertEqual('m3', config.read_config('board_type', 'def'))
+        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir("m3_no_robot")):
+            self.assertEqual("m3", config.read_config("board_type"))
+            self.assertEqual("m3", config.read_config("board_type", "def"))
 
-            self.assertRaises(IOError, config.read_config, 'robot')
-            self.assertEqual(None, config.read_config('robot', None))
+            self.assertRaises(IOError, config.read_config, "robot")
+            self.assertEqual(None, config.read_config("robot", None))
 
-        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir('m3_robot')):
-            self.assertEqual('m3', config.read_config('board_type'))
-            self.assertEqual('turtlebot2', config.read_config('robot'))
+        with mock.patch(utils.CFG_VAR_PATH, utils.test_cfg_dir("m3_robot")):
+            self.assertEqual("m3", config.read_config("board_type"))
+            self.assertEqual("turtlebot2", config.read_config("robot"))
 
     def test_default_profile(self):
         default_profile_dict = {
-            'power': 'dc',
-            'profilename': '_default_profile',
+            "power": "dc",
+            "profilename": "_default_profile",
         }
         self.assertEqual(default_profile_dict, config.DEFAULT_PROFILE)
 
@@ -65,7 +66,7 @@ class TestConfig(unittest.TestCase):
             pass
 
     def test_user_files(self):
-        file_path = f'/tmp/test_{os.uname()[1]}'
+        file_path = f"/tmp/test_{os.uname()[1]}"
         self._rmfile(file_path)
 
         config.create_user_file(file_path)
@@ -75,8 +76,8 @@ class TestConfig(unittest.TestCase):
 
         config.create_user_file(file_path)
         self.assertTrue(os.path.exists(file_path))
-        with open(file_path, 'w+') as _file:
-            _file.write('DATA\n')
+        with open(file_path, "w+") as _file:
+            _file.write("DATA\n")
         config.clean_user_file(file_path)
         self.assertTrue(os.path.exists(file_path))  # not empty, still here
 

@@ -20,4 +20,4 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Common node utilities """
+"""Common node utilities"""

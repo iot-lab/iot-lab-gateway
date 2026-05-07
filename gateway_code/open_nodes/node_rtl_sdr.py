@@ -19,17 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node Rtl SDR experiment implementation """
+"""Open Node Rtl SDR experiment implementation"""
 
 import logging
 import shlex
 import subprocess
 
 from gateway_code.common import logger_call
-from gateway_code.utils.rtl_tcp import RtlTcp
 from gateway_code.open_nodes.common.node_no import NodeNoBase
+from gateway_code.utils.rtl_tcp import RtlTcp
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 # This command controls the power of the open node/rtl_tcp USB stick via the
 # Yepkit module.
@@ -37,9 +37,9 @@ YKUSHCMD = "sudo ykushcmd {model} {cmd} {port}"
 
 
 class NodeRtlSdr(NodeNoBase):
-    """ Open node Rtl SDR implementation """
+    """Open node Rtl SDR implementation"""
 
-    TYPE = 'rtl_sdr'
+    TYPE = "rtl_sdr"
     RTL_TCP_PORT = 50000
     RTL_TCP_FREQ = 868000000
 

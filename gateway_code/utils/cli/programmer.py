@@ -19,42 +19,32 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Programmer to flash/reset/debug nodes  """
+"""Programmer to flash/reset/debug nodes"""
 
+import argparse
 import os
 import signal
-import argparse
 
-from gateway_code import board_config
+from gateway_code import board_config, common
 from gateway_code.utils.cli import log_to_stderr
-from gateway_code import common
 
-
-_FLASH = 'flash'
-_RESET = 'reset'
-_DEBUG = 'debug'
+_FLASH = "flash"
+_RESET = "reset"
+_DEBUG = "debug"
 
 
 def _setup_parser(cmd, board_cfg):
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '-q', '--quiet',
-        action='store_true', help='Disable verbose output'
-    )
-    if board_cfg.cn_type == 'iotlab' and not board_cfg.linux_on_class:
-        parser.add_argument('-cn', '--control-node', dest="cn",
-                            action="store_true",
-                            help=f'{cmd} control node')
-    if cmd == 'flash':
-        parser.add_argument('firmware', nargs='?', help='Firmware path')
+    parser.add_argument("-q", "--quiet", action="store_true", help="Disable verbose output")
+    if board_cfg.cn_type == "iotlab" and not board_cfg.linux_on_class:
         parser.add_argument(
-            '--bin',
-            action='store_true',
-            help='use if firmware is a binary file '
+            "-cn", "--control-node", dest="cn", action="store_true", help=f"{cmd} control node"
         )
+    if cmd == "flash":
+        parser.add_argument("firmware", nargs="?", help="Firmware path")
+        parser.add_argument("--bin", action="store_true", help="use if firmware is a binary file ")
         parser.add_argument(
-            '--offset', default=0, type=int,
-            help='offset at which to flash the binary file'
+            "--offset", default=0, type=int, help="offset at which to flash the binary file"
         )
     return parser.parse_args()
 
@@ -70,21 +60,21 @@ def _get_node(board_cfg, control_node=False):
 
 def _print_result(ret, cmd, node=None):
     if ret == 0:
-        print(f'{cmd} OK\n')
+        print(f"{cmd} OK\n")
     elif ret == -1:
-        print(f'error: {cmd} not supported for board {node}\n')
+        print(f"error: {cmd} not supported for board {node}\n")
     elif ret == -2:
-        print(f'error: {cmd} too few arguments\n')
+        print(f"error: {cmd} too few arguments\n")
     else:
-        print(f'{cmd} KO: {ret}\n')
+        print(f"{cmd} KO: {ret}\n")
 
 
 @log_to_stderr
 def reset():
-    """ reset node function """
+    """reset node function"""
     board_cfg = board_config.BoardConfig()
     opts = _setup_parser(_RESET, board_cfg)
-    control_node = opts.cn if hasattr(opts, 'cn') else False
+    control_node = opts.cn if hasattr(opts, "cn") else False
     node = _get_node(board_cfg, control_node)
     if node.programmer is not None:
         if not opts.quiet:
@@ -98,16 +88,16 @@ def reset():
 
 @log_to_stderr
 def flash():
-    """ flash node function """
+    """flash node function"""
     board_cfg = board_config.BoardConfig()
-    firmware = os.getenv('FW')
+    firmware = os.getenv("FW")
     opts = _setup_parser(_FLASH, board_cfg)
-    control_node = opts.cn if hasattr(opts, 'cn') else False
+    control_node = opts.cn if hasattr(opts, "cn") else False
     node = _get_node(board_cfg, control_node)
     if firmware is not None and not control_node:
-        if firmware == 'idle':
+        if firmware == "idle":
             firmware = node.FW_IDLE
-        if firmware == 'autotest':
+        if firmware == "autotest":
             firmware = node.FW_AUTOTEST
     else:
         firmware = opts.firmware
@@ -139,10 +129,10 @@ def _debug(node):
     if ret:
         return ret
     try:
-        print('Type Ctrl+C to quit')
+        print("Type Ctrl+C to quit")
         signal.pause()
     except KeyboardInterrupt:
-        print('Ctrl+C')
+        print("Ctrl+C")
     finally:
         node.debug_stop()
     return 0
@@ -150,13 +140,13 @@ def _debug(node):
 
 @log_to_stderr
 def debug():
-    """ debug node function """
+    """debug node function"""
     board_cfg = board_config.BoardConfig()
     opts = _setup_parser(_DEBUG, board_cfg)
-    control_node = opts.cn if hasattr(opts, 'cn') else False
+    control_node = opts.cn if hasattr(opts, "cn") else False
     node = _get_node(board_cfg, control_node)
-    start_debug = hasattr(node, f'{_DEBUG}_start')
-    stop_debug = hasattr(node, f'{_DEBUG}_stop')
+    start_debug = hasattr(node, f"{_DEBUG}_start")
+    stop_debug = hasattr(node, f"{_DEBUG}_stop")
     ret = _debug(node) if (start_debug and stop_debug) else -1
     _print_result(ret, _DEBUG, node.TYPE)
     return ret

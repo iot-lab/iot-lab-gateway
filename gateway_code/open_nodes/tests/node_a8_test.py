@@ -20,7 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Test gateway_code.open_node module """
+"""Test gateway_code.open_node module"""
 
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
@@ -28,6 +28,7 @@
 # pylint: disable=too-many-public-methods
 
 import unittest
+
 from mock import patch
 
 from gateway_code.open_nodes.node_a8 import NodeA8
@@ -35,9 +36,9 @@ from gateway_code.open_nodes.node_a8 import NodeA8
 
 class TestNodeA8(unittest.TestCase):
 
-    @patch('gateway_code.open_nodes.node_a8.SerialExpectForSocket')
+    @patch("gateway_code.open_nodes.node_a8.SerialExpectForSocket")
     def test__debug_boot_thread(self, expect_class):
-        """ Run both cases for coverage """
+        """Run both cases for coverage"""
         serial_expect = expect_class.return_value
 
         a8_node = NodeA8()
@@ -45,16 +46,16 @@ class TestNodeA8(unittest.TestCase):
         # programmer instance
         assert a8_node.programmer is None
 
-        serial_expect.expect.return_value = ''
+        serial_expect.expect.return_value = ""
         ret = a8_node.wait_booted(0)
-        self.assertEqual(ret, '')
+        self.assertEqual(ret, "")
 
-        serial_expect.expect.return_value = ' login: '
+        serial_expect.expect.return_value = " login: "
         ret = a8_node.wait_booted(0)
-        self.assertIn('login:', ret)
+        self.assertIn("login:", ret)
 
     @staticmethod
     def test_error_cases():
-        """ Coverage cases execution """
+        """Coverage cases execution"""
         a8_node = NodeA8()
         a8_node._debug_boot_stop()

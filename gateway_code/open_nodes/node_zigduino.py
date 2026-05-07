@@ -19,47 +19,44 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node Zigduino r2 experiment implementation """
+"""Open Node Zigduino r2 experiment implementation"""
 
-import time
 import logging
-
 import termios
+import time
+
 import serial
 from serial import SerialException
 
-from gateway_code.config import static_path
 from gateway_code import common
 from gateway_code.common import logger_call
+from gateway_code.config import static_path
 from gateway_code.nodes import OpenNodeBase
-
 from gateway_code.utils.avrdude import AvrDude
 from gateway_code.utils.serial_redirection import SerialRedirection
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class NodeZigduino(OpenNodeBase):
     """Open node Zigduino implementation."""
 
     TYPE = "zigduino"
-    ELF_TARGET = ('ELFCLASS32', 'EM_AVR')
-    TTY = '/dev/iotlab/ttyON_ZIGDUINO'
+    ELF_TARGET = ("ELFCLASS32", "EM_AVR")
+    TTY = "/dev/iotlab/ttyON_ZIGDUINO"
     BAUDRATE = 57600
-    FW_IDLE = static_path('zigduino_idle.elf')
-    FW_AUTOTEST = static_path('zigduino_autotest.elf')
+    FW_IDLE = static_path("zigduino_idle.elf")
+    FW_AUTOTEST = static_path("zigduino_autotest.elf")
     AVRDUDE_CONF = {
-        'tty': TTY,
-        'baudrate': 57600,
-        'model': 'atmega128rfa1',
-        'programmer': 'arduino',
+        "tty": TTY,
+        "baudrate": 57600,
+        "model": "atmega128rfa1",
+        "programmer": "arduino",
     }
 
-    AUTOTEST_AVAILABLE = [
-        'echo', 'get_time'  # mandatory
-    ]
+    AUTOTEST_AVAILABLE = ["echo", "get_time"]  # mandatory
 
-    ALIM = '5V'
+    ALIM = "5V"
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
@@ -71,8 +68,8 @@ class NodeZigduino(OpenNodeBase):
         return self.avrdude
 
     def disable_dtr(self):
-        """ Disable serial port DTR in order to avoid
-            board autoreset at first connection
+        """Disable serial port DTR in order to avoid
+        board autoreset at first connection
         """
         # Check if Zigduino is up before DTR reset
         try:
@@ -88,12 +85,11 @@ class NodeZigduino(OpenNodeBase):
 
     @logger_call("Setup of Zigduino node")
     def setup(self, firmware_path):
-        """ Flash open node, create serial redirection """
+        """Flash open node, create serial redirection"""
         ret_val = 0
         # it appears that /dev/ttyON_ZIGDUINO need some time to be detected
         common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
-        ret_val += common.wait_tty(self.TTY, LOGGER,
-                                   timeout=common.TTY_DETECT_TIME)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
         ret_val += self.do_flash(firmware_path, redirect=False)
         ret_val += self.disable_dtr()
         ret_val += self.serial_redirection.start()
@@ -101,12 +97,11 @@ class NodeZigduino(OpenNodeBase):
 
     @logger_call("Teardown of Zigduino node")
     def teardown(self):
-        """ Stop serial redirection and flash idle firmware """
+        """Stop serial redirection and flash idle firmware"""
         ret_val = 0
 
         common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
-        ret_val += common.wait_tty(
-            self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
         ret_val += self.serial_redirection.stop()
         # Reboot needs 8 seconds before ending linux sees it in < 2 seconds
         ret_val += common.wait_tty(self.TTY, LOGGER, timeout=10)
@@ -114,7 +109,7 @@ class NodeZigduino(OpenNodeBase):
         return ret_val
 
     def flash(self, firmware_path=None, binary=False, offset=0):
-        """ Flash the given firmware on Zigduino node
+        """Flash the given firmware on Zigduino node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware
         :param binary: whether to flash a binary file
@@ -124,9 +119,10 @@ class NodeZigduino(OpenNodeBase):
         return self.do_flash(firmware_path, binary, offset, True)
 
     @logger_call("Flash of Zigduino node")
-    def do_flash(self, firmware_path=None, binary=False,
-                 offset=0, redirect=True):  # pylint:disable=unused-argument
-        """ Flash the given firmware on Zigduino node
+    def do_flash(
+        self, firmware_path=None, binary=False, offset=0, redirect=True
+    ):  # pylint:disable=unused-argument
+        """Flash the given firmware on Zigduino node
         :param firmware_path: Path to the firmware to be flashed on `node`.
             If None, flash 'idle' firmware
         :param binary: whether to flash a binary file
@@ -134,21 +130,20 @@ class NodeZigduino(OpenNodeBase):
         :param redirect: whether to stop the serial redirection before flashing
         """
         if binary:
-            LOGGER.error('FLASH: binary mode not supported with Zigduino')
+            LOGGER.error("FLASH: binary mode not supported with Zigduino")
             return 1
 
         if offset != 0:
-            LOGGER.error('FLASH: flash offset is not supported with Zigduino')
+            LOGGER.error("FLASH: flash offset is not supported with Zigduino")
             return 1
 
         ret_val = 0
         firmware_path = firmware_path or self.FW_IDLE
-        LOGGER.info('Flash firmware on Zigduino: %s', firmware_path)
+        LOGGER.info("Flash firmware on Zigduino: %s", firmware_path)
         # First stop serial redirection, flash hangup if an
         # user session is openened on port 20000
         common.wait_no_tty(self.TTY, timeout=common.TTY_DETECT_TIME)
-        ret_val += common.wait_tty(
-            self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
+        ret_val += common.wait_tty(self.TTY, LOGGER, timeout=common.TTY_DETECT_TIME)
         if redirect:
             ret_val += self.serial_redirection.stop()
         # Then flash
@@ -163,7 +158,7 @@ class NodeZigduino(OpenNodeBase):
 
     @logger_call("Reset of Zigduino node")
     def reset(self):
-        """ Reset the Zigduino node using DTR"""
+        """Reset the Zigduino node using DTR"""
         ret_val = 0
 
         # Check if Zigduino is up before DTR reset
@@ -185,6 +180,6 @@ class NodeZigduino(OpenNodeBase):
         return ret_val
 
     def status(self):
-        """ Check Zigduino node status """
+        """Check Zigduino node status"""
         # It's impossible for us to check the status of the zigduino node
         return 0

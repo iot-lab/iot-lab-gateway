@@ -19,31 +19,31 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Standalone Control Node experiment implementation """
+"""Standalone Control Node experiment implementation"""
 
 import logging
+
 import gateway_code.utils.ftdi_check
 from gateway_code.common import logger_call
 from gateway_code.config import static_path
-
 from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class ControlNodeIotlabm3(ControlNodeIotlab):
-    """ Implementation of a Control Node with a Standalone M3 """
-    TYPE = 'iotlabm3'
-    FEATURES = ['leds',
-                'radio']
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
-    OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
-    OPENOCD_OPTS = (static_path('iot-lab-cn-m3.cfg'),)
+    """Implementation of a Control Node with a Standalone M3"""
+
+    TYPE = "iotlabm3"
+    FEATURES = ["leds", "radio"]
+    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
+    OPENOCD_CFG_FILE = static_path("iot-lab.cfg")
+    OPENOCD_OPTS = (static_path("iot-lab-cn-m3.cfg"),)
 
     @logger_call("Control node : profile configuration")
     def configure_profile(self, profile=None):
-        """ Configure the given profile on the control node """
-        LOGGER.info('Configure profile on Control Node')
+        """Configure the given profile on the control node"""
+        LOGGER.info("Configure profile on Control Node")
         self.profile = profile or self.default_profile
         ret_val = 0
 
@@ -53,14 +53,14 @@ class ControlNodeIotlabm3(ControlNodeIotlab):
 
     @logger_call("Control node : start power of open node - Ignored")
     def open_start(self, power=None):
-        """ Start open node with 'power' source """
+        """Start open node with 'power' source"""
         return 0
 
     @logger_call("Control node : stop power of open node - Ignored")
     def open_stop(self, power=None):
-        """ Stop open node with 'power' source """
+        """Stop open node with 'power' source"""
         return 0
 
     def status(self):
-        """ Check Control node status """
-        return gateway_code.utils.ftdi_check.ftdi_check('controlNode', '2232')
+        """Check Control node status"""
+        return gateway_code.utils.ftdi_check.ftdi_check("controlNode", "2232")
