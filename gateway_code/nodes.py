@@ -26,6 +26,7 @@ import abc
 import os
 import inspect
 import pkgutil
+import importlib
 
 from gateway_code.utils import elftarget
 
@@ -139,11 +140,13 @@ REGISTRY = {}
 # import all the nodes/plugins
 def import_all_nodes(pkg_dir):
     """Looks into the given relative path for modules and imports them"""
-    pkg_dir = os.path.join(os.path.dirname(__file__), pkg_dir)
-    for module_loader, name, _ in pkgutil.iter_modules([pkg_dir]):
+    pkg_dir_absolute = os.path.join(os.path.dirname(__file__), pkg_dir)
+    for module_finder, name, _ in pkgutil.iter_modules(path=[pkg_dir_absolute]):
         if name in ['tests', 'common']:
             continue
-        module = module_loader.find_module(name).load_module(name)
+        spec = module_finder.find_spec(name)
+        module = importlib.util.module_from_spec(spec)
+        module = importlib.import_module(f'gateway_code.{pkg_dir}.{name}')
         class_members = inspect.getmembers(module, inspect.isclass)
         for class_member_tuple in class_members:
             class_member_name, class_member = class_member_tuple
