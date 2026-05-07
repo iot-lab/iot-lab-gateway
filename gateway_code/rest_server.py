@@ -143,7 +143,7 @@ class GatewayRest(bottle.Bottle):
         try:
             profile = request.json
             LOGGER.debug('REST: Profile json dict: %r', profile)
-        except ValueError:
+        except (ValueError, bottle.HTTPError):
             LOGGER.error('REST: Invalid json for profile')
             return {'ret': 1}
 
