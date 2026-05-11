@@ -218,7 +218,7 @@ class TestComplexExperimentRunning(ExperimentRunningMock):
         firmware = abspath(board_class.FW_AUTOTEST)
         hostname = config.read_config("ip", "localhost")
         gdb_cmd = [
-            "gdb",
+            "gdb-multiarch",
             "-ex",
             "set confirm off",
             "-ex",
