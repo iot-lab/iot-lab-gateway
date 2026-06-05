@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
 
 # This file is a part of IoT-LAB gateway_code
@@ -81,7 +81,7 @@ RUN git clone https://github.com/ntfreak/openocd openocd10 && \
 #openocd dev
 RUN git clone https://github.com/ntfreak/openocd openocd-dev && \
     cd openocd-dev && \
-    git checkout 7c88e76a76588fa0e3ab645adfc46e8baff6a3e4 && \
+    git checkout v0.12.0 && \
     ./bootstrap && \
     ./configure --prefix=/opt/openocd-dev --enable-cmsis-dap --enable-hidapi-libusb && \
     make && \
@@ -107,8 +107,10 @@ RUN git clone https://github.com/iot-lab/iot-lab-ftdi-utils/  && \
 
 # cc2538 for firefly
 RUN git clone https://github.com/JelmerT/cc2538-bsl && \
-    cp cc2538-bsl/cc2538-bsl.py /usr/bin/. && \
-    pip3 install intelhex
+    cd cc2538-bsl && \
+    cp cc2538_bsl/cc2538_bsl.py /usr/bin/cc2538-bsl.py
+
+RUN python3 -m pip install intelhex
 
 RUN git clone https://github.com/iot-lab/oml.git -b iotlab && \
     cd oml && \
@@ -131,9 +133,12 @@ RUN git clone https://github.com/iot-lab/pycom-utils && \
     cd pycom-utils && \
     cp *.py /usr/local/share/pycom/eps32/tools/fw_updater/
 
+# Install gateway rest server
+RUN python3 -m pip install build hatch
+
 WORKDIR /setup_dir
 COPY . /setup_dir/
-RUN python3 setup.py install
+RUN python3 -m pip install .
 RUN rm -r /setup_dir
 
 #test with M3 config

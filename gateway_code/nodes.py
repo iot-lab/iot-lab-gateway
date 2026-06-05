@@ -21,10 +21,12 @@
 
 # pylint: disable=no-member
 
-""" Common logic for plugin nodes classes """
+"""Common logic for plugin nodes classes"""
+
 import abc
-import os
+import importlib
 import inspect
+import os
 import pkgutil
 
 from gateway_code.utils import elftarget
@@ -37,11 +39,11 @@ def with_metaclass(meta, *bases):
 
 class NodeBase(with_metaclass(abc.ABCMeta)):
     # pylint: disable=too-few-public-methods
-    """ metaclass combining registry and abstract contract """
+    """metaclass combining registry and abstract contract"""
 
     @abc.abstractmethod
     def status(self):
-        """ Status of the node """
+        """Status of the node"""
         # pragma: no cover
 
     @property
@@ -52,82 +54,81 @@ class NodeBase(with_metaclass(abc.ABCMeta)):
 
 
 class ControlNodeBase(NodeBase):
-    """ Class to inherit, for control node classes """
+    """Class to inherit, for control node classes"""
 
     @abc.abstractmethod
     def start(self, exp_id, exp_files=None):
-        """ This method is called when starting an experiment """
+        """This method is called when starting an experiment"""
         # pragma: no cover
 
     @abc.abstractmethod
     def stop(self):
-        """ This method is called when stopping an experiment """
+        """This method is called when stopping an experiment"""
         # pragma: no cover
 
     @abc.abstractmethod
     def start_experiment(self, profile):
-        """ Configure experiment and monitoring on ControlNode"""
+        """Configure experiment and monitoring on ControlNode"""
         # pragma: no cover
 
     @abc.abstractmethod
     def stop_experiment(self):
-        """ Cleanup Control node Monitoring and experiment """
+        """Cleanup Control node Monitoring and experiment"""
         # pragma: no cover
 
     @abc.abstractmethod
     def autotest_setup(self, measures_handler):
-        """ Setup the control node for the open node autotest """
+        """Setup the control node for the open node autotest"""
         # pragma: no cover
 
     @abc.abstractmethod
     def autotest_teardown(self, stop_on):
-        """ Cleanup the control node for the open node autotest """
+        """Cleanup the control node for the open node autotest"""
         # pragma: no cover
 
     @abc.abstractmethod
     def configure_profile(self, profile=None):
-        """ Setup the profile used by the control node """
+        """Setup the profile used by the control node"""
         # pragma: no cover
 
     @abc.abstractmethod
     def flash(self, firmware_path=None, binary=False, offset=0):
-        """ Flash firmware on the control_node """
+        """Flash firmware on the control_node"""
         # pragma: no cover
 
 
 class OpenNodeBase(NodeBase):
-    """ class to inherit, for open node classes """
+    """class to inherit, for open node classes"""
 
     @abc.abstractmethod
     def setup(self, firmware_path):
-        """ Setup the open node with a firmware"""
+        """Setup the open node with a firmware"""
         # pragma: no cover
 
     @abc.abstractmethod
     def teardown(self):
-        """ Cleanup the open node """
+        """Cleanup the open node"""
         # pragma: no cover
 
     @classmethod
     def verify(cls):
-        """ Verifiy the open node """
+        """Verifiy the open node"""
         ret_val = 0
         # Tuple with (class, machine) run 'elftarget.py' on a node firmware
-        if (getattr(cls, 'ELF_TARGET', None) is None or
-                len(cls.ELF_TARGET) != 2):
+        if getattr(cls, "ELF_TARGET", None) is None or len(cls.ELF_TARGET) != 2:
             ret_val += 1
 
         # skip on iotlab gateways because of too little RAM
-        if os.uname()[4] != 'armv7l':
-            for firmware_attr in ('FW_IDLE', 'FW_AUTOTEST'):
+        if os.uname()[4] != "armv7l":
+            for firmware_attr in ("FW_IDLE", "FW_AUTOTEST"):
                 firmware = getattr(cls, firmware_attr, None)
-                if (firmware is not None and not
-                        elftarget.is_compatible_with_node(firmware, cls)):
+                if firmware is not None and not elftarget.is_compatible_with_node(firmware, cls):
                     ret_val += 1
 
-        required_autotest = {'echo', 'get_time'}  # mandatory
-        if (getattr(cls, 'AUTOTEST_AVAILABLE', None) is None or
-                not required_autotest.issubset(cls.AUTOTEST_AVAILABLE)):
+        required_autotest = {"echo", "get_time"}  # mandatory
+        if getattr(cls, "AUTOTEST_AVAILABLE", None) is None or not required_autotest.issubset(
+            cls.AUTOTEST_AVAILABLE
+        ):
             ret_val += 1
 
         return ret_val
@@ -139,67 +140,61 @@ REGISTRY = {}
 # import all the nodes/plugins
 def import_all_nodes(pkg_dir):
     """Looks into the given relative path for modules and imports them"""
-    pkg_dir = os.path.join(os.path.dirname(__file__), pkg_dir)
-    for module_loader, name, _ in pkgutil.iter_modules([pkg_dir]):
-        if name in ['tests', 'common']:
+    pkg_dir_absolute = os.path.join(os.path.dirname(__file__), pkg_dir)
+    for module_finder, name, _ in pkgutil.iter_modules(path=[pkg_dir_absolute]):
+        if name in ["tests", "common"]:
             continue
-        module = module_loader.find_module(name).load_module(name)
+        spec = module_finder.find_spec(name)
+        module = importlib.util.module_from_spec(spec)
+        module = importlib.import_module(f"gateway_code.{pkg_dir}.{name}")
         class_members = inspect.getmembers(module, inspect.isclass)
         for class_member_tuple in class_members:
             class_member_name, class_member = class_member_tuple
-            if (not issubclass(
-                    class_member, NodeBase) or
-                    class_member_name.endswith("Base")):
+            if not issubclass(class_member, NodeBase) or class_member_name.endswith("Base"):
                 continue
             REGISTRY[class_member.TYPE] = class_member
 
 
-import_all_nodes('open_nodes')
-import_all_nodes('control_nodes')
+import_all_nodes("open_nodes")
+import_all_nodes("control_nodes")
 
 
 def _node_class(board_type):
     """Return the open node class implementation for `board_type`.
 
-    :raises ValueError: if board class can't be found """
+    :raises ValueError: if board class can't be found"""
     try:
         output_class = REGISTRY[board_type]
         # Class sanity check
         assert output_class.TYPE == board_type
     except KeyError:
-        raise ValueError(f'Board {board_type} not implemented')
-    else:
-        return output_class
+        raise ValueError(f"Board {board_type} not implemented")
+
+    return output_class
 
 
 def open_node_class(board_type):
     """Return the open node class implementation for `board_type`.
 
-    :raises ValueError: if board class can't be found """
+    :raises ValueError: if board class can't be found"""
     output_class = _node_class(board_type)
     if output_class.verify() != 0:
-        raise ValueError(f'Invalid open node class {output_class.__name__}')
+        raise ValueError(f"Invalid open node class {output_class.__name__}")
     return output_class
 
 
 def control_node_class(cn_type):
     """Return the control node class implementation for `cn_type`.
 
-    :raises ValueError: if board class can't be found """
+    :raises ValueError: if board class can't be found"""
     return _node_class(cn_type)
 
 
 def all_open_nodes_types():
     """Returns all the open nodes classes"""
-    return [
-        key for key, value in REGISTRY.items()
-        if issubclass(value, OpenNodeBase)
-    ]
+    return [key for key, value in REGISTRY.items() if issubclass(value, OpenNodeBase)]
 
 
 def all_control_nodes_types():
     """Returns all the control nodes classes"""
-    return [
-        key for key, value in REGISTRY.items()
-        if issubclass(value, ControlNodeBase)
-    ]
+    return [key for key, value in REGISTRY.items() if issubclass(value, ControlNodeBase)]

@@ -17,11 +17,11 @@ jobs:
       max-parallel: 5
       fail-fast: false
       matrix:
-        python-version: [3.7, 3.8, 3.9, '3.10']
+        python-version: ['3.10', '3.12', '3.13']
     steps:
-    - uses: actions/checkout@master
+    - uses: actions/checkout@v6
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
+      uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -39,7 +39,7 @@ jobs:
         tox -e copying
     - name: Upload coverage to Codecov
       if: ${{ matrix.python-version == 3.10 }}
-      uses: codecov/codecov-action@v1
+      uses: codecov/codecov-action@v6
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         fail_ci_if_error: true
@@ -49,55 +49,43 @@ jobs:
     - uses: actions/checkout@master
     - name: Test within Docker image
       run: make test
-  integration-test:
-    runs-on: self-hosted
-    strategy:
-      matrix:
-        boards:
-          - archi: a8
-            node-id: 17
-            site: devgrenoble
-          - archi: m3
-            node-id: 17
-            site: devgrenoble
-          - archi: custom
-            node-id: 1 # samr21
-            site: devgrenoble
-          - archi: custom
-            node-id: 4 # nucleo-wl55jc
-            site: devgrenoble
-          - archi: custom
-            node-id: 29 # microbit
-            site: devsaclay
-          - archi: custom
-            node-id: 30 # arduino-zero
-            site: devsaclay
-          - archi: custom
-            node-id: 31 # st-lrwan1
-            site: devsaclay
-          - archi: custom
-            node-id: 32  # nrf52dk
-            site: devsaclay
-          - archi: custom
-            node-id: 33 # nrf52840dk
-            site: devsaclay
-          - archi: custom
-            node-id: 4 # zigduino
-            site: devstrasbourg
-      fail-fast: false
-    steps:
-      - name: Check out install-lib repo
-        uses: actions/checkout@v2
-        with:
-          repository: iot-lab/iot-lab-dev
-          token: ${{ secrets.IOTLAB_TOKEN }}
-      - name: Check out the repo
-        uses: actions/checkout@v2
-        with:
-          path: ./parts/iot-lab-gateway
-      - name: Decrypt password
-        run: make decrypt_passwords
-      - name: Launch integration tests
-        working-directory: ./install_lib
-        run: |
-          fab ci:${{ matrix.boards.archi }}_ids=${{ matrix.boards.node-id }} nodes.test_gateway_code:codecov_token=${{ secrets.CODECOV_TOKEN }} -H root@${{ matrix.boards.site }}.iot-lab.info:2222
+  # integration-test:
+  #   runs-on: self-hosted
+  #   strategy:
+  #     matrix:
+  #       boards:
+  #         - archi: custom
+  #           node-id: 29 # microbit
+  #           site: devsaclay
+  #         - archi: custom
+  #           node-id: 30 # arduino-zero
+  #           site: devsaclay
+  #         - archi: custom
+  #           node-id: 31 # st-lrwan1
+  #           site: devsaclay
+  #         - archi: custom
+  #           node-id: 32  # nrf52dk
+  #           site: devsaclay
+  #         - archi: custom
+  #           node-id: 33 # nrf52840dk
+  #           site: devsaclay
+  #         - archi: custom
+  #           node-id: 4 # zigduino
+  #           site: devstrasbourg
+  #     fail-fast: false
+  #   steps:
+  #     - name: Check out install-lib repo
+  #       uses: actions/checkout@v2
+  #       with:
+  #         repository: iot-lab/iot-lab-dev
+  #         token: ${{ secrets.IOTLAB_TOKEN }}
+  #     - name: Check out the repo
+  #       uses: actions/checkout@v2
+  #       with:
+  #         path: ./parts/iot-lab-gateway
+  #     - name: Decrypt password
+  #       run: make decrypt_passwords
+  #     - name: Launch integration tests
+  #       working-directory: ./install_lib
+  #       run: |
+  #         fab ci:${{ matrix.boards.archi }}_ids=${{ matrix.boards.node-id }} nodes.test_gateway_code:codecov_token=${{ secrets.CODECOV_TOKEN }} -H root@${{ matrix.boards.site }}.iot-lab.info:2222

@@ -1,8 +1,9 @@
 pytest>=3.0
 pytest-cov
 pylint
-pycodestyle
-flake8
+black
+isort
+ruff
 nosexcover
 mock
 WebTest

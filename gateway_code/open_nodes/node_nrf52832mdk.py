@@ -19,16 +19,16 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node NRF52832-MDK experiment implementation """
+"""Open Node NRF52832-MDK experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
 class NodeNrf52832Mdk(NodeDapLinkBase):
-    """ Open node NRF52832-MDK implementation """
+    """Open node NRF52832-MDK implementation"""
 
-    TYPE = 'nrf52832mdk'
-    OPENOCD_CFG_FILE = static_path('iot-lab-nrf528xxmdk.cfg')
-    FW_IDLE = static_path('nrf52832mdk_idle.elf')
-    FW_AUTOTEST = static_path('nrf52832mdk_autotest.elf')
+    TYPE = "nrf52832mdk"
+    OPENOCD_CFG_FILE = static_path("iot-lab-nrf528xxmdk.cfg")
+    FW_IDLE = static_path("nrf52832mdk_idle.elf")
+    FW_AUTOTEST = static_path("nrf52832mdk_autotest.elf")

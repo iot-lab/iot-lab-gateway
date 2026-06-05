@@ -16,7 +16,8 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-""" control nodes plugins tests """
+"""control nodes plugins tests"""
+
 from __future__ import print_function
 
 from mock import patch
@@ -24,8 +25,7 @@ from mock import patch
 from gateway_code.nodes import all_control_nodes_types, control_node_class
 
 
-@patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
-       '/tmp/mjpg_streamer_test.log')
+@patch("gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE", "/tmp/mjpg_streamer_test.log")
 def test_nodes_classes():
     """Test loading all implemented control nodes implementation."""
     for node in all_control_nodes_types():

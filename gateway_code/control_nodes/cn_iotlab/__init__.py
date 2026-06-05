@@ -19,36 +19,41 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Control Node experiment implementation """
+"""Control Node experiment implementation"""
 
-import time
 import logging
+import time
 
 import gateway_code.utils.ftdi_check
 from gateway_code.common import logger_call
+from gateway_code.config import static_path
 from gateway_code.nodes import ControlNodeBase
 from gateway_code.utils.openocd import OpenOCD
-from gateway_code.config import static_path
+
 from . import cn_interface, cn_protocol
 
-
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class ControlNodeIotlab(ControlNodeBase):
-    """ Control Node implemenation """
-    TYPE = 'iotlab'
-    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/ttyCN'
+    """Control Node implemenation"""
+
+    TYPE = "iotlab"
+    ELF_TARGET = ("ELFCLASS32", "EM_ARM")
+    TTY = "/dev/ttyCN"
     BAUDRATE = 500000
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
-    OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
-    OPENOCD_OPTS = (static_path('iot-lab-cn.cfg'),)
-    FW_CONTROL_NODE = static_path('control_node.elf')
-    FEATURES = ['leds',
-                'open_node_power',
-                'open_node_gpio', 'open_node_i2c',
-                'radio', 'consumption']
+    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
+    OPENOCD_CFG_FILE = static_path("iot-lab.cfg")
+    OPENOCD_OPTS = (static_path("iot-lab-cn.cfg"),)
+    FW_CONTROL_NODE = static_path("control_node.elf")
+    FEATURES = [
+        "leds",
+        "open_node_power",
+        "open_node_gpio",
+        "open_node_i2c",
+        "radio",
+        "consumption",
+    ]
 
     def __init__(self, node_id, default_profile):
         self.node_id = node_id
@@ -57,7 +62,7 @@ class ControlNodeIotlab(ControlNodeBase):
         self.openocd = OpenOCD.from_node(self)
         self.cn_serial = cn_interface.ControlNodeSerial(self.TTY)
         self.protocol = cn_protocol.Protocol(self.cn_serial.send_command)
-        self.open_node_state = 'stop'
+        self.open_node_state = "stop"
         self.profile = self.default_profile
 
     @property
@@ -67,14 +72,13 @@ class ControlNodeIotlab(ControlNodeBase):
 
     @logger_call("Control node : Starting of control node serial interface")
     def start(self, exp_id, exp_files=None):
-        """ Start ControlNode serial interface """
+        """Start ControlNode serial interface"""
         ret_val = 0
         ret_val += self.reset()
 
-        oml_cfg = self.cn_serial.oml_xml_config(self.node_id, exp_id,
-                                                exp_files)
+        oml_cfg = self.cn_serial.oml_xml_config(self.node_id, exp_id, exp_files)
         ret_val += self.cn_serial.start(oml_cfg)
-        ret_val += self.open_start('dc')
+        ret_val += self.open_start("dc")
         return ret_val
 
     @logger_call("Control node: Setup")
@@ -87,16 +91,16 @@ class ControlNodeIotlab(ControlNodeBase):
 
     @logger_call("Control node : Stop control node serial interface")
     def stop(self):
-        """ Start ControlNode """
+        """Start ControlNode"""
         ret_val = 0
-        ret_val += self.open_stop('dc')
+        ret_val += self.open_stop("dc")
         ret_val += self.cn_serial.stop()
         ret_val += self.reset()
         return ret_val
 
     @logger_call("Control node : Start experiment")
     def start_experiment(self, profile):
-        """ Configure the experiment """
+        """Configure the experiment"""
         ret_val = 0
         ret_val += self.protocol.green_led_blink()
         ret_val += self.protocol.set_time()
@@ -106,15 +110,15 @@ class ControlNodeIotlab(ControlNodeBase):
 
     @logger_call("Control node : stop of the experiment")
     def stop_experiment(self):
-        """ Cleanup the control node configuration
-        Also start open node for cleanup """
+        """Cleanup the control node configuration
+        Also start open node for cleanup"""
         ret_val = 0
         ret_val += self.configure_profile(None)
-        ret_val += self.open_start('dc')
+        ret_val += self.open_start("dc")
         ret_val += self.protocol.green_led_on()
         return ret_val
 
-    @logger_call("Control node : autotest setup.""")
+    @logger_call("Control node : autotest setup." "")
     def autotest_setup(self, measures_handler):
         """Setup node for autotests."""
         ret_val = 0
@@ -126,24 +130,23 @@ class ControlNodeIotlab(ControlNodeBase):
         ret_val += self.protocol.set_time()
         return ret_val
 
-    @logger_call("Control node : autotest teardown.""")
+    @logger_call("Control node : autotest teardown." "")
     def autotest_teardown(self, stop_on):
         """Teardown node after autotests."""
         ret_val = 0
         if stop_on:
-            ret_val += self.open_stop('dc')
+            ret_val += self.open_stop("dc")
         self.cn_serial.stop()
         return ret_val
 
     @logger_call("Control node : profile configuration")
     def configure_profile(self, profile=None):
-        """ Configure the given profile on the control node """
-        LOGGER.info('Configure profile on Control Node')
+        """Configure the given profile on the control node"""
+        LOGGER.info("Configure profile on Control Node")
         self.profile = profile or self.default_profile
         ret_val = 0
         # power_mode (start|stop dc|batt)
-        ret_val += self.protocol.start_stop(self.open_node_state,
-                                            self.profile.power)
+        ret_val += self.protocol.start_stop(self.open_node_state, self.profile.power)
         # Monitoring
         ret_val += self.protocol.config_consumption(self.profile.consumption)
         ret_val += self.protocol.config_radio(self.profile.radio)
@@ -151,25 +154,25 @@ class ControlNodeIotlab(ControlNodeBase):
 
     @logger_call("Control node : start power of open node")
     def open_start(self, power=None):
-        """ Start open node with 'power' source """
+        """Start open node with 'power' source"""
         power = power or self.profile.power
-        ret = self.protocol.start_stop('start', power)
+        ret = self.protocol.start_stop("start", power)
         if ret == 0:
-            self.open_node_state = 'start'
+            self.open_node_state = "start"
         return ret
 
     @logger_call("Control node : stop power of open node")
     def open_stop(self, power=None):
-        """ Stop open node with 'power' source """
+        """Stop open node with 'power' source"""
         power = power or self.profile.power
-        ret = self.protocol.start_stop('stop', power)
+        ret = self.protocol.start_stop("stop", power)
         if ret == 0:
-            self.open_node_state = 'stop'
+            self.open_node_state = "stop"
         return ret
 
     @logger_call("Control node : flash the open node")
     def flash(self, firmware_path=None, binary=False, offset=0):
-        """ Flash the given firmware on Control Node
+        """Flash the given firmware on Control Node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
                               If None, flash 'control_node' firmware
@@ -177,28 +180,28 @@ class ControlNodeIotlab(ControlNodeBase):
         :param offset: the offset at which to flash the binary file
         """
         firmware_path = firmware_path or self.FW_CONTROL_NODE
-        LOGGER.info('Flash firmware on Control Node %s', firmware_path)
+        LOGGER.info("Flash firmware on Control Node %s", firmware_path)
         ret = self.openocd.flash(firmware_path)
         self._wait_control_node_ready()
         return ret
 
     @logger_call("Control node : reset")
     def reset(self):
-        """ Reset the Control Node using jtag """
-        LOGGER.info('Reset Control Node')
+        """Reset the Control Node using jtag"""
+        LOGGER.info("Reset Control Node")
         ret = self.openocd.reset()
         self._wait_control_node_ready()
         return ret
 
     @staticmethod
     def _wait_control_node_ready():
-        """ Wait that the ControlNode firmware starts.
+        """Wait that the ControlNode firmware starts.
 
         It waits one second when starting, and may also trigger udev when
         restarting a node. This take a bit more than 1.1 second.
-        So wait 2 seconds to be safe.  """
+        So wait 2 seconds to be safe."""
         time.sleep(2)
 
     def status(self):
-        """ Check Control node status """
-        return gateway_code.utils.ftdi_check.ftdi_check('control', '4232')
+        """Check Control node status"""
+        return gateway_code.utils.ftdi_check.ftdi_check("control", "4232")

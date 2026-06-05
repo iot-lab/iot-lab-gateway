@@ -1,3 +1,0 @@
-# Additionnal data needed for tests
-include gateway_code/static/*
-include tests_utils/*

@@ -19,7 +19,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" CLI client for mjpg_streamer
+"""CLI client for mjpg_streamer
 
 Usage: mjpg_streamer <port>
 
@@ -27,25 +27,26 @@ Usage: mjpg_streamer <port>
 
 import argparse
 import signal
+
 from .. import mjpg_streamer
 from . import log_to_stderr
 
 PARSER = argparse.ArgumentParser()
-PARSER.add_argument('port', type=int, help="Server port")
+PARSER.add_argument("port", type=int, help="Server port")
 
 
 @log_to_stderr
 def main():
-    """ mjpg_streamer cli main function """
+    """mjpg_streamer cli main function"""
 
     opts = PARSER.parse_args()
     process = mjpg_streamer.MjpgStreamer(opts.port)
     try:
         process.start()
-        print('Press Ctrl+C to stop')
+        print("Press Ctrl+C to stop")
         signal.pause()
     except KeyboardInterrupt:
         pass
     finally:
         process.stop()
-        print('Stopped')
+        print("Stopped")

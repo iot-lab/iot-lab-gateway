@@ -19,36 +19,37 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.node_zigduino unit tests files """
+"""gateway_code.open_nodes.node_zigduino unit tests files"""
 
 import os
 import tempfile
 import unittest
+
+from mock import Mock, patch
 from serial import SerialException
-from mock import patch, Mock
 
 from gateway_code.open_nodes.node_zigduino import NodeZigduino
 
 
-@patch('gateway_code.common.wait_tty')
+@patch("gateway_code.common.wait_tty")
 class TestNodeZigduino(unittest.TestCase):
     """Unittest class for zigduino nodes."""
 
     def setUp(self):
         self.node = NodeZigduino()
         self.node.TTY = tempfile.NamedTemporaryFile(delete=False).name
-        self.fw_path = '/path/to/firmware'
-        avrdude_class = patch('gateway_code.utils.avrdude.AvrDude').start()
+        self.fw_path = "/path/to/firmware"
+        avrdude_class = patch("gateway_code.utils.avrdude.AvrDude").start()
         self.node.avrdude = avrdude_class.return_value
         self.node.avrdude.flash.return_value = 0
         self.node.serial_redirection.start = Mock()
         self.node.serial_redirection.start.return_value = 0
         self.node.serial_redirection.stop = Mock()
         self.node.serial_redirection.stop.return_value = 0
-        self.serial = patch('serial.Serial').start()
-        termios_get = patch('termios.tcgetattr').start()
+        self.serial = patch("serial.Serial").start()
+        termios_get = patch("termios.tcgetattr").start()
         termios_get.return_value = [1, 2, 3]
-        termios_set = patch('termios.tcsetattr').start()
+        termios_set = patch("termios.tcsetattr").start()
         termios_set.return_value = 0
 
     def tearDown(self):
@@ -77,11 +78,11 @@ class TestNodeZigduino(unittest.TestCase):
 
         # Reset with serial error
         wait_tty.call_count = 0
-        self.serial.side_effect = SerialException('Error')
+        self.serial.side_effect = SerialException("Error")
         assert self.node.reset() == 1
         assert wait_tty.call_count == 0
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_setup(self, wait_no_tty, wait_tty):
         """Test setup function of a zigduino node."""
         wait_no_tty.return_value = 0
@@ -99,12 +100,12 @@ class TestNodeZigduino(unittest.TestCase):
         # Setup with serial error
         wait_tty.call_count = 0
         wait_no_tty.call_count = 0
-        self.serial.side_effect = SerialException('Error')
+        self.serial.side_effect = SerialException("Error")
         assert self.node.setup(self.fw_path) == 1
         assert wait_tty.call_count == 3
         assert wait_no_tty.call_count == 2
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_teardown(self, wait_no_tty, wait_tty):
         """Test teardown of a zigduino node."""
         wait_no_tty.return_value = 0
@@ -116,7 +117,7 @@ class TestNodeZigduino(unittest.TestCase):
         self.node.serial_redirection.stop.assert_called_once()
         assert self.node.serial_redirection.start.call_count == 0
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_flash(self, wait_no_tty, wait_tty):
         """Test flash of a zigduino node."""
         wait_no_tty.return_value = 0

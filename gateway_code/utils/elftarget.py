@@ -23,16 +23,16 @@
 
 from __future__ import print_function
 
-import sys
 import logging
+import sys
 
+import elftools.common.exceptions
 from elftools.elf.constants import SH_FLAGS
 from elftools.elf.elffile import ELFFile
-import elftools.common.exceptions
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
-TYPE_EXECUTABLE = 'ET_EXEC'
+TYPE_EXECUTABLE = "ET_EXEC"
 
 
 def elf_target(filepath):
@@ -41,20 +41,20 @@ def elf_target(filepath):
     :raises: ValueError if file is not an executable elf file.
     """
     try:
-        with open(filepath, 'rb') as _file:
+        with open(filepath, "rb") as _file:
             elffile = ELFFile(_file)
     except elftools.common.exceptions.ELFError:
-        raise ValueError('Not a valid elf file')
+        raise ValueError("Not a valid elf file")
 
     # Type
-    e_type = elffile.header['e_type']
+    e_type = elffile.header["e_type"]
     # Class
-    e_class = elffile.header['e_ident']['EI_CLASS']
+    e_class = elffile.header["e_ident"]["EI_CLASS"]
     # Machine
-    e_machine = elffile.header['e_machine']
+    e_machine = elffile.header["e_machine"]
 
     if e_type != TYPE_EXECUTABLE:
-        raise ValueError(f'Not an executable elf file: {e_type}')
+        raise ValueError(f"Not an executable elf file: {e_type}")
 
     return e_class, e_machine
 
@@ -69,18 +69,18 @@ def is_compatible_with_node(firmware_path, node_class):
     try:
         return elf_target(firmware_path) == node_elf_target
     except ValueError as err:
-        LOGGER.warning('Invalid firmware: %s', err)
+        LOGGER.warning("Invalid firmware: %s", err)
         return False
 
 
 def get_elf_load_addr(firmware_path):
-    """ Read the load offset for the given elf """
-    with open(firmware_path, 'rb') as firmware_file:
+    """Read the load offset for the given elf"""
+    with open(firmware_path, "rb") as firmware_file:
         elf_file = ELFFile(firmware_file)
         for section in elf_file.iter_sections():
-            sh_flags = section['sh_flags']
+            sh_flags = section["sh_flags"]
             if sh_flags & SH_FLAGS.SHF_EXECINSTR:
-                return section['sh_addr']
+                return section["sh_addr"]
     return None
 
 
@@ -89,5 +89,5 @@ def main():
     print(elf_target(sys.argv[1]))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

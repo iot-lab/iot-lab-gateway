@@ -19,9 +19,10 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.node_lora_gateway unit tests files """
+"""gateway_code.open_nodes.node_lora_gateway unit tests files"""
 
 import subprocess
+
 from mock import patch
 
 from gateway_code.open_nodes.node_lora_gateway import NodeLoraGateway
@@ -29,9 +30,9 @@ from gateway_code.open_nodes.node_lora_gateway import NodeLoraGateway
 # pylint:disable=unused-argument
 
 
-@patch('subprocess.Popen')
-@patch('subprocess.check_output')
-@patch('gateway_code.utils.external_process.ExternalProcess.start')
+@patch("subprocess.Popen")
+@patch("subprocess.check_output")
+@patch("gateway_code.utils.external_process.ExternalProcess.start")
 def test_setup(start, check_output, popen):
     """Test lora_gateway node setup."""
     check_output.return_value = 42
@@ -51,20 +52,19 @@ def test_setup(start, check_output, popen):
     assert start.call_count == 2
 
 
-@patch('gateway_code.open_nodes.node_lora_gateway.'
-       'LORA_PKT_FORWARDER_MAX_TRIES', 1)
-@patch('time.sleep')
-@patch('subprocess.Popen')
-@patch('subprocess.check_output')
+@patch("gateway_code.open_nodes.node_lora_gateway.LORA_PKT_FORWARDER_MAX_TRIES", 1)
+@patch("time.sleep")
+@patch("subprocess.Popen")
+@patch("subprocess.check_output")
 def test_setup_no_pkt_forwarder(check, popen, sleep):
     """Smoke test when no pkt forwarder is running."""
     check.side_effect = subprocess.CalledProcessError("test", "test")
     NodeLoraGateway()
 
 
-@patch('subprocess.Popen')
-@patch('subprocess.check_output')
-@patch('gateway_code.utils.external_process.ExternalProcess.stop')
+@patch("subprocess.Popen")
+@patch("subprocess.check_output")
+@patch("gateway_code.utils.external_process.ExternalProcess.stop")
 def test_teardown(stop, check_output, popen):
     """Test lora_gateway node teardown."""
     check_output.return_value = 42

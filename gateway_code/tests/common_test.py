@@ -27,9 +27,10 @@
 # pylint: disable=too-few-public-methods
 # pylint: disable=no-member
 
-import unittest
 import time
-from threading import Thread, RLock
+import unittest
+from threading import RLock, Thread
+
 import mock
 
 from gateway_code import common
@@ -37,10 +38,10 @@ from gateway_code import common
 
 class TestLogger(unittest.TestCase):
 
-    @mock.patch('gateway_code.common.LOGGER')
+    @mock.patch("gateway_code.common.LOGGER")
     def test_ret_logger_with_ret(self, m_logger):
 
-        @common.logger_call("test value", 'info', 'error')
+        @common.logger_call("test value", "info", "error")
         def simple_ret(value):
             return value
 
@@ -56,16 +57,16 @@ class TestLogger(unittest.TestCase):
 class TestWaitCond(unittest.TestCase):
 
     def test_wait_cond_no_timeout(self):
-        """ Test wait_cond """
+        """Test wait_cond"""
 
         self.assertTrue(common.wait_cond(0, True, lambda: True))
         self.assertFalse(common.wait_cond(0, True, lambda: False))
 
     def test_wait_cond_with_timeout(self):
-        """ Test wait_cond using a timeout value """
+        """Test wait_cond using a timeout value"""
 
         t_ref = time.time()
-        self.assertTrue(common.wait_cond(10., True, lambda: True))
+        self.assertTrue(common.wait_cond(10.0, True, lambda: True))
         self.assertGreater(10, time.time() - t_ref)
 
         t_ref = time.time()
@@ -73,7 +74,7 @@ class TestWaitCond(unittest.TestCase):
         self.assertLessEqual(0.5, time.time() - t_ref)
 
     def test_wait_cond_with_fct_param(self):
-        """ Test wait_cond using a function with params """
+        """Test wait_cond using a function with params"""
 
         self.assertTrue(common.wait_cond(0, True, lambda x: x, True))
         self.assertTrue(common.wait_cond(0, True, lambda x: x, x=True))
@@ -82,17 +83,17 @@ class TestWaitCond(unittest.TestCase):
 class TestWaitTTY(unittest.TestCase):
 
     def test_wait_tty(self):
-        """ Test running wait_tty fct """
+        """Test running wait_tty fct"""
         logger = mock.Mock()
-        self.assertEqual(0, common.wait_tty('/dev/null', logger, 0))
+        self.assertEqual(0, common.wait_tty("/dev/null", logger, 0))
         self.assertEqual(0, logger.error.call_count)
-        self.assertEqual(1, common.wait_tty('no_tty_file', logger, 0))
+        self.assertEqual(1, common.wait_tty("no_tty_file", logger, 0))
         self.assertEqual(1, logger.error.call_count)
 
     def test_wait_no_tty(self):
-        """ Test running wait_no_tty fct """
-        self.assertEqual(0, common.wait_no_tty('no_tty_file', 0))
-        self.assertEqual(1, common.wait_no_tty('/dev/null', 0))
+        """Test running wait_no_tty fct"""
+        self.assertEqual(0, common.wait_no_tty("no_tty_file", 0))
+        self.assertEqual(1, common.wait_no_tty("/dev/null", 0))
 
 
 class TestSynchronousDecorator(unittest.TestCase):
@@ -106,19 +107,19 @@ class TestSynchronousDecorator(unittest.TestCase):
                 self.rlock = RLock()
                 self.item_list = []
 
-            @common.synchronous('rlock')
+            @common.synchronous("rlock")
             def put_after_time(self, item, delay=0):
                 time.sleep(delay)
                 self.item_list.append(item)
 
         class_put = PutAfterTime()
 
-        thr_a = Thread(target=class_put.put_after_time, args=('a', 2))
+        thr_a = Thread(target=class_put.put_after_time, args=("a", 2))
 
         thr_a.start()
         time.sleep(0.5)
-        self.assertRaises(EnvironmentError, class_put.put_after_time, 'b')
+        self.assertRaises(EnvironmentError, class_put.put_after_time, "b")
         time.sleep(2)
-        class_put.put_after_time('c')
+        class_put.put_after_time("c")
 
-        self.assertEqual(['a', 'c'], class_put.item_list)
+        self.assertEqual(["a", "c"], class_put.item_list)

@@ -19,38 +19,37 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Implementation of common mocks for integration tests """
+"""Implementation of common mocks for integration tests"""
 
 import os
 import unittest
+
 import mock
+import pytest
 import webtest
 
-import pytest
-
-import gateway_code.rest_server
 import gateway_code.board_config
+import gateway_code.rest_server
 
-
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/"
 
 
 def run_integration():
     """Tell if integration tests should be run."""
-    if 'IOTLAB_GATEWAY_NO_INTEGRATION_TESTS' in os.environ:
+    if "IOTLAB_GATEWAY_NO_INTEGRATION_TESTS" in os.environ:
         return False  # pragma: no cover
     # iotlab-gateways
-    if os.uname()[4] == 'armv7l':
+    if os.uname()[4] == "armv7l":
         return True
     # manual tests without control node
-    if 'IOTLAB_GATEWAY_CFG_DIR' in os.environ:
+    if "IOTLAB_GATEWAY_CFG_DIR" in os.environ:
         return True  # pragma: no cover
     return False
 
 
 # pylint: disable=too-many-public-methods
 class GatewayCodeMock(unittest.TestCase):
-    """ gateway_code mock for integration tests  """
+    """gateway_code mock for integration tests"""
 
     @classmethod
     def setUpClass(cls):
@@ -58,7 +57,7 @@ class GatewayCodeMock(unittest.TestCase):
         if not run_integration():
             pytest.skip("Skip integration tests")
 
-        cls.gateway_manager = gateway_code.rest_server.GatewayManager('.')
+        cls.gateway_manager = gateway_code.rest_server.GatewayManager(".")
         cls.gateway_manager.setup()
 
         app = gateway_code.rest_server.GatewayRest(cls.gateway_manager)
@@ -76,14 +75,14 @@ class GatewayCodeMock(unittest.TestCase):
         self.board_cfg = gateway_code.board_config.BoardConfig()
 
         self.cn_measures = []
-        if hasattr(self.g_m.control_node, 'cn_serial'):
+        if hasattr(self.g_m.control_node, "cn_serial"):
             self.g_m.control_node.cn_serial.measures_debug = self.cn_measure
 
     def cn_measure(self, measure):
-        """ Store control node measures """
-        self.cn_measures.append(measure.split(' '))
+        """Store control node measures"""
+        self.cn_measures.append(measure.split(" "))
 
     def tearDown(self):
         mock.patch.stopall()
         # Post error cleanup
-        self.server.delete('/exp/stop')
+        self.server.delete("/exp/stop")

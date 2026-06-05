@@ -21,34 +21,29 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Gateway manager """
+"""Gateway manager"""
 
+import errno
 import os
 import re
-import time
-import errno
 import shutil
+import time
 from threading import RLock, Timer
 
-from gateway_code import config
-from gateway_code import common
-from gateway_code.common import logger_call, wait_tty, wait_no_tty
+from gateway_code import board_config, common, config, gateway_logging
 from gateway_code.autotest import autotest
+from gateway_code.common import logger_call, wait_no_tty, wait_tty
 from gateway_code.utils import elftarget
-
-from gateway_code import board_config
-
-from gateway_code import gateway_logging
 
 LOGGER = gateway_logging.LOGGER
 
 
 class GatewayManager:  # pylint:disable=too-many-instance-attributes
-    """ Gateway Manager class,
+    """Gateway Manager class,
 
-    Manages experiments, open node and control node """
+    Manages experiments, open node and control node"""
 
-    def __init__(self, log_folder='.', log_stdout=False):
+    def __init__(self, log_folder=".", log_stdout=False):
         gateway_logging.init_logger(log_folder, log_stdout)
 
         self.board_cfg = board_config.BoardConfig()
@@ -59,7 +54,7 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         self.control_node = self.board_cfg.cn_class(
             self.board_cfg.node_id, self.board_cfg.default_profile
         )
-        self._nodes = {'control': self.control_node, 'open': self.open_node}
+        self._nodes = {"control": self.control_node, "open": self.open_node}
 
         # current experiment infos
         self.exp_id = None
@@ -72,10 +67,10 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
     @logger_call("Gateway Manager : Setup")
     def setup(self):
-        """ Run commands that might crash
-        Must be run before running other commands """
+        """Run commands that might crash
+        Must be run before running other commands"""
         # Setup control node
-        ret = self.node_flash('control', None)  # Flash default
+        ret = self.node_flash("control", None)  # Flash default
         if ret != 0:
             raise RuntimeError(f"Control node flash failed: 'ret:{ret}'")
         return ret
@@ -93,13 +88,19 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         >>> GatewayManager._board_require_power_cycle("m3")
         False
         """
-        return re.match('^nrf52[0-9]{0,3}dk$', board) is not None
+        return re.match("^nrf52[0-9]{0,3}dk$", board) is not None
 
     # R0913 too many arguments 6/5
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     @logger_call("Gateway Manager : Start experiment")
-    def exp_start(self, user, exp_id,  # pylint: disable=R0913
-                  firmware_path=None, profile_dict=None, timeout=0):
+    def exp_start(
+        self,
+        user,
+        exp_id,
+        firmware_path=None,
+        profile_dict=None,
+        timeout=0,
+    ):  # pylint: disable=R0913,R0917
         """
         Start an experiment
 
@@ -119,17 +120,16 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
         """
         if self.experiment_is_running:
-            LOGGER.debug('Experiment running. Stop previous experiment')
+            LOGGER.debug("Experiment running. Stop previous experiment")
             self.exp_stop()
 
         try:
             profile = self.board_cfg.profile_from_dict(profile_dict)
         except ValueError as err:
-            LOGGER.error('%r', err)
+            LOGGER.error("%r", err)
             return 1
-        if not elftarget.is_compatible_with_node(firmware_path,
-                                                 self.open_node):
-            LOGGER.error('Invalid firmware target, aborting experiment.')
+        if not elftarget.is_compatible_with_node(firmware_path, self.open_node):
+            LOGGER.error("Invalid firmware target, aborting experiment.")
             return 1
 
         ret_val = 0
@@ -138,26 +138,25 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         self.exp_id = exp_id
         self.user = user
 
-        if (self.board_cfg.robot_type == 'turtlebot2' or
-                self.board_cfg.cn_class.TYPE == 'no'):  # pragma: no cover
-            LOGGER.info('Create user exp folder')
+        if (
+            self.board_cfg.robot_type == "turtlebot2" or self.board_cfg.cn_class.TYPE == "no"
+        ):  # pragma: no cover
+            LOGGER.info("Create user exp folder")
             self._create_user_exp_folders(user, exp_id)
 
-        self.exp_files = self.create_user_exp_files(self.board_cfg.node_id,
-                                                    user, exp_id)
+        self.exp_files = self.create_user_exp_files(self.board_cfg.node_id, user, exp_id)
 
         # Create user log
-        self.user_log_handler = gateway_logging.user_logger(
-            self.exp_files['log'])
+        self.user_log_handler = gateway_logging.user_logger(self.exp_files["log"])
         LOGGER.addHandler(self.user_log_handler)
-        LOGGER.info('Start experiment: %s-%i', user, exp_id)
+        LOGGER.info("Start experiment: %s-%i", user, exp_id)
 
         # Init ControlNode
         ret_val += self.control_node.start(self.exp_id, self.exp_files)
 
         # with Pycom boards, trigger 2 power-cycle to ensure REPL is correctly
         # started
-        if self.open_node.TYPE == 'pycom' and self.control_node.TYPE != 'no':
+        if self.open_node.TYPE == "pycom" and self.control_node.TYPE != "no":
             for _ in range(2):
                 LOGGER.debug("Power cycle %s board", self.open_node.TYPE)
                 ret_val += self.control_node.open_stop()
@@ -171,42 +170,39 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
         # nrf52dk and nrf52840dk needs a power cycle before their serial
         # becomes fully usable.
-        if (firmware_path is not None and
-                self._board_require_power_cycle(self.open_node.TYPE)):
-            LOGGER.info("Power cycle node %s",
-                        self.control_node.node_id.replace('_', '-'))
+        if firmware_path is not None and self._board_require_power_cycle(self.open_node.TYPE):
+            LOGGER.info("Power cycle node %s", self.control_node.node_id.replace("_", "-"))
             ret_val += self.control_node.open_stop()
             ret_val += self.control_node.open_start()
 
         if timeout != 0:
             LOGGER.debug("Setting timeout to: %d", timeout)
-            self.timeout_timer = Timer(timeout, self._timeout_exp_stop,
-                                       args=(exp_id, user))
+            self.timeout_timer = Timer(timeout, self._timeout_exp_stop, args=(exp_id, user))
             self.timeout_timer.start()
         LOGGER.info("Start experiment succeeded")
         return ret_val
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     def _timeout_exp_stop(self, exp_id, user):
-        """ Run exp_stop after timeout.
+        """Run exp_stop after timeout.
 
         Should stop only if experiment is the same as the experiment
-        that started the timer """
+        that started the timer"""
         LOGGER.info("Timeout experiment: %r %r", user, exp_id)
         if (self.exp_id, self.user) != (exp_id, user):
             return
 
-        LOGGER.info('Still running. Stop exp')
+        LOGGER.info("Still running. Stop exp")
         try:
             self.exp_stop()
         except EnvironmentError as err:
             print("EnvironmentError", err)
             if err.errno == errno.EWOULDBLOCK:
-                LOGGER.warning('timeout_exp_stop would block hope its OK')
+                LOGGER.warning("timeout_exp_stop would block hope its OK")
                 return
             raise
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     @logger_call("Gateway Manager : Stop experiment")
     def exp_stop(self):
         """
@@ -233,7 +229,7 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         # Cleanup Control node Monitoring and experiment #
         ret_val += self.control_node.stop_experiment()
         # Pycom TTY must be available before it's teared down.
-        if self.open_node.TYPE == 'pycom':
+        if self.open_node.TYPE == "pycom":
             wait_tty(self.open_node.TTY, LOGGER, timeout=10)
         # Cleanup open node
         ret_val += self.open_node.teardown()
@@ -255,64 +251,64 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
         return ret_val
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     def exp_update_profile(self, profile_dict):
-        """ Update the experiment profile """
-        LOGGER.info('Update experiment profile')
+        """Update the experiment profile"""
+        LOGGER.info("Update experiment profile")
 
         try:
             profile = self.board_cfg.profile_from_dict(profile_dict)
         except ValueError as err:
-            LOGGER.error('%r', err)
+            LOGGER.error("%r", err)
             ret = 1
         else:
             ret = self.control_node.configure_profile(profile)
 
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Update experiment profile failed')
+            LOGGER.error("Update experiment profile failed")
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     @logger_call("Gateway Manager : Start open node power")
     def open_power_start(self, power=None):
-        """ Power on the open node """
-        LOGGER.info('Open power start')
+        """Power on the open node"""
+        LOGGER.info("Open power start")
         ret = self.control_node.open_start(power)
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Open power start failed')
+            LOGGER.error("Open power start failed")
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     @logger_call("Gateway Manager : Stop open node power")
     def open_power_stop(self, power=None):
-        """ Power off the open node """
-        LOGGER.info('Open power stop')
+        """Power off the open node"""
+        LOGGER.info("Open power stop")
         ret = self.control_node.open_stop(power)
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Open power stop failed')
+            LOGGER.error("Open power stop failed")
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     def open_debug_start(self):
-        """ Start open node debugger """
-        LOGGER.info('Open node debugger start')
+        """Start open node debugger"""
+        LOGGER.info("Open node debugger start")
 
-        ret = self._nodes['open'].debug_start()
+        ret = self._nodes["open"].debug_start()
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Open node debugger start failed')
+            LOGGER.error("Open node debugger start failed")
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     def open_debug_stop(self):
-        """ Stop open node debugger """
-        LOGGER.info('Open node debugger stop')
+        """Stop open node debugger"""
+        LOGGER.info("Open node debugger stop")
 
-        ret = self._nodes['open'].debug_stop()
+        ret = self._nodes["open"].debug_stop()
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Open node debugger stop failed')
+            LOGGER.error("Open node debugger stop failed")
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     @logger_call("Gateway Manager : Soft reset of open node")
     def node_soft_reset(self, node):
         """
@@ -320,16 +316,16 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
         :param node: Node type in {'control', 'open'}
         """
-        assert node in ['control', 'open'], "Invalid node type"
-        LOGGER.info('Node %s reset', node)
+        assert node in ["control", "open"], "Invalid node type"
+        LOGGER.info("Node %s reset", node)
 
         ret = self._nodes[node].reset()
 
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Reset failed on %s node: %d', node, ret)
+            LOGGER.error("Reset failed on %s node: %d", node, ret)
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     @logger_call("Gateway Manager : Flash of node")
     def node_flash(self, node, firmware_path, binary=False, offset=0):
         """
@@ -340,46 +336,45 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         :param binary: The given file is a binary file
         :param offset: The offset at which to flash the binary file
         """
-        assert node in ['control', 'open'], "Invalid node name"
-        LOGGER.info('Flash firmware on %s node: %s', node, firmware_path)
+        assert node in ["control", "open"], "Invalid node name"
+        LOGGER.info("Flash firmware on %s node: %s", node, firmware_path)
 
         target_node = self._nodes[node]
 
-        if not binary and not \
-                elftarget.is_compatible_with_node(firmware_path, target_node):
-            LOGGER.error('Invalid firmware target, not flashing.')
+        if not binary and not elftarget.is_compatible_with_node(firmware_path, target_node):
+            LOGGER.error("Invalid firmware target, not flashing.")
             return 1
 
         ret = target_node.flash(firmware_path, binary, offset)
         if ret != 0:  # pragma: no cover
-            LOGGER.error('Flash firmware failed on %s node: %d', node, ret)
+            LOGGER.error("Flash firmware failed on %s node: %d", node, ret)
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     def auto_tests(self, channel, blink, flash, gps):
-        """ Run Auto-tests on nodes and gateway """
+        """Run Auto-tests on nodes and gateway"""
         autotest_manager = autotest.AutoTestManager(self)
         return autotest_manager.auto_tests(channel, blink, flash, gps)
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     def status(self):
-        """ Run a node sanity status check """
+        """Run a node sanity status check"""
         ret = 0
         ret += self.control_node.status()
         ret += self.open_node.status()
         return ret
 
-    @common.synchronous('rlock')
+    @common.synchronous("rlock")
     def sleep(self, seconds):
         """Sleep `seconds` seconds."""
         time.sleep(seconds)
         return 0
 
-# Experiment files and folder management methods
+    # Experiment files and folder management methods
 
     @staticmethod
     def create_user_exp_files(node_id, user, exp_id):
-        """ Create user experiment files with 0666 permissions """
+        """Create user experiment files with 0666 permissions"""
 
         exp_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
         exp_files = {}
@@ -392,15 +387,15 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
     @staticmethod
     def cleanup_user_exp_files(exp_files):
-        """ Delete empty user experiment files """
+        """Delete empty user experiment files"""
         for exp_file in exp_files.values():
             config.clean_user_file(exp_file)
 
-# Exp folders creation used in tests
+    # Exp folders creation used in tests
 
     @staticmethod
     def _create_user_exp_folders(user, exp_id):
-        """ Create a user experiment folders
+        """Create a user experiment folders
 
         On turtelbots nodes, the folders can't be created by exp handler
         Also useful for integration tests
@@ -414,10 +409,10 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
     @staticmethod
     def _destroy_user_exp_folders(user, exp_id):
-        """ Destroy a user experiment folder
+        """Destroy a user experiment folder
 
         Used in integration tests.
-        Implemented here after the '_create' method for completeness """
+        Implemented here after the '_create' method for completeness"""
         exp_files_dir = config.EXP_FILES_DIR.format(user=user, exp_id=exp_id)
         try:
             shutil.rmtree(exp_files_dir)

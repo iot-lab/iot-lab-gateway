@@ -20,4 +20,4 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" gateway_code.utils unit tests files """
+"""gateway_code.utils unit tests files"""
