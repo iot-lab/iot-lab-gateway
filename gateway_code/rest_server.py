@@ -143,7 +143,7 @@ class GatewayRest(bottle.Bottle):
         try:
             profile = request.json
             LOGGER.debug('REST: Profile json dict: %r', profile)
-        except ValueError:
+        except (ValueError, bottle.HTTPError):
             LOGGER.error('REST: Invalid json for profile')
             return {'ret': 1}
 
@@ -265,7 +265,7 @@ class GatewayRest(bottle.Bottle):
         # get mode
         if mode not in ['blink', None]:
             return {'ret': 1, 'success': [], 'errors': ['invalid_mode']}
-        blink = (mode == 'blink')
+        blink = mode == 'blink'
 
         # query optionnal channel
         # if defined it should be int(11:26)

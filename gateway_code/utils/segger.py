@@ -154,7 +154,7 @@ class Segger:  # pylint:disable=too-many-instance-attributes
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
         args = shlex.split(command_str)
-        return dict(args=args, stdout=self.out, stderr=self.out)
+        return {"args": args, "stdout": self.out, "stderr": self.out}
 
     def _commandline_file(self, fw_path, offset=0):
         """ Generate JLinkExe batch commands file """

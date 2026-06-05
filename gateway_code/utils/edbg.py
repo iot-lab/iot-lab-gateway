@@ -38,7 +38,7 @@ class Edbg:
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-    EDBG = ('/usr/bin/edbg {cmd}')
+    EDBG = '/usr/bin/edbg {cmd}'
 
     FLASH = (' -t atmel_cm0p'
              ' -b'
@@ -107,4 +107,4 @@ class Edbg:
         """ Get subprocess arguments for command_str """
         # Generate full command arguments
         args = shlex.split(command_str)
-        return dict(args=args, stdout=self.out, stderr=self.out)
+        return {"args": args, "stdout": self.out, "stderr": self.out}

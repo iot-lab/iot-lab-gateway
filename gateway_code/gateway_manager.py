@@ -98,7 +98,7 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
     # R0913 too many arguments 6/5
     @common.synchronous('rlock')
     @logger_call("Gateway Manager : Start experiment")
-    def exp_start(self, user, exp_id,  # pylint: disable=R0913
+    def exp_start(self, user, exp_id,  # pylint: disable=R0913,R0917
                   firmware_path=None, profile_dict=None, timeout=0):
         """
         Start an experiment
