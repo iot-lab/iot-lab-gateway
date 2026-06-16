@@ -29,7 +29,9 @@
 
 import unittest
 from subprocess import CalledProcessError
+
 import mock
+
 from gateway_code.autotest import open_linux_interface
 
 
@@ -38,9 +40,8 @@ class TestLinuxConnectionError(unittest.TestCase):
         error = open_linux_interface.LinuxConnectionError("value", "err_msg")
         self.assertEqual("'value' : 'err_msg'", str(error))
 
-    @mock.patch(('gateway_code.autotest.open_linux_interface'
-                 '.OpenLinuxConnection.scp'))
+    @mock.patch(("gateway_code.autotest.open_linux_interface.OpenLinuxConnection.scp"))
     def test_flash_error(self, scp):
-        scp.side_effect = CalledProcessError(1, 'flash', 'flash failed')
+        scp.side_effect = CalledProcessError(1, "flash", "flash failed")
         connection = open_linux_interface.OpenLinuxConnection()
         self.assertEqual(connection.flash(), 1)

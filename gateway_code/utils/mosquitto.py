@@ -22,23 +22,23 @@
 
 """Module managing the open node mosquitto broker."""
 
-import shlex
-
 import logging
+import shlex
 
 from .external_process import ExternalProcess
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
-LOG_DIR = '/var/log/gateway-server'
-MOSQUITTO_CMD = '/usr/sbin/mosquitto -v -p {port}'
+LOG_DIR = "/var/log/gateway-server"
+MOSQUITTO_CMD = "/usr/sbin/mosquitto -v -p {port}"
 
 
 class Mosquitto(ExternalProcess):
-    """ Class providing node mosquitto broker
+    """Class providing node mosquitto broker
 
     It's implemented as a stoppable thread running mosquitto in a loop.
     """
+
     NAME = "mosquitto"
 
     def __init__(self, port):
@@ -48,5 +48,5 @@ class Mosquitto(ExternalProcess):
     def check_error(self, retcode):
         """Print debug message and check error."""
         if retcode and self._run:
-            LOGGER.warning('%s error or restarted', self.NAME)
+            LOGGER.warning("%s error or restarted", self.NAME)
         return retcode

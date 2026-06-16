@@ -23,6 +23,7 @@
 # pylint: disable=missing-docstring
 
 import unittest
+
 from . import utils
 
 
@@ -30,13 +31,13 @@ class TestUtilsMock(unittest.TestCase):
 
     def test_read_config_mock(self):
 
-        read_cfg = utils.read_config_mock('m3', test_key='value')
-        self.assertEqual('m3', read_cfg('board_type'))
+        read_cfg = utils.read_config_mock("m3", test_key="value")
+        self.assertEqual("m3", read_cfg("board_type"))
 
         # No robot by default
-        self.assertRaises(IOError, read_cfg, 'robot')
-        self.assertEqual(None, read_cfg('robot', None))
+        self.assertRaises(IOError, read_cfg, "robot")
+        self.assertEqual(None, read_cfg("robot", None))
 
         # Extra key
-        self.assertEqual('value', read_cfg('test_key'))
-        self.assertEqual('value', read_cfg('test_key', 'default'))
+        self.assertEqual("value", read_cfg("test_key"))
+        self.assertEqual("value", read_cfg("test_key", "default"))

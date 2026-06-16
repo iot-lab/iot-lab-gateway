@@ -21,27 +21,28 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Common functions of the module """
+"""Common functions of the module"""
 
-import os
-import time
 import errno
-# pylint: disable=unused-import
-import queue  # noqa
 
 # http://code.activestate.com/recipes/\
 #     577105-synchronization-decorator-for-class-methods/
 # About `functools.wraps` http://stackoverflow.com/a/309000/395687
 import functools
-
 import logging
-LOGGER = logging.getLogger('gateway_code')
+import os
+
+# pylint: disable=unused-import
+import queue  # noqa
+import time
+
+LOGGER = logging.getLogger("gateway_code")
 
 # pylint: disable=C2801
 
 
-def logger_call(msg, log_lvl='info', err_lvl='warning'):
-    """ Decorator to wrap a function with logs
+def logger_call(msg, log_lvl="info", err_lvl="warning"):
+    """Decorator to wrap a function with logs
 
     Print a message before calling the function and an error message in case of
     non zero return value.
@@ -55,10 +56,11 @@ def logger_call(msg, log_lvl='info', err_lvl='warning'):
     log_err = getattr(LOGGER, err_lvl)
 
     def _wrap(func):
-        """ Decorator implementation """
+        """Decorator implementation"""
+
         @functools.wraps(func)
         def _wrapped_f(*args, **kwargs):
-            """ Function wrapped with logs """
+            """Function wrapped with logs"""
             log_msg(msg)
             ret = func(*args, **kwargs)
             if ret:
@@ -66,11 +68,12 @@ def logger_call(msg, log_lvl='info', err_lvl='warning'):
             return ret
 
         return _wrapped_f
+
     return _wrap
 
 
 def empty_queue(my_queue):
-    """ Remove all items in Queue
+    """Remove all items in Queue
 
     >>> my_queue = queue.Queue(0)
     >>> _ = [my_queue.put(i) for i in range(0, 10)]
@@ -86,7 +89,7 @@ def empty_queue(my_queue):
 
 
 def wait_cond(timeout, value, fct, *args, **kwargs):
-    """ Wait at max `timeout` for `fct(*args, **kwargs)` to return `value`
+    """Wait at max `timeout` for `fct(*args, **kwargs)` to return `value`
     :return: True if fct has returned `value` before timeout False otherwise.
     :rtype: bool
     """
@@ -106,26 +109,28 @@ TTY_DETECT_TIME = 3
 
 
 def wait_tty(dev_tty, logger, timeout=TTY_DETECT_TIME):
-    """ Wait that tty is present """
+    """Wait that tty is present"""
     if wait_cond(timeout, True, os.path.exists, dev_tty):
         return 0
-    logger.error('Error Open Node tty not visible: %s', dev_tty)
+    logger.error("Error Open Node tty not visible: %s", dev_tty)
     return 1
 
 
 def wait_no_tty(dev_tty, timeout=TTY_DETECT_TIME):
-    """ Wait until `dev_tty` is not present """
+    """Wait until `dev_tty` is not present"""
     ret = wait_cond(timeout, False, os.path.exists, dev_tty)
     return 0 if ret else 1
 
 
 def synchronous(tlockname):
-    """A decorator to place an instance based lock around a method """
+    """A decorator to place an instance based lock around a method"""
+
     def _wrap(func):
         """Decorator implementation."""
+
         @functools.wraps(func)
         def _wrapped_f(self, *args, **kwargs):
-            """ Function protected by 'rlock' """
+            """Function protected by 'rlock'"""
             tlock = self.__getattribute__(tlockname)
             if not tlock.acquire(blocking=False):
                 err = errno.EWOULDBLOCK
@@ -136,14 +141,16 @@ def synchronous(tlockname):
                 return func(self, *args, **kwargs)
             finally:
                 tlock.release()
+
         return _wrapped_f
+
     return _wrap
 
 
 def abspath(path):
-    """ Return abspath of given `path` and check the file can be opened """
+    """Return abspath of given `path` and check the file can be opened"""
     abs_path = os.path.abspath(path)
-    open(abs_path, 'rb').close()  # can be open by this user
+    open(abs_path, "rb").close()  # can be open by this user
     return abs_path
 
 
@@ -152,7 +159,7 @@ def deepgetattr(obj, attr):
 
     http://pingfive.typepad.com/blog/2010/04/deep-getattr-python-function.html
     """
-    return functools.reduce(getattr, attr.split('.'), obj)
+    return functools.reduce(getattr, attr.split("."), obj)
 
 
 def object_attr_has(obj, features_attr, required_list):
@@ -166,15 +173,18 @@ def class_attr_has(features_attr, required_list):
     """Only run tests if required `commands` are in self.features_attr."""
 
     def _wrap(func):
-        """ Decorator implementation """
+        """Decorator implementation"""
+
         @functools.wraps(func)
         def _wrapped_f(self, *args, **kwargs):
-            """ Function wrapped with test """
+            """Function wrapped with test"""
             has_required = object_attr_has(self, features_attr, required_list)
             if has_required:
                 return func(self, *args, **kwargs)
             return 0
+
         return _wrapped_f
+
     return _wrap
 
 
@@ -236,10 +246,10 @@ def booleanize(value):
     if isinstance(value, str):
         value = value.lower()
 
-    if value in ('y', 'yes', 't', 'true', 'on', '1', 1):
+    if value in ("y", "yes", "t", "true", "on", "1", 1):
         return True
 
-    if value in ('n', 'no', 'f', 'false', 'off', '0', 0, None):
+    if value in ("n", "no", "f", "false", "off", "0", 0, None):
         return False
 
     raise ValueError(f"invalid value '{value}'")

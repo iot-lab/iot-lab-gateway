@@ -19,16 +19,16 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node NRF52DK experiment implementation """
+"""Open Node NRF52DK experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
 
 
 class NodeNrf52Dk(NodeJLinkBase):
-    """ Open node NRF52DK implementation """
+    """Open node NRF52DK implementation"""
 
-    TYPE = 'nrf52dk'
-    OPENOCD_CFG_FILE = static_path('iot-lab-nrf52xxxdk.cfg')
-    FW_IDLE = static_path('nrf52dk_idle.elf')
-    FW_AUTOTEST = static_path('nrf52dk_autotest.elf')
+    TYPE = "nrf52dk"
+    OPENOCD_CFG_FILE = static_path("iot-lab-nrf52xxxdk.cfg")
+    FW_IDLE = static_path("nrf52dk_idle.elf")
+    FW_AUTOTEST = static_path("nrf52dk_autotest.elf")

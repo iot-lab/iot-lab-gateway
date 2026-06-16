@@ -19,17 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node DWM3001 experiment implementation """
+"""Open Node DWM3001 experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
 
 
 class NodeDwm3001(NodeJLinkBase):
-    """ Open node DWM3001 implementation """
+    """Open node DWM3001 implementation"""
 
-    TYPE = 'dwm3001'
-    OPENOCD_CFG_FILE = static_path('iot-lab-nrf52xxxdk.cfg')
-    OPENOCD_PATH = '/usr/local/bin/openocd'
-    FW_IDLE = static_path('dwm3001_idle.elf')
-    FW_AUTOTEST = static_path('dwm3001_autotest.elf')
+    TYPE = "dwm3001"
+    OPENOCD_CFG_FILE = static_path("iot-lab-nrf52xxxdk.cfg")
+    OPENOCD_PATH = "/usr/local/bin/openocd"
+    FW_IDLE = static_path("dwm3001_idle.elf")
+    FW_AUTOTEST = static_path("dwm3001_autotest.elf")

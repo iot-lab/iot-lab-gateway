@@ -20,4 +20,32 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-"""Common node utilities"""
+"""Open Node RPI Pico experiment implementation"""
+
+from gateway_code.config import static_path
+from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
+
+
+class NodeRpiPico(NodeDapLinkBase):
+    """Open node RPI Pico implementation using Picoprobe"""
+
+    TYPE = "rpi_pico"
+
+    # RP2040 UART emits a spurious byte at boot/reset; flush serial after flash
+    DIRTY_SERIAL = True
+
+    ROM_START_ADDR = 0x10000000  # RP2040 external XIP flash base
+
+    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
+    OPENOCD_CFG_FILE = static_path("iot-lab-rpi-pico.cfg")
+
+    FW_IDLE = static_path("rpi-pico_idle.elf")
+    FW_AUTOTEST = static_path("rpi-pico_autotest.elf")
+    # RIOT doesn't provide support cpuid feature
+    AUTOTEST_AVAILABLE = [
+        "echo",
+        "get_time",  # mandatory
+        "leds_on",
+        "leds_off",
+        "leds_blink",
+    ]

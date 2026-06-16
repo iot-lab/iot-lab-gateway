@@ -20,7 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Integration tests running autotests """
+"""Integration tests running autotests"""
 
 # pylint: disable=too-many-public-methods
 from __future__ import print_function
@@ -30,53 +30,53 @@ import sys
 
 from gateway_code.autotest.autotest import AutoTestManager
 from gateway_code.integration import test_integration_mock
-from gateway_code.utils.node_connection import OpenNodeConnection
 from gateway_code.tests.rest_server_test import query_string
+from gateway_code.utils.node_connection import OpenNodeConnection
 
 
 class TestAutoTests(test_integration_mock.GatewayCodeMock):
-    """ Try running autotests on node """
+    """Try running autotests on node"""
 
     def test_complete_auto_tests(self):
-        """ Test a regular autotest """
+        """Test a regular autotest"""
         # call with channel/flash/no_gps and blinking leds
-        extra = query_string('channel=22&flash=1&gps=')
-        ret = self.server.put('/autotest/blink', extra_environ=extra)
+        extra = query_string("channel=22&flash=1&gps=")
+        ret = self.server.put("/autotest/blink", extra_environ=extra)
         ret_dict = ret.json
-        sys.stderr.write(f'{ret_dict}\n')
+        sys.stderr.write(f"{ret_dict}\n")
 
-        self.assertEqual([], ret_dict['error'])
-        self.assertIn('on_serial_echo', ret_dict['success'])
-        self.assertTrue('GWT' in ret_dict['mac'])
-        self.assertEqual(0, ret_dict['ret'])
+        self.assertEqual([], ret_dict["error"])
+        self.assertIn("on_serial_echo", ret_dict["success"])
+        self.assertTrue("GWT" in ret_dict["mac"])
+        self.assertEqual(0, ret_dict["ret"])
 
         # test that ON still on
-        if self.board_cfg.board_type in ('a8', 'rpi3'):
+        if self.board_cfg.board_type in ("a8", "rpi3"):
             # Don't know ip address, just check TTY
             self.assertTrue(os.path.exists(self.board_cfg.board_class.TTY))
         else:
             self.g_m.open_node.serial_redirection.start()
-            ret = OpenNodeConnection.send_one_command(['get_time'])
+            ret = OpenNodeConnection.send_one_command(["get_time"])
             self.g_m.open_node.serial_redirection.stop()
             self.assertIsNotNone(ret)
 
         if self.board_cfg.linux_on_class is not None:
             autotest = self.board_cfg.linux_on_class.AUTOTEST_AVAILABLE
-            not_tested = (set(autotest) -
-                          set(AutoTestManager.TESTED_FEATURES))
+            not_tested = set(autotest) - set(AutoTestManager.TESTED_FEATURES)
         else:
-            not_tested = (set(self.g_m.open_node.AUTOTEST_AVAILABLE) -
-                          set(AutoTestManager.TESTED_FEATURES))
+            not_tested = set(self.g_m.open_node.AUTOTEST_AVAILABLE) - set(
+                AutoTestManager.TESTED_FEATURES
+            )
 
         self.assertEqual(not_tested, set())
 
     def test_mode_no_blink_no_radio(self):
-        """ Try running autotest without blinking leds and without radio """
-        ret = self.server.put('/autotest')
+        """Try running autotest without blinking leds and without radio"""
+        ret = self.server.put("/autotest")
         ret_dict = ret.json
 
-        self.assertEqual([], ret_dict['error'])
-        self.assertEqual(0, ret_dict['ret'])
+        self.assertEqual([], ret_dict["error"])
+        self.assertEqual(0, ret_dict["ret"])
         # Radio functions not in results
-        self.assertNotIn('test_radio_ping_pong', ret_dict['success'])
-        self.assertNotIn('rssi_measures', ret_dict['success'])
+        self.assertNotIn("test_radio_ping_pong", ret_dict["success"])
+        self.assertNotIn("rssi_measures", ret_dict["success"])

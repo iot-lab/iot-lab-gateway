@@ -20,23 +20,23 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Open node communication interface.
+"""Open node communication interface.
 
-Connects to the serial_redirection tcp socket and allow sending commands """
-
-import time
-import socket
+Connects to the serial_redirection tcp socket and allow sending commands"""
 
 import logging
+import socket
+import time
 
 from gateway_code import config
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class OpenNodeConnection:
-    """ Connects to serial port redirection and sends messages """
-    HOST = config.read_config('ip', 'localhost')
+    """Connects to serial port redirection and sends messages"""
+
+    HOST = config.read_config("ip", "localhost")
     PORT = 20000
 
     def __init__(self, host=HOST, port=PORT, timeout=5.0):
@@ -46,18 +46,18 @@ class OpenNodeConnection:
         self.sock = None
 
     def start(self):
-        """ Connect to the serial_redirection """
+        """Connect to the serial_redirection"""
         try:
             self.sock = self.try_connect(self.address)
             self.sock.settimeout(self.timeout)  # pylint:disable=no-member
-            self.fd = self.sock.makefile('rw')
+            self.fd = self.sock.makefile("rw")
             return 0
         except IOError:
             return 1
 
     def stop(self):
-        """ Close the connection and wait until the connection is ready
-        for reconnection """
+        """Close the connection and wait until the connection is ready
+        for reconnection"""
         self.fd.close()
         self.fd = None
         self.sock = None
@@ -70,12 +70,12 @@ class OpenNodeConnection:
 
     @staticmethod
     def try_connect(address=(HOST, PORT), tries=10, step=0.5):
-        """ Try connecting 'tries' time to address (host, port) tuple
+        """Try connecting 'tries' time to address (host, port) tuple
         Sleep 'step' between each tries.
         If last trial fails, the IOError is raised
 
         The goal is to be resilient to the fact that serial_aggregator might be
-        (re)starting.  """
+        (re)starting."""
         # Run 'tries -1' times with 'try except'
         for _ in range(0, tries - 1):
             try:
@@ -87,9 +87,9 @@ class OpenNodeConnection:
         return socket.create_connection(address)
 
     def send_command(self, command_list):
-        """ Send command and wait for answer """
+        """Send command and wait for answer"""
         assert isinstance(command_list, (list, tuple))
-        packet = ' '.join(command_list)
+        packet = " ".join(command_list)
 
         LOGGER.debug("Command send:   %r", packet)
         self._writeline(packet)
@@ -98,24 +98,24 @@ class OpenNodeConnection:
         return answer
 
     def _writeline(self, line):
-        """ Write a line """
-        self.fd.write(line + '\n')
+        """Write a line"""
+        self.fd.write(line + "\n")
         self.fd.flush()
 
     def _readline(self):
-        """ Read a line """
+        """Read a line"""
         try:
             answer = self.fd.readline()
-            if answer.endswith('\n'):
-                return answer.strip().split(' ')
+            if answer.endswith("\n"):
+                return answer.strip().split(" ")
         except (socket.timeout, IOError) as err:
             LOGGER.warning("Read timeout: %s", err)
         return None
 
     @classmethod
     def send_one_command(cls, command_list, *args, **kwargs):
-        """ Quick sending function.
-        Connects, sends, reads answer and disconnects """
+        """Quick sending function.
+        Connects, sends, reads answer and disconnects"""
         with cls(*args, **kwargs) as conn:
             return conn.send_command(command_list)
 

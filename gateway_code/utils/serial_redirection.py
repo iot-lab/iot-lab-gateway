@@ -20,41 +20,34 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Module managing the open node serial redirection """
+"""Module managing the open node serial redirection"""
 
+import logging
 import os.path
 import shlex
 
-import logging
-
 from .external_process import ExternalProcess
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class SerialRedirection(ExternalProcess):
-    """ Class providing node serial redirection to a tcp socket
+    """Class providing node serial redirection to a tcp socket
 
     It's implemented as a stoppable thread running socat in a loop.
 
     Socat is run in a loop instead of using 'tcp-listen,..,fork' because we
     want
     """
-    SOCAT = (
-        'socat -d'
-        ' TCP4-LISTEN:20000,reuseaddr,bind={bind_ip}'
-        ' open:{tty},b{baud},{serial_opts}'
-    )
+
+    SOCAT = "socat -d TCP4-LISTEN:20000,reuseaddr,bind={bind_ip} open:{tty},b{baud},{serial_opts}"
     NAME = "serial redirection"
 
-    def __init__(
-        self, tty, baudrate, bind_ip='0.0.0.0', serial_opts=('echo=0', 'raw')
-    ):
+    def __init__(self, tty, baudrate, bind_ip="0.0.0.0", serial_opts=("echo=0", "raw")):
         self.tty = tty
         self.process_cmd = shlex.split(
             self.SOCAT.format(
-                bind_ip=bind_ip, tty=tty, baud=baudrate,
-                serial_opts=','.join(serial_opts)
+                bind_ip=bind_ip, tty=tty, baud=baudrate, serial_opts=",".join(serial_opts)
             )
         )
         super().__init__()
@@ -63,5 +56,5 @@ class SerialRedirection(ExternalProcess):
         """Check the return code on exit and print a warning on error."""
         if retcode and self._run:
             if not os.path.exists(self.tty):
-                LOGGER.warning('%s: %s not found', self.NAME, self.tty)
+                LOGGER.warning("%s: %s not found", self.NAME, self.tty)
         return retcode

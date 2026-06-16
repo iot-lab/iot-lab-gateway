@@ -19,22 +19,21 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node Pycom experiment implementation """
+"""Open Node Pycom experiment implementation"""
 
-import time
 import logging
 import shlex
 import subprocess
+import time
 
 import serial
 
 import gateway_code.common
 from gateway_code.common import logger_call
-from gateway_code.utils.serial_redirection import SerialRedirection
 from gateway_code.open_nodes.common.node_no import NodeNoBase
+from gateway_code.utils.serial_redirection import SerialRedirection
 
-
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 PYCOM_SAFE_REBOOT_SEQUENCE = {
     b"\x03\r\n",  # Interrupt any running code
     b"\x06\r\n",  # Perform safe boot with Ctrl + F
@@ -48,22 +47,22 @@ PYCOM_RESET_SEQUENCE = (
     b"machine.reset()\r\n",
 )
 
-PYCOM_UPDATE_BIN = "/usr/bin/python3 " \
-    + "/usr/local/share/pycom/eps32/tools/fw_updater/updater.py"
+PYCOM_UPDATE_BIN = "/usr/bin/python3 " + "/usr/local/share/pycom/eps32/tools/fw_updater/updater.py"
 PYCOM_FLASH_ERASE_HARD = "{bin} --pic -p {port} erase_fs"
 
 
 class NodePycom(NodeNoBase):
-    """ Open node Pycom implementation """
+    """Open node Pycom implementation"""
 
-    TYPE = 'pycom'
-    TTY = '/dev/iotlab/ttyON_PYCOM'
+    TYPE = "pycom"
+    TTY = "/dev/iotlab/ttyON_PYCOM"
     BAUDRATE = 115200
-    ALIM = '5V'
+    ALIM = "5V"
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(
-            self.TTY, self.BAUDRATE, serial_opts=('echo=0', 'raw', 'crnl'))
+            self.TTY, self.BAUDRATE, serial_opts=("echo=0", "raw", "crnl")
+        )
 
     def _send_sequence(self, sequence, delay=None):
         try:
@@ -71,13 +70,13 @@ class NodePycom(NodeNoBase):
         except serial.serialutil.SerialException:
             LOGGER.error("No serial port found")
             return 1
-        else:
-            for command in sequence:
-                ser.write(command)
-                if delay is not None:
-                    time.sleep(delay)
-                LOGGER.info("%s: %s", command, ser.read_all())
-            ser.close()
+
+        for command in sequence:
+            ser.write(command)
+            if delay is not None:
+                time.sleep(delay)
+            LOGGER.info("%s: %s", command, ser.read_all())
+        ser.close()
         return 0
 
     @logger_call("Node Pycom: Setup node")
@@ -89,8 +88,7 @@ class NodePycom(NodeNoBase):
             ssh -L 20000:<pycom node>:20000 <login>@<site>.iot-lab.info
             socat PTY,link=/tmp/ttyS0,echo=0,crnl TCP:localhost:20000
         """
-        pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN,
-                                                  port=self.TTY)
+        pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN, port=self.TTY)
         ret_val = subprocess.call(shlex.split(pycom_str))
         ret_val += gateway_code.common.wait_tty(self.TTY, LOGGER, timeout=10)
         ret_val += self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
@@ -105,8 +103,7 @@ class NodePycom(NodeNoBase):
         ret_val = self._send_sequence(PYCOM_SAFE_REBOOT_SEQUENCE, delay=2)
         ret_val += self._send_sequence(PYCOM_FLASH_ERASE_SEQUENCE)
         ret_val += self.serial_redirection.stop()
-        pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN,
-                                                  port=self.TTY)
+        pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN, port=self.TTY)
         ret_val += subprocess.call(shlex.split(pycom_str))
         return ret_val
 

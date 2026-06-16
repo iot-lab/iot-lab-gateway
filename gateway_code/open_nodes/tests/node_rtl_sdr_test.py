@@ -19,16 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.node_rtl_sdr unit tests files """
+"""gateway_code.open_nodes.node_rtl_sdr unit tests files"""
 
 import shlex
+
 from mock import patch
 
-from gateway_code.open_nodes.node_rtl_sdr import NodeRtlSdr, YKUSHCMD
+from gateway_code.open_nodes.node_rtl_sdr import YKUSHCMD, NodeRtlSdr
 
 
-@patch('subprocess.call')
-@patch('gateway_code.utils.external_process.ExternalProcess.start')
+@patch("subprocess.call")
+@patch("gateway_code.utils.external_process.ExternalProcess.start")
 def test_setup(rtl_tcp_start, call):
     """Test rtl_sdr node setup."""
     call.return_value = 0
@@ -51,8 +52,8 @@ def test_setup(rtl_tcp_start, call):
     call.assert_called_with(shlex.split(ykushcmd))
 
 
-@patch('subprocess.call')
-@patch('gateway_code.utils.external_process.ExternalProcess.stop')
+@patch("subprocess.call")
+@patch("gateway_code.utils.external_process.ExternalProcess.stop")
 def test_teardown(rtl_tcp_stop, call):
     """Test rtl_sdr node teardown."""
     call.return_value = 0

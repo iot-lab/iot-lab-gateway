@@ -18,87 +18,82 @@
 #
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
-""" cc2538 commands """
-
-import os
-import shlex
+"""cc2538 commands"""
 
 import logging
+import os
+import shlex
 import tempfile
 
 from gateway_code import common
 from gateway_code.utils.elftarget import get_elf_load_addr
+
 from . import subprocess_timeout
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class CC2538:
-    """ Debugger class, implemented as a global variable storage """
-    DEVNULL = open(os.devnull, 'w')
+    """Debugger class, implemented as a global variable storage"""
 
-    CC2538BSL = ('/usr/bin/cc2538-bsl.py -p {port} {cmd}')
+    DEVNULL = open(os.devnull, "w")
 
-    RESET = ('')
+    CC2538BSL = "/usr/bin/cc2538-bsl.py -p {port} {cmd}"
 
-    FLASH = ('-b {baudrate}'
-             ' -e'
-             ' -w'
-             ' -a 0x{addr:08x}'
-             ' -v'
-             ' {hex}')
+    RESET = ""
+
+    FLASH = "-b {baudrate} -e -w -a 0x{addr:08x} -v {hex}"
 
     TIMEOUT = 100
 
     def __init__(self, config, verb=False, timeout=TIMEOUT):
-        self.port = config['port']
-        self.baud = config['baudrate']
+        self.port = config["port"]
+        self.baud = config["baudrate"]
         self.timeout = timeout
 
         self.out = None if verb else self.DEVNULL
 
     def reset(self):
-        """ Reset """
+        """Reset"""
         cmd = self.CC2538BSL.format(port=self.port, cmd=self.RESET)
         return self._call_cmd(cmd)
 
     def flash(self, elf_file):
-        """ Flash firmware """
+        """Flash firmware"""
         try:
             ret_value = 0
 
             elf_path = common.abspath(elf_file)
-            LOGGER.info('Creating hex path from %s', elf_path)
-            hex_file = tempfile.NamedTemporaryFile(suffix='.hex')
+            LOGGER.info("Creating hex path from %s", elf_path)
+            hex_file = tempfile.NamedTemporaryFile(suffix=".hex")
             hex_path = hex_file.name
-            LOGGER.info('Created hex path %s', hex_path)
+            LOGGER.info("Created hex path %s", hex_path)
 
             # creating hex file
-            to_hex_command = 'objcopy -I elf32-big -O ihex {elf} {hex}'
+            to_hex_command = "objcopy -I elf32-big -O ihex {elf} {hex}"
             cmd = to_hex_command.format(elf=elf_path, hex=hex_path)
             ret_value = self._call_cmd(cmd)
-            LOGGER.info('To hex conversion ret value : %d', ret_value)
+            LOGGER.info("To hex conversion ret value : %d", ret_value)
 
             # getting flash addr
             address = get_elf_load_addr(elf_path)
 
             # Flashing
-            flash_cmd = self.FLASH.format(baudrate=self.baud, hex=hex_path,
-                                          addr=address)
+            flash_cmd = self.FLASH.format(baudrate=self.baud, hex=hex_path, addr=address)
             cmd = self.CC2538BSL.format(port=self.port, cmd=flash_cmd)
             ret_value += self._call_cmd(cmd)
-            LOGGER.info('Flashing ret value : %d', ret_value)
+            LOGGER.info("Flashing ret value : %d", ret_value)
 
             # removing temporary hex file
             hex_file.close()
 
             return ret_value
         except IOError as err:
-            LOGGER.error('%s', err)
+            LOGGER.error("%s", err)
             return 1
 
     def _call_cmd(self, command_str):
-        """ Run the given command_str to cc2538-bsl."""
+        """Run the given command_str to cc2538-bsl."""
 
         kwargs = self._cc2538_args(command_str)
         LOGGER.info(kwargs)
@@ -110,7 +105,7 @@ class CC2538:
             return 1
 
     def _cc2538_args(self, command_str):
-        """ Get subprocess arguments for command_str """
+        """Get subprocess arguments for command_str"""
         # Generate full command arguments
         args = shlex.split(command_str)
-        return {'args': args, 'stdout': self.out, 'stderr': self.out}
+        return {"args": args, "stdout": self.out, "stderr": self.out}

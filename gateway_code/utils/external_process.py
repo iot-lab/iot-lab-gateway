@@ -20,22 +20,22 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Module managing an external background process """
+"""Module managing an external background process"""
 
-import os
-import time
-import subprocess
-import signal
-import threading
 import atexit
-
 import logging
-LOGGER = logging.getLogger('gateway_code')
+import os
+import signal
+import subprocess
+import threading
+import time
+
+LOGGER = logging.getLogger("gateway_code")
 
 
 class ExternalProcess(threading.Thread):
     # pylint: disable=no-member,method-hidden
-    """ Class running an external process in background
+    """Class running an external process in background
 
     It's implemented as a stoppable thread running the process in a loop.
     """
@@ -47,7 +47,7 @@ class ExternalProcess(threading.Thread):
         self._started = threading.Event()
         self.process = None
         if self.stdout is None:
-            self.stdout = open(os.devnull, 'w')
+            self.stdout = open(os.devnull, "w")
 
         # Thread management
         self._run = False
@@ -55,25 +55,25 @@ class ExternalProcess(threading.Thread):
         atexit.register(self.stop)  # cleanup in case of error
 
     def _thread_init(self):
-        """ Init Thread.
+        """Init Thread.
         Must be called in __init__ and after stop.
-        This will allow calling start-stop without re-instanciating """
+        This will allow calling start-stop without re-instanciating"""
         # threading.Thread init
         super().__init__(target=self._target)
         self.daemon = True
 
     def start(self):
-        """ Start the external process Thread """
+        """Start the external process Thread"""
         self._run = True
-        LOGGER.debug('%s start', self.NAME)
+        LOGGER.debug("%s start", self.NAME)
         super().start()
         # wait for 'Popen' to have been called
         return 0 if self._started.wait(15.0) else 1
 
     def stop(self):
-        """ Stop the running thread """
+        """Stop the running thread"""
         self._run = False
-        LOGGER.debug('%s stop', self.NAME)
+        LOGGER.debug("%s stop", self.NAME)
         signals = self.signals_iter()
 
         # kill
@@ -84,11 +84,11 @@ class ExternalProcess(threading.Thread):
                     self.process.send_signal(sig)
             except OSError as err:
                 # errno == 3 'No such proccess', already terminated: OK
-                assert err.errno == 3, f'Unknown error num: {err.errno}'
+                assert err.errno == 3, f"Unknown error num: {err.errno}"
             time.sleep(0.1)
         self.process = None
         self._started.clear()
-        LOGGER.debug('%s stopped', self.NAME)
+        LOGGER.debug("%s stopped", self.NAME)
 
         # Re-init thread to allow calling 'start' once again
         self._thread_init()
@@ -113,27 +113,26 @@ class ExternalProcess(threading.Thread):
         for _ in range(sigterm):
             yield signal.SIGTERM
 
-        LOGGER.info('External process signal: escalading to SIGINT')
+        LOGGER.info("External process signal: escalading to SIGINT")
         for _ in range(sigint):
             yield signal.SIGINT
 
-        LOGGER.warning('External process signal: escalading to SIGKILL')
+        LOGGER.warning("External process signal: escalading to SIGKILL")
         while True:
             yield signal.SIGKILL
 
     def _target(self):
-        """ Starts a while loop running a socat command """
-        LOGGER.debug('%s thread started', self.NAME)
+        """Starts a while loop running a socat command"""
+        LOGGER.debug("%s thread started", self.NAME)
 
         while self._run:
             self._call_process(self.stdout)
 
     def _call_process(self, out):
-        """ Call 'process_cmd' and wait until it finishes
+        """Call 'process_cmd' and wait until it finishes
         'self.proc' is updated with the current socat process
-        Logs an error if it terminates with a non-null return value """
-        self.process = subprocess.Popen(self.process_cmd,
-                                        stdout=out, stderr=out)
+        Logs an error if it terminates with a non-null return value"""
+        self.process = subprocess.Popen(self.process_cmd, stdout=out, stderr=out)
         # 'start' can now exit
         self._started.set()
 
