@@ -31,6 +31,7 @@ RUN apt-get update && \
         python3-dev \
         python3-setuptools \
         socat \
+        screen \
         # openocd
         build-essential \
         libftdi-dev \
