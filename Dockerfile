@@ -137,9 +137,15 @@ RUN git clone https://github.com/iot-lab/pycom-utils && \
 # Install gateway rest server
 RUN python3 -m pip install build hatch
 
+RUN python3 -m pip install setuptools>=64
+
 WORKDIR /setup_dir
 COPY . /setup_dir/
+
+RUN python3 -m pip install --upgrade pip
+
 RUN python3 -m pip install .
+
 RUN rm -r /setup_dir
 
 #test with M3 config
