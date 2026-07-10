@@ -1,5 +1,5 @@
 FROM ubuntu:22.04
-MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
+LABEL org.opencontainers.image.authors="admin@iot-lab.info"
 
 # This file is a part of IoT-LAB gateway_code
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
@@ -20,10 +20,10 @@ MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y git \
