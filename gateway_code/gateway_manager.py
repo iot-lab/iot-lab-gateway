@@ -77,7 +77,7 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
 
     @staticmethod
     def _board_require_power_cycle(board):
-        """nrf52dk and nrf52840dk requires a power cycle after exp_start.
+        """nrf52dk, nrf52840dk and lopy4requires a power cycle after exp_start.
 
         >>> GatewayManager._board_require_power_cycle("nrf52dk")
         True
@@ -88,7 +88,8 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         >>> GatewayManager._board_require_power_cycle("m3")
         False
         """
-        return re.match("^nrf52[0-9]{0,3}dk$", board) is not None
+        return re.match("^nrf52[0-9]{0,3}dk$", board) is not None or \
+                re.match("^lopy4$", board) is not None
 
     # R0913 too many arguments 6/5
     @common.synchronous("rlock")
@@ -169,8 +170,8 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         ret_val += self.control_node.start_experiment(profile)
 
         # nrf52dk and nrf52840dk needs a power cycle before their serial
-        # becomes fully usable.
-        if firmware_path is not None and self._board_require_power_cycle(self.open_node.TYPE):
+        # even after idle_firmware flash
+        if self._board_require_power_cycle(self.open_node.TYPE):
             LOGGER.info("Power cycle node %s", self.control_node.node_id.replace("_", "-"))
             ret_val += self.control_node.open_stop()
             ret_val += self.control_node.open_start()
@@ -348,6 +349,11 @@ class GatewayManager:  # pylint:disable=too-many-instance-attributes
         ret = target_node.flash(firmware_path, binary, offset)
         if ret != 0:  # pragma: no cover
             LOGGER.error("Flash firmware failed on %s node: %d", node, ret)
+        # With Pycom boards, trigger 1 power-cycle to ensure tty alias is correctly setup
+        if self.open_node.TYPE == "lopy4" and self.control_node.TYPE != "no":
+            LOGGER.debug("Power cycle %s board", self.open_node.TYPE)
+            ret += self.control_node.open_stop()
+            ret += self.control_node.open_start()
         return ret
 
     @common.synchronous("rlock")
