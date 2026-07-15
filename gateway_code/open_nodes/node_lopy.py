@@ -51,7 +51,7 @@ LOGGER = logging.getLogger('gateway_code')
 
 class NodeLopy(NodeBinBase):
     """Open node LoPy implementation."""
-    TYPE = "lopy"
+    TYPE = "lopy4"
     TTY = '/dev/iotlab/ttyON_PYCOM'
     ELF_TARGET = ('ELFCLASS32', 'EM_XTENSA')
     BAUDRATE = 115200
