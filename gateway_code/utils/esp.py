@@ -40,12 +40,12 @@ OFFSET = "0x00000"
 class Esp(object):
     """ Debugger class, implemented as a global variable storage """
 
-    _ESP_CONF_KEYS = {'baudrate', 'chip', 'tty', 'flash_freq'}
+    _ESP_CONF_KEYS = {'baudrate', 'chip', 'tty'}
     DEVNULL = open(os.devnull, 'w')
 
     ESPTOOL_FLASH = 'esptool.py --chip {chip} --port {tty} --baud {baudrate} \
                --before default_reset --after hard_reset write_flash \
-               -z --flash_mode dio --flash_freq {flash_freq} --flash_size detect \
+               -z --flash_mode dio --flash_size detect \
                {cmd}'
 
     FLASH = '{0} {1}'

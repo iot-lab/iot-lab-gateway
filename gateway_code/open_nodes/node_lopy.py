@@ -64,8 +64,7 @@ class NodeLopy(NodeBinBase):
     ESPTOOL_CONF = {
         'tty': TTY,
         'baudrate': 921600,
-        'chip': 'esp32',  
-        'flash_freq': '80m'
+        'chip': 'esp32' 
     }
 
     AUTOTEST_AVAILABLE = [
@@ -80,7 +79,7 @@ class NodeLopy(NodeBinBase):
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(
-            self.TTY, self.BAUDRATE, serial_opts=("echo=1", "raw")
+            self.TTY, self.BAUDRATE, serial_opts=("echo=0", "raw", "crnl")
         )
         self.esp = Esp(self.ESPTOOL_CONF)
 
