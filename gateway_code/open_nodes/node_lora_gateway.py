@@ -19,34 +19,36 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node LoRa gateway experiment implementation """
+"""Open Node LoRa gateway experiment implementation"""
 
-import os
-import time
 import logging
+import os
 import shlex
 import subprocess
+import time
 
 from gateway_code.common import logger_call
 from gateway_code.open_nodes.common.node_no import NodeNoBase
 from gateway_code.utils.lora_gateway_bridge import LoraGatewayBridge
 from gateway_code.utils.mosquitto import Mosquitto
 
-LOGGER = logging.getLogger('gateway_code')
-LOG_DIR = '/var/log/gateway-server'
-LORA_PKT_FORWARDER_START_CMD = ('sudo '  # needs to be root to access GPIO
-                                'CFG_DIR=/var/local/config /opt/lora/start.sh')
+LOGGER = logging.getLogger("gateway_code")
+LOG_DIR = "/var/log/gateway-server"
+LORA_PKT_FORWARDER_START_CMD = (
+    "sudo "  # needs to be root to access GPIO
+    "CFG_DIR=/var/local/config /opt/lora/start.sh"
+)
 LORA_PKT_FORWARDER_MAX_TRIES = 50
 
 
 class NodeLoraGateway(NodeNoBase):
-    """ Open node LoRa gateway implementation """
+    """Open node LoRa gateway implementation"""
 
-    TYPE = 'lora_gw'
+    TYPE = "lora_gw"
     MOSQUITTO_PORT = 1883
 
     def __init__(self):
-        self.lora_pkt_fwd_out = open(os.devnull, 'w')
+        self.lora_pkt_fwd_out = open(os.devnull, "w")
         self._start_lora_pkt_fwd()
         self.mosquitto = Mosquitto(self.MOSQUITTO_PORT)
         self.lora_gateway_bridge = LoraGatewayBridge()
@@ -54,7 +56,7 @@ class NodeLoraGateway(NodeNoBase):
     @staticmethod
     def _lora_pkt_fwd_pid():
         try:
-            return subprocess.check_output(shlex.split('pgrep lora_pkt_fwd'))
+            return subprocess.check_output(shlex.split("pgrep lora_pkt_fwd"))
         except subprocess.CalledProcessError:
             return None
 
@@ -66,9 +68,11 @@ class NodeLoraGateway(NodeNoBase):
         # Sometimes the lora_pkt_forwarder fails to start so try multiple
         # times.
         while _pid is None and _tries <= LORA_PKT_FORWARDER_MAX_TRIES:
-            subprocess.Popen(shlex.split(LORA_PKT_FORWARDER_START_CMD),
-                             stdout=self.lora_pkt_fwd_out,
-                             stderr=self.lora_pkt_fwd_out)
+            subprocess.Popen(
+                shlex.split(LORA_PKT_FORWARDER_START_CMD),
+                stdout=self.lora_pkt_fwd_out,
+                stderr=self.lora_pkt_fwd_out,
+            )
             time.sleep(2)
             _pid = self._lora_pkt_fwd_pid()
             if _pid is None:

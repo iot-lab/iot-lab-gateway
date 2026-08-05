@@ -28,14 +28,15 @@
 # pylint: disable=maybe-no-member
 # pylint: disable=unused-argument
 
-import time
 import os.path
+import time
 import unittest
 
-import serial
 import mock
+import serial
 
 from gateway_code.open_nodes.node_leonardo import NodeLeonardo
+
 from .. import avrdude
 
 
@@ -45,7 +46,7 @@ class TestsMethods(unittest.TestCase):
     def setUp(self):
         self.avr = avrdude.AvrDude(NodeLeonardo.AVRDUDE_CONF)
 
-    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    @mock.patch("gateway_code.utils.subprocess_timeout.call")
     def test_flash(self, call_mock):
         """Test flash."""
         call_mock.return_value = 0
@@ -57,23 +58,23 @@ class TestsMethods(unittest.TestCase):
         self.assertEqual(42, ret)
 
     def test_invalid_firmware_path(self):
-        ret = self.avr.flash('/invalid/path')
+        ret = self.avr.flash("/invalid/path")
         self.assertNotEqual(0, ret)
 
 
 class TestsCall(unittest.TestCase):
-    """ Tests avrdude call timeout """
+    """Tests avrdude call timeout"""
+
     def setUp(self):
         self.timeout = 5
-        self.avr = avrdude.AvrDude(NodeLeonardo.AVRDUDE_CONF,
-                                   timeout=self.timeout)
+        self.avr = avrdude.AvrDude(NodeLeonardo.AVRDUDE_CONF, timeout=self.timeout)
         self.avr._avrdude_args = mock.Mock()
 
     def test_timeout_call(self):
         """Test timeout reached."""
-        self.avr._avrdude_args.return_value = {'args': ['sleep', '10']}
+        self.avr._avrdude_args.return_value = {"args": ["sleep", "10"]}
         t_0 = time.time()
-        ret = self.avr._call_cmd('sleep')
+        ret = self.avr._call_cmd("sleep")
         t_end = time.time()
 
         # Not to much more
@@ -82,9 +83,9 @@ class TestsCall(unittest.TestCase):
 
     def test_no_timeout(self):
         """Test timeout not reached."""
-        self.avr._avrdude_args.return_value = {'args': ['sleep', '1']}
+        self.avr._avrdude_args.return_value = {"args": ["sleep", "1"]}
         t_0 = time.time()
-        ret = self.avr._call_cmd('sleep')
+        ret = self.avr._call_cmd("sleep")
         t_end = time.time()
 
         # Strictly lower here
@@ -92,13 +93,13 @@ class TestsCall(unittest.TestCase):
         self.assertEqual(ret, 0)
 
 
-@mock.patch('serial.Serial')
+@mock.patch("serial.Serial")
 class TestTriggerBootloader(unittest.TestCase):
     """Test 'trigger_bootloader' function."""
 
     def setUp(self):
-        self.tty = '/tmp/test_trigger_tty'
-        self.tty_prog = '/tmp/test_trigger_tty_prog'
+        self.tty = "/tmp/test_trigger_tty"
+        self.tty_prog = "/tmp/test_trigger_tty_prog"
         self._del_tty_prog()
 
     def tearDown(self):
@@ -106,7 +107,7 @@ class TestTriggerBootloader(unittest.TestCase):
 
     def _create_tty_prog(self, *_, **__):
         self.assertFalse(os.path.exists(self.tty_prog))
-        open(self.tty_prog, 'a').close()
+        open(self.tty_prog, "a").close()
         return mock.DEFAULT
 
     def _del_tty_prog(self, *_, **__):
@@ -120,8 +121,7 @@ class TestTriggerBootloader(unittest.TestCase):
         """Opening self.tty should create the 'prog' tty."""
         serial_mock.side_effect = self._create_tty_prog
 
-        ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog,
-                                                 timeout=2)
+        ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog, timeout=2)
         self.assertEqual(0, ret)
         self.assertTrue(os.path.exists(self.tty_prog))
 
@@ -129,14 +129,13 @@ class TestTriggerBootloader(unittest.TestCase):
         """Opening self.tty will not create the 'prog' tty."""
         serial_mock.side_effect = self._del_tty_prog
 
-        ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog,
-                                                 timeout=1)
+        ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog, timeout=1)
         self.assertNotEqual(0, ret)
         self.assertFalse(os.path.exists(self.tty_prog))
 
     def test_serial_error_opening_tty(self, serial_mock):
         """Test SerialError handling while opening the trigger tty."""
-        serial_mock.side_effect = serial.SerialException('Test Error')
+        serial_mock.side_effect = serial.SerialException("Test Error")
         ret = avrdude.AvrDude.trigger_bootloader(self.tty, self.tty_prog)
         self.assertNotEqual(0, ret)
 

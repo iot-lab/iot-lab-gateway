@@ -9,7 +9,6 @@ files_list=$(git ls-tree -r HEAD --full-tree --name-only)
 files_list=$(echo "${files_list}" | grep -v \
     -e 'tests_utils/' \
     -e '.gitignore' \
-    -e 'setup.cfg' \
     -e 'tox.ini' \
     -e '.md$' \
     -e '.elf' \
@@ -21,7 +20,6 @@ files_list=$(echo "${files_list}" | grep -v \
     -e '.json'\
     -e 'AUTHORS' \
     -e 'COPYING' \
-    -e 'MANIFEST.in'\
     -e 'README'\
     -e 'CHANGELOG'\
     -e '.coveragerc'\
@@ -34,6 +32,7 @@ files_list=$(echo "${files_list}" | grep -v \
     \
     -e 'Makefile'\
     -e '.dot'\
+    -e 'pyproject.toml'\
 )
 
 # Verify that 'AUTHORS' and 'COPYING' files exist

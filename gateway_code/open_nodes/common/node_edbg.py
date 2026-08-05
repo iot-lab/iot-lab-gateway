@@ -19,35 +19,38 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" EDBG based Open Node experiment implementation """
+"""EDBG based Open Node experiment implementation"""
+
 import logging
 
 from gateway_code import common
 from gateway_code.common import logger_call
 from gateway_code.nodes import OpenNodeBase
-
-from gateway_code.utils.openocd import OpenOCD
 from gateway_code.utils.edbg import Edbg
+from gateway_code.utils.openocd import OpenOCD
 from gateway_code.utils.serial_redirection import SerialRedirection
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class NodeEdbgBase(OpenNodeBase):
     # pylint:disable=no-member
-    """ Open node EDBG implementation """
+    """Open node EDBG implementation"""
 
-    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-    TTY = '/dev/iotlab/ttyON_CMSIS_DAP'
+    ELF_TARGET = ("ELFCLASS32", "EM_ARM")
+    TTY = "/dev/iotlab/ttyON_CMSIS_DAP"
     BAUDRATE = 115200
 
     AUTOTEST_AVAILABLE = [
-        'echo', 'get_time',  # mandatory
-        'get_uid',
-        'leds_on', 'leds_off', 'leds_blink'
+        "echo",
+        "get_time",  # mandatory
+        "get_uid",
+        "leds_on",
+        "leds_off",
+        "leds_blink",
     ]
 
-    ALIM = '5V'
+    ALIM = "5V"
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
@@ -63,7 +66,7 @@ class NodeEdbgBase(OpenNodeBase):
 
     @logger_call("Node EDBG: Setup of EDBG node")
     def setup(self, firmware_path):
-        """ Flash open node, create serial redirection """
+        """Flash open node, create serial redirection"""
         self._in_debug = False
         ret_val = 0
 
@@ -75,7 +78,7 @@ class NodeEdbgBase(OpenNodeBase):
 
     @logger_call("Node EDBG: teardown of EDBG node")
     def teardown(self):
-        """ Stop serial redirection and flash idle firmware """
+        """Stop serial redirection and flash idle firmware"""
         self._in_debug = False
         ret_val = 0
         # ON may have been stopped at the end of the experiment.
@@ -92,14 +95,13 @@ class NodeEdbgBase(OpenNodeBase):
 
     @logger_call("Node EDBG: flash of edbg node")
     def flash(self, firmware_path=None, binary=False, offset=0):
-        """ Flash the given firmware on EDBG node
+        """Flash the given firmware on EDBG node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
                               If None, flash 'idle' firmware.
         """
         firmware_path = firmware_path or self.FW_IDLE
-        LOGGER.info('Flash firmware on %s: %s',
-                    self.TYPE.upper(), firmware_path)
+        LOGGER.info("Flash firmware on %s: %s", self.TYPE.upper(), firmware_path)
         self._current_fw = firmware_path
 
         if self._in_debug:
@@ -109,13 +111,13 @@ class NodeEdbgBase(OpenNodeBase):
 
     @logger_call("Node EDBG: reset of EDBG node")
     def reset(self):
-        """ Reset the EDBG node using jtag """
-        LOGGER.info('Reset %s node', self.TYPE.upper())
+        """Reset the EDBG node using jtag"""
+        LOGGER.info("Reset %s node", self.TYPE.upper())
         return self.openocd.reset()
 
     def debug_start(self):
-        """ Start EDBG node debugger """
-        LOGGER.info('%s Node debugger start', self.TYPE.upper())
+        """Start EDBG node debugger"""
+        LOGGER.info("%s Node debugger start", self.TYPE.upper())
         self._in_debug = True
         if self._current_fw is not None:
             # Reflash current firmware using openocd to avoid misbehavior of
@@ -124,13 +126,13 @@ class NodeEdbgBase(OpenNodeBase):
         return self.openocd.debug_start()
 
     def debug_stop(self):
-        """ Stop EDBG node debugger """
-        LOGGER.info('%s Node debugger stop', self.TYPE.upper())
+        """Stop EDBG node debugger"""
+        LOGGER.info("%s Node debugger stop", self.TYPE.upper())
         self._in_debug = False
         return self.openocd.debug_stop()
 
     def status(self):
-        """ Check EDBG node status """
+        """Check EDBG node status"""
         # Status is called when open node is not powered
         # So can't check for FTDI
         return 0

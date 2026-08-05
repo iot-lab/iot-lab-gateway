@@ -19,17 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node FRDM-KW41Z experiment implementation """
+"""Open Node FRDM-KW41Z experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_jlink import NodeJLinkBase
 
 
 class NodeFrdmKw41z(NodeJLinkBase):
-    """ Open node FRDM-KW41Z implementation """
+    """Open node FRDM-KW41Z implementation"""
 
-    TYPE = 'frdm_kw41z'
-    OPENOCD_CFG_FILE = static_path('iot-lab-frdm-kw41z.cfg')
-    FW_IDLE = static_path('frdm-kw41z_idle.elf')
-    FW_AUTOTEST = static_path('frdm-kw41z_autotest.elf')
+    TYPE = "frdm_kw41z"
+    OPENOCD_CFG_FILE = static_path("iot-lab-frdm-kw41z.cfg")
+    FW_IDLE = static_path("frdm-kw41z_idle.elf")
+    FW_AUTOTEST = static_path("frdm-kw41z_autotest.elf")
     DIRTY_SERIAL = False

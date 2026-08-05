@@ -1,0 +1,90 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "gateway_code"
+dynamic = ["version"]
+description = "Linux Gateway code"
+license = "CECILL-2.1"
+authors = [{name = "IoT-Lab Team", email = "admin@iot-lab.info"}]
+dependencies = [
+    "bottle",
+    "paste",
+    "pyserial",
+    "pyelftools",
+]
+
+[project.urls]
+Homepage = "http://www.iot-lab.info"
+
+[tool.hatch.version]
+path = "gateway_code/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gateway_code"]
+
+[tool.hatch.build.targets.wheel.shared-scripts]
+"bin/scripts/gateway-rest-server" = "gateway-rest-server"
+"bin/scripts/iotlab_debug" = "iotlab_debug"
+"bin/scripts/iotlab_flash" = "iotlab_flash"
+"bin/scripts/iotlab_reset" = "iotlab_reset"
+"bin/scripts/mjpg_streamer_cmd" = "mjpg_streamer_cmd"
+"bin/scripts/rtl_tcp_cmd" = "rtl_tcp_cmd"
+"bin/scripts/serial_redirection" = "serial_redirection"
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "gateway_code/",
+    "tests_utils/",
+    "bin/",
+    "post_install.py",
+]
+
+# Release environment: `hatch run release:deploy` replaces `python setup.py release`
+# `hatch run release:post-install` replaces `python setup.py post_install`
+# `hatch run release:udev` replaces `python setup.py udev_rules_install`
+[tool.hatch.envs.release]
+type = "system"
+
+[tool.hatch.envs.release.scripts]
+udev = "python post_install.py --only udev"
+post-install = "python post_install.py"
+deploy = [
+    "pip install .",
+    "python post_install.py",
+]
+
+[tool.pytest.ini_options]
+addopts = [
+    "-v",
+    "--doctest-glob=doc/*.rst",
+    "--doctest-modules",
+]
+testpaths = ["gateway_code"]
+
+[tool.pylint]
+persistent = false
+reports = false
+disable = [
+    "locally-disabled",
+    "duplicate-code",
+    "raise-missing-from",
+    "consider-using-with",
+    "unspecified-encoding",
+    "invalid-name",
+]
+msg-template = "{path}:{line}: [{msg_id}({symbol}), {obj}] {msg}"
+
+[tool.black]
+line-length = 100
+
+[tool.isort]
+profile = "black"
+line_length = 100
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]

@@ -21,10 +21,10 @@
 
 """Test utils.elftarget."""
 
-import os
 import logging
-import unittest
+import os
 import runpy
+import unittest
 
 try:
     from cStringIO import StringIO
@@ -36,9 +36,10 @@ import pytest
 from testfixtures import LogCapture
 
 from gateway_code.open_nodes.node_m3 import NodeM3
+
 from .. import elftarget
 
-FIRMWARES_DIR = os.path.join(os.path.dirname(__file__), 'elftarget_firmwares')
+FIRMWARES_DIR = os.path.join(os.path.dirname(__file__), "elftarget_firmwares")
 
 
 def firmware(name):
@@ -51,21 +52,21 @@ class TestElfTarget(unittest.TestCase):
 
     def test_elf_target_valid(self):
         """Test valid elf targets."""
-        target = elftarget.elf_target(firmware('m3_idle.elf'))
-        self.assertEqual(target, ('ELFCLASS32', 'EM_ARM'))
-        target = elftarget.elf_target(firmware('leonardo_idle.elf'))
-        self.assertEqual(target, ('ELFCLASS32', 'EM_AVR'))
+        target = elftarget.elf_target(firmware("m3_idle.elf"))
+        self.assertEqual(target, ("ELFCLASS32", "EM_ARM"))
+        target = elftarget.elf_target(firmware("leonardo_idle.elf"))
+        self.assertEqual(target, ("ELFCLASS32", "EM_AVR"))
 
     def test_invalid_elf(self):
         """Test invalid elf files or non elf files."""
         # elf relocation file
         with pytest.raises(ValueError) as exc_info:
-            elftarget.elf_target(firmware('idle.c.o'))
-        assert 'Not an executable elf file: ET_REL' in str(exc_info.value)
+            elftarget.elf_target(firmware("idle.c.o"))
+        assert "Not an executable elf file: ET_REL" in str(exc_info.value)
         # wsn430 firmware
         with pytest.raises(ValueError) as exc_info:
-            elftarget.elf_target(firmware('wsn430_print_uids.hex'))
-        assert 'Not a valid elf file' in str(exc_info.value)
+            elftarget.elf_target(firmware("wsn430_print_uids.hex"))
+        assert "Not a valid elf file" in str(exc_info.value)
 
 
 class TestElfTargetIsCompatibleWithNode(unittest.TestCase):
@@ -73,31 +74,27 @@ class TestElfTargetIsCompatibleWithNode(unittest.TestCase):
 
     def setUp(self):
         self.m3_class = mock.Mock()
-        self.m3_class.ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
-        self.log = LogCapture('gateway_code', level=logging.DEBUG)
+        self.m3_class.ELF_TARGET = ("ELFCLASS32", "EM_ARM")
+        self.log = LogCapture("gateway_code", level=logging.DEBUG)
 
     def tearDown(self):
         self.log.uninstall()
 
     def test_m3_like_elf_check(self):
         """Test elftarget for an m3 like node."""
-        ret = elftarget.is_compatible_with_node(firmware('m3_idle.elf'),
-                                                self.m3_class)
+        ret = elftarget.is_compatible_with_node(firmware("m3_idle.elf"), self.m3_class)
         self.assertTrue(ret)
         self.log.check()
 
         # invalid target
-        ret = elftarget.is_compatible_with_node(firmware('node.z1'),
-                                                self.m3_class)
+        ret = elftarget.is_compatible_with_node(firmware("node.z1"), self.m3_class)
         self.assertFalse(ret)
         self.log.check()
 
         # invalid, not elf file
-        ret = elftarget.is_compatible_with_node(
-            firmware('wsn430_print_uids.hex'), self.m3_class)
+        ret = elftarget.is_compatible_with_node(firmware("wsn430_print_uids.hex"), self.m3_class)
         self.assertFalse(ret)
-        self.log.check(('gateway_code', 'WARNING',
-                        'Invalid firmware: Not a valid elf file'))
+        self.log.check(("gateway_code", "WARNING", "Invalid firmware: Not a valid elf file"))
 
 
 class TestElftargetMain(unittest.TestCase):
@@ -105,17 +102,17 @@ class TestElftargetMain(unittest.TestCase):
 
     def test_main(self):
         """Test running script."""
-        argv = ['elftarget.py', firmware('m3_idle.elf')]
+        argv = ["elftarget.py", firmware("m3_idle.elf")]
         stdout = StringIO()
         stderr = StringIO()
 
-        script = os.path.join(os.path.dirname(__file__), '..', 'elftarget.py')
-        with mock.patch('sys.stderr', stderr):
-            with mock.patch('sys.stdout', stdout):
-                with mock.patch('sys.argv', argv):
-                    runpy.run_path(script, run_name='__main__')
+        script = os.path.join(os.path.dirname(__file__), "..", "elftarget.py")
+        with mock.patch("sys.stderr", stderr):
+            with mock.patch("sys.stdout", stdout):
+                with mock.patch("sys.argv", argv):
+                    runpy.run_path(script, run_name="__main__")
 
-        self.assertEqual(stderr.getvalue(), '')
+        self.assertEqual(stderr.getvalue(), "")
         self.assertEqual(stdout.getvalue(), "('ELFCLASS32', 'EM_ARM')\n")
 
 
@@ -124,13 +121,13 @@ def test_elf_without_load_addr(iter_sections):
     # pylint:disable=unused-argument
     """Test load addr of a firmware without section returns None."""
     # no load addr in elf (because iter_sections function yields nothing)
-    assert elftarget.get_elf_load_addr(firmware('m3_idle.elf')) is None
+    assert elftarget.get_elf_load_addr(firmware("m3_idle.elf")) is None
 
 
 def test_elf_with_load_addr():
     """Test load add of a valid firmware returns a valid address."""
     # A valid firmware returns a valid load addr
-    assert elftarget.get_elf_load_addr(firmware('m3_idle.elf')) > 0
+    assert elftarget.get_elf_load_addr(firmware("m3_idle.elf")) > 0
 
 
 def test_is_compatible_with_node():
@@ -138,7 +135,5 @@ def test_is_compatible_with_node():
     # None is ignored
     assert elftarget.is_compatible_with_node(None, NodeM3)
 
-    assert elftarget.is_compatible_with_node(firmware('m3_idle.elf'),
-                                             NodeM3)
-    assert not elftarget.is_compatible_with_node(
-        firmware('leonardo_idle.elf'), NodeM3)
+    assert elftarget.is_compatible_with_node(firmware("m3_idle.elf"), NodeM3)
+    assert not elftarget.is_compatible_with_node(firmware("leonardo_idle.elf"), NodeM3)

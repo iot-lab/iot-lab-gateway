@@ -19,36 +19,39 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node using JLink Segger as programmer/debugger """
+"""Open Node using JLink Segger as programmer/debugger"""
 
 import logging
+
 import serial
 
 from gateway_code import common
 from gateway_code.common import logger_call
 from gateway_code.nodes import OpenNodeBase
-
 from gateway_code.utils.segger import Segger
 from gateway_code.utils.serial_redirection import SerialRedirection
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class NodeSeggerBase(OpenNodeBase):
     # pylint:disable=no-member
-    """ Open node JLink Segger implementation """
+    """Open node JLink Segger implementation"""
 
-    ELF_TARGET = ('ELFCLASS32', 'EM_ARM')
+    ELF_TARGET = ("ELFCLASS32", "EM_ARM")
 
     SEGGER_CLASS = Segger
 
     AUTOTEST_AVAILABLE = [
-        'echo', 'get_time',  # mandatory
-        'get_uid',
-        'leds_on', 'leds_off', 'leds_blink'
+        "echo",
+        "get_time",  # mandatory
+        "get_uid",
+        "leds_on",
+        "leds_off",
+        "leds_blink",
     ]
 
-    ALIM = '5V'
+    ALIM = "5V"
 
     def __init__(self):
         self.serial_redirection = SerialRedirection(self.TTY, self.BAUDRATE)
@@ -72,7 +75,7 @@ class NodeSeggerBase(OpenNodeBase):
 
     @logger_call("Node Segger: Setup of segger node")
     def setup(self, firmware_path):
-        """ Flash open node, create serial redirection """
+        """Flash open node, create serial redirection"""
         ret_val = 0
 
         common.wait_no_tty(self.TTY)
@@ -83,7 +86,7 @@ class NodeSeggerBase(OpenNodeBase):
 
     @logger_call("Node Segger: teardown of segger node")
     def teardown(self):
-        """ Stop serial redirection and flash idle firmware """
+        """Stop serial redirection and flash idle firmware"""
         ret_val = 0
         # ON may have been stopped at the end of the experiment.
         # And then restarted again in cn teardown.
@@ -99,7 +102,7 @@ class NodeSeggerBase(OpenNodeBase):
 
     @logger_call("Node Segger: flash of segger node")
     def flash(self, firmware_path=None, binary=False, offset=0):
-        """ Flash the given firmware on segger node
+        """Flash the given firmware on segger node
 
         :param firmware_path: Path to the firmware to be flashed on `node`.
                               If None, flash 'idle' firmware.
@@ -107,27 +110,27 @@ class NodeSeggerBase(OpenNodeBase):
         :param offset: the offset at which to flash the binary file
         """
         firmware_path = firmware_path or self.FW_IDLE
-        LOGGER.info('Flash firmware on Segger: %s', firmware_path)
+        LOGGER.info("Flash firmware on Segger: %s", firmware_path)
         ret_val = self.segger.flash(firmware_path, binary, offset)
         return ret_val
 
     @logger_call("Node Segger: reset of segger node")
     def reset(self):
-        """ Reset the segger node using jtag """
-        LOGGER.info('Reset segger node')
+        """Reset the segger node using jtag"""
+        LOGGER.info("Reset segger node")
         return self.segger.reset()
 
     def debug_start(self):
-        """ Start segger node debugger """
-        LOGGER.info('segger node debugger start')
+        """Start segger node debugger"""
+        LOGGER.info("segger node debugger start")
         return self.segger.debug_start()
 
     def debug_stop(self):
-        """ Stop segger node debugger """
-        LOGGER.info('segger node debugger stop')
+        """Stop segger node debugger"""
+        LOGGER.info("segger node debugger stop")
         return self.segger.debug_stop()
 
     def status(self):
-        """ Check segger node status """
+        """Check segger node status"""
         # Status is called when open node is not powered
         return 0

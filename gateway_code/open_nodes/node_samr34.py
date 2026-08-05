@@ -19,17 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node SAMR34 experiment implementation """
+"""Open Node SAMR34 experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
 class NodeSamr34(NodeDapLinkBase):
-    """ Open node SAMR34 implementation """
+    """Open node SAMR34 implementation"""
 
-    TYPE = 'samr34'
-    OPENOCD_CFG_FILE = static_path('iot-lab-samr34.cfg')
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
-    FW_IDLE = static_path('samr34_idle.elf')
-    FW_AUTOTEST = static_path('samr34_autotest.elf')
+    TYPE = "samr34"
+    OPENOCD_CFG_FILE = static_path("iot-lab-samr34.cfg")
+    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
+    FW_IDLE = static_path("samr34_idle.elf")
+    FW_AUTOTEST = static_path("samr34_autotest.elf")
