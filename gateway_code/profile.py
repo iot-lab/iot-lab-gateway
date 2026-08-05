@@ -32,7 +32,7 @@ class Profile:
 
     """ Experiment monitoring Profile """
 
-    def __init__(self, open_node_type,  # pylint:disable=unused-argument
+    def __init__(self, open_node_type,  # pylint:disable=unused-argument,R0917
                  profilename, power,
                  consumption=None, radio=None, **_kwargs):
         self.profilename = profilename
@@ -79,7 +79,7 @@ class Consumption:
         'alim': ('3.3V', '5V'),
     }
 
-    def __init__(self, alim, source, period, average,
+    def __init__(self, alim, source, period, average,  # pylint:disable=R0917
                  power=False, voltage=False, current=False):
         _err = "Required values period/average for consumption measure."
         assert period is not None and average is not None, _err

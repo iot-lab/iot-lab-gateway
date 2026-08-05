@@ -71,13 +71,13 @@ class NodePycom(NodeNoBase):
         except serial.serialutil.SerialException:
             LOGGER.error("No serial port found")
             return 1
-        else:
-            for command in sequence:
-                ser.write(command)
-                if delay is not None:
-                    time.sleep(delay)
-                LOGGER.info("%s: %s", command, ser.read_all())
-            ser.close()
+
+        for command in sequence:
+            ser.write(command)
+            if delay is not None:
+                time.sleep(delay)
+            LOGGER.info("%s: %s", command, ser.read_all())
+        ser.close()
         return 0
 
     @logger_call("Node Pycom: Setup node")

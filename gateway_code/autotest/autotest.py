@@ -129,7 +129,7 @@ class AutoTestManager:
         gwt_mac_addr = self.get_local_mac_addr()
         self.ret_dict['mac']['GWT'] = gwt_mac_addr
 
-        test_ok = (MAC_RE.match(gwt_mac_addr) is not None)
+        test_ok = MAC_RE.match(gwt_mac_addr) is not None
         ret_val += self._check(tst_ok(test_ok), 'gw_mac_addr', gwt_mac_addr)
 
         self._assert(ret_val, 'setup_cn_connection', ret_val,
@@ -185,7 +185,7 @@ class AutoTestManager:
         # save mac address
         linux_mac_addr = self.linux_connection.get_mac_addr()
         self.ret_dict['mac']['ON'] = linux_mac_addr
-        test_ok = (MAC_RE.match(linux_mac_addr) is not None)
+        test_ok = MAC_RE.match(linux_mac_addr) is not None
         ret_val += self._check(tst_ok(test_ok), 'linux_mac_addr',
                                linux_mac_addr)
 
@@ -250,9 +250,9 @@ class AutoTestManager:
         ret_val += self._open_node_start()
 
         ret_val += self.set_result_leds(blink)
-        ret_val += self._teardown_open_node(stop=(not blink))
+        ret_val += self._teardown_open_node(stop=not blink)
 
-        self.g_m.control_node.autotest_teardown(stop_on=(not blink))
+        self.g_m.control_node.autotest_teardown(stop_on=not blink)
         LOGGER.debug("cn_serial stopped")
 
         return self._check(ret_val, 'teardown', ret_val)
@@ -428,7 +428,7 @@ class AutoTestManager:
         answer = self._on_call(['get_time'])[1]
 
         values = self._run_test(5, ['get_time'], (lambda x: x[2].isdigit()))
-        test_ok = (any(values))
+        test_ok = any(values)
         self._assert(tst_ok(test_ok), 'on_serial_get_time', answer,
                      "get_time failed. Can't communicate with ON")
 
@@ -569,7 +569,7 @@ class AutoTestManager:
 
         # Run num times
         values = self._run_test(num, on_cmd + args, (lambda x: 0))
-        test_ok = (0 in values)  # at least one success
+        test_ok = 0 in values  # at least one success
         ret_val += self._check(tst_ok(test_ok), debug_str, values)
 
         # teardown

@@ -212,7 +212,7 @@ def test_node_verify_errors():
         # pylint:disable=abstract-method,unused-variable
         """OpenNode with invalid elf target attribute."""
         TYPE = "open_node_elf_target_invalid"
-        ELF_TARGET = ('INVALID')
+        ELF_TARGET = 'INVALID'
 
     REGISTRY[OpenNodeElfTargetInvalid.TYPE] = OpenNodeElfTargetInvalid
 

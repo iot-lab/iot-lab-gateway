@@ -37,9 +37,9 @@ class CC2538:
     """ Debugger class, implemented as a global variable storage """
     DEVNULL = open(os.devnull, 'w')
 
-    CC2538BSL = ('/usr/bin/cc2538-bsl.py -p {port} {cmd}')
+    CC2538BSL = '/usr/bin/cc2538-bsl.py -p {port} {cmd}'
 
-    RESET = ('')
+    RESET = ''
 
     FLASH = ('-b {baudrate}'
              ' -e'

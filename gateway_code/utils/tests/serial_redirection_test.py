@@ -65,7 +65,7 @@ class _SerialRedirectionTestCase(unittest.TestCase):
     @staticmethod
     def _serial(tty, baud):
         """Create a local pty with socat."""
-        cmd = ['socat', '-', f'pty,link={tty},raw,b{baud},echo=0']
+        cmd = ['socat', '-', f'pty,link={tty},raw,b{baud},echo=1']
         return Popen(cmd, stdout=PIPE, stdin=PIPE)
 
 
