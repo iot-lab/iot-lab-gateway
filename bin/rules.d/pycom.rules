@@ -2,12 +2,12 @@
 
 # pytrack
 KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="f014", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_PYCOM"
-SUBSYSTEM=="usb", ATTR{idProduct}=="04d8", ATTR{idVendor}=="f014", MODE="0664", GROUP="dialout"
+SUBSYSTEM=="usb", ATTR{idVendor}=="04d8", ATTR{idProduct}=="f014", MODE="0664", GROUP="dialout"
 
 # pysense
 KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="f012", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_PYCOM"
-SUBSYSTEM=="usb", ATTR{idProduct}=="04d8", ATTR{idVendor}=="f012", MODE="0664", GROUP="dialout"
+SUBSYSTEM=="usb", ATTR{idVendor}=="04d8", ATTR{idProduct}=="f012", MODE="0664", GROUP="dialout"
 
 # expansion board
 KERNEL=="ttyACM*", SUBSYSTEM=="tty", ATTRS{idVendor}=="04d8", ATTRS{idProduct}=="ef98", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_PYCOM"
-SUBSYSTEM=="usb", ATTR{idProduct}=="04d8", ATTR{idVendor}=="f012", MODE="0664", GROUP="dialout"
+SUBSYSTEM=="usb", ATTR{idVendor}=="04d8", ATTR{idProduct}=="ef98", MODE="0664", GROUP="dialout"
