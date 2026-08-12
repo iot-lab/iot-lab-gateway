@@ -1,0 +1,5 @@
+# open nodes TTY
+
+# Espressif ESP32-C6-DevKitC-1 UART
+KERNEL=="ttyUSB*", SUBSYSTEM=="tty", ATTRS{idVendor}=="10c4", ATTRS{idProduct}=="ea60", SUBSYSTEMS=="usb", SYMLINK+="iotlab/ttyON_ESP32C6C1"
+SUBSYSTEM=="usb", ATTR{idProduct}=="10c4", ATTR{idVendor}=="ea60", MODE="0664", GROUP="dialout"
