@@ -36,7 +36,8 @@ class NodeRpiPico(NodeDapLinkBase):
 
     ROM_START_ADDR = 0x10000000  # RP2040 external XIP flash base
 
-    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
+    #OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
+    OPENOCD_PATH = "/usr/bin/openocd"
     OPENOCD_CFG_FILE = static_path("iot-lab-rpi-pico.cfg")
 
     FW_IDLE = static_path("rpi-pico_idle.elf")
