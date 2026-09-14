@@ -19,30 +19,32 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.control_node (RPI3) unit tests files """
+"""gateway_code.control_node (RPI3) unit tests files"""
 
 import os.path
 import shutil
 import tempfile
 import unittest
+
 import mock
 
 from gateway_code.control_nodes.cn_rpi3 import ControlNodeRpi3
 from gateway_code.utils import subprocess_timeout
 
 
-@mock.patch('gateway_code.utils.subprocess_timeout.call')
+@mock.patch("gateway_code.utils.subprocess_timeout.call")
 class TestCnRPI3(unittest.TestCase):
     """Unittest class for RPI3 control node."""
 
     def setUp(self):
         self.temp_dir = tempfile.mkdtemp()
         self.camera_conf = os.path.join(self.temp_dir, "camera")
-        with open(self.camera_conf, 'w') as cam:
-            cam.write('')
+        with open(self.camera_conf, "w") as cam:
+            cam.write("")
         camera_conf_mock = os.path.join(self.temp_dir, "log_camera")
-        mock.patch('gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE',
-                   camera_conf_mock).start()
+        mock.patch(
+            "gateway_code.utils.mjpg_streamer.MJPG_STREAMER_LOG_FILE", camera_conf_mock
+        ).start()
 
     def tearDown(self):
         mock.patch.stopall()
@@ -54,7 +56,7 @@ class TestCnRPI3(unittest.TestCase):
 
         # Setup doesn't nothing but is required. It always returns 0
         assert ControlNodeRpi3.setup() == 0
-        cn_rpi3 = ControlNodeRpi3('test', None)
+        cn_rpi3 = ControlNodeRpi3("test", None)
 
         # Flash and status does nothing
         assert cn_rpi3.flash() == 0
@@ -67,47 +69,46 @@ class TestCnRPI3(unittest.TestCase):
         """Test open node start calls the right command."""
         call.return_value = 0
 
-        cn_rpi3 = ControlNodeRpi3('test', None)
-        cn_rpi3.start('test')
+        cn_rpi3 = ControlNodeRpi3("test", None)
+        cn_rpi3.start("test")
 
         assert call.call_count == 1
-        call.assert_called_with(args=['sudo', 'ykushcmd', 'ykushxs', '-u'])
+        call.assert_called_with(args=["sudo", "ykushcmd", "ykushxs", "-u"])
 
-        assert cn_rpi3.open_node_state == 'start'
+        assert cn_rpi3.open_node_state == "start"
 
         call.call_count = 0
         cn_rpi3.stop()
 
         assert call.call_count == 1
-        call.assert_called_with(args=['sudo', 'ykushcmd', 'ykushxs', '-d'])
+        call.assert_called_with(args=["sudo", "ykushcmd", "ykushxs", "-d"])
 
-        assert cn_rpi3.open_node_state == 'stop'
+        assert cn_rpi3.open_node_state == "stop"
 
     def test_cn_rpi3_timeout(self, call):
         """Test open node start/stop with timeout."""
-        call.side_effect = subprocess_timeout.TimeoutExpired(mock.Mock("test"),
-                                                             'timeout')
+        call.side_effect = subprocess_timeout.TimeoutExpired(mock.Mock("test"), "timeout")
 
-        cn_rpi3 = ControlNodeRpi3('test', None)
-        ret = cn_rpi3.start('test')
+        cn_rpi3 = ControlNodeRpi3("test", None)
+        ret = cn_rpi3.start("test")
 
-        assert cn_rpi3.open_node_state == 'stop'
+        assert cn_rpi3.open_node_state == "stop"
         assert ret == 1
 
         ret = cn_rpi3.stop()
 
-        assert cn_rpi3.open_node_state == 'stop'
+        assert cn_rpi3.open_node_state == "stop"
         assert ret == 1
 
-    @mock.patch('gateway_code.utils.mjpg_streamer.MjpgStreamer.stop')
-    @mock.patch('gateway_code.utils.mjpg_streamer.MjpgStreamer.start')
+    @mock.patch("gateway_code.utils.mjpg_streamer.MjpgStreamer.stop")
+    @mock.patch("gateway_code.utils.mjpg_streamer.MjpgStreamer.start")
     def test_cn_rpi3_configure_profile(self, cam_start, cam_stop, call):
         # pylint:disable=too-many-arguments
         """Test open node profile confguration with start/stop experiment."""
         call.return_value = 0
         cam_start.return_value = 0
         cam_stop.return_value = 0
-        cn_rpi3 = ControlNodeRpi3('test', None)
+        cn_rpi3 = ControlNodeRpi3("test", None)
 
         ret = cn_rpi3.start_experiment("test")
 
@@ -124,8 +125,7 @@ class TestCnRPI3(unittest.TestCase):
         call.mock_calls = []
 
         call.call_count = 0
-        with mock.patch('gateway_code.control_nodes.cn_rpi3.CAMERA_CONFIG',
-                        self.camera_conf):
+        with mock.patch("gateway_code.control_nodes.cn_rpi3.CAMERA_CONFIG", self.camera_conf):
             ret = cn_rpi3.start_experiment("test")
             assert ret == 0
             assert cn_rpi3.profile == "test"

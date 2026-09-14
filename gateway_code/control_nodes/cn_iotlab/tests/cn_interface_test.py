@@ -27,22 +27,22 @@
 # pylint: disable=maybe-no-member
 # pylint: disable=too-many-public-methods
 
-import queue
-
-import unittest
 import logging
+import queue
+import unittest
+
 import mock
 from testfixtures import LogCapture
 
 from gateway_code.tests import utils
+
 from .. import cn_interface
 
 
 class TestControlNodeSerial(unittest.TestCase):
 
     def setUp(self):
-        self.popen_patcher = mock.patch(
-            'gateway_code.utils.subprocess_timeout.Popen')
+        self.popen_patcher = mock.patch("gateway_code.utils.subprocess_timeout.Popen")
         popen_class = self.popen_patcher.start()
         self.popen = popen_class.return_value
 
@@ -51,10 +51,10 @@ class TestControlNodeSerial(unittest.TestCase):
 
         self.readline_ret_vals = queue.Queue(0)
         self.popen.stderr.readline.side_effect = self.readline_ret_vals.get
-        self.readline_ret_vals.put(b'cn_serial_ready\n')
+        self.readline_ret_vals.put(b"cn_serial_ready\n")
 
-        self.cn = cn_interface.ControlNodeSerial('tty')
-        self.log_error = LogCapture('gateway_code', level=logging.WARNING)
+        self.cn = cn_interface.ControlNodeSerial("tty")
+        self.log_error = LogCapture("gateway_code", level=logging.WARNING)
 
     def tearDown(self):
         self.cn.stop()
@@ -62,7 +62,7 @@ class TestControlNodeSerial(unittest.TestCase):
         self.log_error.uninstall()
 
     def _terminate(self):
-        self.readline_ret_vals.put(b'')
+        self.readline_ret_vals.put(b"")
 
     def test_normal_start_stop(self):
         ret_start = self.cn.start()
@@ -81,8 +81,8 @@ class TestControlNodeSerial(unittest.TestCase):
         ret_start = self.cn.start()
         self.assertNotEqual(0, ret_start)
         self.log_error.check(
-            ('gateway_code', 'ERROR',
-             'Control node serial reader thread ended prematurely'))
+            ("gateway_code", "ERROR", "Control node serial reader thread ended prematurely")
+        )
         self.cn.stop()
 
     def test_stop_before_start(self):
@@ -91,31 +91,27 @@ class TestControlNodeSerial(unittest.TestCase):
     def test_stop_with_cn_interface_allready_stopped(self):
 
         # Simulate cn_interface stopped
-        self.readline_ret_vals.put(b'')
+        self.readline_ret_vals.put(b"")
         self.popen.stdin.write.side_effect = IOError()
         self.popen.terminate.side_effect = OSError()
 
         self.cn.start()
 
         # try sending command
-        ret = self.cn.send_command(['test', 'cmd'])
+        ret = self.cn.send_command(["test", "cmd"])
         self.assertEqual(None, ret)
-        self.log_error.check(
-            ('gateway_code', 'ERROR',
-             'control_node_serial process is terminated'))
+        self.log_error.check(("gateway_code", "ERROR", "control_node_serial process is terminated"))
 
         self.log_error.clear()
         self.cn.stop()
-        self.log_error.check(
-            ('gateway_code', 'ERROR',
-             'Control node process already terminated'))
+        self.log_error.check(("gateway_code", "ERROR", "Control node process already terminated"))
 
     def test_stop_terminate_failed(self):
         """Stop cn_interface but terminate does not stop it."""
         # terminate does not stop process
         self.popen.terminate.side_effect = None
         timeout_expired = cn_interface.subprocess_timeout.TimeoutExpired
-        self.popen.wait.side_effect = timeout_expired('cn_serial_interface', 3)
+        self.popen.wait.side_effect = timeout_expired("cn_serial_interface", 3)
         # kill does it
         self.popen.kill.side_effect = self._terminate
 
@@ -123,76 +119,72 @@ class TestControlNodeSerial(unittest.TestCase):
         self.cn.stop()
 
         self.assertTrue(self.popen.kill.called)
-        self.log_error.check(('gateway_code', 'WARNING',
-                              'Control node serial not terminated, kill it'))
+        self.log_error.check(
+            ("gateway_code", "WARNING", "Control node serial not terminated, kill it")
+        )
 
-# Test command sending
+    # Test command sending
 
     def test_send_command(self):
-        self.popen.stdin.write.side_effect = \
-            lambda *x: self.readline_ret_vals.put(b'start ACK\n')
+        self.popen.stdin.write.side_effect = lambda *x: self.readline_ret_vals.put(b"start ACK\n")
 
         self.cn.start()
-        ret = self.cn.send_command(['start', 'DC'])
-        self.assertEqual(['start', 'ACK'], ret)
+        ret = self.cn.send_command(["start", "DC"])
+        self.assertEqual(["start", "ACK"], ret)
         self.cn.stop()
 
     def test_send_command_no_answer(self):
         self.cn.start()
-        ret = self.cn.send_command(['start', 'DC'])
+        ret = self.cn.send_command(["start", "DC"])
         self.assertIsNone(ret)
         self.cn.stop()
 
     def test_send_command_cn_interface_stoped(self):
-        ret = self.cn.send_command(['lala'])
+        ret = self.cn.send_command(["lala"])
         self.assertIsNone(ret)
 
     def test_answer_and_answer_with_queue_full(self):
         # get two answers without sending command
-        self.readline_ret_vals.put(b'set ACK\n')
-        self.readline_ret_vals.put(b'start ACK\n')
+        self.readline_ret_vals.put(b"set ACK\n")
+        self.readline_ret_vals.put(b"start ACK\n")
 
         self.cn.start()
         self.cn.stop()
 
         self.log_error.check(
-            (
-                'gateway_code',
-                'ERROR',
-                f'Control node answer queue full: {["start", "ACK"]}'
-            )
+            ("gateway_code", "ERROR", f'Control node answer queue full: {["start", "ACK"]}')
         )
 
-# _cn_interface_args
+    # _cn_interface_args
 
     def test__cn_interface_args(self):
         args = self.cn._cn_interface_args()
         self.assertIn(self.cn.tty, args)
-        self.assertNotIn('-c', args)
-        self.assertNotIn('-d', args)
+        self.assertNotIn("-c", args)
+        self.assertNotIn("-d", args)
 
         # OML config
-        args = self.cn._cn_interface_args('<omlc></omlc>')
-        self.assertIn('-c', args)
-        self.assertNotIn('-d', args)
+        args = self.cn._cn_interface_args("<omlc></omlc>")
+        self.assertIn("-c", args)
+        self.assertNotIn("-d", args)
         self.cn._oml_cfg_file.close()
 
         # Debug mode
         self.cn.measures_debug = lambda x: None
         args = self.cn._cn_interface_args()
-        self.assertNotIn('-c', args)
-        self.assertIn('-d', args)
+        self.assertNotIn("-c", args)
+        self.assertIn("-d", args)
 
-# _config_oml coverage tests
+    # _config_oml coverage tests
 
     def test_empty_config_oml(self):
         # No experiment description
         ret = self.cn._oml_config_file(None)
         self.assertIsNone(ret)
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock("m3"))
     def test_config_oml(self):
-        oml_xml_cfg = '''<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>'''
+        oml_xml_cfg = """<omlc id='{node_id}' exp_id='{exp_id}'>\n</omlc>"""
         self.cn.start(oml_xml_cfg)
         self.assertIsNotNone(self.cn._oml_cfg_file)
 
@@ -200,61 +192,59 @@ class TestControlNodeSerial(unittest.TestCase):
 
     def test_oml_xml_config(self):
         exp_files = {
-            'consumption': '/tmp/consumption',
-            'radio': '/tmp/radio',
-            'event': '/tmp/event',
-            'sniffer': '/tmp/sniffer',
-            'log': '/tmp/log',
+            "consumption": "/tmp/consumption",
+            "radio": "/tmp/radio",
+            "event": "/tmp/event",
+            "sniffer": "/tmp/sniffer",
+            "log": "/tmp/log",
         }
 
-        oml_xml_cfg = self.cn.oml_xml_config('m3-1', '1234', exp_files)
+        oml_xml_cfg = self.cn.oml_xml_config("m3-1", "1234", exp_files)
         self.assertIsNotNone(oml_xml_cfg)
-        self.assertTrue(oml_xml_cfg.startswith('<omlc'))
+        self.assertTrue(oml_xml_cfg.startswith("<omlc"))
 
         # No output if none or empty
-        oml_xml_cfg = self.cn.oml_xml_config('m3-1', '1234', None)
+        oml_xml_cfg = self.cn.oml_xml_config("m3-1", "1234", None)
         self.assertIsNone(oml_xml_cfg)
-        oml_xml_cfg = self.cn.oml_xml_config('m3-1', '1234', {})
+        oml_xml_cfg = self.cn.oml_xml_config("m3-1", "1234", {})
         self.assertIsNone(oml_xml_cfg)
 
 
 class TestHandleAnswer(unittest.TestCase):
 
     def setUp(self):
-        self.cn = cn_interface.ControlNodeSerial('tty')
-        self.log = LogCapture('gateway_code', level=logging.DEBUG)
+        self.cn = cn_interface.ControlNodeSerial("tty")
+        self.log = LogCapture("gateway_code", level=logging.DEBUG)
 
     def tearDown(self):
         self.log.uninstall()
 
     def test_config_ack(self):
-        self.cn._handle_answer('config_ack set_time 0.123456')
+        self.cn._handle_answer("config_ack set_time 0.123456")
         self.log.check(
-            ('gateway_code', 'DEBUG', 'config_ack set_time'),
-            ('gateway_code', 'INFO', 'Control Node set time delay: 123456 us')
+            ("gateway_code", "DEBUG", "config_ack set_time"),
+            ("gateway_code", "INFO", "Control Node set time delay: 123456 us"),
         )
 
         self.log.clear()
-        self.cn._handle_answer('config_ack anything')
+        self.cn._handle_answer("config_ack anything")
         self.log.check(
-            ('gateway_code', 'DEBUG', 'config_ack anything'),
+            ("gateway_code", "DEBUG", "config_ack anything"),
         )
 
     def test_error(self):
-        self.cn._handle_answer('error 42')
-        self.log.check(
-            ('gateway_code', 'ERROR', "Control node error: '42'")
-        )
+        self.cn._handle_answer("error 42")
+        self.log.check(("gateway_code", "ERROR", "Control node error: '42'"))
 
     def test_cn_serial_error(self):
-        self.cn._handle_answer('cn_serial_error: any error msg')
-        self.log.check(
-            ('gateway_code', 'ERROR', 'cn_serial_error: any error msg')
-        )
+        self.cn._handle_answer("cn_serial_error: any error msg")
+        self.log.check(("gateway_code", "ERROR", "cn_serial_error: any error msg"))
 
     def test_measures_debug(self):
-        msg = ('measures_debug: consumption_measure 1377268768.841070:'
-               '1.78250 0.000000 3.230000 0.080003')
+        msg = (
+            "measures_debug: consumption_measure 1377268768.841070:"
+            "1.78250 0.000000 3.230000 0.080003"
+        )
 
         m_debug = mock.Mock()
 

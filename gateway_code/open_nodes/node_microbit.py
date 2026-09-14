@@ -19,26 +19,24 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node Micro:Bit experiment implementation """
+"""Open Node Micro:Bit experiment implementation"""
 
 from gateway_code.config import static_path
-from gateway_code.utils.openocd import OpenOCD
 from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
+from gateway_code.utils.openocd import OpenOCD
 
 
 class OpenOCDCustomReset(OpenOCD):
     """Custom OpenOCD class with a Microbit specific reset sequence."""
 
-    RESET = ('-c "reset halt" '
-             '-c "reset run" '
-             '-c "shutdown"')
+    RESET = '-c "reset halt" -c "reset run" -c "shutdown"'
 
 
 class NodeMicrobit(NodeDapLinkBase):
-    """ Open node Micro:Bit implementation """
+    """Open node Micro:Bit implementation"""
 
-    TYPE = 'microbit'
+    TYPE = "microbit"
     OPENOCD_CLASS = OpenOCDCustomReset
-    OPENOCD_CFG_FILE = static_path('iot-lab-microbit.cfg')
-    FW_IDLE = static_path('microbit_idle.elf')
-    FW_AUTOTEST = static_path('microbit_autotest.elf')
+    OPENOCD_CFG_FILE = static_path("iot-lab-microbit.cfg")
+    FW_IDLE = static_path("microbit_idle.elf")
+    FW_AUTOTEST = static_path("microbit_autotest.elf")

@@ -19,10 +19,11 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.control_node (iotlab) unit tests files """
+"""gateway_code.control_node (iotlab) unit tests files"""
 
 import unittest
-from mock import Mock, patch, call
+
+from mock import Mock, call, patch
 
 from gateway_code.control_nodes.cn_iotlab import ControlNodeIotlab
 
@@ -31,21 +32,23 @@ class TestCnIotlab(unittest.TestCase):
     """Unittest class for iotlab control node."""
 
     def setUp(self):
-        self.cn_node = ControlNodeIotlab('test', None)
-        assert self.cn_node.open_node_state == 'stop'
+        self.cn_node = ControlNodeIotlab("test", None)
+        assert self.cn_node.open_node_state == "stop"
         self.cn_node.default_profile = Mock()
-        self.cn_node.default_profile.power = 'test_power'
-        self.cn_node.default_profile.consumption = 'test_consumption'
-        self.cn_node.default_profile.radio = 'test_radio'
-        cn_serial_class = patch('gateway_code.control_nodes.cn_iotlab.'
-                                'cn_interface.ControlNodeSerial').start()
+        self.cn_node.default_profile.power = "test_power"
+        self.cn_node.default_profile.consumption = "test_consumption"
+        self.cn_node.default_profile.radio = "test_radio"
+        cn_serial_class = patch(
+            "gateway_code.control_nodes.cn_iotlab.cn_interface.ControlNodeSerial"
+        ).start()
         self.cn_node.cn_serial = cn_serial_class.return_value
-        self.cn_node.cn_serial.oml_xml_config.return_value = 'oml_cfg_test'
+        self.cn_node.cn_serial.oml_xml_config.return_value = "oml_cfg_test"
         self.cn_node.cn_serial.start.return_value = 0
         self.cn_node.cn_serial.stop.return_value = 0
 
-        cn_protocol_class = patch('gateway_code.control_nodes.cn_iotlab.'
-                                  'cn_protocol.Protocol').start()
+        cn_protocol_class = patch(
+            "gateway_code.control_nodes.cn_iotlab.cn_protocol.Protocol"
+        ).start()
         self.cn_node.protocol = cn_protocol_class.return_value
         self.cn_node.protocol.start_stop.return_value = 0
         self.cn_node.protocol.green_led_blink.return_value = 0
@@ -55,13 +58,13 @@ class TestCnIotlab(unittest.TestCase):
         self.cn_node.protocol.config_consumption.return_value = 0
         self.cn_node.protocol.config_radio.return_value = 0
 
-        openocd_class = patch('gateway_code.utils.openocd.OpenOCD').start()
+        openocd_class = patch("gateway_code.utils.openocd.OpenOCD").start()
         self.cn_node.openocd = openocd_class.return_value
         self.cn_node.openocd.flash.return_value = 0
         self.cn_node.openocd.reset.return_value = 0
 
         # Let's be fast
-        patch('time.sleep').start()
+        patch("time.sleep").start()
 
     def tearDown(self):
         patch.stopall()
@@ -69,8 +72,8 @@ class TestCnIotlab(unittest.TestCase):
     def test_start(self):
         """Test start of iotlab control node."""
         self.cn_node.protocol.start_stop.return_value = 1
-        assert self.cn_node.start('123') == 1
-        assert self.cn_node.open_node_state == 'stop'
+        assert self.cn_node.start("123") == 1
+        assert self.cn_node.open_node_state == "stop"
         self.cn_node.cn_serial.oml_xml_config.assert_called_once()
         self.cn_node.cn_serial.start.assert_called_once()
         self.cn_node.protocol.start_stop.return_value = 0
@@ -78,36 +81,34 @@ class TestCnIotlab(unittest.TestCase):
         self.cn_node.cn_serial.oml_xml_config.call_count = 0
         self.cn_node.cn_serial.start.call_count = 0
 
-        assert self.cn_node.start('123') == 0
+        assert self.cn_node.start("123") == 0
         self.cn_node.cn_serial.oml_xml_config.assert_called_once()
-        self.cn_node.cn_serial.oml_xml_config.assert_called_with(
-            'test', '123', None)
+        self.cn_node.cn_serial.oml_xml_config.assert_called_with("test", "123", None)
         self.cn_node.cn_serial.start.assert_called_once()
-        self.cn_node.cn_serial.start.assert_called_with('oml_cfg_test')
+        self.cn_node.cn_serial.start.assert_called_with("oml_cfg_test")
         self.cn_node.protocol.start_stop.assert_called_once()
-        self.cn_node.protocol.start_stop.assert_called_with('start', 'dc')
-        assert self.cn_node.open_node_state == 'start'
+        self.cn_node.protocol.start_stop.assert_called_with("start", "dc")
+        assert self.cn_node.open_node_state == "start"
 
     def test_setup(self):
         """Test setup of iotlab control node."""
         assert self.cn_node.setup() == 0
         assert self.cn_node.openocd.flash.call_count == 1
-        self.cn_node.openocd.flash.assert_called_with(
-            ControlNodeIotlab.FW_CONTROL_NODE)
+        self.cn_node.openocd.flash.assert_called_with(ControlNodeIotlab.FW_CONTROL_NODE)
 
     def test_stop(self):
         """Test stop of iotlab control node."""
         assert self.cn_node.stop() == 0
         self.cn_node.cn_serial.stop.assert_called_once()
         self.cn_node.protocol.start_stop.assert_called_once()
-        self.cn_node.protocol.start_stop.assert_called_with('stop', 'dc')
-        assert self.cn_node.open_node_state == 'stop'
+        self.cn_node.protocol.start_stop.assert_called_with("stop", "dc")
+        assert self.cn_node.open_node_state == "stop"
 
-        assert self.cn_node.start('123') == 0
-        assert self.cn_node.open_node_state == 'start'
+        assert self.cn_node.start("123") == 0
+        assert self.cn_node.open_node_state == "start"
         self.cn_node.protocol.start_stop.return_value = 1
         assert self.cn_node.stop() == 1
-        assert self.cn_node.open_node_state == 'start'
+        assert self.cn_node.open_node_state == "start"
 
     def test_start_experiment(self):
         """Test start experiment of iotlab control node."""
@@ -115,31 +116,28 @@ class TestCnIotlab(unittest.TestCase):
         self.cn_node.protocol.green_led_blink.assert_called_once()
         self.cn_node.protocol.set_time.assert_called_once()
         self.cn_node.protocol.set_node_id.assert_called_once()
-        self.cn_node.protocol.set_node_id.assert_called_with('test')
+        self.cn_node.protocol.set_node_id.assert_called_with("test")
         self.cn_node.protocol.config_consumption.assert_called_once()
-        self.cn_node.protocol.config_consumption.assert_called_with(
-            'test_consumption')
+        self.cn_node.protocol.config_consumption.assert_called_with("test_consumption")
         self.cn_node.protocol.config_radio.assert_called_once()
-        self.cn_node.protocol.config_radio.assert_called_with(
-            'test_radio')
+        self.cn_node.protocol.config_radio.assert_called_with("test_radio")
         self.cn_node.protocol.start_stop.assert_called_once()
-        self.cn_node.protocol.start_stop.assert_called_with(
-            'stop', 'test_power')
+        self.cn_node.protocol.start_stop.assert_called_with("stop", "test_power")
 
     def test_stop_experiment(self):
         """Test stop experiment of iotlab control node."""
         assert self.cn_node.stop_experiment() == 0
         self.cn_node.protocol.green_led_on.assert_called_once()
         assert self.cn_node.protocol.start_stop.call_count == 2
-        assert self.cn_node.protocol.start_stop.call_args_list == \
-            [call('stop', 'test_power'), call('start', 'dc')]
+        assert self.cn_node.protocol.start_stop.call_args_list == [
+            call("stop", "test_power"),
+            call("start", "dc"),
+        ]
 
         self.cn_node.protocol.config_consumption.assert_called_once()
-        self.cn_node.protocol.config_consumption.assert_called_with(
-            'test_consumption')
+        self.cn_node.protocol.config_consumption.assert_called_with("test_consumption")
         self.cn_node.protocol.config_radio.assert_called_once()
-        self.cn_node.protocol.config_radio.assert_called_with(
-            'test_radio')
+        self.cn_node.protocol.config_radio.assert_called_with("test_radio")
 
     def test_autotest_setup(self):
         """Test autotest setup of iotlab control node."""
@@ -157,11 +155,11 @@ class TestCnIotlab(unittest.TestCase):
         assert self.cn_node.autotest_teardown(True) == 0
         assert self.cn_node.cn_serial.stop.call_count == 2
         self.cn_node.protocol.start_stop.assert_called_once()
-        self.cn_node.protocol.start_stop.assert_called_with('stop', 'dc')
+        self.cn_node.protocol.start_stop.assert_called_with("stop", "dc")
 
     def test_status(self):
         """Test status method of iotlab control node."""
-        with patch('gateway_code.utils.ftdi_check.ftdi_check') as ftdi_check:
+        with patch("gateway_code.utils.ftdi_check.ftdi_check") as ftdi_check:
             ftdi_check.return_value = 42
             assert self.cn_node.status() == 42
-            ftdi_check.assert_called_with('control', '4232')
+            ftdi_check.assert_called_with("control", "4232")

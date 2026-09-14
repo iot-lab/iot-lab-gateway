@@ -20,48 +20,46 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Common static configuration for the application  """
+"""Common static configuration for the application"""
 
-import stat
-import os
 import json
+import os
+import stat
 
-STAT_0666 = (stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP |
-             stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH)
+STAT_0666 = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP | stat.S_IROTH | stat.S_IWOTH
 
 PKG_DIR = os.path.abspath(os.path.dirname(__file__))
-STATIC_DIR = os.path.join(PKG_DIR, 'static')
+STATIC_DIR = os.path.join(PKG_DIR, "static")
 
 
 def static_path(static_file):
-    """ Return the 'static_file' relative path """
+    """Return the 'static_file' relative path"""
     return os.path.join(STATIC_DIR, static_file)
 
 
-GATEWAY_CONFIG_PATH = os.environ.get('IOTLAB_GATEWAY_CFG_DIR',
-                                     '/var/local/config/')
+GATEWAY_CONFIG_PATH = os.environ.get("IOTLAB_GATEWAY_CFG_DIR", "/var/local/config/")
 GATEWAY_CONFIG_PATH = os.path.abspath(GATEWAY_CONFIG_PATH)
 
-IOTLAB_USERS = os.environ.get('IOTLAB_USERS_DIR', '/iotlab/users')
-EXP_FILES_DIR = os.path.join(IOTLAB_USERS, '{user}/.iot-lab/{exp_id}/')
+IOTLAB_USERS = os.environ.get("IOTLAB_USERS_DIR", "/iotlab/users")
+EXP_FILES_DIR = os.path.join(IOTLAB_USERS, "{user}/.iot-lab/{exp_id}/")
 EXP_FILES = {
-    'consumption': 'consumption/{node_id}.oml',
-    'radio': 'radio/{node_id}.oml',
-    'event': 'event/{node_id}.oml',
-    'sniffer': 'sniffer/{node_id}.oml',
-    'log': 'log/{node_id}.log',
+    "consumption": "consumption/{node_id}.oml",
+    "radio": "radio/{node_id}.oml",
+    "event": "event/{node_id}.oml",
+    "sniffer": "sniffer/{node_id}.oml",
+    "log": "log/{node_id}.log",
 }
 
 
-def create_user_file(file_path, mode='w'):
-    """ Creat a file that can be read and modified by user """
+def create_user_file(file_path, mode="w"):
+    """Creat a file that can be read and modified by user"""
     open(file_path, mode).close()
     os.chmod(file_path, STAT_0666)
     return file_path
 
 
 def clean_user_file(file_path):
-    """ Clean a user file if empty """
+    """Clean a user file if empty"""
     try:
         if os.path.getsize(file_path) == 0:
             os.remove(file_path)
@@ -69,22 +67,22 @@ def clean_user_file(file_path):
         pass
 
 
-DEFAULT_PROFILE = json.load(open(static_path('default_profile.json')))
+DEFAULT_PROFILE = json.load(open(static_path("default_profile.json")))
 
 
 def read_config(key, default=IOError):
-    """ Read 'key' from config. If 'key' is not present raise an IOError
+    """Read 'key' from config. If 'key' is not present raise an IOError
     if 'default' is not provided.
 
     :param key: Return configuration for 'key'
     :param default: return default if provided and 'key' absent
-    :raises IOError: when 'key' can't be read and default not provided """
+    :raises IOError: when 'key' can't be read and default not provided"""
 
     entry = os.path.join(GATEWAY_CONFIG_PATH, key)
 
     try:
         with open(entry) as _conf:
-            return _conf.read().strip().lower().replace('-', '_')
+            return _conf.read().strip().lower().replace("-", "_")
     except IOError:
         if default is IOError:  # not provided
             raise

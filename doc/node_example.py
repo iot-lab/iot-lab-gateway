@@ -1,30 +1,30 @@
 # -*- coding:utf-8 -*-
-""" Blank file for the implementation of an open-node called Nodename """
+"""Blank file for the implementation of an open-node called Nodename"""
 
 import logging
 
-from gateway_code.config import static_path
 from gateway_code.common import logger_call
+from gateway_code.config import static_path
 from gateway_code.nodes import OpenNodeBase
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class NodeExample(OpenNodeBase):
-    """ Example node """
+    """Example node"""
 
-    TTY = '/dev/ttyON_EXAMPLE'
+    TTY = "/dev/ttyON_EXAMPLE"
     # The tty as named in the udev rule
     BAUDRATE = 9600
     # The baudrate used to communicate with the open-node on the serial port
-    FW_IDLE = static_path('example_idle.elf')
+    FW_IDLE = static_path("example_idle.elf")
     # The name of the idle firmware
-    FW_AUTOTEST = static_path('example_autotest.elf')
+    FW_AUTOTEST = static_path("example_autotest.elf")
     # The name of the autotest firmware
-    ALIM = '5V'
+    ALIM = "5V"
     # The tension of alimentation (will be 5V in most of the case)
 
-    AUTOTEST_AVAILABLE = ['echo']
+    AUTOTEST_AVAILABLE = ["echo"]
 
     # The list of autotest available for your node.
     # As describe in the document,

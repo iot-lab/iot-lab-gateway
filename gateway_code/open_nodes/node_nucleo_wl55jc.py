@@ -19,17 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node STM32 Nucleo-WL55JC experiment implementation """
+"""Open Node STM32 Nucleo-WL55JC experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_st_link import NodeStLinkBase
 
 
 class NodeNucleoWL55JC(NodeStLinkBase):
-    """ Open node STM32 Nucleo-WL55JC implementation """
+    """Open node STM32 Nucleo-WL55JC implementation"""
 
-    TYPE = 'nucleo_wl55jc'
+    TYPE = "nucleo_wl55jc"
     ROM_START_ADDR = 0x08000000
-    OPENOCD_CFG_FILE = static_path('iot-lab-nucleo-wl55jc.cfg')
-    FW_IDLE = static_path('nucleo-wl55jc_idle.elf')
-    FW_AUTOTEST = static_path('nucleo-wl55jc_autotest.elf')
+    OPENOCD_CFG_FILE = static_path("iot-lab-nucleo-wl55jc.cfg")
+    FW_IDLE = static_path("nucleo-wl55jc_idle.elf")
+    FW_AUTOTEST = static_path("nucleo-wl55jc_autotest.elf")

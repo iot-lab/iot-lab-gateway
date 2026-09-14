@@ -19,10 +19,11 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.common.node_edbg unit tests files """
+"""gateway_code.open_nodes.common.node_edbg unit tests files"""
 
 import unittest
-from mock import patch, Mock
+
+from mock import Mock, patch
 
 from gateway_code.open_nodes.common.node_edbg import NodeEdbgBase
 from gateway_code.open_nodes.node_arduino_zero import NodeArduinoZero
@@ -30,8 +31,9 @@ from gateway_code.open_nodes.node_arduino_zero import NodeArduinoZero
 
 class NodeEdbgTest(NodeEdbgBase):
     """A test node derived from NodeOpenOCDBase."""
-    TYPE = 'edbgnode_test'
-    TTY = '/dev/iotlab/ttyTestEdbgNode'
+
+    TYPE = "edbgnode_test"
+    TTY = "/dev/iotlab/ttyTestEdbgNode"
     BAUDRATE = 115200
     OPENOCD_CFG_FILE = NodeArduinoZero.OPENOCD_CFG_FILE
     FW_IDLE = NodeArduinoZero.FW_IDLE
@@ -43,15 +45,15 @@ class TestNodeEdbgBase(unittest.TestCase):
 
     def setUp(self):
         self.node = NodeEdbgTest()
-        self.fw_path = '/path/to/firmware'
-        openocd_class = patch('gateway_code.utils.openocd.OpenOCD').start()
+        self.fw_path = "/path/to/firmware"
+        openocd_class = patch("gateway_code.utils.openocd.OpenOCD").start()
         self.node.openocd = openocd_class.return_value
         self.node.openocd.flash.return_value = 0
         self.node.openocd.reset.return_value = 0
         self.node.openocd.flash.return_value = 0
         self.node.openocd.debug_start.return_value = 0
         self.node.openocd.debug_stop.return_value = 0
-        edbg_class = patch('gateway_code.utils.edbg.Edbg').start()
+        edbg_class = patch("gateway_code.utils.edbg.Edbg").start()
         self.node.edbg = edbg_class.return_value
         self.node.edbg.flash.return_value = 0
         self.node.serial_redirection.start = Mock()
@@ -80,8 +82,8 @@ class TestNodeEdbgBase(unittest.TestCase):
         # programmer instance
         assert self.node.programmer == self.node.edbg
 
-    @patch('gateway_code.common.wait_tty')
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_tty")
+    @patch("gateway_code.common.wait_no_tty")
     def test_edbg_node_flash(self, no_tty, tty):
         """Test flash function of an edbg based node."""
         no_tty.return_value = 0
@@ -108,8 +110,8 @@ class TestNodeEdbgBase(unittest.TestCase):
         assert self.node.flash(self.fw_path, binary=True, offset=42) == 0
         self.node.edbg.flash.assert_called_with(self.fw_path, True, 42)
 
-    @patch('gateway_code.common.wait_tty')
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_tty")
+    @patch("gateway_code.common.wait_no_tty")
     def test_edbg_node_flash_with_debug(self, no_tty, tty):
         # pylint:disable=protected-access
         """Test flash function of an edbg based node while in debug session."""
@@ -132,8 +134,7 @@ class TestNodeEdbgBase(unittest.TestCase):
         assert self.node.debug_start() == 0
         assert self.node.edbg.flash.call_count == 1
         assert self.node.openocd.flash.call_count == 1
-        self.node.openocd.flash.assert_called_with(
-            self.node._current_fw, False, 0)
+        self.node.openocd.flash.assert_called_with(self.node._current_fw, False, 0)
         assert self.node._current_fw == self.node.FW_AUTOTEST
         assert self.node._in_debug
 

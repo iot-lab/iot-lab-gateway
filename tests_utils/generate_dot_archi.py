@@ -1,12 +1,11 @@
 #! /usr/bin/env python
 # -*- coding:utf-8 -*-
 
-import os.path
-from subprocess import check_output, check_call
 import logging
+import os.path
+from subprocess import check_call, check_output
 
-
-HEADER = '''
+HEADER = """
 digraph g {
 
     graph [
@@ -19,12 +18,12 @@ digraph g {
         shape = "record"
     ];
 
-'''
-FOOTER = '}'
-NODE = '''    "%s" [
+"""
+FOOTER = "}"
+NODE = """    "%s" [
         label = "<f0> %s"
     ];
-'''
+"""
 NODE_LINK = '    "%s" -> "%s"'
 
 
@@ -54,7 +53,7 @@ def extract_associations(files):
         other_modules.remove(cur_module)
 
         # line containing 'import'
-        import_lines = [line for line in open(current) if 'import' in line]
+        import_lines = [line for line in open(current) if "import" in line]
 
         for line in import_lines:
             # for each dependency
@@ -75,7 +74,7 @@ def extract_subpackage(path):
     >>> extract_subpackage('gateway_code/common.py')
 
     """
-    parts = path.split('/')
+    parts = path.split("/")
     if len(parts) == 2:
         return None
     else:
@@ -95,21 +94,21 @@ def extract_clusters(files):
 
 
 def str_cluster(cluster, nodes):
-    nodes_str = ''
+    nodes_str = ""
     for node in nodes:
-        nodes_str += 8 * ' ' + node + ';\n'
+        nodes_str += 8 * " " + node + ";\n"
 
     return CLUSTER_FMT % (cluster, cluster, nodes_str)
 
 
 def generate_dot(files):
-    ret = ''
+    ret = ""
     ret += HEADER
     for associations in extract_associations(files):
         ret += NODE_LINK % associations
-        if associations[1] in ('config', 'common'):
-            ret += ' [style=invis, constraint=false]'
-        ret += '\n'
+        if associations[1] in ("config", "common"):
+            ret += " [style=invis, constraint=false]"
+        ret += "\n"
 
     for cluster, nodes in extract_clusters(files).items():
         ret += str_cluster(cluster, nodes)
@@ -119,25 +118,28 @@ def generate_dot(files):
     return ret
 
 
-FILE = 'gateway_code'
+FILE = "gateway_code"
 
 
 def main():
-    dot_path = '%s.dot' % FILE
-    png_path = '%s.png' % FILE
+    dot_path = "%s.dot" % FILE
+    png_path = "%s.png" % FILE
 
-    files = check_output('find gateway_code/ -name \\*py'
-                         ' ! -name __init__.py'
-                         ' -not -path "*integration/*"'
-                         ' -not -path "*cli/*"'
-                         ' -not -path "*tests*"', shell=True).splitlines()
+    files = check_output(
+        "find gateway_code/ -name \\*py"
+        " ! -name __init__.py"
+        ' -not -path "*integration/*"'
+        ' -not -path "*cli/*"'
+        ' -not -path "*tests*"',
+        shell=True,
+    ).splitlines()
 
     dot = generate_dot(files)
-    with open('%s.dot' % FILE, 'w+') as dot_file:
+    with open("%s.dot" % FILE, "w+") as dot_file:
         dot_file.write(dot)
         logging.debug("Dot written to %r", dot_path)
     try:
-        check_call(['dot', '-T', 'png', dot_path, '-o', png_path])
+        check_call(["dot", "-T", "png", dot_path, "-o", png_path])
     except OSError as err:
         logging.error("Cand find 'dot'. Graphviz is not installed")
         logging.error("%s", err)
@@ -145,6 +147,6 @@ def main():
         logging.debug("PNG written to %r", dot_path)
 
 
-if __name__ == '__main__':
-    logging.basicConfig(format='%(message)s', level=logging.DEBUG)
+if __name__ == "__main__":
+    logging.basicConfig(format="%(message)s", level=logging.DEBUG)
     main()

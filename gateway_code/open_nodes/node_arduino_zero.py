@@ -19,16 +19,16 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node Arduino Zero experiment implementation """
+"""Open Node Arduino Zero experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_daplink import NodeDapLinkBase
 
 
 class NodeArduinoZero(NodeDapLinkBase):
-    """ Open node Arduino Zero implementation """
+    """Open node Arduino Zero implementation"""
 
-    TYPE = 'arduino_zero'
-    OPENOCD_CFG_FILE = static_path('iot-lab-arduino-zero.cfg')
-    FW_IDLE = static_path('arduino-zero_idle.elf')
-    FW_AUTOTEST = static_path('arduino-zero_autotest.elf')
+    TYPE = "arduino_zero"
+    OPENOCD_CFG_FILE = static_path("iot-lab-arduino-zero.cfg")
+    FW_IDLE = static_path("arduino-zero_idle.elf")
+    FW_AUTOTEST = static_path("arduino-zero_autotest.elf")

@@ -20,16 +20,18 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" test serial_redirection module """
+"""test serial_redirection module"""
 
 import os
-import time
-import threading
 import signal
+import threading
+import time
 import unittest
+
 import mock
 
 from gateway_code.tests import utils
+
 from ..cli import serial_redirection
 
 # pylint <= 1.3
@@ -39,50 +41,49 @@ from ..cli import serial_redirection
 
 
 class TestMain(unittest.TestCase):
-    """ Main function tests """
+    """Main function tests"""
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
-    @mock.patch('signal.pause')
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock("m3"))
+    @mock.patch("signal.pause")
     def test_main_function(self, m_pause):
-        """ Test cli.serial_redirection main function
+        """Test cli.serial_redirection main function
 
         Run and simulate 'stop' with a Ctrl+C
         """
         m_pause.side_effect = KeyboardInterrupt()
 
-        args = ['serial_redirection.py']
-        with mock.patch('sys.argv', args):
+        args = ["serial_redirection.py"]
+        with mock.patch("sys.argv", args):
             serial_redirection.main()
             self.assertTrue(m_pause.called)
 
-    @mock.patch(utils.READ_CONFIG,
-                utils.read_config_mock('a8', linux_open_node_type='a8_m3'))
-    @mock.patch('signal.pause')
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock("a8", linux_open_node_type="a8_m3"))
+    @mock.patch("signal.pause")
     def test_open_linux_node(self, m_pause):
-        """ Test open Linux node cli.serial_redirection
+        """Test open Linux node cli.serial_redirection
 
         Run and simulate 'stop' with a Ctrl+C
         """
         m_pause.side_effect = KeyboardInterrupt()
 
-        args = ['serial_redirection.py']
-        with mock.patch('sys.argv', args):
+        args = ["serial_redirection.py"]
+        with mock.patch("sys.argv", args):
             serial_redirection.main()
             self.assertTrue(m_pause.called)
 
-    @mock.patch(utils.READ_CONFIG, utils.read_config_mock('m3'))
+    @mock.patch(utils.READ_CONFIG, utils.read_config_mock("m3"))
     def test_signal_handling(self):
-        """ Test signal handling """
+        """Test signal handling"""
         pid = os.getpid()
 
         def trigger_signal():
-            """ trigger sigterm signal """
+            """trigger sigterm signal"""
             time.sleep(2)
             os.kill(pid, signal.SIGTERM)
 
         thread = threading.Thread(target=trigger_signal)
         thread.daemon = True
         thread.start()
-        args = ['serial_redirection.py']
-        with mock.patch('sys.argv', args):
+        args = ["serial_redirection.py"]
+        with mock.patch("sys.argv", args):
             serial_redirection.main()

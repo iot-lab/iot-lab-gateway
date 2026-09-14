@@ -29,12 +29,17 @@ and methods to convert it to config commands
 
 
 class Profile:
+    """Experiment monitoring Profile"""
 
-    """ Experiment monitoring Profile """
-
-    def __init__(self, open_node_type,  # pylint:disable=unused-argument,R0917
-                 profilename, power,
-                 consumption=None, radio=None, **_kwargs):
+    def __init__(
+        self,
+        open_node_type,
+        profilename,
+        power,
+        consumption=None,
+        radio=None,
+        **_kwargs,
+    ):  # pylint:disable=unused-argument,R0917
         self.profilename = profilename
         self.power = power
 
@@ -45,12 +50,11 @@ class Profile:
         try:
             # add consumption (it needs power_source and alim)
             if consumption is not None:
-                _current = 'consumption'
-                self.consumption = Consumption(open_node_type.ALIM,
-                                               source=power, **consumption)
+                _current = "consumption"
+                self.consumption = Consumption(open_node_type.ALIM, source=power, **consumption)
             # add radio
             if radio is not None:
-                _current = 'radio'
+                _current = "radio"
                 self.radio = Radio(**radio)
 
         except TypeError as err:
@@ -58,9 +62,9 @@ class Profile:
 
     @classmethod
     def from_dict(cls, open_node_type, profile_dict):
-        """ Create Profile object from `profile_dict` and `open_node_type`
+        """Create Profile object from `profile_dict` and `open_node_type`
         If profile_dict is None, None is returned
-        :raises: ValueError on invalid profile_dict """
+        :raises: ValueError on invalid profile_dict"""
         if profile_dict is None:
             return None
         try:
@@ -70,27 +74,36 @@ class Profile:
 
 
 class Consumption:
+    """Consumption monitoring configuration"""
 
-    """ Consumption monitoring configuration """
     choices = {
-        'consumption': {
-            'period': [140, 204, 332, 588, 1100, 2116, 4156, 8244],
-            'average': [1, 4, 16, 64, 128, 256, 512, 1024]},
-        'alim': ('3.3V', '5V'),
+        "consumption": {
+            "period": [140, 204, 332, 588, 1100, 2116, 4156, 8244],
+            "average": [1, 4, 16, 64, 128, 256, 512, 1024],
+        },
+        "alim": ("3.3V", "5V"),
     }
 
-    def __init__(self, alim, source, period, average,  # pylint:disable=R0917
-                 power=False, voltage=False, current=False):
+    def __init__(
+        self,
+        alim,
+        source,
+        period,
+        average,
+        power=False,
+        voltage=False,
+        current=False,
+    ):  # pylint:disable=R0917
         _err = "Required values period/average for consumption measure."
         assert period is not None and average is not None, _err
         period = int(period)
         average = int(average)
 
-        assert period in self.choices['consumption']['period'], 'Period'
-        assert average in self.choices['consumption']['average'], 'Average'
-        assert alim in self.choices['alim'], 'Alim'
+        assert period in self.choices["consumption"]["period"], "Period"
+        assert average in self.choices["consumption"]["average"], "Average"
+        assert alim in self.choices["alim"], "Alim"
 
-        self.source = alim if source == 'dc' else 'BATT'
+        self.source = alim if source == "dc" else "BATT"
         self.period = period
         self.average = average
 
@@ -100,21 +113,19 @@ class Consumption:
 
 
 class Radio:
+    """Radio monitoring configuration"""
 
-    """ Radio monitoring configuration """
     choices = {
-        'radio': {'channels': range(11, 27)},
-        'rssi': {
-            'num_per_channel': range(0, 256),
-            'period': range(1, 2 ** 16)},
-        'sniffer': {'period': range(0, 2 ** 16)}
+        "radio": {"channels": range(11, 27)},
+        "rssi": {"num_per_channel": range(0, 256), "period": range(1, 2**16)},
+        "sniffer": {"period": range(0, 2**16)},
     }
 
     def __init__(self, mode, channels, period=None, num_per_channel=None):
         # power=None, pkt_size=None
-        assert channels, 'No channels'
+        assert channels, "No channels"
         for channel in channels:
-            assert channel in self.choices['radio']['channels'], 'Channel'
+            assert channel in self.choices["radio"]["channels"], "Channel"
 
         self.mode = mode
         self.channels = channels
@@ -131,7 +142,7 @@ class Radio:
         self._is_valid()
 
     def _is_valid(self):
-        """ raise ValueError if self is not a 'valid' configuration """
+        """raise ValueError if self is not a 'valid' configuration"""
 
         # Channels not empty
         # all channels must be in [11, 26]
@@ -147,9 +158,10 @@ class Radio:
             # num_per_channels is required when multiple channels are given
             _err = "Required 'num_per_channels' as multiple channels provided"
             assert len(self.channels) == 1 or self.num_per_channel != 0, _err
-            assert self.period in self.choices['rssi']['period'], 'Period'
-            assert self.num_per_channel in \
-                self.choices['rssi']['num_per_channel'], 'Num per channel'
+            assert self.period in self.choices["rssi"]["period"], "Period"
+            assert (
+                self.num_per_channel in self.choices["rssi"]["num_per_channel"]
+            ), "Num per channel"
 
         # Sniffer
         elif self.mode == "sniffer":
@@ -158,9 +170,9 @@ class Radio:
             # num_per_channels is required when multiple channels are given
             _err = "Required 'period' as multiple channels provided"
 
-            assert self.period in self.choices['sniffer']['period'], 'Period'
+            assert self.period in self.choices["sniffer"]["period"], "Period"
             # period only if there are more than 1 channel
-            assert bool(self.period) == (len(self.channels) != 1), 'Period'
-            assert self.num_per_channel is None, 'Num per channel'
+            assert bool(self.period) == (len(self.channels) != 1), "Period"
+            assert self.num_per_channel is None, "Num per channel"
 
-        assert self.mode in ('rssi', 'sniffer'), 'Mode'
+        assert self.mode in ("rssi", "sniffer"), "Mode"

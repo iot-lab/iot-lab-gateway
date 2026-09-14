@@ -20,7 +20,7 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" test mjpg_streamer module """
+"""test mjpg_streamer module"""
 
 import unittest
 
@@ -35,20 +35,20 @@ from ..cli import mjpg_streamer
 
 
 class TestMjpgStreamerMain(unittest.TestCase):
-    """ Main function tests """
+    """Main function tests"""
 
-    @mock.patch('gateway_code.utils.mjpg_streamer.MjpgStreamer')
-    @mock.patch('signal.pause')
+    @mock.patch("gateway_code.utils.mjpg_streamer.MjpgStreamer")
+    @mock.patch("signal.pause")
     def test_main_function(self, m_pause, m_streamer_class):
-        """ Test cli.mjpg_streamer main function
+        """Test cli.mjpg_streamer main function
 
         Run and simulate 'stop' with a Ctrl+C
         """
         streamer = m_streamer_class.return_value
         m_pause.side_effect = KeyboardInterrupt()
 
-        args = ['mjpg_streamer.py', '40000']
-        with mock.patch('sys.argv', args):
+        args = ["mjpg_streamer.py", "40000"]
+        with mock.patch("sys.argv", args):
             mjpg_streamer.main()
 
             self.assertTrue(m_pause.called)
@@ -58,9 +58,9 @@ class TestMjpgStreamerMain(unittest.TestCase):
 
 
 class TestMjpgStreamerParsing(unittest.TestCase):
-    """ PARSER tests """
+    """PARSER tests"""
 
     def test_parser(self):
-        """ Test cli.mjpg_streamer PARSER """
-        opts = mjpg_streamer.PARSER.parse_args(['40000'])
+        """Test cli.mjpg_streamer PARSER"""
+        opts = mjpg_streamer.PARSER.parse_args(["40000"])
         self.assertEqual(40000, opts.port)

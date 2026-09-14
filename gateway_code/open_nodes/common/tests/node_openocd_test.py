@@ -19,11 +19,12 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.common.node_openocd unit tests files """
+"""gateway_code.open_nodes.common.node_openocd unit tests files"""
 
 import unittest
+
 import serial
-from mock import patch, Mock
+from mock import Mock, patch
 
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 from gateway_code.open_nodes.node_microbit import NodeMicrobit
@@ -31,11 +32,12 @@ from gateway_code.open_nodes.node_microbit import NodeMicrobit
 
 class NodeOpenOCDTest(NodeOpenOCDBase):
     """A test node derived from NodeOpenOCDBase."""
-    TYPE = 'openocd_test'
-    TTY = '/dev/iotlab/ttyTestOpenOCD'
-    BIND_IP = '0.0.0.0'
+
+    TYPE = "openocd_test"
+    TTY = "/dev/iotlab/ttyTestOpenOCD"
+    BIND_IP = "0.0.0.0"
     BAUDRATE = 115200
-    ROM_START_ADDR = 0xaa
+    ROM_START_ADDR = 0xAA
     OPENOCD_CFG_FILE = NodeMicrobit.OPENOCD_CFG_FILE
     FW_IDLE = NodeMicrobit.FW_IDLE
     FW_AUTOTEST = NodeMicrobit.FW_AUTOTEST
@@ -48,8 +50,8 @@ class TestNodeOpenOCDBase(unittest.TestCase):
 
     def setUp(self):
         self.node = NodeOpenOCDTest()
-        self.fw_path = '/path/to/firmware'
-        openocd_class = patch('gateway_code.utils.openocd.OpenOCD').start()
+        self.fw_path = "/path/to/firmware"
+        openocd_class = patch("gateway_code.utils.openocd.OpenOCD").start()
         self.node.openocd = openocd_class.return_value
         self.node.openocd.flash.return_value = 0
         self.node.openocd.reset.return_value = 0
@@ -82,9 +84,9 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         # programmer instance
         assert self.node.programmer == self.node.openocd
 
-    @patch('serial.Serial')
-    @patch('gateway_code.common.wait_tty')
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("serial.Serial")
+    @patch("gateway_code.common.wait_tty")
+    @patch("gateway_code.common.wait_no_tty")
     def test_openocd_node_flash(self, no_tty, tty, ser):
         """Test flash function of an openocd based node."""
         no_tty.return_value = 0
@@ -92,8 +94,7 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         # Setup the node
         assert self.node.setup(self.fw_path) == 0
         assert self.node.openocd.flash.call_count == 1
-        self.node.openocd.flash.assert_called_with(
-            self.fw_path, False, self.node.ROM_START_ADDR)
+        self.node.openocd.flash.assert_called_with(self.fw_path, False, self.node.ROM_START_ADDR)
         assert ser.call_count == 0
         assert tty.call_count == 1
 
@@ -101,30 +102,35 @@ class TestNodeOpenOCDBase(unittest.TestCase):
         tty.call_count = 0
         assert self.node.teardown() == 0
         self.node.openocd.flash.assert_called_with(
-            self.node.FW_IDLE, False, self.node.ROM_START_ADDR)
+            self.node.FW_IDLE, False, self.node.ROM_START_ADDR
+        )
         assert tty.call_count == 1
 
         # Flash a firmware
         assert self.node.flash(self.fw_path) == 0
         tty.call_count = 0
-        self.node.openocd.flash.assert_called_with(
-            self.fw_path, False, self.node.ROM_START_ADDR)
+        self.node.openocd.flash.assert_called_with(self.fw_path, False, self.node.ROM_START_ADDR)
         assert ser.call_count == 0
         assert tty.call_count == 0
 
         assert self.node.flash() == 0
         self.node.openocd.flash.assert_called_with(
-            self.node.FW_IDLE, False, self.node.ROM_START_ADDR)
+            self.node.FW_IDLE, False, self.node.ROM_START_ADDR
+        )
         assert ser.call_count == 0
         assert tty.call_count == 0
 
         # Flash with DIRTY_SERIAL attribute
         # pylint:disable=invalid-name,attribute-defined-outside-init
-        with patch('gateway_code.open_nodes.common.tests.node_openocd_test.'
-                   'NodeOpenOCDTest.DIRTY_SERIAL', True):
+        with patch(
+            "gateway_code.open_nodes.common.tests.node_openocd_test."
+            "NodeOpenOCDTest.DIRTY_SERIAL",
+            True,
+        ):
             assert self.node.flash(self.fw_path) == 0
             self.node.openocd.flash.assert_called_with(
-                self.fw_path, False, self.node.ROM_START_ADDR)
+                self.fw_path, False, self.node.ROM_START_ADDR
+            )
             assert ser.call_count == 1
             assert tty.call_count == 0
 
@@ -132,13 +138,18 @@ class TestNodeOpenOCDBase(unittest.TestCase):
             ser.side_effect = serial.serialutil.SerialException
             assert self.node.flash() == 1
             self.node.openocd.flash.assert_called_with(
-                self.node.FW_IDLE, False, self.node.ROM_START_ADDR)
+                self.node.FW_IDLE, False, self.node.ROM_START_ADDR
+            )
 
         # Flash with JLINK_SERIAL attribute
         # pylint:disable=invalid-name,attribute-defined-outside-init
-        with patch('gateway_code.open_nodes.common.tests.node_openocd_test.'
-                   'NodeOpenOCDTest.JLINK_SERIAL', True):
+        with patch(
+            "gateway_code.open_nodes.common.tests.node_openocd_test."
+            "NodeOpenOCDTest.JLINK_SERIAL",
+            True,
+        ):
             assert self.node.flash(self.fw_path) == 0
             self.node.openocd.flash.assert_called_with(
-                self.fw_path, False, self.node.ROM_START_ADDR)
+                self.fw_path, False, self.node.ROM_START_ADDR
+            )
             assert tty.call_count == 1

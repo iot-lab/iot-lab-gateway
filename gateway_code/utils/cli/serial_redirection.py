@@ -19,10 +19,12 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" CLI client for serial_redirection """
+"""CLI client for serial_redirection"""
 
 import signal
+
 from gateway_code import board_config
+
 from . import log_to_stderr
 
 
@@ -40,7 +42,7 @@ def _handle_signal(signum, frame):
 
 @log_to_stderr
 def main():
-    """ serial_redirection cli main function """
+    """serial_redirection cli main function"""
     # Catch SIGTERM signal sending by start-stop-daemon
     # init script
     signal.signal(signal.SIGTERM, _handle_signal)
@@ -48,10 +50,10 @@ def main():
     node = _get_node(board_cfg)
     try:
         node.serial_redirection.start()
-        print('Press Ctrl+C to stop')
+        print("Press Ctrl+C to stop")
         signal.pause()
     except KeyboardInterrupt:
         pass
     finally:
         node.serial_redirection.stop()
-        print('Stopped')
+        print("Stopped")

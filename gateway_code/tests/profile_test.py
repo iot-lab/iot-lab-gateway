@@ -20,17 +20,18 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Test profile creation with valid and invalids profiles jsons """
+"""Test profile creation with valid and invalids profiles jsons"""
 
-import unittest
+import json
 import os
 import re
-import json
-from gateway_code.profile import Profile
-from gateway_code.open_nodes.node_m3 import NodeM3
+import unittest
 
-CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + '/'
-PROFILES_DIR = CURRENT_DIR + 'profiles/'
+from gateway_code.open_nodes.node_m3 import NodeM3
+from gateway_code.profile import Profile
+
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__)) + "/"
+PROFILES_DIR = CURRENT_DIR + "profiles/"
 
 # pylint: disable=missing-docstring
 # pylint: disable=invalid-name
@@ -48,8 +49,9 @@ class TestsSimpleProfile(unittest.TestCase):
 
     def test_simple_profiles(self):
 
-        files = [PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR)
-                 if re.match("simple", _json)]
+        files = [
+            PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR) if re.match("simple", _json)
+        ]
 
         for profile_file in files:
             ret = Profile.from_dict(NodeM3, profile_dict(profile_file))
@@ -57,12 +59,14 @@ class TestsSimpleProfile(unittest.TestCase):
 
     def test_invalid_profiles(self):
 
-        files = [PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR)
-                 if re.match("invalid_simple", _json)]
+        files = [
+            PROFILES_DIR + _json
+            for _json in os.listdir(PROFILES_DIR)
+            if re.match("invalid_simple", _json)
+        ]
 
         for profile_file in files:
-            self.assertRaises(ValueError, Profile.from_dict,
-                              NodeM3, profile_dict(profile_file))
+            self.assertRaises(ValueError, Profile.from_dict, NodeM3, profile_dict(profile_file))
 
     def test_profile_from_dict_empty(self):
         self.assertIsNone(Profile.from_dict(NodeM3, None))
@@ -72,8 +76,11 @@ class TestsConsumptionProfile(unittest.TestCase):
 
     def test_consumption_profiles(self):
 
-        files = [PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR)
-                 if re.match("consumption", _json)]
+        files = [
+            PROFILES_DIR + _json
+            for _json in os.listdir(PROFILES_DIR)
+            if re.match("consumption", _json)
+        ]
 
         for profile_file in files:
             ret = Profile.from_dict(NodeM3, profile_dict(profile_file))
@@ -81,19 +88,22 @@ class TestsConsumptionProfile(unittest.TestCase):
 
     def test_invalid_profiles_consumption(self):
 
-        files = [PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR)
-                 if re.match("invalid_consumption", _json)]
+        files = [
+            PROFILES_DIR + _json
+            for _json in os.listdir(PROFILES_DIR)
+            if re.match("invalid_consumption", _json)
+        ]
         for profile_file in files:
-            self.assertRaises(ValueError, Profile.from_dict,
-                              NodeM3, profile_dict(profile_file))
+            self.assertRaises(ValueError, Profile.from_dict, NodeM3, profile_dict(profile_file))
 
 
 class TestsRadioProfile(unittest.TestCase):
 
     def test_radio_profiles(self):
 
-        files = [PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR)
-                 if re.match("radio", _json)]
+        files = [
+            PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR) if re.match("radio", _json)
+        ]
 
         for profile_file in files:
             ret = Profile.from_dict(NodeM3, profile_dict(profile_file))
@@ -101,18 +111,21 @@ class TestsRadioProfile(unittest.TestCase):
 
     def test_invalid_radio_profiles(self):
 
-        files = [PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR)
-                 if re.match("invalid_radio", _json)]
+        files = [
+            PROFILES_DIR + _json
+            for _json in os.listdir(PROFILES_DIR)
+            if re.match("invalid_radio", _json)
+        ]
         for profile_file in files:
-            self.assertRaises(ValueError, Profile.from_dict,
-                              NodeM3, profile_dict(profile_file))
+            self.assertRaises(ValueError, Profile.from_dict, NodeM3, profile_dict(profile_file))
 
 
 class TestsMixedProfile(unittest.TestCase):
 
     def test_mixed_profiles(self):
-        files = [PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR)
-                 if re.match("mixed", _json)]
+        files = [
+            PROFILES_DIR + _json for _json in os.listdir(PROFILES_DIR) if re.match("mixed", _json)
+        ]
 
         for profile_file in files:
             ret = Profile.from_dict(NodeM3, profile_dict(profile_file))

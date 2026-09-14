@@ -23,9 +23,9 @@
 # pylint: disable=missing-docstring
 # pylint: disable=too-many-public-methods
 
+import logging
 import tempfile
 import unittest
-import logging
 
 try:
     from cStringIO import StringIO
@@ -40,11 +40,11 @@ from gateway_code import gateway_logging
 class TestGatewayLogging(unittest.TestCase):
 
     def test_multiple_calls(self):
-        logger = logging.getLogger('gateway_code')
+        logger = logging.getLogger("gateway_code")
 
-        gateway_logging.init_logger('.')
+        gateway_logging.init_logger(".")
         handlers_one = logger.handlers
-        gateway_logging.init_logger('.')
+        gateway_logging.init_logger(".")
         handlers_two = logger.handlers
 
         self.assertEqual(handlers_one, handlers_two)
@@ -56,7 +56,7 @@ class TestGatewayLogging(unittest.TestCase):
             log_handler = gateway_logging.user_logger(log_file.name)
 
             logger.addHandler(log_handler)
-            test_log = 'Test log'
+            test_log = "Test log"
 
             logger.info(test_log)
             log_handler.close()
@@ -66,15 +66,15 @@ class TestGatewayLogging(unittest.TestCase):
             self.assertNotEqual(0, len(log_content))
             self.assertIn(test_log, log_content)
 
-    @mock.patch('sys.stdout', new_callable=StringIO)
+    @mock.patch("sys.stdout", new_callable=StringIO)
     def test_stdout_logging(self, fake_stdout):
-        logger = logging.getLogger('gateway_code')
+        logger = logging.getLogger("gateway_code")
         for handler in logger.handlers:
             logger.removeHandler(handler)
 
         gateway_logging.init_logger(tempfile.gettempdir(), log_stdout=True)
 
-        test_log = 'Test log'
+        test_log = "Test log"
         logger.info(test_log)
 
         # sys.stdout received some data

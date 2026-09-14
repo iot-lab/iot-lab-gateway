@@ -29,21 +29,24 @@
 
 import time
 import unittest
+
 import mock
 
 from gateway_code.open_nodes.node_m3 import NodeM3  # config file
 from gateway_code.utils.openocd import OpenOCDArgs
+
 from .. import openocd
 
 
-@mock.patch('gateway_code.utils.subprocess_timeout.call')
+@mock.patch("gateway_code.utils.subprocess_timeout.call")
 class TestsMethods(unittest.TestCase):
-    """ Tests openocd methods """
+    """Tests openocd methods"""
+
     def setUp(self):
         self.ocd = openocd.OpenOCD.from_node(NodeM3)
 
     def test_flash(self, call_mock):
-        """ Test flash """
+        """Test flash"""
         call_mock.return_value = 0
         ret = self.ocd.flash(NodeM3.FW_IDLE)
         self.assertEqual(0, ret)
@@ -52,24 +55,24 @@ class TestsMethods(unittest.TestCase):
         ret = self.ocd.flash(NodeM3.FW_IDLE)
         self.assertEqual(42, ret)
 
-    @mock.patch('gateway_code.common.abspath')
+    @mock.patch("gateway_code.common.abspath")
     def test_flash_binary(self, abspath_mock, call_mock):
-        """ Test flash a binary firmware"""
-        fw_path = '/tmp/firmware.bin'
+        """Test flash a binary firmware"""
+        fw_path = "/tmp/firmware.bin"
         abspath_mock.return_value = fw_path
         call_mock.return_value = 0
         ret = self.ocd.flash(fw_path, binary=True, offset=42)
         self.assertEqual(0, ret)
-        command_list = call_mock.call_args[1]['args']
+        command_list = call_mock.call_args[1]["args"]
         self.assertEqual(
             " ".join(command_list[-10:]),
-            openocd.OpenOCD.FLASH_BIN.format(
-                firmware=fw_path, offset=hex(42)
-            ).replace('"', '').strip()
+            openocd.OpenOCD.FLASH_BIN.format(firmware=fw_path, offset=hex(42))
+            .replace('"', "")
+            .strip(),
         )
 
     def test_reset(self, call_mock):
-        """ Test reset"""
+        """Test reset"""
         call_mock.return_value = 0
         ret = self.ocd.reset()
         self.assertEqual(0, ret)
@@ -78,7 +81,7 @@ class TestsMethods(unittest.TestCase):
         ret = self.ocd.reset()
         self.assertEqual(42, ret)
 
-    @mock.patch('subprocess.Popen')
+    @mock.patch("subprocess.Popen")
     def test_debug(self, popen_mock, call_mock):
         """Test debug."""
         # Stop without debugging
@@ -90,17 +93,21 @@ class TestsMethods(unittest.TestCase):
         self.assertTrue(popen_mock.called)
 
         # Verify command
-        command_list = popen_mock.call_args[1]['args']
+        command_list = popen_mock.call_args[1]["args"]
         self.assertEqual(len(command_list), 14)
         self.assertEqual(command_list[0], NodeM3.OPENOCD_PATH)
         self.assertEqual(
             command_list[-8:],
             [
-                '-c', 'bindto 0.0.0.0',
-                '-c', 'init',
-                '-c', 'targets',
-                '-c', 'reset halt',
-            ]
+                "-c",
+                "bindto 0.0.0.0",
+                "-c",
+                "init",
+                "-c",
+                "targets",
+                "-c",
+                "reset halt",
+            ],
         )
         assert command_list[-9] == NodeM3.OPENOCD_OPTS[0]
         # don't test middle args as depends on local path
@@ -117,7 +124,7 @@ class TestsMethods(unittest.TestCase):
         ret = self.ocd.debug_stop()
         self.assertEqual(0, ret)
 
-    @mock.patch('subprocess.Popen')
+    @mock.patch("subprocess.Popen")
     def test_debug_error_stop(self, popen_mock, _):
         """Test error on debug_stop."""
         popen_mock.return_value.terminate.side_effect = OSError()
@@ -128,7 +135,8 @@ class TestsMethods(unittest.TestCase):
 
 
 class TestsCall(unittest.TestCase):
-    """ Tests openocd call timeout """
+    """Tests openocd call timeout"""
+
     def setUp(self):
         self.timeout = 5
         self.ocd = openocd.OpenOCD.from_node(NodeM3, timeout=self.timeout)
@@ -136,9 +144,9 @@ class TestsCall(unittest.TestCase):
 
     def test_timeout_call(self):
         """Test timeout reached."""
-        self.ocd._openocd_args.return_value = {'args': ['sleep', '10']}
+        self.ocd._openocd_args.return_value = {"args": ["sleep", "10"]}
         t_0 = time.time()
-        ret = self.ocd._call_cmd('sleep')
+        ret = self.ocd._call_cmd("sleep")
         t_end = time.time()
 
         # Not to much more
@@ -147,9 +155,9 @@ class TestsCall(unittest.TestCase):
 
     def test_no_timeout(self):
         """Test timeout not reached."""
-        self.ocd._openocd_args.return_value = {'args': ['sleep', '1']}
+        self.ocd._openocd_args.return_value = {"args": ["sleep", "1"]}
         t_0 = time.time()
-        ret = self.ocd._call_cmd('sleep')
+        ret = self.ocd._call_cmd("sleep")
         t_end = time.time()
 
         # Strictly lower here
@@ -163,13 +171,13 @@ class TestsFlashInvalidPaths(unittest.TestCase):
             IOError,
             openocd.OpenOCD,
             OpenOCDArgs(
-                'openocd',
-                '/invalid/path',
+                "openocd",
+                "/invalid/path",
                 (),
                 "0.0.0.0",
                 None,
                 None,
-            )
+            ),
         )
 
     def test_invalid_openocd_path(self):
@@ -177,24 +185,24 @@ class TestsFlashInvalidPaths(unittest.TestCase):
             IOError,
             openocd.OpenOCD,
             OpenOCDArgs(
-                '/wrong/openocd',
-                '/invalid/path',
+                "/wrong/openocd",
+                "/invalid/path",
                 (),
                 "0.0.0.0",
                 None,
                 None,
-            )
+            ),
         )
 
     def test_invalid_firmware_path(self):
         ret = openocd.OpenOCD(
             OpenOCDArgs(
-                'openocd',
+                "openocd",
                 NodeM3.OPENOCD_CFG_FILE,
                 (),
                 "0.0.0.0",
                 None,
                 None,
             )
-        ).flash('/invalid/path')
+        ).flash("/invalid/path")
         self.assertNotEqual(0, ret)

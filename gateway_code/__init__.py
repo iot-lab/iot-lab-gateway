@@ -1,4 +1,4 @@
-""" gateway_code package """
+"""gateway_code package"""
 
 # This file is a part of IoT-LAB gateway_code
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
@@ -20,4 +20,4 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-__version__ = '2.12.0'
+__version__ = "2.12.0"

@@ -19,17 +19,17 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node STM32 CELL02 (NB-IoT) experiment implementation """
+"""Open Node STM32 CELL02 (NB-IoT) experiment implementation"""
 
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_st_link import NodeStLinkBase
 
 
 class NodeStCell02(NodeStLinkBase):
-    """ Open node STM32 CELL02 (NB-IoT) implementation """
+    """Open node STM32 CELL02 (NB-IoT) implementation"""
 
-    TYPE = 'st_cell02'
+    TYPE = "st_cell02"
     ROM_START_ADDR = 0x08000000
-    OPENOCD_CFG_FILE = static_path('iot-lab-st-cell02.cfg')
-    FW_IDLE = static_path('st-cell02_idle.elf')
-    FW_AUTOTEST = static_path('st-cell02_autotest.elf')
+    OPENOCD_CFG_FILE = static_path("iot-lab-st-cell02.cfg")
+    FW_IDLE = static_path("st-cell02_idle.elf")
+    FW_AUTOTEST = static_path("st-cell02_autotest.elf")

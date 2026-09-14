@@ -19,37 +19,45 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node M3 experiment implementation """
+"""Open Node M3 experiment implementation"""
 
 import gateway_code.utils.ftdi_check
-
 from gateway_code.config import static_path
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
 class NodeM3(NodeOpenOCDBase):
-    """ Open node M3 implementation """
+    """Open node M3 implementation"""
 
-    TYPE = 'm3'
-    TTY = '/dev/iotlab/ttyON_M3'
+    TYPE = "m3"
+    TTY = "/dev/iotlab/ttyON_M3"
     BAUDRATE = 500000
     ROM_START_ADDR = 0x08000000
-    OPENOCD_CFG_FILE = static_path('iot-lab.cfg')
-    OPENOCD_OPTS = (static_path('iot-lab-m3.cfg'),)
-    FW_IDLE = static_path('m3_idle.elf')
-    FW_AUTOTEST = static_path('m3_autotest.elf')
-    ALIM = '3.3V'
+    OPENOCD_CFG_FILE = static_path("iot-lab.cfg")
+    OPENOCD_OPTS = (static_path("iot-lab-m3.cfg"),)
+    FW_IDLE = static_path("m3_idle.elf")
+    FW_AUTOTEST = static_path("m3_autotest.elf")
+    ALIM = "3.3V"
     AUTOTEST_AVAILABLE = [
-        'echo', 'get_time',  # mandatory
-        'get_uid',
-        'get_pressure', 'get_light', 'test_flash',
-        'get_accelero', 'get_gyro', 'get_magneto',
-        'test_gpio', 'test_i2c',
-        'radio_pkt', 'radio_ping_pong',
-        'leds_consumption',
-        'leds_on', 'leds_off', 'leds_blink',
+        "echo",
+        "get_time",  # mandatory
+        "get_uid",
+        "get_pressure",
+        "get_light",
+        "test_flash",
+        "get_accelero",
+        "get_gyro",
+        "get_magneto",
+        "test_gpio",
+        "test_i2c",
+        "radio_pkt",
+        "radio_ping_pong",
+        "leds_consumption",
+        "leds_on",
+        "leds_off",
+        "leds_blink",
     ]
 
     def status(self):
-        """ Check M3 node status """
-        return gateway_code.utils.ftdi_check.ftdi_check('m3', '2232')
+        """Check M3 node status"""
+        return gateway_code.utils.ftdi_check.ftdi_check("m3", "2232")

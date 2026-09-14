@@ -19,35 +19,32 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.node_pycom unit tests files """
+"""gateway_code.open_nodes.node_pycom unit tests files"""
 
 import shlex
-
 import unittest
+
 import serial
 from mock import patch
 
-from gateway_code.open_nodes.node_pycom import NodePycom
-from gateway_code.open_nodes.node_pycom import PYCOM_UPDATE_BIN
-from gateway_code.open_nodes.node_pycom import PYCOM_FLASH_ERASE_HARD
+from gateway_code.open_nodes.node_pycom import PYCOM_FLASH_ERASE_HARD, PYCOM_UPDATE_BIN, NodePycom
 
 
-@patch('serial.Serial')
+@patch("serial.Serial")
 class TestNodePycom(unittest.TestCase):
     """Unittest class for pycom nodes."""
 
     def setUp(self):
         self.node = NodePycom()
-        self.pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN,
-                                                       port=self.node.TTY)
-        patch('time.sleep').start()
+        self.pycom_str = PYCOM_FLASH_ERASE_HARD.format(bin=PYCOM_UPDATE_BIN, port=self.node.TTY)
+        patch("time.sleep").start()
 
     def tearDown(self):
         patch.stopall()
 
-    @patch('subprocess.call')
-    @patch('gateway_code.common.wait_tty')
-    @patch('gateway_code.utils.external_process.ExternalProcess.start')
+    @patch("subprocess.call")
+    @patch("gateway_code.common.wait_tty")
+    @patch("gateway_code.utils.external_process.ExternalProcess.start")
     def test_setup(self, serial_start, wait, call, ser):
         """Test pycom node setup."""
         serial_start.return_value = 0
@@ -81,8 +78,8 @@ class TestNodePycom(unittest.TestCase):
         call.assert_called_with(shlex.split(self.pycom_str))
         assert ser.call_count == 3
 
-    @patch('subprocess.call')
-    @patch('gateway_code.utils.external_process.ExternalProcess.stop')
+    @patch("subprocess.call")
+    @patch("gateway_code.utils.external_process.ExternalProcess.stop")
     def test_teardown(self, serial_stop, call, ser):
         """Test pycom node teardown."""
         serial_stop.return_value = 0

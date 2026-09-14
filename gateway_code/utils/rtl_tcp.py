@@ -20,35 +20,31 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Module managing the open node RTL SDR TCP server """
-
-import shlex
+"""Module managing the open node RTL SDR TCP server"""
 
 import logging
+import shlex
 
 from .external_process import ExternalProcess
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
 
 class RtlTcp(ExternalProcess):
-    """ Class providing node RTL SDR TCP server
+    """Class providing node RTL SDR TCP server
 
     It's implemented as a stoppable thread running rtl_tcp in a loop.
     """
-    RTL_TCP = ('/usr/bin/rtl_tcp '
-               '-a 0.0.0.0 '
-               '-p {port} '
-               '-f {frequency}')
+
+    RTL_TCP = "/usr/bin/rtl_tcp -a 0.0.0.0 -p {port} -f {frequency}"
     NAME = "rtl_tcp"
 
     def __init__(self, port, frequency):
-        self.process_cmd = shlex.split(self.RTL_TCP.format(
-            port=port, frequency=frequency))
+        self.process_cmd = shlex.split(self.RTL_TCP.format(port=port, frequency=frequency))
         super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""
         if retcode and self._run:
-            LOGGER.warning('%s error or restarted', self.NAME)
+            LOGGER.warning("%s error or restarted", self.NAME)
         return retcode

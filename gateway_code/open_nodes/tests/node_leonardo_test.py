@@ -19,25 +19,27 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" gateway_code.open_nodes.node_leonardo unit tests files """
+"""gateway_code.open_nodes.node_leonardo unit tests files"""
 
 import unittest
-from mock import patch, Mock
+
+from mock import Mock, patch
 
 from gateway_code.open_nodes.node_leonardo import NodeLeonardo
 
 
-@patch('gateway_code.common.wait_tty')
+@patch("gateway_code.common.wait_tty")
 class TestNodeLeonardo(unittest.TestCase):
     """Unittest class for leonardo nodes."""
 
     def setUp(self):
         self.node = NodeLeonardo()
-        self.fw_path = '/path/to/firmware'
-        self.trigger_bootloader = patch('gateway_code.utils.avrdude.'
-                                        'AvrDude.trigger_bootloader').start()
+        self.fw_path = "/path/to/firmware"
+        self.trigger_bootloader = patch(
+            "gateway_code.utils.avrdude.AvrDude.trigger_bootloader"
+        ).start()
         self.trigger_bootloader.return_value = 0
-        avrdude_class = patch('gateway_code.utils.avrdude.AvrDude').start()
+        avrdude_class = patch("gateway_code.utils.avrdude.AvrDude").start()
         self.node.avrdude = avrdude_class.return_value
         self.node.avrdude.flash.return_value = 0
         self.node.serial_redirection.start = Mock()
@@ -59,7 +61,7 @@ class TestNodeLeonardo(unittest.TestCase):
         # Node status always returns 0
         assert self.node.status() == 0
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_setup(self, wait_no_tty, wait_tty):
         """Test setup function of a leonardo node."""
         wait_no_tty.return_value = 0
@@ -73,7 +75,7 @@ class TestNodeLeonardo(unittest.TestCase):
         self.node.serial_redirection.start.assert_called_once()
         assert self.node.serial_redirection.stop.call_count == 0
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_teardown(self, wait_no_tty, wait_tty):
         """Test teardown of a leonardo node."""
         wait_no_tty.return_value = 0
@@ -86,7 +88,7 @@ class TestNodeLeonardo(unittest.TestCase):
         self.node.serial_redirection.stop.assert_called_once()
         assert self.node.serial_redirection.start.call_count == 0
 
-    @patch('gateway_code.common.wait_no_tty')
+    @patch("gateway_code.common.wait_no_tty")
     def test_flash(self, wait_no_tty, wait_tty):
         """Test flash of a leonardo node."""
         wait_no_tty.return_value = 0

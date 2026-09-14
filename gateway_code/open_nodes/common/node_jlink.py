@@ -19,18 +19,18 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" Open Node JLink based experiment implementation """
+"""Open Node JLink based experiment implementation"""
 
 from gateway_code.open_nodes.common.node_openocd import NodeOpenOCDBase
 
 
 class NodeJLinkBase(NodeOpenOCDBase):
     # pylint:disable=no-member
-    """ Open node JLink implemention """
+    """Open node JLink implemention"""
 
-    OPENOCD_PATH = '/opt/openocd-dev/bin/openocd'
+    OPENOCD_PATH = "/opt/openocd-dev/bin/openocd"
     OPENOCD_SERIAL_CMD = "-c 'jlink serial {serial}'"
-    TTY = '/dev/iotlab/ttyON_JLINK'
+    TTY = "/dev/iotlab/ttyON_JLINK"
     BAUDRATE = 115200
     JLINK_SERIAL = True
     DIRTY_SERIAL = True

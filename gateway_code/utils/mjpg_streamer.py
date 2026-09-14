@@ -20,39 +20,41 @@
 # knowledge of the CeCILL license and that you accept its terms.
 
 
-""" Module managing the open node mjpg_streamer video stream server """
+"""Module managing the open node mjpg_streamer video stream server"""
 
+import logging
 import os
 import shlex
 
-import logging
-
 from .external_process import ExternalProcess
 
-LOGGER = logging.getLogger('gateway_code')
+LOGGER = logging.getLogger("gateway_code")
 
-LOG_DIR = '/var/log/gateway-server'
-MJPG_STREAMER_LOG_FILE = os.path.join(LOG_DIR, 'mjpg_streamer.log')
+LOG_DIR = "/var/log/gateway-server"
+MJPG_STREAMER_LOG_FILE = os.path.join(LOG_DIR, "mjpg_streamer.log")
 
 
 class MjpgStreamer(ExternalProcess):
-    """ Class providing node mjpg_streamer server
+    """Class providing node mjpg_streamer server
 
     It's implemented as a stoppable thread running mjpg_streamer in a loop.
     """
-    MJPG_STREAMER = ('/usr/bin/mjpg_streamer '
-                     '-i \'input_raspicam.so -fps 2 -x 320 -y 240 -drc high '
-                     '-st -ex auto -sh 100\' '
-                     '-o \'output_http.so -p {port}\'')
+
+    MJPG_STREAMER = (
+        "/usr/bin/mjpg_streamer "
+        "-i 'input_raspicam.so -fps 2 -x 320 -y 240 -drc high "
+        "-st -ex auto -sh 100' "
+        "-o 'output_http.so -p {port}'"
+    )
     NAME = "mjpg_streamer"
 
     def __init__(self, port):
         self.process_cmd = shlex.split(self.MJPG_STREAMER.format(port=port))
-        self.stdout = open(MJPG_STREAMER_LOG_FILE, 'w')
+        self.stdout = open(MJPG_STREAMER_LOG_FILE, "w")
         super().__init__()
 
     def check_error(self, retcode):
         """Print debug message and check error."""
         if retcode and self._run:
-            LOGGER.warning('%s error or restarted', self.NAME)
+            LOGGER.warning("%s error or restarted", self.NAME)
         return retcode

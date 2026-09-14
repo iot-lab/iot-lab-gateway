@@ -29,47 +29,47 @@ Author: Gaëtan Harter gaetan.harter@inria.fr
 
 import re
 import time
+
 import serial
 
 
 class SerialExpect:
-    """ Simple Expect implementation for serial """
+    """Simple Expect implementation for serial"""
 
     def __init__(self, tty, baudrate, logger=None):
-        self.fd = serial.Serial(tty, baudrate,  # pylint:disable=invalid-name
-                                timeout=0.1)
+        self.fd = serial.Serial(tty, baudrate, timeout=0.1)  # pylint:disable=invalid-name
         self.logger = logger
 
     def close(self):
-        """ Close connection """
+        """Close connection"""
         try:
             self.fd.close()
         except AttributeError:
             pass
 
     def send(self, data):
-        """ Write given data to serial with newline"""
-        self.fd.write((data + '\n').encode())
+        """Write given data to serial with newline"""
+        self.fd.write((data + "\n").encode())
 
-    def expect_list(self, pattern_list, timeout=float('+inf')):
-        """ expect multiple patterns """
+    def expect_list(self, pattern_list, timeout=float("+inf")):
+        """expect multiple patterns"""
         # concatenate in a single pattern
-        pattern = '(' + ')|('.join(pattern_list) + ')'
+        pattern = "(" + ")|(".join(pattern_list) + ")"
         return self.expect(pattern, timeout)
 
-    def expect(self, pattern, timeout=float('+inf')):
-        """ expect pattern
+    def expect(self, pattern, timeout=float("+inf")):
+        """expect pattern
         return matching string on match
         return '' on timeout
-        It cannot match multiline pattern correctly """
+        It cannot match multiline pattern correctly"""
 
-        if '\n' in pattern:
+        if "\n" in pattern:
             raise ValueError("Does not handle multiline patterns with '\\n'")
 
         end_time = time.time() + timeout
 
-        buff = ''
-        print_buff = ''
+        buff = ""
+        print_buff = ""
         regexp = re.compile(pattern)
         while True:
             # get new data
@@ -88,19 +88,19 @@ class SerialExpect:
 
             # add new bytes to remaining of last line
             # no multiline patterns
-            buff = buff.rsplit('\n', maxsplit=1)[-1]
-            buff += read_bytes.decode('latin-1')
+            buff = buff.rsplit("\n", maxsplit=1)[-1]
+            buff += read_bytes.decode("latin-1")
 
             # print each line with timestamp on front
             if self.logger is not None:
-                print_buff += read_bytes.decode('latin-1')
+                print_buff += read_bytes.decode("latin-1")
                 lines = print_buff.splitlines()
 
                 # keep last line in buffer if not newline terminated
-                if print_buff[-1] not in '\r\n':
+                if print_buff[-1] not in "\r\n":
                     print_buff = lines.pop(-1)
                 else:
-                    print_buff = ''
+                    print_buff = ""
 
                 # print all lines
                 for line in lines:
@@ -116,7 +116,7 @@ class SerialExpect:
                 return match.group(0)
 
             # continue
-        return ''
+        return ""
 
     def __enter__(self):
         return self
@@ -126,22 +126,23 @@ class SerialExpect:
 
 
 class SerialExpectForSocket(SerialExpect):
-    """ Simple Expect implementation for tcp connection adapter """
+    """Simple Expect implementation for tcp connection adapter"""
 
     # Just a hack to use the same class without changing init
-    def __init__(self,  # pylint:disable=super-init-not-called
-                 host='localhost', port=20000, logger=None):
-        self.fd = self.try_connect(f'socket://{host}:{port}', timeout=0.1)
+    def __init__(
+        self, host="localhost", port=20000, logger=None
+    ):  # pylint:disable=super-init-not-called
+        self.fd = self.try_connect(f"socket://{host}:{port}", timeout=0.1)
         self.logger = logger
 
     @staticmethod
     def try_connect(url, tries=10, step=0.5, *args, **kwargs):
-        """ Try connecting 'tries' time to url tuple
+        """Try connecting 'tries' time to url tuple
         Sleep 'step' between each tries.
         If last trial fails, the SerialException is raised
 
         The goal is to be resilient to the fact that serial_aggregator might be
-        (re)starting.  """
+        (re)starting."""
         # pylint:disable=keyword-arg-before-vararg
         # Run 'tries -1' times with 'try except'
         for _ in range(0, tries - 1):
@@ -154,6 +155,6 @@ class SerialExpectForSocket(SerialExpect):
         return serial.serial_for_url(url, *args, **kwargs)
 
     def close(self):
-        """ Close connection and wait until it's restartable """
+        """Close connection and wait until it's restartable"""
         super().close()
         time.sleep(1)  # Wait SerialRedirection restarts and can be reconnected

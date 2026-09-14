@@ -33,6 +33,7 @@ import unittest
 import mock
 
 from gateway_code.open_nodes.node_samr21 import NodeSamr21
+
 from .. import edbg
 
 
@@ -42,7 +43,7 @@ class TestsMethods(unittest.TestCase):
     def setUp(self):
         self.edbg = edbg.Edbg()
 
-    @mock.patch('gateway_code.utils.subprocess_timeout.call')
+    @mock.patch("gateway_code.utils.subprocess_timeout.call")
     def test_flash(self, call_mock):
         """Test flash."""
         call_mock.return_value = 0
@@ -55,12 +56,13 @@ class TestsMethods(unittest.TestCase):
         self.assertEqual(84, ret)
 
     def test_invalid_firmware_path(self):
-        ret = self.edbg.flash('/invalid/path')
+        ret = self.edbg.flash("/invalid/path")
         self.assertNotEqual(0, ret)
 
 
 class TestsCall(unittest.TestCase):
-    """ Tests edbg call timeout """
+    """Tests edbg call timeout"""
+
     def setUp(self):
         self.timeout = 5
         self.edbg = edbg.Edbg(timeout=self.timeout)
@@ -68,9 +70,9 @@ class TestsCall(unittest.TestCase):
 
     def test_timeout_call(self):
         """Test timeout reached."""
-        self.edbg._edbg_args.return_value = {'args': ['sleep', '10']}
+        self.edbg._edbg_args.return_value = {"args": ["sleep", "10"]}
         t_0 = time.time()
-        ret = self.edbg._call_cmd('sleep')
+        ret = self.edbg._call_cmd("sleep")
         t_end = time.time()
 
         # Not to much more
@@ -79,9 +81,9 @@ class TestsCall(unittest.TestCase):
 
     def test_no_timeout(self):
         """Test timeout not reached."""
-        self.edbg._edbg_args.return_value = {'args': ['sleep', '1']}
+        self.edbg._edbg_args.return_value = {"args": ["sleep", "1"]}
         t_0 = time.time()
-        ret = self.edbg._call_cmd('sleep')
+        ret = self.edbg._call_cmd("sleep")
         t_end = time.time()
 
         # Strictly lower here

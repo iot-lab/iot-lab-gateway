@@ -19,7 +19,7 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-""" CLI client for rtl_tcp
+"""CLI client for rtl_tcp
 
 Usage: rtl_tcp <port> <frequency>
 
@@ -27,26 +27,27 @@ Usage: rtl_tcp <port> <frequency>
 
 import argparse
 import signal
+
 from .. import rtl_tcp
 from . import log_to_stderr
 
 PARSER = argparse.ArgumentParser()
-PARSER.add_argument('port', type=int, help="Server TCP port")
-PARSER.add_argument('frequency', type=int, help="Center frequency in Hz")
+PARSER.add_argument("port", type=int, help="Server TCP port")
+PARSER.add_argument("frequency", type=int, help="Center frequency in Hz")
 
 
 @log_to_stderr
 def main():
-    """ rtl_tcp cli main function """
+    """rtl_tcp cli main function"""
 
     opts = PARSER.parse_args()
     process = rtl_tcp.RtlTcp(opts.port, opts.frequency)
     try:
         process.start()
-        print('Press Ctrl+C to stop')
+        print("Press Ctrl+C to stop")
         signal.pause()
     except KeyboardInterrupt:
         pass
     finally:
         process.stop()
-        print('Stopped')
+        print("Stopped")
