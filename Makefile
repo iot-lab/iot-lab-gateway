@@ -65,7 +65,7 @@ endif
 run: setup-cfg-dir setup-exp-dir
 	docker run -it --rm \
 		-v $(PWD):/shared \
-		-v /dev/iotlab:/dev/iotlab \
+		-v /dev:/dev \
 		$(DOCKER_CN_MAPPING) \
 		-v /tmp/cfg_dir:/var/local/config \
 		-v /tmp/exp_dir:$(WORKDIR) \

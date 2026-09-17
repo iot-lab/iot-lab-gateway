@@ -1,5 +1,5 @@
 FROM ubuntu:22.04
-MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
+LABEL org.opencontainers.image.authors="admin@iot-lab.info"
 
 # This file is a part of IoT-LAB gateway_code
 # Copyright (C) 2015 INRIA (Contact: admin@iot-lab.info)
@@ -20,10 +20,10 @@ MAINTAINER Cédric Roussel <cedric.roussel@inria.fr>
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_FRONTEND=noninteractive
 
-ENV LC_ALL C.UTF-8
-ENV LANG C.UTF-8
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
 
 RUN apt-get update && \
     apt-get install -y git \
@@ -31,6 +31,7 @@ RUN apt-get update && \
         python3-dev \
         python3-setuptools \
         socat \
+        screen \
         # openocd
         build-essential \
         libftdi-dev \
@@ -136,9 +137,15 @@ RUN git clone https://github.com/iot-lab/pycom-utils && \
 # Install gateway rest server
 RUN python3 -m pip install build hatch
 
+RUN python3 -m pip install setuptools>=64
+
 WORKDIR /setup_dir
 COPY . /setup_dir/
+
+RUN python3 -m pip install --upgrade pip
+
 RUN python3 -m pip install .
+
 RUN rm -r /setup_dir
 
 #test with M3 config
