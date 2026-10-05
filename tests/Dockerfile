@@ -21,31 +21,17 @@ FROM fitiotlab/iot-lab-gateway:latest
 
 # Update
 RUN apt-get update && \
-    apt-get install -y sudo python3-pip valgrind gdb gdb-multiarch
-
-# Install app dependencies
-RUN python3 -m pip install --upgrade pip && \
-    python3 -m pip install tox codecov
-
-RUN apt-get -y --no-install-recommends install \
-    ca-certificates \
-    curl
-
-RUN export KEY=B42F6819007F00F88E364FD4036A9C25BF357DD4; \
-    for server in $(shuf -e ha.pool.sks-keyservers.net \
-                            hkp://p80.pool.sks-keyservers.net:80 \
-                            keyserver.ubuntu.com \
-                            hkp://keyserver.ubuntu.com:80 \
-                            keyserver.pgp.com \
-                            pgp.mit.edu) ; do \
-        gpg --batch --keyserver "$server" --recv-keys $KEY && break || : ; \
-    done;
-
-RUN curl -o /usr/local/bin/gosu -SL "https://github.com/tianon/gosu/releases/download/1.4/gosu-$(dpkg --print-architecture)" \
-    && curl -o /usr/local/bin/gosu.asc -SL "https://github.com/tianon/gosu/releases/download/1.4/gosu-$(dpkg --print-architecture).asc" \
-    && gpg --verify /usr/local/bin/gosu.asc \
-    && rm /usr/local/bin/gosu.asc \
-    && chmod +x /usr/local/bin/gosu
+    apt-get install -y --no-install-recommends \
+        gdb \
+        gdb-multiarch \
+        gosu \
+        # tox commands (clean-test-files)
+        make \
+        sudo \
+        tox \
+        valgrind \
+        && \
+    rm -rf /var/lib/apt/lists/*
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 

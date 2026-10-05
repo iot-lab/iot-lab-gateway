@@ -1,1 +1,8 @@
 docker/
+.git
+.tox
+.eggs
+**/__pycache__
+**/*.pyc
+build
+dist

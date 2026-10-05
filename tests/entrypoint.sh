@@ -29,4 +29,4 @@ chown -R $USER_ID /iotlab/users
 
 export HOME=/shared
 
-exec /usr/local/bin/gosu user "$@"
+exec gosu user "$@"
