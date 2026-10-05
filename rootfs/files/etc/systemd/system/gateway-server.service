@@ -1,0 +1,15 @@
+[Unit]
+Description=IoT-LAB gateway REST server
+Requires=iotlab-boot-setup.service
+After=iotlab-boot-setup.service gateway-server-network.service
+
+[Service]
+# gateway-server-daemon starts one server per open node in the background
+# (start-stop-daemon), the servers stay in the cgroup of this unit
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/gateway-server-daemon start
+ExecStop=/usr/local/sbin/gateway-server-daemon stop
+
+[Install]
+WantedBy=multi-user.target

@@ -19,18 +19,30 @@
 # The fact that you are presently reading this means that you have had
 # knowledge of the CeCILL license and that you accept its terms.
 
-# Image of the gateway code (stages tools and gateway):
+# Images of the gateway code, sharing the same tools and gateway installation
+# (stages tools and gateway):
 #
 # - dev (default target): runs the gateway REST server in a container, see
 #   DOCKER.md. Image fitiotlab/iot-lab-gateway, base of the tests image.
 #
 #       docker build -t fitiotlab/iot-lab-gateway .
+#
+# - rootfs: root filesystem of the IoT-LAB gateways, deployed by
+#   iot-lab-install and booted read-only over NFS, see rootfs/README.md.
+#   Platforms linux/arm/v7 (A8, Raspberry Pi 2/3/4), linux/arm64 (RPi 5).
+#
+#       docker buildx build --target rootfs --platform linux/arm/v7 \
+#           --build-context a8-kernel=<deploy dir of the iot-lab-yocto a8 target> .
 
 ARG DEBIAN_RELEASE=trixie
 
-# Optional input, empty unless given as a named build context:
+# Optional inputs of the rootfs target, empty unless given as named build
+# contexts:
+#   a8-kernel: deploy directory of the iot-lab-yocto a8 target (uImage and
+#              modules-var-som-am35.tgz), used for linux/arm/v7 only
 #   jlink:     extracted Segger J-Link software for the target architecture,
 #              installed in /usr/local/share/JLink (not redistributable)
+FROM scratch AS a8-kernel
 FROM scratch AS jlink
 
 #
@@ -73,6 +85,7 @@ RUN apt-get update && \
         python3 \
         ruby \
         texinfo \
+        u-boot-tools \
         && \
     rm -rf /var/lib/apt/lists/*
 
@@ -144,6 +157,12 @@ RUN git_checkout https://github.com/iot-lab/pycom-utils.git ${PYCOM_UTILS_REV} p
     install -d /out/usr/local/share/pycom/eps32/tools/fw_updater && \
     cp pycom-utils/*.py /out/usr/local/share/pycom/eps32/tools/fw_updater/
 
+# Second stage U-Boot script of the Raspberry Pi 2/3/4 gateways (rootfs)
+COPY rootfs/boot/rpi-uboot.cmd /src/
+RUN mkdir -p /boot-files && \
+    mkimage -A arm -O linux -T script -C none -n "IoT-LAB gateway" \
+        -d /src/rpi-uboot.cmd /boot-files/rpi-uboot.scr
+
 #
 # gateway: the gateway code, its udev rules and the tools it uses
 #
@@ -204,6 +223,115 @@ RUN usermod -a -G dialout,plugdev www-data && \
     install -d -o www-data -g www-data -m 755 /var/www && \
     install -d -o www-data -g www-data -m 700 /var/www/.ssh && \
     mkdir -p /var/local/config /iotlab/users
+
+#
+# rootfs: root filesystem of the gateways (rootfs/README.md)
+#
+FROM gateway AS rootfs
+
+ARG DEBIAN_RELEASE
+ARG RASPBERRYPI_ARCHIVE=http://archive.raspberrypi.com/debian
+
+# Kernels of the Raspberry Pi gateways come from the Raspberry Pi archive,
+# pinned so that only the packages explicitly requested come from it
+COPY rootfs/files/etc/apt/preferences.d/raspberrypi /etc/apt/preferences.d/raspberrypi
+ADD https://archive.raspberrypi.com/debian/raspberrypi.gpg.key /tmp/raspberrypi.gpg.key
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends gpg && \
+    gpg --dearmor -o /usr/share/keyrings/raspberrypi-archive-keyring.gpg /tmp/raspberrypi.gpg.key && \
+    rm /tmp/raspberrypi.gpg.key && \
+    printf '%s\n' \
+        "Types: deb" \
+        "URIs: ${RASPBERRYPI_ARCHIVE}" \
+        "Suites: ${DEBIAN_RELEASE}" \
+        "Components: main" \
+        "Signed-By: /usr/share/keyrings/raspberrypi-archive-keyring.gpg" \
+        > /etc/apt/sources.list.d/raspberrypi.sources && \
+    apt-get purge -y --auto-remove gpg && \
+    rm -rf /var/lib/apt/lists/*
+
+# System of a netbooted gateway. No systemd-sysv: /sbin/init is the overlay
+# init script of the image
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        busybox-static \
+        chrony \
+        iproute2 \
+        iputils-ping \
+        kmod \
+        less \
+        logrotate \
+        nfs-common \
+        openssh-server \
+        procps \
+        psmisc \
+        systemd \
+        udev \
+        vim-tiny \
+        && \
+    rm -rf /var/lib/apt/lists/*
+
+# Kernels, device trees and boot files, gathered per gateway type in
+# /boot/iotlab/<type> (copied to the site TFTP server by iot-lab-install)
+COPY --from=tools /boot-files/rpi-uboot.scr /tmp/rpi-uboot.scr
+COPY rootfs/boot/rpi5/config.txt /tmp/rpi5-config.txt
+COPY --from=a8-kernel / /tmp/a8-kernel/
+RUN set -eu; \
+    rpi_boot() { \
+        flavour=$1; target=$2; kernel=$3; dtbs=$4; \
+        mkdir -p /boot/iotlab/$target; \
+        cp /boot/vmlinuz-*-rpi-$flavour /boot/iotlab/$target/$kernel; \
+        find /usr/lib/linux-image-*-rpi-$flavour -name "$dtbs" \
+            -exec cp {} /boot/iotlab/$target/ \; ; \
+    }; \
+    apt-get update; \
+    case "$(dpkg --print-architecture)" in \
+    armhf) \
+        apt-get install -y --no-install-recommends \
+            linux-image-rpi-v7 linux-image-rpi-v7l; \
+        rpi_boot v7 rpi2 zImage 'bcm27*.dtb'; \
+        rpi_boot v7 rpi3 zImage 'bcm27*.dtb'; \
+        rpi_boot v7l rpi4 zImage 'bcm27*.dtb'; \
+        for target in rpi2 rpi3 rpi4; do \
+            cp /tmp/rpi-uboot.scr /boot/iotlab/$target/boot.scr; \
+        done; \
+        mkdir -p /boot/iotlab/a8; \
+        if [ -e /tmp/a8-kernel/uImage ]; then \
+            cp -L /tmp/a8-kernel/uImage /boot/iotlab/a8/uImage; \
+        fi; \
+        if [ -e /tmp/a8-kernel/modules-var-som-am35.tgz ]; then \
+            tar -xzf /tmp/a8-kernel/modules-var-som-am35.tgz -C /; \
+        fi; \
+        ;; \
+    arm64) \
+        apt-get install -y --no-install-recommends linux-image-rpi-2712; \
+        rpi_boot 2712 rpi5 Image 'bcm2712*.dtb'; \
+        cp -r "$(find /usr/lib/linux-image-*-rpi-2712 -type d -name overlays | head -1)" \
+            /boot/iotlab/rpi5/overlays; \
+        cp /tmp/rpi5-config.txt /boot/iotlab/rpi5/config.txt; \
+        ;; \
+    *) \
+        echo "unsupported architecture $(dpkg --print-architecture)"; exit 1 ;; \
+    esac; \
+    rm -rf /tmp/rpi-uboot.scr /tmp/rpi5-config.txt /tmp/a8-kernel \
+        /boot/vmlinuz-* /boot/initrd.img-* /boot/System.map-* /boot/config-* \
+        /var/lib/apt/lists/*
+
+# Boot and services configuration
+COPY rootfs/files/ /
+RUN chmod 440 /etc/sudoers.d/www-data && \
+    systemctl enable iotlab-boot-setup.service gateway-server-network.service \
+        gateway-server.service chrony.service ssh.service && \
+    # the kernel configures eth0 for the NFS root: keep the kernel interface
+    # names (the gateway code uses eth0) and never touch the network
+    mkdir -p /etc/systemd/network && \
+    ln -sf /dev/null /etc/systemd/network/99-default.link && \
+    # mount points of the overlay init (/sbin/init)
+    mkdir -p /overlay /mnt/oldroot && \
+    # empty machine-id: generated at each boot, unique per node
+    : > /etc/machine-id && \
+    : > /etc/fstab && \
+    rm -f /etc/ssh/ssh_host_*
 
 #
 # dev: gateway REST server in a container (default target), see DOCKER.md

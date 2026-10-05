@@ -1,0 +1,9 @@
+# The gateway server logs are written in RAM (overlay root filesystem)
+/var/log/gateway-server/*.log /var/log/gateway-server/*/*.log {
+    size 2M
+    rotate 2
+    missingok
+    notifempty
+    copytruncate
+    compress
+}

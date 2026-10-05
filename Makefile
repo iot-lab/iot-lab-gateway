@@ -21,6 +21,33 @@ build-docker-image:
 build-docker-image-test: build-docker-image
 	docker build -t $(DOCKER_IMAGE_TEST) tests
 
+# Gateway root filesystem images (see rootfs/README.md)
+ROOTFS_IMAGE ?= fitiotlab/iot-lab-gateway-rootfs
+ROOTFS_TAG ?= $(shell git describe --tags --always --dirty)
+ROOTFS_PLATFORMS ?= linux/arm/v7,linux/arm64
+# Deploy directory of the iot-lab-yocto a8 target (A8 gateway kernel)
+A8_KERNEL_DIR ?=
+# Extracted Segger J-Link software (not redistributable)
+JLINK_DIR ?=
+
+ROOTFS_BUILD = docker buildx build --target rootfs \
+	$(if $(A8_KERNEL_DIR),--build-context a8-kernel=$(A8_KERNEL_DIR)) \
+	$(if $(JLINK_DIR),--build-context jlink=$(JLINK_DIR)) \
+	-t $(ROOTFS_IMAGE):$(ROOTFS_TAG)
+
+.PHONY: rootfs-image-armhf rootfs-image-arm64 rootfs-push
+
+# Build one platform and load it in the local Docker daemon
+rootfs-image-armhf:
+	$(ROOTFS_BUILD) --platform linux/arm/v7 --load .
+
+rootfs-image-arm64:
+	$(ROOTFS_BUILD) --platform linux/arm64 --load .
+
+# Build all platforms and push the multi-platform image to the registry
+rootfs-push:
+	$(ROOTFS_BUILD) --platform $(ROOTFS_PLATFORMS) --push .
+
 setup-udev-rules:
 	sudo cp bin/rules.d/* /etc/udev/rules.d/.
 	sudo udevadm control --reload-rules

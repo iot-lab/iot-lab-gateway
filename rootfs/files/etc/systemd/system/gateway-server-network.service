@@ -1,0 +1,14 @@
+[Unit]
+Description=IoT-LAB gateway open node addresses (gateways with several open nodes)
+Requires=iotlab-boot-setup.service
+After=iotlab-boot-setup.service
+Before=gateway-server.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/gateway-server-network start
+ExecStop=/usr/local/sbin/gateway-server-network stop
+
+[Install]
+WantedBy=multi-user.target

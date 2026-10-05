@@ -4,6 +4,11 @@ Docker Image of iot-lab-gateway
 The provided Dockerfile builds a Docker image that installs all the necessary dependencies listed in [INSTALL.md](INSTALL.md), 
 without you having to install them on the host machine. 
 
+It is the default target (`dev`) of the Dockerfile, based on Debian trixie. The
+same Dockerfile also builds the root filesystem of the gateways (`rootfs`
+target, see [rootfs/README.md](rootfs/README.md)): both images share the
+build of the tools and the installation of the gateway code.
+
 The only prerequisite on the host before running the container for the first time is to install udev rules on the host, which is done with:
 
     python setup.py udev_rules_install

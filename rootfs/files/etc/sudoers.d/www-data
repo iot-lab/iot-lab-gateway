@@ -1,0 +1,6 @@
+# The gateway server (www-data) controls the USB ports and the LoRa gateway
+www-data ALL= NOPASSWD: /usr/bin/ykushcmd
+www-data ALL= NOPASSWD:SETENV: /opt/lora/start.sh
+www-data ALL= NOPASSWD:SETENV: /usr/bin/python3
+www-data ALL= NOPASSWD:SETENV: /usr/sbin/uhubctl
+www-data ALL= NOPASSWD:SETENV: /usr/bin/udevadm
