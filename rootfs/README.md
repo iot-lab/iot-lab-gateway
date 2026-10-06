@@ -2,8 +2,8 @@
 
 The `rootfs` target of the repository `Dockerfile` builds the root filesystem
 of the IoT-LAB gateways as an OCI image, based on Debian trixie. It replaces
-the Yocto gateway images (iot-lab-yocto). The image is not run as a container: iot-lab-install
-unpacks it on the site host, exports it read-only over NFS and the gateways
+the Yocto gateway images (iot-lab-yocto). The image is not run as a container:
+iot-lab-install unpacks it on the site host, exports it read-only over NFS and the gateways
 boot it as their root filesystem, with a RAM overlay on top of it.
 Deployment is documented in iot-lab-install (`GATEWAY_ROOTFS.md`).
 
@@ -18,25 +18,77 @@ Raspberry Pi 5 gateways netboot from their EEPROM bootloader.
 
 ## Build
 
-The build uses Docker buildx. The ARM platforms are built under emulation on
-an x86 host: install the qemu binfmt handlers first, for example with
-`docker run --privileged --rm tonistiigi/binfmt --install arm,arm64`.
+The build uses Docker buildx.
+
+### Prerequisite: ARM emulation
+
+On an x86 host the steps of the ARM images that run on the target platform
+(package installation, kernel installation) are emulated (qemu user mode):
+the qemu binfmt handlers must be registered in the host kernel. Without them
+the build fails at its first `RUN` with:
+
+    exec /bin/sh: exec format error
+
+Register them, either persistently (Debian/Ubuntu package, registered at
+boot by systemd-binfmt):
+
+    $ sudo apt install qemu-user-binfmt
+
+or until the next reboot, without installing anything:
+
+    $ docker run --privileged --rm tonistiigi/binfmt --install arm,arm64
+
+Check that they are registered and that an ARM container runs:
+
+    $ ls /proc/sys/fs/binfmt_misc/ | grep qemu      # qemu-arm, qemu-aarch64
+    $ docker run --rm --platform linux/arm/v7 debian:trixie uname -m    # armv7l
+    $ docker run --rm --platform linux/arm64 debian:trixie uname -m     # aarch64
+
+The tools not packaged in Debian (`tools` stage: openocd, oml2...) are
+cross-compiled on the build machine, with the Debian cross toolchain of the
+target (`crossbuild-essential-armhf`, `crossbuild-essential-arm64`): only the
+package installations run emulated. The following builds reuse the cached
+layers.
+
+### Build
 
     $ make rootfs-image-armhf A8_KERNEL_DIR=<iot-lab-yocto>/build-a8/tmp/deploy/images/var-som-am35
     $ make rootfs-image-arm64
 
-These targets load the image in the local Docker daemon. `make rootfs-push`
-builds both platforms and pushes the multi-platform image to the registry
-(this needs a buildx builder with the `docker-container` driver:
-`docker buildx create --use`).
+These targets build one platform and load the image in the local Docker
+daemon. Check its boot files:
+
+    $ docker run --rm --platform linux/arm/v7 fitiotlab/iot-lab-gateway-rootfs:<tag> ls -l /boot/iotlab/*
+    $ docker run --rm --platform linux/arm64 fitiotlab/iot-lab-gateway-rootfs:<tag> ls -l /boot/iotlab/rpi5
+
+`make rootfs-push` builds both platforms and pushes the multi-platform image
+to the registry (log in first with `docker login`):
+
+    $ docker login
+    $ make rootfs-push ROOTFS_TAG=<tag> A8_KERNEL_DIR=<...>
+
+The default buildx builder (`docker` driver) can't build or push
+multi-platform images ("Multi-platform build is not supported for the docker
+driver"): `rootfs-push` uses its own builder with the `docker-container`
+driver, `iot-lab-multiarch` (`ROOTFS_BUILDER`), created on first use by
+`make rootfs-builder`. The default builder is left as it is, the
+`rootfs-image-*` targets keep loading their image in the local daemon. The
+`docker-container` builder has its own build cache: the first push rebuilds
+everything.
+
+The kernel modules and `uImage` of the A8 gateways come from the iot-lab-yocto
+`a8` target (`make TARGET=a8 build-kernel`): the A8 kernel needs
+`CONFIG_OVERLAY_FS=y`.
 
 Variables:
 
 * `ROOTFS_IMAGE`: image name, `fitiotlab/iot-lab-gateway-rootfs` by default
 * `ROOTFS_TAG`: image tag, `git describe` by default
 * `A8_KERNEL_DIR`: deploy directory of the iot-lab-yocto `a8` target. The
-  A8 gateway kernel (`uImage`, zImage with the device tree appended) and its
-  modules are taken from there. Without it the image has no A8 kernel.
+  A8 gateway kernel (`uImage`, zImage with the device tree appended) is taken
+  from there, and its modules (`modules-var-som-am35.tgz`) if the kernel has
+  some: the current one is built without modules. Without it the image has no
+  A8 kernel.
 * `JLINK_DIR`: extracted Segger J-Link software for the target architecture,
   installed in `/usr/local/share/JLink`. It is not redistributable, so it is
   not downloaded by the build.
@@ -62,7 +114,7 @@ copied by iot-lab-install to the site TFTP server:
 | `rpi5`      | `Image`, `bcm2712*.dtb`, `overlays/`, `config.txt`           |
 
 The Raspberry Pi kernels come from the Raspberry Pi archive
-(`linux-image-rpi-v7`, `linux-image-rpi-v7l`, `linux-image-rpi-2712`).
+(`linux-image-rpi-v7` for the Raspberry Pi 2/3/4, `linux-image-rpi-2712`).
 The A8 kernel needs `CONFIG_OVERLAY_FS=y`.
 
 ## Boot sequence on the gateway

@@ -35,7 +35,11 @@ ROOTFS_BUILD = docker buildx build --target rootfs \
 	$(if $(JLINK_DIR),--build-context jlink=$(JLINK_DIR)) \
 	-t $(ROOTFS_IMAGE):$(ROOTFS_TAG)
 
-.PHONY: rootfs-image-armhf rootfs-image-arm64 rootfs-push
+# buildx builder of the multi-platform build: the docker driver of the
+# default builder can't build or push multi-platform images
+ROOTFS_BUILDER ?= iot-lab-multiarch
+
+.PHONY: rootfs-image-armhf rootfs-image-arm64 rootfs-builder rootfs-push
 
 # Build one platform and load it in the local Docker daemon
 rootfs-image-armhf:
@@ -44,9 +48,14 @@ rootfs-image-armhf:
 rootfs-image-arm64:
 	$(ROOTFS_BUILD) --platform linux/arm64 --load .
 
+# Create the multi-platform builder (docker-container driver) if missing
+rootfs-builder:
+	docker buildx inspect $(ROOTFS_BUILDER) > /dev/null 2>&1 || \
+		docker buildx create --name $(ROOTFS_BUILDER) --driver docker-container
+
 # Build all platforms and push the multi-platform image to the registry
-rootfs-push:
-	$(ROOTFS_BUILD) --platform $(ROOTFS_PLATFORMS) --push .
+rootfs-push: rootfs-builder
+	$(ROOTFS_BUILD) --builder $(ROOTFS_BUILDER) --platform $(ROOTFS_PLATFORMS) --push .
 
 setup-udev-rules:
 	sudo cp bin/rules.d/* /etc/udev/rules.d/.
