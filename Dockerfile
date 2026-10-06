@@ -40,9 +40,13 @@ ARG DEBIAN_RELEASE=trixie
 # contexts:
 #   a8-kernel: deploy directory of the iot-lab-yocto a8 target (uImage and
 #              modules-var-som-am35.tgz), used for linux/arm/v7 only
+#   a8-kernel-mtd-rw: deploy directory of the a8 kernel with writable NAND
+#              partitions (uImage, make TARGET=a8 build-kernel-mtd-rw), to
+#              update the A8 bootloader, linux/arm/v7 only
 #   jlink:     extracted Segger J-Link software for the target architecture,
 #              installed in /usr/local/share/JLink (not redistributable)
 FROM scratch AS a8-kernel
+FROM scratch AS a8-kernel-mtd-rw
 FROM scratch AS jlink
 
 #
@@ -318,7 +322,11 @@ RUN apt-get update && \
         iputils-ping \
         kmod \
         less \
+        # fw_printenv, fw_setenv (A8 U-Boot environment, /etc/fw_env.config)
+        libubootenv-tool \
         logrotate \
+        # flash_erase, nandwrite, nanddump (A8 NAND)
+        mtd-utils \
         nfs-common \
         openssh-server \
         procps \
@@ -336,6 +344,7 @@ RUN apt-get update && \
 COPY --from=tools /boot-files/rpi-uboot.scr /tmp/rpi-uboot.scr
 COPY rootfs/boot/rpi5/config.txt /tmp/rpi5-config.txt
 COPY --from=a8-kernel / /tmp/a8-kernel/
+COPY --from=a8-kernel-mtd-rw / /tmp/a8-kernel-mtd-rw/
 RUN set -eu; \
     rpi_boot() { \
         flavour=$1; target=$2; kernel=$3; dtbs=$4; \
@@ -362,6 +371,9 @@ RUN set -eu; \
         if [ -e /tmp/a8-kernel/uImage ]; then \
             cp -L /tmp/a8-kernel/uImage /boot/iotlab/a8/uImage; \
         fi; \
+        if [ -e /tmp/a8-kernel-mtd-rw/uImage ]; then \
+            cp -L /tmp/a8-kernel-mtd-rw/uImage /boot/iotlab/a8/uImage-mtd-rw; \
+        fi; \
         if [ -e /tmp/a8-kernel/modules-var-som-am35.tgz ]; then \
             tar -xzf /tmp/a8-kernel/modules-var-som-am35.tgz -C /; \
         fi; \
@@ -375,7 +387,7 @@ RUN set -eu; \
     *) \
         echo "unsupported architecture $(dpkg --print-architecture)"; exit 1 ;; \
     esac; \
-    rm -rf /tmp/rpi-uboot.scr /tmp/rpi5-config.txt /tmp/a8-kernel \
+    rm -rf /tmp/rpi-uboot.scr /tmp/rpi5-config.txt /tmp/a8-kernel /tmp/a8-kernel-mtd-rw \
         /boot/vmlinuz-* /boot/initrd.img-* /boot/System.map-* /boot/config-* \
         /var/lib/apt/lists/*
 

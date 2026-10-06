@@ -65,7 +65,7 @@ daemon. Check its boot files:
 to the registry (log in first with `docker login`):
 
     $ docker login
-    $ make rootfs-push ROOTFS_TAG=<tag> A8_KERNEL_DIR=<...>
+    $ make rootfs-push ROOTFS_TAG=<tag> A8_KERNEL_DIR=<...> A8_KERNEL_MTD_RW_DIR=<...>
 
 The default buildx builder (`docker` driver) can't build or push
 multi-platform images ("Multi-platform build is not supported for the docker
@@ -89,6 +89,11 @@ Variables:
   from there, and its modules (`modules-var-som-am35.tgz`) if the kernel has
   some: the current one is built without modules. Without it the image has no
   A8 kernel.
+* `A8_KERNEL_MTD_RW_DIR`: deploy directory of the A8 kernel with writable
+  NAND partitions (iot-lab-yocto `make TARGET=a8 build-kernel-mtd-rw`,
+  `build-a8/tmp/deploy/images/var-som-am35-mtd-rw`), installed as
+  `/boot/iotlab/a8/uImage-mtd-rw`. Booted on demand to update the A8
+  bootloader (iot-lab-install `GATEWAY_ROOTFS.md`).
 * `JLINK_DIR`: extracted Segger J-Link software for the target architecture,
   installed in `/usr/local/share/JLink`. It is not redistributable, so it is
   not downloaded by the build.
@@ -109,7 +114,7 @@ copied by iot-lab-install to the site TFTP server:
 
 | Type        | Files                                                        |
 |-------------|--------------------------------------------------------------|
-| `a8`        | `uImage`, loaded by the U-Boot of the board NAND             |
+| `a8`        | `uImage` (and `uImage-mtd-rw`), loaded by the NAND U-Boot    |
 | `rpi2/3/4`  | `boot.scr` (second stage U-Boot script), `zImage`, `*.dtb`   |
 | `rpi5`      | `Image`, `bcm2712*.dtb`, `overlays/`, `config.txt`           |
 
@@ -144,3 +149,8 @@ keeps the kernel interface names (`eth0`).
 
 The image has no ssh host keys and no authorized keys: iot-lab-install adds
 the ones of the site when it deploys the image.
+
+For the A8 NAND, the image has `fw_printenv`/`fw_setenv` (U-Boot
+environment, `/etc/fw_env.config`) and the mtd-utils (`flash_erase`,
+`nandwrite`, `nanddump`). Writing needs the `uImage-mtd-rw` kernel: the
+NAND partitions are read-only with `uImage`.

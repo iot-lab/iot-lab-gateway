@@ -27,11 +27,15 @@ ROOTFS_TAG ?= $(shell git describe --tags --always --dirty)
 ROOTFS_PLATFORMS ?= linux/arm/v7,linux/arm64
 # Deploy directory of the iot-lab-yocto a8 target (A8 gateway kernel)
 A8_KERNEL_DIR ?=
+# Deploy directory of the A8 kernel with writable NAND partitions
+# (iot-lab-yocto: make TARGET=a8 build-kernel-mtd-rw)
+A8_KERNEL_MTD_RW_DIR ?=
 # Extracted Segger J-Link software (not redistributable)
 JLINK_DIR ?=
 
 ROOTFS_BUILD = docker buildx build --target rootfs \
 	$(if $(A8_KERNEL_DIR),--build-context a8-kernel=$(A8_KERNEL_DIR)) \
+	$(if $(A8_KERNEL_MTD_RW_DIR),--build-context a8-kernel-mtd-rw=$(A8_KERNEL_MTD_RW_DIR)) \
 	$(if $(JLINK_DIR),--build-context jlink=$(JLINK_DIR)) \
 	-t $(ROOTFS_IMAGE):$(ROOTFS_TAG)
 
