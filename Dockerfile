@@ -289,22 +289,24 @@ ARG DEBIAN_RELEASE
 ARG RASPBERRYPI_ARCHIVE=http://archive.raspberrypi.com/debian
 
 # Kernels of the Raspberry Pi gateways come from the Raspberry Pi archive,
-# pinned so that only the packages explicitly requested come from it
+# pinned so that only the packages explicitly requested come from it. Its
+# signing key comes from the raspberrypi-archive-keyring package (the
+# raspberrypi.gpg.key file of the archive has binding signatures rejected by
+# the trixie apt policy).
+ARG RASPBERRYPI_KEYRING=raspberrypi-archive-keyring_2025.1+rpt1_all.deb
 COPY rootfs/files/etc/apt/preferences.d/raspberrypi /etc/apt/preferences.d/raspberrypi
-ADD https://archive.raspberrypi.com/debian/raspberrypi.gpg.key /tmp/raspberrypi.gpg.key
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends gpg && \
-    gpg --dearmor -o /usr/share/keyrings/raspberrypi-archive-keyring.gpg /tmp/raspberrypi.gpg.key && \
-    rm /tmp/raspberrypi.gpg.key && \
+ADD --checksum=sha256:2e727149d7acb8cc7f604e66d0049161039c8aa1eaf1175e54f9e69d963d60e4 \
+    https://archive.raspberrypi.com/debian/pool/main/r/raspberrypi-archive-keyring/${RASPBERRYPI_KEYRING} \
+    /tmp/${RASPBERRYPI_KEYRING}
+RUN dpkg -i /tmp/${RASPBERRYPI_KEYRING} && \
+    rm /tmp/${RASPBERRYPI_KEYRING} && \
     printf '%s\n' \
         "Types: deb" \
         "URIs: ${RASPBERRYPI_ARCHIVE}" \
         "Suites: ${DEBIAN_RELEASE}" \
         "Components: main" \
-        "Signed-By: /usr/share/keyrings/raspberrypi-archive-keyring.gpg" \
-        > /etc/apt/sources.list.d/raspberrypi.sources && \
-    apt-get purge -y --auto-remove gpg && \
-    rm -rf /var/lib/apt/lists/*
+        "Signed-By: /usr/share/keyrings/raspberrypi-archive-keyring.pgp" \
+        > /etc/apt/sources.list.d/raspberrypi.sources
 
 # System of a netbooted gateway. No systemd-sysv: /sbin/init is the overlay
 # init script of the image
@@ -328,7 +330,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # Kernels, device trees and boot files, gathered per gateway type in
-# /boot/iotlab/<type> (copied to the site TFTP server by iot-lab-install)
+# /boot/iotlab/<type> (copied to the site TFTP server by iot-lab-install).
+# INITRD=No: no initramfs, the kernel mounts its NFS root itself (and the
+# initramfs generation fails under emulation).
 COPY --from=tools /boot-files/rpi-uboot.scr /tmp/rpi-uboot.scr
 COPY rootfs/boot/rpi5/config.txt /tmp/rpi5-config.txt
 COPY --from=a8-kernel / /tmp/a8-kernel/
@@ -337,17 +341,20 @@ RUN set -eu; \
         flavour=$1; target=$2; kernel=$3; dtbs=$4; \
         mkdir -p /boot/iotlab/$target; \
         cp /boot/vmlinuz-*-rpi-$flavour /boot/iotlab/$target/$kernel; \
-        find /usr/lib/linux-image-*-rpi-$flavour -name "$dtbs" \
+        # device trees: /usr/lib/modules/<version>/dtb (armhf) or
+        # dtb/broadcom (arm64), overlays in dtb/overlays
+        find /usr/lib/modules/*-rpi-$flavour/dtb -name "$dtbs" \
             -exec cp {} /boot/iotlab/$target/ \; ; \
     }; \
     apt-get update; \
     case "$(dpkg --print-architecture)" in \
     armhf) \
-        apt-get install -y --no-install-recommends \
-            linux-image-rpi-v7 linux-image-rpi-v7l; \
+        # the v7 kernel covers the Raspberry Pi 2, 3 and 4 (the Raspberry Pi
+        # archive has no LPAE v7l kernel for trixie)
+        INITRD=No apt-get install -y --no-install-recommends linux-image-rpi-v7; \
         rpi_boot v7 rpi2 zImage 'bcm27*.dtb'; \
         rpi_boot v7 rpi3 zImage 'bcm27*.dtb'; \
-        rpi_boot v7l rpi4 zImage 'bcm27*.dtb'; \
+        rpi_boot v7 rpi4 zImage 'bcm27*.dtb'; \
         for target in rpi2 rpi3 rpi4; do \
             cp /tmp/rpi-uboot.scr /boot/iotlab/$target/boot.scr; \
         done; \
@@ -360,10 +367,9 @@ RUN set -eu; \
         fi; \
         ;; \
     arm64) \
-        apt-get install -y --no-install-recommends linux-image-rpi-2712; \
+        INITRD=No apt-get install -y --no-install-recommends linux-image-rpi-2712; \
         rpi_boot 2712 rpi5 Image 'bcm2712*.dtb'; \
-        cp -r "$(find /usr/lib/linux-image-*-rpi-2712 -type d -name overlays | head -1)" \
-            /boot/iotlab/rpi5/overlays; \
+        cp -r /usr/lib/modules/*-rpi-2712/dtb/overlays /boot/iotlab/rpi5/overlays; \
         cp /tmp/rpi5-config.txt /boot/iotlab/rpi5/config.txt; \
         ;; \
     *) \

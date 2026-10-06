@@ -1,6 +1,8 @@
 #!/bin/busybox sh
 #
-# /sbin/init of the IoT-LAB gateway root filesystem.
+# /sbin/init of the IoT-LAB gateway root filesystem, the same for every
+# gateway type booting the image (A8, Raspberry Pi 2/3/4 with the armhf
+# image, Raspberry Pi 5 with the arm64 image).
 #
 # The kernel mounts the root filesystem from the read-only NFS export of
 # the gateway image. This script stacks a RAM overlay (tmpfs) on top of it
@@ -45,7 +47,8 @@ fi
 overlay_size=$(cmdline_param iotlab.overlay_size)
 overlay_size=${overlay_size:-25%}
 
-# overlayfs is a module on the Raspberry Pi kernels
+# overlayfs is a module on the Raspberry Pi kernels, built in on the A8
+# kernel (without module support): modprobe fails there, silently
 /usr/sbin/modprobe overlay 2>/dev/null
 
 $bb mount -t tmpfs -o mode=0755,size="$overlay_size" overlay-ram /overlay \
