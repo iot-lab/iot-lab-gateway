@@ -1,0 +1,13 @@
+[Unit]
+Description=IoT-LAB gateway boot time setup (users directory)
+Requires=iotlab-boot-setup.service
+After=iotlab-boot-setup.service
+Before=gateway-server-network.service gateway-server.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/iotlab-gateway-setup
+
+[Install]
+WantedBy=multi-user.target

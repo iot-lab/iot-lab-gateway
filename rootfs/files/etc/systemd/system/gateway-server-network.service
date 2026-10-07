@@ -1,7 +1,7 @@
 [Unit]
 Description=IoT-LAB gateway open node addresses (gateways with several open nodes)
-Requires=iotlab-boot-setup.service
-After=iotlab-boot-setup.service
+Requires=iotlab-gateway-setup.service
+After=iotlab-gateway-setup.service
 Before=gateway-server.service
 
 [Service]

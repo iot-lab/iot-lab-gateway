@@ -1,5 +1,0 @@
-# Only the packages explicitly requested (the kernels) come from the
-# Raspberry Pi archive, everything else from Debian
-Package: *
-Pin: origin archive.raspberrypi.com
-Pin-Priority: 100

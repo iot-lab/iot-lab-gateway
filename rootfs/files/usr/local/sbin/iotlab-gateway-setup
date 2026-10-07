@@ -1,0 +1,18 @@
+#!/bin/bash
+#
+# Boot time setup of the IoT-LAB gateway, run by iotlab-gateway-setup.service
+# after iotlab-boot-setup.service (iot-lab-linux-base: name resolution, node
+# configuration directory) and before the gateway services:
+# - users directory (/iotlab/users), mounted from the site NFS server, where
+#   the gateway server writes the experiment files of the users
+
+set -eu
+
+USERS_DIR=/iotlab/users
+NFS_OPTIONS="rw,relatime,vers=3,rsize=131072,wsize=131072,hard,nolock,proto=tcp,timeo=600,retrans=2"
+
+# nfsserver: added to /etc/hosts by iotlab-boot-setup
+mkdir -p "$USERS_DIR"
+if ! mountpoint -q "$USERS_DIR"; then
+    mount -t nfs -o "$NFS_OPTIONS" "nfsserver:/iotlab/users" "$USERS_DIR"
+fi

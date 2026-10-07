@@ -1,7 +1,7 @@
 [Unit]
 Description=IoT-LAB gateway REST server
-Requires=iotlab-boot-setup.service
-After=iotlab-boot-setup.service gateway-server-network.service
+Requires=iotlab-gateway-setup.service
+After=iotlab-gateway-setup.service gateway-server-network.service
 
 [Service]
 # gateway-server-daemon starts one server per open node in the background

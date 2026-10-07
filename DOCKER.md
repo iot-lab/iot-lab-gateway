@@ -5,9 +5,11 @@ The provided Dockerfile builds a Docker image that installs all the necessary de
 without you having to install them on the host machine. 
 
 It is the default target (`dev`) of the Dockerfile, based on Debian trixie. The
-same Dockerfile also builds the root filesystem of the gateways (`rootfs`
-target, see [rootfs/README.md](rootfs/README.md)): both images share the
-build of the tools and the installation of the gateway code.
+same Dockerfile also builds the tests image (`tests` target, see
+[DEVELOPER.md](DEVELOPER.md)), sharing the build of the tools and the
+installation of the gateway code, and the root filesystem of the gateways
+(`rootfs` target, on top of `fitiotlab/iot-lab-linux-base`, see
+[rootfs/README.md](rootfs/README.md)).
 
 The only prerequisite on the host before running the container for the first time is to install udev rules on the host, which is done with:
 
