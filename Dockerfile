@@ -245,6 +245,8 @@ RUN apt-get update && \
         libusb-1.0-0 \
         libxml2 \
         mosquitto \
+        # openocd 0.12 (/usr/bin/openocd): RP2040 of the rpi-pico open nodes
+        openocd \
         openssh-client \
         python3 \
         python3-bottle \
@@ -294,6 +296,8 @@ RUN apt-get update && \
         avarice \
         curl \
         mosquitto \
+        # openocd 0.12 (/usr/bin/openocd): RP2040 of the rpi-pico open nodes
+        openocd \
         rtl-sdr \
         uhubctl \
         && \
